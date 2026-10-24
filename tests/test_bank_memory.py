@@ -32,6 +32,16 @@ class TestBankMemory(unittest.TestCase):
         cache["three"] = 3
         self.assertEqual(set(cache), {"one", "three"})
 
+    def test_explicit_removal_preserves_order_and_empty_behavior(self):
+        cache = BoundedCache(3)
+        for key in ("one", "two", "three"):
+            cache[key] = key.upper()
+        self.assertEqual(cache.popitem(last=False), ("one", "ONE"))
+        self.assertEqual(cache.popitem(), ("three", "THREE"))
+        self.assertEqual(cache.popitem(), ("two", "TWO"))
+        with self.assertRaises(KeyError):
+            cache.popitem()
+
     def test_scanned_exam_remix_missing_helper_regression(self):
         import real_exam_engine as engine
         exam = {"code": "qa", "p1": [{"q": "Câu hỏi chữ", "opt": ["A. 1", "B. 2"], "ans": "A"}], "p2": [], "p3": []}
