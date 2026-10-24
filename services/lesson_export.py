@@ -1,0 +1,140 @@
+"""Deterministic lesson exports: preserve source text and typeset formulas offline."""
+import base64
+import hashlib
+import html
+import json
+import re
+from functools import lru_cache
+from pathlib import Path
+
+from markdown_it import MarkdownIt
+from services.academic_context import academic_context
+
+ROOT = Path(__file__).resolve().parents[1]
+_TOKENS = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$)")
+
+
+@lru_cache(maxsize=1)
+def renderer_assets():
+    vendor = ROOT / "assets/vendor/katex/dist"
+    css = (vendor / "katex.min.css").read_text(encoding="utf-8")
+    # Keep only the WOFF2 source, embedded; no CDN or fonts/ URL is needed.
+    def font_source(match):
+        block = match[0]
+        font = re.search(r"url\([^)]*?fonts/([^/()]+\.woff2)\)", block)
+        if not font:
+            raise ValueError("KaTeX font face has no packaged WOFF2 source")
+        encoded = base64.b64encode((vendor / "fonts" / font[1]).read_bytes()).decode()
+        return re.sub(r"src:[^;}]+", 'src:url("data:font/woff2;base64,' + encoded + '") format("woff2")', block)
+    css = re.sub(r"@font-face\{[^}]+\}", font_source, css)
+    notebook = base64.b64encode((ROOT / "assets/fonts/Caveat.ttf").read_bytes()).decode()
+    js = "\n".join((vendor / name).read_text(encoding="utf-8") for name in ("katex.min.js", "contrib/mhchem.min.js"))
+    license_text = (ROOT / "assets/fonts/Caveat-OFL.txt").read_text(encoding="utf-8") + "\n" + (ROOT / "assets/vendor/katex/LICENSE").read_text(encoding="utf-8")
+    css += "\n/* " + license_text.replace("*/", "* /") + " */"
+    return css, notebook, js.replace("</script", r"<\/script")
+
+
+def lesson_body_html(lesson):
+    """Protect math/code separately; never convert formulas to approximate Unicode."""
+    replacements = {}
+    nonce = hashlib.sha256(lesson.encode()).hexdigest()[:12]
+
+    def protect(match):
+        raw = match[0]
+        if raw.startswith(("`", "~~~")):
+            return raw
+        display = raw.startswith(("$$", r"\["))
+        width = 2 if raw.startswith(("$$", r"\[", r"\(")) else 1
+        tex = raw[width:-width]
+        token = f"GSAIMATH{nonce}N{len(replacements)}END"
+        replacements[token] = ('<span class="lesson-math" data-display="' + str(display).lower() +
+                               '" data-tex="' + html.escape(tex, quote=True) + '">' + html.escape(raw) + '</span>')
+        return token
+
+    protected = _TOKENS.sub(protect, lesson)
+    outside_code = re.sub(r"```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`", "", protected)
+    naked_math = re.search(r"\\(?:frac|dfrac|sqrt|begin|ce|pu|omega|alpha|int|sum|vec)\b", outside_code)
+    md = MarkdownIt("commonmark", {"html": False}).enable("table")
+    # Remote images are not evidence of the selected lesson. Preserve their alt
+    # description, without loading arbitrary image hosts from generated text.
+    md.renderer.rules["image"] = lambda tokens, idx, options, env: html.escape(tokens[idx].content)
+    body = md.render(protected)
+    for token, value in replacements.items():
+        body = body.replace(token, value)
+    if naked_math:
+        body = '<p class="notice" data-source-issue="math-delimiter">Có lệnh công thức chưa nằm trong dấu phân cách toán học; cần sửa nội dung trước khi in.</p>' + body
+    return body
+
+
+def build_lesson_html(subject, grade, topic, lesson, style="handwritten"):
+    subject, grade = academic_context(subject, grade)
+    if not isinstance(lesson, str) or not lesson.strip():
+        raise ValueError("Chưa có nội dung bài học để xuất.")
+    if len(lesson) > 250000:
+        raise ValueError("Bài học quá dài để xuất trong một lượt.")
+    if style not in {"handwritten", "color", "monochrome"}:
+        raise ValueError("Kiểu bản in không hợp lệ.")
+    css, font, js = renderer_assets()
+    digest = hashlib.sha256(lesson.encode()).hexdigest()
+    metadata = json.dumps({"subject": subject, "grade": grade, "topic": topic, "source_sha256": digest}, ensure_ascii=False).replace("<", "\\u003c")
+    title = html.escape(str(topic or subject))
+    body = lesson_body_html(lesson)
+    return r'''<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>''' + title + r'''</title>
+<style>''' + css + r'''
+@font-face{font-family:GSAIHand;src:url(data:font/ttf;base64,''' + font + r''') format('truetype');font-weight:100 900;font-display:swap}
+*{box-sizing:border-box}body{margin:0;background:#e8e3d8;color:#182c73;font-family:Georgia,'Times New Roman',serif}
+.toolbar{padding:12px;background:#fff;position:sticky;top:0;z-index:5;font:14px system-ui;color:#334155}.toolbar button{padding:8px 18px;margin-right:12px;cursor:pointer}
+.paper{max-width:820px;margin:20px auto;padding:32px 35px 40px 66px;background:#f5eedc;min-height:1120px;overflow-wrap:anywhere;position:relative}
+.handwritten .paper{background-image:linear-gradient(#d8d2c260 1px,transparent 1px),linear-gradient(90deg,#d8d2c260 1px,transparent 1px);background-size:22px 22px;border-left:14px dotted #343434}
+.handwritten article{font:25px/1.42 GSAIHand,cursive}.handwritten h1,.handwritten h2,.handwritten h3{font-family:GSAIHand,cursive}
+h1{font-size:30px;line-height:1.2;color:#b51e35;text-align:center;margin:10px 0 20px}h2,h3,h4{color:#b51e35;line-height:1.25;break-after:avoid}h2{font-size:1.2em}h3{font-size:1.1em}
+.context{text-align:center;font:15px system-ui;margin-bottom:20px;color:#334155}.source-note{font:13px system-ui;border-top:1px solid #bcae94;padding-top:12px;margin-top:24px;color:#475569}
+article{font-size:17px;line-height:1.6}article p{margin:0 0 .75em}article li{margin:.25em 0}article table{border-collapse:collapse;width:100%;font-size:.85em}td,th{border:1px solid #9e998e;padding:6px;vertical-align:top}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#ffffff80;padding:10px;font:14px/1.4 monospace}code{font-family:monospace;font-size:.8em}.katex{font-size:1.02em}.katex-display{overflow-x:auto;overflow-y:hidden;margin:.7em 0}
+.formula-error{outline:2px solid #b91c1c;color:#991b1b;white-space:pre-wrap;font-family:monospace}.monochrome,.monochrome h1,.monochrome h2,.monochrome h3,.monochrome h4{color:#111}.monochrome .paper{background:#fff}
+.color .paper{background:#fff}.color h2{border-left:4px solid #0891b2;padding-left:10px}.notice{color:#b91c1c}
+@page{size:A4;margin:12mm}@media print{body{background:#fff}.toolbar{display:none}.paper{margin:0;max-width:none;min-height:0;padding:10mm 7mm 10mm 12mm;box-shadow:none}article{orphans:3;widows:3}p,li{break-inside:avoid}pre{break-inside:auto}.katex-display{overflow:visible}a{color:inherit;text-decoration:none}}
+</style></head><body class="''' + style + r'''">
+<div class="toolbar"><button id="print" disabled>In / Lưu PDF</button><span id="render-status">Đang dựng công thức…</span></div>
+<main class="paper"><h1>''' + title + r'''</h1><div class="context">''' + html.escape(subject) + f" · Lớp {grade}" + r'''</div>
+<article id="lesson">''' + body + r'''</article>
+<p class="source-note">Bản trình bày giữ nội dung bài học AI, không bổ sung công thức hoặc ví dụ mẫu. Cần giáo viên duyệt tính đúng đắn học thuật trước khi sử dụng chính thức. Nội dung dài được in thành nhiều trang.</p></main>
+<script type="application/json" id="lesson-context">''' + metadata + r'''</script>
+<script>''' + js + r'''</script><script>
+(async function(){let errors=document.querySelectorAll('[data-source-issue]').length;const status=document.getElementById('render-status');
+for(const el of document.querySelectorAll('.lesson-math')){try{katex.render(el.dataset.tex,el,{displayMode:el.dataset.display==='true',throwOnError:true,trust:false,strict:'warn',maxExpand:1000,maxSize:20});}catch(error){errors++;el.textContent=el.dataset.tex;el.classList.add('formula-error');el.title='Công thức chưa dựng được; cần kiểm tra cú pháp.';}}
+await document.fonts.ready;status.textContent=errors?'Có '+errors+' công thức cần kiểm tra; chưa cho in.':'Đã dựng công thức. Có thể in hoặc lưu PDF.';status.className=errors?'notice':'';
+const print=document.getElementById('print');print.disabled=errors>0;print.onclick=()=>window.print();document.documentElement.dataset.renderErrors=String(errors);document.documentElement.dataset.renderReady='true';
+})();</script></body></html>'''
+
+
+def handwritten_prompt(subject, grade, topic, lesson):
+    subject, grade = academic_context(subject, grade)
+    return json.dumps({"purpose": "STYLE REFERENCE ONLY — use deterministic HTML/PDF for authoritative text and formulas",
+                       "subject": subject, "grade": grade, "title": topic, "content": lesson,
+                       "style": {"paper": "cream graph paper #F5EEDC", "binding": "black spiral on the left",
+                                 "body_ink": "#182C73", "heading_ink": "#B51E35",
+                                 "handwriting": "legible Vietnamese cursive, slight right slant, complete diacritics"},
+                       "rules": ["Use only the supplied lesson content and context", "Never invent or alter formulas, facts, examples or figures",
+                                 "Preserve chemical, physical, mathematical and language notation for this subject",
+                                 "Use multiple pages instead of cutting or shrinking content", "Do not copy any subject matter or identity from a style reference"]}, ensure_ascii=False, indent=2)
+
+
+def faithful_infographic_data(subject, grade, topic, lesson):
+    academic_context(subject, grade)
+    if not lesson or not lesson.strip():
+        raise ValueError("Không có nội dung bài học để trích xuất infographic.")
+    md = MarkdownIt("commonmark", {"html": False}).enable("table")
+    title, rows = str(topic or subject), []
+    tokens = md.parse(lesson)
+    for index, token in enumerate(tokens):
+        if token.type == "inline" and index and tokens[index - 1].type == "heading_open":
+            title = token.content
+        elif token.type == "inline" and token.content.strip():
+            rows.append((title, token.content, ""))
+    # Legacy SVG is explicitly a short excerpt. Full, exact, multi-page content
+    # is available in build_lesson_html; never pad excerpt slots with facts.
+    return {"box1": rows[:4], "box2": rows[4:8], "box4": [],
+            "example": {"title": "Nội dung trích từ bài học", "steps": [], "visual_svg": ""},
+            "source_sha256": hashlib.sha256(lesson.encode()).hexdigest(), "is_excerpt": True}

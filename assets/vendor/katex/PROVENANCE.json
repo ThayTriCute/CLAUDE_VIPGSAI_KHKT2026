@@ -1,0 +1,6 @@
+{
+  "name": "katex",
+  "version": "0.19.0",
+  "registry_integrity": "sha512-v6Tznz3zJ7u3niRCoDTsumM2+HA2XXcCu+WAacCeHD2z3p9A9Ks987o5FzfTGBN0e8A0vjEgIDvLbICrXpdw/Q==",
+  "font_source": "https://github.com/google/fonts/tree/main/ofl/caveat"
+}

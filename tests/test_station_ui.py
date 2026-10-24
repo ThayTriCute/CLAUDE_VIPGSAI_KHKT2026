@@ -2,6 +2,7 @@
 import tempfile
 import time
 import unittest
+from types import SimpleNamespace
 from pathlib import Path
 from unittest.mock import patch
 
@@ -53,6 +54,30 @@ class TestStationUI(unittest.TestCase):
         self.assertEqual([e.message for e in at.exception], [])
         self.assertEqual(at.session_state["tram2_count"], 0)
         self.assertFalse(any("85.4%" in m.value for m in at.markdown))
+
+    def test_generated_lesson_export_is_bound_to_subject_and_grade(self):
+        at = self.app()
+        at.secrets["GEMINI_API_KEY"] = "test-only-key"
+        next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select("Lớp 6").run()
+        next(t for t in at.text_input if "Bài học cần chiếm lĩnh" in t.label).set_value("Phân số")
+        lesson = "### PHẦN 1: Phân số\nChỉ có nội dung lớp 6. Phân số $\\frac{1}{2}$."
+        with patch("google.genai.Client") as client:
+            client.return_value.__enter__.return_value.models.generate_content.return_value = SimpleNamespace(text=lesson, candidates=[])
+            next(b for b in at.button if b.label == "🚀 Soạn bài học").click().run()
+        self.assertEqual([e.message for e in at.exception], [])
+        self.assertEqual(at.session_state["current_lesson_context"], ("Toán học", 6))
+        self.assertIn("lớp 6", at.session_state["current_lesson"])
+        next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select("Lớp 7").run()
+        self.assertEqual(at.session_state["current_lesson"], "")
+        self.assertEqual([e.message for e in at.exception], [])
+
+    def test_stale_unbound_lesson_is_not_exported_as_current_subject(self):
+        at = self.app()
+        at.session_state["current_lesson"] = "Bài Hóa học lớp 12 từ phiên cũ."
+        at.run()
+        self.assertEqual(at.session_state["current_lesson"], "")
+        self.assertIn("Hóa học", at.session_state["orphaned_lesson"])
+        self.assertEqual([e.message for e in at.exception], [])
 
     def test_station3_wrong_decimal_gets_zero_and_saves_one_event(self):
         at = self.app()

@@ -16,6 +16,7 @@ Chuyển đổi 1-chạm toàn bộ đề thi sang định dạng chuẩn nhận
 import re
 import io
 from qa_runtime import normalize_bool
+from services.academic_context import canonical_subject
 from typing import Dict, Any, List, Optional
 
 
@@ -61,13 +62,13 @@ def export_exam_to_azota_text(exam: Dict[str, Any]) -> str:
     title = exam.get("title") or f"ĐỀ THI {exam.get('subject', 'TOÁN HỌC').upper()} - CHUẨN BỘ GD&ĐT"
     school = exam.get("school", "TRƯỜNG THPT TÂN HIỆP (AN GIANG) • THẦY PHAN MINH TRÍ")
     year = exam.get("year", "2025 - 2026")
-    subject = exam.get("subject", "Toán học")
+    subject = canonical_subject(exam.get("subject", "Toán học"))
 
     lines = []
     lines.append(f"{'='*60}")
     lines.append(f"{school.upper()}")
     lines.append(f"{title.upper()} ({year})")
-    lines.append(f"Môn thi: {subject} | Thời gian làm bài: {exam.get('duration', exam.get('duration_minutes', 90))} phút (Không kể thời gian phát đề)")
+    lines.append(f"Môn thi: {subject} | Lớp: {exam.get('grade', 'Chưa cung cấp')} | Thời gian làm bài: {exam.get('duration', exam.get('duration_minutes', 90))} phút (Không kể thời gian phát đề)")
     lines.append(f"{'='*60}\n")
 
     p1 = exam.get("p1", [])
@@ -222,7 +223,7 @@ def export_exam_to_azota_docx(exam: Dict[str, Any]) -> io.BytesIO:
 
     p_info = doc.add_paragraph()
     p_info.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run_sub = p_info.add_run(f"Môn: {exam.get('subject', 'Toán học')}  |  Thời gian làm bài: 90 phút (Chuẩn QĐ 764/QĐ-BGDĐT)")
+    run_sub = p_info.add_run(f"Môn: {canonical_subject(exam.get('subject', 'Toán học'))} | Lớp: {exam.get('grade', 'Chưa cung cấp')} | Thời gian làm bài: {exam.get('duration', exam.get('duration_minutes', 90))} phút")
     run_sub.font.italic = True
     run_sub.font.size = Pt(10.5)
 

@@ -1,3 +1,7 @@
+from copy import deepcopy
+from services.academic_context import canonical_subject, academic_context, validate_exam_context
+from services.lesson_export import build_lesson_html, handwritten_prompt
+from services.lesson_sources import books_for, lesson_references, PUBLISHER_PORTAL
 from qa_runtime import (split_api_keys, admin_password_matches, normalize_bool, display_frame,
     exam_response_metadata, observed_item_matrix, mcq_answer_matches)
 # VIP 76.0 - HỆ THỐNG GIA SƯ AI THPT 2026 (CHUẨN GDPT 2018 - EDTECH & PSYCHOMETRICS SOTA QUỐC TẾ)
@@ -371,41 +375,14 @@ APP_URL = get_secret("APP_URL", "https://vip-demo-gsai-khkt2026.streamlit.app")
 from kntt_sgk_library import KNTT_DIGITAL_LIBRARY
 
 
-def get_kntt_books_for(subject_name: str, grade_lvl: int):
-
-    """Truy xuất danh mục sách SGK Kết Nối Tri Thức theo đúng khối lớp và môn học từ VniTeach."""
-
-    g_dict = KNTT_DIGITAL_LIBRARY.get(grade_lvl) or KNTT_DIGITAL_LIBRARY.get(str(grade_lvl)) or {}
-
-    if subject_name in g_dict:
-
-        return g_dict[subject_name]
-
-    for k, v in g_dict.items():
-
-        if subject_name.lower() in k.lower() or k.lower() in subject_name.lower():
-
-            return v
-
-    return [{"title": f"SGK {subject_name} Lớp {grade_lvl} (KNTT)", "url": "https://www.vniteach.com/sach-dien-tu-ket-noi-tri-thuc/#google_vignette"}]
+def get_kntt_books_for(subject_name, grade_lvl):
+    return books_for(subject_name, grade_lvl)
 
 
 
-def get_nxbgd_books_for(subject_name: str, grade_lvl: int):
-
-    """Truy xuất danh mục sách SGK Kết Nối Tri Thức từ nguồn Tập Huấn NXBGD."""
-
-    kntt_books = get_kntt_books_for(subject_name, grade_lvl)
-
-    nxbgd_books = []
-
-    for b in kntt_books:
-
-        title = b["title"].replace("(KNTT)", "(NXBGD)").replace("Global Success", "(NXBGD)")
-
-        nxbgd_books.append({"title": title, "url": "https://taphuan.nxbgd.vn/"})
-
-    return nxbgd_books
+def get_nxbgd_books_for(subject_name, grade_lvl):
+    subject_name, grade_lvl = academic_context(subject_name, grade_lvl)
+    return [{"title": f"Tra cứu SGK {subject_name} lớp {grade_lvl} tại NXBGD", "url": PUBLISHER_PORTAL, "kind": "portal"}]
 
 
 
@@ -607,7 +584,7 @@ st.markdown("""
 
 # ==============================================================================
 
-def sanitize_katex_latex(text: str) -> str:
+def _legacy_sanitize_katex_latex(text: str) -> str:
 
     if not text: return ""
 
@@ -633,14 +610,6 @@ def sanitize_katex_latex(text: str) -> str:
     s = re.sub(r'(?<!\\)\brac\{', r'\\frac{', s)
     s = re.sub(r'\\lim_\{([^}]+)\s+o\s+', r'\\lim_{\1 \\to ', s)
     s = re.sub(r'(?<=\s)o(?=\s*[-+]?\d|\\infty|\$)', r'\\to', s)
-
-    # 0.15 Khử triệt để lỗi chữ 'mega' / '\omega' bị dùng nhầm thành vô cực (\infty) do AI / OCR lỗi font
-    s = re.sub(r'(?i)(?<=[\(\[\s;,-])-+\s*mega\b', r'-\\infty', s)
-    s = re.sub(r'(?i)\b-\s*mega\b', r'-\\infty', s)
-    s = re.sub(r'(?i)\+\s*mega\b', r'+\\infty', s)
-    s = re.sub(r'(?i)(?<=[;,\s])\s*\+?mega(?=[\)\]\s;,])', r'+\\infty', s)
-    s = re.sub(r'(?i)(?<=[(\[\s])-?\s*\\?[oO]mega\b', r'-\\infty', s)
-    s = re.sub(r'(?i);\s*\+?\s*\\?[oO]mega\s*(?=[)\]])', r'; +\\infty', s)
 
     # 0.2 Chuẩn hóa môi trường cases
     s = re.sub(r'\\cases\{', r'\\begin{cases}', s)
@@ -768,6 +737,20 @@ def sanitize_katex_latex(text: str) -> str:
 
     return s
 
+
+
+def sanitize_katex_latex(text: str) -> str:
+    if not text:
+        return ""
+    protected = []
+    def save_code(match):
+        protected.append(match.group(0))
+        return f"GSAICODESLOT{len(protected)-1}END"
+    value = re.sub(r"```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`", save_code, str(text))
+    value = _legacy_sanitize_katex_latex(value)
+    for index, original in enumerate(protected):
+        value = value.replace(f"GSAICODESLOT{index}END", original)
+    return value
 
 
 def clean_vietnamese_math(text):
@@ -1732,7 +1715,7 @@ with st.sidebar.expander(f"📚 Thư Viện SGK KNTT - Lớp {grade_num} (VniTea
 
         st.image(generate_local_qr_base64(curr_books_nxbgd[0]['url']), width="stretch")
 
-    st.link_button("🌐 Kho Toàn Bộ SGK Điện Tử KNTT (NXBGD)", "https://taphuan.nxbgd.vn/", width="stretch")
+    st.link_button("🌐 Kho Toàn Bộ SGK Điện Tử KNTT (NXBGD)", PUBLISHER_PORTAL, width="stretch")
 
 
 
@@ -9246,120 +9229,8 @@ KNTT_EXPERT_MEDIA_CHANNELS = {
     }
 }
 
-def generate_kntt_lesson_indexing_and_media(subject_name: str, grade_lvl: int, topic_text: str):
-    """
-    TỰ ĐỘNG ĐỊNH VỊ CHỈ MỤC ADN BÀI HỌC SGK KẾT NỐI TRI THỨC (CT GDPT 2018)
-    VÀ TẠO MÃ QR CODE ĐỘNG LIÊN KẾT VIDEO YOUTUBE CHUẨN XÁC THEO TỪNG MÔN HỌC.
-    """
-    import textwrap
-    raw_topic = str(topic_text or "").strip()
-    clean_topic = re.sub(r'^(?:chuyên đề|bài|chương|unit)\s*\d+[\:\.\-]?\s*', '', raw_topic, flags=re.IGNORECASE).strip()
-    if not clean_topic:
-        clean_topic = raw_topic
-
-    channel_info = KNTT_EXPERT_MEDIA_CHANNELS.get(subject_name, {
-        "channel_name": "Kênh Giáo Dục Mở GDPT 2018 (VTV7)",
-        "channel_url": "https://www.youtube.com/@VTV7",
-        "search_prefix": subject_name,
-        "tag": "GD"
-    })
-
-    curricula = BIGDATA_CURRICULUM.get(subject_name, {}).get(grade_lvl, [])
-    found_idx = -1
-    found_title = ""
-    for idx_c, c_item in enumerate(curricula):
-        if clean_topic.lower() in c_item.lower() or any(w in c_item.lower() for w in clean_topic.lower().split() if len(w) >= 3):
-            found_idx = idx_c
-            found_title = c_item
-            break
-
-    ch_num = 1
-    lesson_num = 1
-    if found_idx >= 0:
-        ch_num = found_idx + 1
-        lesson_num = found_idx + 1
-    else:
-        m_num = re.search(r'(?:bài|chương|chuyên đề|unit)\s*(\d+)', raw_topic, re.IGNORECASE)
-        if m_num:
-            lesson_num = int(m_num.group(1))
-            ch_num = max(1, (lesson_num + 2) // 3)
-
-    vol_num = 1 if ch_num <= 3 or lesson_num <= 4 else 2
-    vol_str = f"Tập {vol_num}"
-    if subject_name == "Tiếng Anh":
-        vol_str = f"Global Success - Unit {lesson_num}"
-        index_code = f"KNTT-ANH{grade_lvl}-GS-U{lesson_num:02d}"
-    else:
-        index_code = f"KNTT-{channel_info['tag']}{grade_lvl}-T{vol_num}-CH{ch_num:02d}-B{lesson_num:02d}"
-
-    book_name = f"Sách giáo khoa {subject_name} {grade_lvl} - {vol_str} (NXB Giáo Dục Việt Nam)"
-    chapter_name = found_title if found_title else f"Chương {ch_num}. Chuyên đề trọng tâm môn {subject_name} Lớp {grade_lvl}"
-
-    yt_query = f"{channel_info['search_prefix']} {grade_lvl} Kết nối tri thức {clean_topic} {channel_info['channel_name'].split()[0]}"
-    encoded_query = urllib.parse.quote_plus(yt_query)
-    yt_deep_url = f"https://www.youtube.com/results?search_query={encoded_query}"
-
-    qr_img_data = generate_local_qr_base64(yt_deep_url, fill_color="#0284c7", back_color="#0f172a")
-
-    kntt_book_list = get_kntt_books_for(subject_name, grade_lvl)
-    vniteach_url = kntt_book_list[0]["url"] if kntt_book_list else "https://www.vniteach.com/sach-dien-tu-ket-noi-tri-thuc/#google_vignette"
-    vniteach_title = kntt_book_list[0]["title"] if kntt_book_list else f"SGK {subject_name} {grade_lvl} (KNTT)"
-    nxbgd_url = "https://taphuan.nxbgd.vn/"
-
-    badge_html = textwrap.dedent(f"""
-    <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95)); border: 1.5px solid #0284c7; border-radius: 12px; padding: 16px 20px; margin: 15px 0 20px 0; box-shadow: 0 4px 20px rgba(2, 132, 199, 0.25);">
-        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(56, 189, 248, 0.3); padding-bottom: 10px; margin-bottom: 12px;">
-            <div style="font-size: 14px; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px;">
-                🛡️ BẢO CHỨNG ĐỊNH VỊ CHỈ MỤC CHUẨN XÁC SGK KẾT NỐI TRI THỨC (CT GDPT 2018)
-            </div>
-            <div style="background: rgba(2, 132, 199, 0.25); border: 1px solid #38bdf8; border-radius: 6px; padding: 3px 10px; font-family: monospace; font-size: 13px; font-weight: 800; color: #f8fafc;">
-                MÃ CHỈ MỤC: {index_code}
-            </div>
-        </div>
-        <div style="display: flex; flex-wrap: wrap; gap: 18px; align-items: center;">
-            <div style="flex: 1 1 320px; font-size: 13.5px; color: #e2e8f0; line-height: 1.6;">
-                <div>📌 <b>Khối lớp & Môn học:</b> {subject_name} - Lớp {grade_lvl} (Chuẩn Thông tư 32/2018/TT-BGDĐT)</div>
-                <div>📖 <b>Chương / Chuyên đề:</b> <span style="color: #fde047;">{chapter_name}</span></div>
-                <div>🎯 <b>Bài học đối chứng:</b> <span style="color: #38bdf8; font-weight: 700;">{clean_topic}</span></div>
-                <div>🏛️ <b>Ấn bản chính thức:</b> {book_name}</div>
-                <div>📚 <b>Đối chất SGK 2 Nguồn:</b> <a href="{vniteach_url}" target="_blank" style="color: #fbbf24; font-weight: 700; text-decoration: underline;">[📖 SGK Điện Tử VniTeach]</a> &nbsp; <a href="{nxbgd_url}" target="_blank" style="color: #38bdf8; font-weight: 700; text-decoration: underline;">[🏛️ Cổng Tập Huấn NXBGD]</a></div>
-                <div style="margin-top: 6px; color: #4ade80; font-size: 12.5px;">
-                    ✅ <i>Liên kết tham khảo theo môn/lớp; nội dung AI cần giáo viên đối chiếu SGK.</i>
-                </div>
-            </div>
-            <div style="flex: 0 0 auto; text-align: center; background: rgba(15, 23, 42, 0.6); border: 1px dashed rgba(56, 189, 248, 0.4); border-radius: 10px; padding: 10px 14px;">
-                <div style="font-size: 11px; font-weight: 700; color: #38bdf8; margin-bottom: 5px;">📱 QUÉT XEM VIDEO BÀI NÀY:</div>
-                <img src="{qr_img_data}" style="width: 105px; height: 105px; border-radius: 6px; display: block; margin: 0 auto;" alt="Mã QR Video Bài Học">
-                <div style="font-size: 10px; color: #94a3b8; margin-top: 4px;">Kênh: {channel_info['channel_name'].split()[0]}</div>
-            </div>
-        </div>
-        <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(148, 163, 184, 0.2); display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
-            <a href="{yt_deep_url}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #ef4444, #dc2626); color: #ffffff !important; text-decoration: none; font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 6px; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);">
-                ▶️ 1-Chạm Mở Video Bài Giảng YouTube
-            </a>
-            <a href="{vniteach_url}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #f59e0b, #d97706); color: #ffffff !important; text-decoration: none; font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 6px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);">
-                📖 Lật SGK KNTT Điện Tử (VniTeach)
-            </a>
-            <a href="{nxbgd_url}" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #0284c7, #0369a1); color: #ffffff !important; text-decoration: none; font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 6px; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);">
-                🏛️ Cổng Tập Huấn NXBGD (SGK Gốc)
-            </a>
-            <span style="font-size: 12px; color: #94a3b8;">
-                👨‍🏫 Kênh đối tác học liệu mở: <b>{channel_info['channel_name']}</b> • <i>Đối soát song song 2 nguồn.</i>
-            </span>
-        </div>
-    </div>
-    """).strip()
-
-    return {
-        "index_code": index_code,
-        "chapter_name": chapter_name,
-        "clean_topic": clean_topic,
-        "book_name": book_name,
-        "channel_info": channel_info,
-        "yt_deep_url": yt_deep_url,
-        "qr_img_data": qr_img_data,
-        "badge_html": badge_html
-    }
+def generate_kntt_lesson_indexing_and_media(subject_name, grade_lvl, topic_text):
+    return lesson_references(subject_name, grade_lvl, topic_text, KNTT_EXPERT_MEDIA_CHANNELS, generate_local_qr_base64)
 
 
 
@@ -10611,16 +10482,15 @@ def render_math_graph_to_webp_base64(graph_data, extra_points=None, xlabel=r'$x$
 
 @st.cache_data(show_spinner=False, max_entries=256)
 def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán học", grade: int = 12, topic: str = "") -> str:
-    """
-    BỘ NÃO KIỂM SOÁT BIGDATA CUỐI CÙNG TRẠM 1 (MASTER SOVEREIGN QUALITY GATE):
-    - Chuẩn hóa 100% văn bản bài học theo GDPT 2018, SGK KNTT và các VB pháp quy của Bộ.
-    - Quét & bọc triệt để KaTeX arrows (chống lỗi đỏ KaTeX ngoài math-mode).
-    - Tự động nhận diện & chữa lành toàn diện BBT đa thức bậc 3, phân thức 1/1, phân thức 2/1.
-    - Bảo đảm cách ly phân loại 13 môn học, chống lẫn lộn nhãn môn này sang môn khác.
+    """Validate the selected curriculum context and normalize display syntax.
+
+    This gate does not certify factual accuracy or official textbook alignment.
+    Academic content still requires teacher review against authoritative sources.
     """
     if not raw_text or not isinstance(raw_text, str):
         return ""
 
+    subject, grade = academic_context(subject, grade)
     t = str(raw_text)
 
     # 1. Tẩy sạch PUA & Soft-hyphen
@@ -11363,7 +11233,7 @@ if selected_station == station_labels[0]:
 
                 st.link_button(f"📖 Mở {b_item['title']}", b_item['url'], width="stretch")
 
-            st.link_button("🌐 Mở Nguồn Tập Huấn NXBGD (Trang chủ)", "https://taphuan.nxbgd.vn/", width="stretch")
+            st.link_button("🌐 Mở Nguồn Tập Huấn NXBGD (Trang chủ)", PUBLISHER_PORTAL, width="stretch")
 
             if curr_t1_books_nxbgd:
 
@@ -11621,12 +11491,18 @@ Khối 4 (Cạm bẫy thực tế & Mẹo thi):
                 res_text = station1_master_sovereign_brain_gate(res_text, subject=subject, grade=grade_num, topic=topic_input.strip())
 
                 st.session_state.current_lesson = res_text
+                st.session_state.current_lesson_context = (subject, grade_num)
                 st.session_state.current_topic = topic_input.strip()
                 st.session_state.parsed_quiz = parse_quiz_questions(res_text)
                 st.session_state.quiz_states = {}
 
             except Exception as e:
                 st.error(f"Lỗi: {e}")
+
+    if st.session_state.get("current_lesson") and st.session_state.get("current_lesson_context") != (subject, grade_num):
+        st.session_state.orphaned_lesson = st.session_state.current_lesson
+        st.session_state.current_lesson = ""
+        st.warning("Bài từ phiên cũ chưa có ngữ cảnh môn/lớp khớp. Hãy soạn lại bài trước khi xuất.")
 
     if st.session_state.get("current_lesson"):
         lesson_text = station1_master_sovereign_brain_gate(st.session_state.current_lesson, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''))
@@ -11651,73 +11527,15 @@ Khối 4 (Cạm bẫy thực tế & Mẹo thi):
             # ==============================================================================
             # 📊 THẺ CẨM NANG INFOGRAPHIC VECTOR SVG A4 (BỎ TÚI / IN ẤN PHOTO TIẾT KIỆM MỰC & MÀU NÉT CĂNG)
             # ==============================================================================
-            if lie is not None:
-                try:
-                    svg_color = lie.build_a4_infographic_svg(
-                        subject_name=subject,
-                        grade_lvl=grade_num,
-                        topic_text=current_topic_name,
-                        index_code=t1_indexing_data["index_code"],
-                        textbook_name=t1_indexing_data["book_name"],
-                        expert_channel=t1_indexing_data["channel_info"]["channel_name"],
-                        qr_base64_url=t1_indexing_data["qr_img_data"],
-                        lesson_markdown=cleaned_p1,
-                        mode="color"
-                    )
-                    svg_mono = lie.build_a4_infographic_svg(
-                        subject_name=subject,
-                        grade_lvl=grade_num,
-                        topic_text=current_topic_name,
-                        index_code=t1_indexing_data["index_code"],
-                        textbook_name=t1_indexing_data["book_name"],
-                        expert_channel=t1_indexing_data["channel_info"]["channel_name"],
-                        qr_base64_url=t1_indexing_data["qr_img_data"],
-                        lesson_markdown=cleaned_p1,
-                        mode="monochrome"
-                    )
-
-                    with st.expander("📊 Thẻ Cẩm Nang Infographic A4 (Vector SVG Siêu Nhẹ • Quét QR Video • In Photocopy / Màu 1-Chạm)", expanded=True):
-                        st.caption("✨ **Bản tóm tắt đồ họa A4 Vector chuẩn GDPT 2018:** Tự động cân chỉnh chữ, ngắt dòng tiếng Việt, công thức Toán - KHTN & Phiên âm IPA quốc tế chuẩn mực. Học sinh có thể tải về lưu điện thoại hoặc in ra giấy kẹp SGK để ôn tập!")
-
-                        col_mode, col_space = st.columns([3, 1])
-                        with col_mode:
-                            mode_choice = st.radio(
-                                "Chế độ hiển thị & Bản in:",
-                                ["🎨 Bản Màu Hiện Đại (Xem Web / Tablet)", "🖨️ Bản In Photo Trắng Đen (Tiết kiệm mực • Nét vô cực)"],
-                                horizontal=True,
-                                key=f"infog_mode_{t1_indexing_data['index_code']}"
-                            )
-
-                        chosen_svg = svg_mono if "Trắng Đen" in mode_choice else svg_color
-                        b64_svg = base64.b64encode(chosen_svg.encode('utf-8')).decode('utf-8')
-                        st.markdown(
-                            f'<div style="text-align: center; margin: 15px auto; max-width: 800px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 25px rgba(0,0,0,0.18); border: 1.5px solid #0284c7; background: #ffffff;">'
-                            f'<img src="data:image/svg+xml;base64,{b64_svg}" style="width: 100%; height: auto; display: block;" alt="Infographic A4 Bài Học" />'
-                            f'</div>',
-                            unsafe_allow_html=True
-                        )
-
-                        col_dl1, col_dl2 = st.columns(2)
-                        with col_dl1:
-                            st.download_button(
-                                label="📥 Tải Bản Màu (.SVG Siêu Nhẹ ~15KB)",
-                                data=svg_color.encode('utf-8'),
-                                file_name=f"Infographic_{t1_indexing_data['index_code']}_Color.svg",
-                                mime="image/svg+xml",
-                                use_container_width=True,
-                                key=f"btn_dl_svg_col_{t1_indexing_data['index_code']}"
-                            )
-                        with col_dl2:
-                            st.download_button(
-                                label="🖨️ Tải Bản Trắng Đen In Photo (.SVG Nét Cực Hạn)",
-                                data=svg_mono.encode('utf-8'),
-                                file_name=f"Infographic_{t1_indexing_data['index_code']}_Monochrome.svg",
-                                mime="image/svg+xml",
-                                use_container_width=True,
-                                key=f"btn_dl_svg_mono_{t1_indexing_data['index_code']}"
-                            )
-                except Exception as _e_infog:
-                    logging.warning("Lỗi tạo Infographic A4: %s", _e_infog)
+            with st.expander("📒 Phiếu bài học và infographic chữ viết tay", expanded=True):
+                st.caption("Nội dung lấy từ bài học đang hiển thị, không chèn công thức/ví dụ mẫu. Bản HTML có sẵn phông và KaTeX, hỗ trợ in nhiều trang khi nội dung dài.")
+                export_mode = st.radio("Kiểu phiếu bài học:", ["Chữ viết tay trên giấy ô ly", "Infographic màu theo bài học", "Bản in trắng đen"], horizontal=True, key=f"lesson_export_{t1_indexing_data['index_code']}")
+                export_style = "handwritten" if export_mode.startswith("Chữ") else "color" if export_mode.startswith("Infographic") else "monochrome"
+                export_html = build_lesson_html(subject, grade_num, current_topic_name, cleaned_p1, export_style)
+                components.html(export_html, height=790, scrolling=True)
+                st.download_button("📥 Tải phiếu HTML để xem / In PDF", export_html.encode("utf-8"), file_name=f"Bai_hoc_{t1_indexing_data['index_code']}_{export_style}.html", mime="text/html", key="download_lesson_html")
+                st.download_button("📄 Tải nội dung gốc Markdown", cleaned_p1.encode("utf-8"), file_name=f"Bai_hoc_{t1_indexing_data['index_code']}.md", mime="text/markdown", key="download_lesson_source")
+                st.download_button("🖋️ Tải prompt phong cách chữ viết tay", handwritten_prompt(subject, grade_num, current_topic_name, cleaned_p1).encode("utf-8"), file_name=f"Prompt_{t1_indexing_data['index_code']}.json", mime="application/json", key="download_handwritten_prompt")
 
             # --- NÚT ĐỌC BÀI GIẢNG TTS SƯ PHẠM CHUẨN GDPT 2018 & TIẾNG ANH BẢN NGỮ ---
             create_pedagogical_tts_component(cleaned_p1, subject, "tram1_lesson")
@@ -14714,6 +14532,11 @@ if selected_station == station_labels[2]:
 
     def enrich_exam_data(exam):
         if not isinstance(exam, dict): return exam
+        validate_exam_context(exam, subject, grade_num)
+        exam = deepcopy(exam)
+        exam["subject"] = canonical_subject(subject)
+        exam["grade"] = grade_num
+        exam.setdefault("duration", st.session_state.get("exam_time_mins", 45))
         try:
             return _internal_enrich_exam_data(exam)
         except Exception as _e_enrich:
