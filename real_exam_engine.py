@@ -1,3 +1,4 @@
+from services.cognitive_levels import annotate_question, LEVEL_GUIDANCE
 from services.curriculum_policy import assessment_profile
 from qa_runtime import normalize_bool
 # VIP 74.3 - HỆ THỐNG GIA SƯ AI THPT 2026 (CHUẨN GDPT 2018 - BỘ NÃO KIỂM SOÁT BIGDATA & THI THỰC CHIẾN)
@@ -708,9 +709,8 @@ def apply_full_7layer_quality_pipeline(exam: dict, subject: str = "Toán học",
         if q_obj.get("ans"):
             q_obj["ans"] = deep_clean_pua_and_artifacts(str(q_obj["ans"]))
 
-        # TẦNG 4: Gán nhãn Bloom nếu thiếu
-        if not q_obj.get("level"):
-            q_obj["level"] = "VD" if part_name == "p3" else ("TH" if part_name == "p2" else "NB")
+        # TẦNG 4: Đối soát nhãn khai báo, không suy từ dạng câu
+        q_obj = annotate_question(q_obj)
         
         # TẦNG 5: Universal QID
         if not q_obj.get("qid"):
@@ -818,9 +818,8 @@ def append_exam_to_national_shard(exam: dict) -> bool:
                     s["t"] = re.sub(r'^[a-dA-D][\.\)]\s*', '', str(s["t"])).strip()
             # L3: Phục dựng đồ họa
             q_obj = attach_question_visuals(q_obj, subject=subject, grade=grade)
-            # L4: Gán nhãn Bloom nếu thiếu
-            if not q_obj.get("level"):
-                q_obj["level"] = "VD" if part_name == "p3" else ("TH" if part_name == "p2" else "NB")
+            # L4: Đối soát nhãn khai báo, không suy từ dạng câu
+            q_obj = annotate_question(q_obj)
             # L5: Universal QID
             if not q_obj.get("qid"):
                 q_obj["qid"] = f"NAT_{norm_subj[:3].upper()}_{grade}_{part_name}_{random.randint(100000, 999999)}"
@@ -1383,7 +1382,7 @@ def normalize_exam_schema(exam: dict, subject: str = None, grade = None) -> dict
                 "explain": expl,
                 "source": q.get("source", out.get("source", "")),
                 "school": q.get("school", out.get("school", "")),
-                "level": q.get("level", "NB-TH")
+                "level": q.get("level", "")
             })
     out["p1"] = clean_p1
 
@@ -1402,16 +1401,20 @@ def normalize_exam_schema(exam: dict, subject: str = None, grade = None) -> dict
                     if isinstance(s, dict):
                         t_val = _sanitize_field_math(str(s.get("t") or s.get("text") or s.get("statement") or "").strip())
                         a_val = normalize_bool(s.get("a", s.get("ans")))
-                        stmts.append({"t": t_val, "a": a_val})
+                        stmts.append({**s, "t": t_val, "a": a_val})
             elif "items" in q and isinstance(q["items"], list):
                 answers = q.get("answers") or []
                 for idx_item, item_val in enumerate(q["items"]):
                     a_val = normalize_bool(answers[idx_item]) if idx_item < len(answers) else None
-                    stmts.append({"t": _sanitize_field_math(str(item_val).strip()), "a": a_val})
+                    if isinstance(item_val, dict):
+                        a_val = normalize_bool(item_val.get("a", item_val.get("ans", a_val)))
+                        stmts.append({**item_val, "t": _sanitize_field_math(str(item_val.get("t") or item_val.get("statement") or item_val.get("text") or "").strip()), "a": a_val})
+                    else:
+                        stmts.append({"t": _sanitize_field_math(str(item_val).strip()), "a": a_val})
             elif "statements" in q and isinstance(q["statements"], list):
                 for s in q["statements"]:
                     if isinstance(s, dict):
-                        stmts.append({"t": _sanitize_field_math(str(s.get("text") or s.get("t") or "").strip()), "a": normalize_bool(s.get("correct", s.get("a")))})
+                        stmts.append({**s, "t": _sanitize_field_math(str(s.get("text") or s.get("t") or "").strip()), "a": normalize_bool(s.get("correct", s.get("a")))})
             if not q_txt and stmts:
                 q_txt = "Xét tính đúng hoặc sai của các mệnh đề sau:"
             if q_txt:
@@ -1422,7 +1425,7 @@ def normalize_exam_schema(exam: dict, subject: str = None, grade = None) -> dict
                     "explain": _sanitize_field_math(str(q.get("explain") or q.get("explanation") or "").strip()),
                     "source": q.get("source", out.get("source", "")),
                     "school": q.get("school", out.get("school", "")),
-                    "level": q.get("level", "TH-VD")
+                    "level": q.get("level", "")
                 })
     out["p2"] = clean_p2
 
@@ -1444,7 +1447,7 @@ def normalize_exam_schema(exam: dict, subject: str = None, grade = None) -> dict
                 "explain": str(q.get("explain") or q.get("explanation") or "").strip(),
                 "source": q.get("source", out.get("source", "")),
                 "school": q.get("school", out.get("school", "")),
-                "level": q.get("level", "VD-VDC")
+                "level": q.get("level", "")
             })
     out["p3"] = clean_p3
 
@@ -1764,7 +1767,7 @@ def parse_raw_exam_text(raw_text: str, subject: str, grade, school: str, title: 
                     "explain": f"Trích xuất từ đề thi thật {school}.",
                     "source": f"{title} - {school}",
                     "school": school,
-                    "level": "NB"
+                    "level": ""
                 })
 
     p2 = []
@@ -1786,7 +1789,7 @@ def parse_raw_exam_text(raw_text: str, subject: str, grade, school: str, title: 
                     "explain": f"Trích xuất từ đề thi thật {school}.",
                     "source": f"{title} - {school}",
                     "school": school,
-                    "level": "TH-VD"
+                    "level": ""
                 })
 
     p3 = []
@@ -1806,7 +1809,7 @@ def parse_raw_exam_text(raw_text: str, subject: str, grade, school: str, title: 
                 "explain": f"Trích xuất từ đề thi thật {school}.",
                 "source": f"{title} - {school}",
                 "school": school,
-                "level": "VD"
+                "level": ""
             })
 
     # Kiểm tra nếu văn bản PDF bị vỡ công thức MathType nặng (như '= -fx', '= +xy', '()=y') và có ai_caller thì ưu tiên dùng AI khôi phục LaTeX chuẩn 100%
@@ -1924,7 +1927,7 @@ QUY TẮC BẮT BUỘC: Thoát kép tất cả các ký tự gạch chéo ngư�
                     for idx_q, q in enumerate(p1):
                         q["source"] = f"{title} - {school}"
                         q["school"] = school
-                        if "level" not in q: q["level"] = "NB-TH"
+                        q.setdefault("level", "")
                         m_no = re.search(r'Câu\s*(\d+)', str(q.get("q", "")))
                         q_no = int(q.get("source_question_number")) if str(q.get("source_question_number", "")).isdigit() else int(m_no.group(1)) if m_no else (idx_q + 1)
                         crop_key = f"p1_q_{q_no}"
@@ -1934,7 +1937,7 @@ QUY TẮC BẮT BUỘC: Thoát kép tất cả các ký tự gạch chéo ngư�
                     for idx_q, q in enumerate(p2):
                         q["source"] = f"{title} - {school}"
                         q["school"] = school
-                        if "level" not in q: q["level"] = "TH-VD"
+                        q.setdefault("level", "")
                         m_no = re.search(r'Câu\s*(\d+)', str(q.get("q", "")))
                         q_no = int(q.get("source_question_number")) if str(q.get("source_question_number", "")).isdigit() else int(m_no.group(1)) if m_no else (idx_q + 1)
                         crop_key = f"p2_q_{q_no}"
@@ -1944,7 +1947,7 @@ QUY TẮC BẮT BUỘC: Thoát kép tất cả các ký tự gạch chéo ngư�
                     for idx_q, q in enumerate(p3):
                         q["source"] = f"{title} - {school}"
                         q["school"] = school
-                        if "level" not in q: q["level"] = "VD-VDC"
+                        q.setdefault("level", "")
                         m_no = re.search(r'Câu\s*(\d+)', str(q.get("q", "")))
                         q_no = int(q.get("source_question_number")) if str(q.get("source_question_number", "")).isdigit() else int(m_no.group(1)) if m_no else (idx_q + 1)
                         crop_key = f"p3_q_{q_no}"
@@ -2027,7 +2030,7 @@ def build_multi_dimensional_index(subject: str = None, force: bool = False):
                     q_store[qid] = q
                     
                 topic_raw = str(q.get("topic") or "").strip().lower()
-                lvl = str(q.get("level") or "TH").upper()
+                lvl = str(q.get("level") or "UNSPECIFIED").upper()
                 
                 # 1. Index theo Part
                 p_key = (norm_subj, grade, part)
@@ -2748,7 +2751,7 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
                     audit_trail.append({
                         "stt": len(audit_trail) + 1,
                         "part": "Phần I (Đọc hiểu)",
-                        "level": q.get("level", "NB-TH"),
+                        "level": q.get("level", ""),
                         "topic": "Đọc hiểu văn bản ngoài SGK",
                         "school": school,
                         "session": session,
@@ -2773,7 +2776,7 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
                     audit_trail.append({
                         "stt": len(audit_trail) + 1,
                         "part": "Phần II (Viết)",
-                        "level": "VD-VDC",
+                        "level": q.get("level", ""),
                         "topic": "Nghị luận xã hội / Văn học",
                         "school": school,
                         "session": session,
@@ -3029,24 +3032,8 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
         fresh_items = [it for it in unique_items if get_q_fingerprint(it) not in active_cooldown]
         cooldown_fallback = [it for it in unique_items if get_q_fingerprint(it) in active_cooldown]
 
-        def split_by_bloom(it_list):
-            nb = [it for it in it_list if it.get("level") == "NB"]
-            th = [it for it in it_list if it.get("level") == "TH"]
-            vd = [it for it in it_list if it.get("level") == "VD"]
-            vdc = [it for it in it_list if it.get("level") == "VDC"]
-            oth = [it for it in it_list if it.get("level") not in ["NB", "TH", "VD", "VDC"]]
-            for lst in (nb, th, vd, vdc, oth):
-                random.shuffle(lst)
-            if part == "p1":
-                return nb + th + vd + vdc + oth
-            elif part == "p2":
-                return th + vd + nb + vdc + oth
-            else:
-                return vd + vdc + th + nb + oth
-
-        ordered_fresh = split_by_bloom(fresh_items)
-        ordered_cooldown = split_by_bloom(cooldown_fallback)
-        ordered = ordered_fresh + ordered_cooldown
+        # A question format is not a cognitive level; retain relevance/cooldown order.
+        ordered = fresh_items + cooldown_fallback
 
         selected = []
         for it in ordered:
@@ -3125,15 +3112,7 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
                 if q_spec and len(selected_p1) > 4:
                     selected_p1[4] = shuffle_question_options(attach_question_visuals(q_spec, subject=subject, grade=grade))
 
-        # 3. Bảo đảm phân hóa độ khó đúng mệnh lệnh (Áp dụng cho MỌI môn học)
-        if p1_only_nb_th:
-            for q in selected_p1:
-                if q.get("level") not in ["NB", "TH"]:
-                    q["level"] = "TH"
-        if p3_vd_vdc:
-            for q in selected_p3:
-                if q.get("level") not in ["VD", "VDC"]:
-                    q["level"] = "VD"
+        # Never relabel a question to make it appear to satisfy a requested matrix.
 
     # Ghi nhận toàn bộ câu hỏi vừa chọn vào bộ nhớ Cooldown để lần sau không chọn lại
     for q in (selected_p1 + selected_p2 + selected_p3):
@@ -3161,7 +3140,7 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
             audit_trail.append({
                 "stt": q_counter,
                 "part": p_name,
-                "level": q.get("level", "TH"),
+                "level": q.get("level", ""),
                 "topic": q.get("topic", "Chuyên đề khảo thí"),
                 "school": q.get("school", "THPT Chuyên"),
                 "session": q.get("exam_session", "Kỳ thi Cuối Học Kỳ 1 (Chính thức)"),
@@ -3309,57 +3288,10 @@ def blend_real_exam_with_ai(parsed_exam: dict, subject: str, grade, chosen_topic
     return parsed_exam
 
 def build_real_exam_context_injection(subject: str, grade_num: int, chosen_topics: list) -> str:
-    """
-    Tạo khối chỉ dẫn ngữ liệu thực chiến (Real Exam Injection) để bơm vào Prompt của AI.
-    Kết hợp giữa Đề thi thật 2025-2026 của các trường và Luồng cập nhật 24/7 TOANMATH.com.
-    """
-    baseline_q = get_baseline_questions(subject, grade_num)
-    live_items = [it for it in load_live_feed() if str(it.get("grade")) == str(grade_num)]
-    
-    portal_info = EXAM_SOURCE_PORTALS.get(subject, {})
-    
-    injection_text = f"""
-[🏛️ NGUỒN NGỮ LIỆU ĐỀ THI THẬT TOÀN QUỐC 24/7 (ĐÃ KIỂM DUYỆT CHUẨN CT 2018 - NÓI KHÔNG VỚI VIOLET CŨ)]:
-- Hệ thống khảo thí liên kết trực tiếp với chuyên trang: {portal_info['portal_name']} ({portal_info['url']})
-- Tiêu chí khảo thí: {portal_info['reliability']}
-- Các trường điểm tiêu biểu đã đồng bộ ngữ liệu: {', '.join(portal_info['sample_schools'])}
-- MỖI CÂU HỎI BẮT BUỘC PHẢI CÓ THUỘC TÍNH "source" (Ví dụ: "Đề thi Giữa kỳ 1 - THPT Phan Bội Châu - Hà Nội (Nguồn: TOANMATH.com)")
-"""
-
-    if live_items:
-        injection_text += "\n[🔥 LUỒNG ĐỀ THI VỪA MỚI THI TRÊN TOÀN QUỐC TUẦN NÀY (ĐÃ ĐỒNG BỘ 24/7)]:\n"
-        for idx, item in enumerate(live_items[:3], 1):
-            injection_text += f"  {idx}. {item['title']} ({item['exam_type']} - Nguồn: {item['source']})\n"
-
-    # Trích xuất câu hỏi mẫu từ đề thật để AI học phong cách ra đề chuẩn chỉ
-    p1_samples = baseline_q.get("p1", [])
-    p3_samples = baseline_q.get("p3", [])
-    
-    if p1_samples or p3_samples:
-        injection_text += "\n[🎯 MẪU CÂU HỎI THỰC CHIẾN TỪ CÁC ĐỀ THI THẬT (YÊU CẦU AI THAM CHIẾU VĂN PHONG VÀ ĐỘ PHÂN HÓA)]:\n"
-        if p1_samples:
-            sample_p1 = p1_samples[0]
-            injection_text += f"- Phần I (Trắc nghiệm {sample_p1.get('level', 'NB')} - Trích: {sample_p1.get('source', '')}):\n"
-            injection_text += f"  Đề bài: {sample_p1.get('q', '')}\n"
-            injection_text += f"  Phương án: {' | '.join(sample_p1.get('opt', []))}\n"
-        if p3_samples:
-            sample_p3 = p3_samples[0]
-            injection_text += f"- Phần III (Trả lời ngắn {sample_p3.get('level', 'VD')} - Trích: {sample_p3.get('source', '')}):\n"
-            injection_text += f"  Đề bài: {sample_p3.get('q', '')}\n"
-            injection_text += f"  Đáp án chuẩn (<= 4 ký tự): {sample_p3.get('ans', '')}\n"
-            
-    injection_text += f"""
-NGUYÊN TẮC RA ĐỀ THỰC CHIẾN BẮT BUỘC:
-1. TRỘN ĐỀ ĐA TẦNG: Bắt buộc mô phỏng 100% phong cách ra đề thực tế của các trường danh tiếng ở trên, tuyệt đối không ra đề theo kiểu tự biên tự diễn xa rời thực tế.
-2. PHÂN HÓA ĐÚNG TẦM:
-   - Các câu Phần I: Đạt đúng tầm Nhận biết (NB: 60%) và Thông hiểu (TH: 40%).
-   - Các câu Phần II: Ý a, b Thông hiểu (TH); Ý c, d Vận dụng (VD) và Vận dụng cao (VDC).
-   - Các câu Phần III: 100% Vận dụng (VD) và Vận dụng cao (VDC) thực tiễn, đáp số <= 4 ký tự (nếu môn thi có Phần III).
-3. MINH BẠCH NGUỒN GỐC: Mỗi câu hỏi phải có nhãn "source" ghi rõ tên trường và chuyên trang tham chiếu ({portal_info['portal_name']}).
-"""
-    return injection_text
-
-
+    """Compatibility prompt; no invented source review or level-by-format ratio."""
+    return (LEVEL_GUIDANCE + "\nNguồn tham khảo cần đối chiếu theo đúng môn/lớp/chủ đề. "
+            "Không tự nhận kho hoặc câu AI đã được duyệt; không bịa tên trường hay nguồn. "
+            f"Ngữ cảnh: {subject}, lớp {grade_num}; chủ đề: {chosen_topics}.")
 
 
 
