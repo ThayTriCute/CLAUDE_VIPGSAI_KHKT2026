@@ -10948,7 +10948,7 @@ if selected_station == station_labels[0]:
             # 📊 THẺ CẨM NANG INFOGRAPHIC VECTOR SVG A4 (BỎ TÚI / IN ẤN PHOTO TIẾT KIỆM MỰC & MÀU NÉT CĂNG)
             # ==============================================================================
             with st.expander("📒 Phiếu bài học và infographic chữ viết tay", expanded=True):
-                st.caption("Nội dung lấy từ bài học đang hiển thị, không chèn công thức/ví dụ mẫu. Bản HTML có sẵn phông và KaTeX, hỗ trợ in nhiều trang khi nội dung dài.")
+                st.caption("Mẫu sổ tay: giấy ô ly kem, gáy lò xo đen, chữ xanh và tiêu đề đỏ gạch chân. Giữ nội dung bài học đang hiển thị và công thức KaTeX; bài dài in nhiều trang. Tải HTML, mở bằng trình duyệt rồi chọn In / Lưu PDF; bật Đồ họa nền để giữ màu giấy khi in.")
                 export_mode = st.radio("Kiểu phiếu bài học:", ["Chữ viết tay trên giấy ô ly", "Infographic màu theo bài học", "Bản in trắng đen"], horizontal=True, key=f"lesson_export_{t1_indexing_data['index_code']}")
                 export_style = "handwritten" if export_mode.startswith("Chữ") else "color" if export_mode.startswith("Infographic") else "monochrome"
                 export_html = build_lesson_html(subject, grade_num, current_topic_name, cleaned_p1, export_style)
