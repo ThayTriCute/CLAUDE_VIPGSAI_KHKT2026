@@ -70,7 +70,18 @@ def validate_exam_context(exam, subject, grade):
     subject, grade = academic_context(subject, grade)
     if not isinstance(exam, dict):
         raise ValueError("Đề thi phải là dữ liệu có cấu trúc.")
-    for item in [exam] + [q for part in ("p1", "p2", "p3") for q in exam.get(part, []) if isinstance(q, dict)]:
+    items = [exam]
+    for part in ("p1", "p2", "p3", "part_1", "part_2", "part_3", "part_I", "part_II", "part_III", "part_viet"):
+        questions = exam.get(part, [])
+        if isinstance(questions, list):
+            items.extend(q for q in questions if isinstance(q, dict))
+    reading = exam.get("part_doc_hieu")
+    if isinstance(reading, dict) and isinstance(reading.get("questions"), list):
+        items.extend(q for q in reading["questions"] if isinstance(q, dict))
+    title_grade = re.search(r"(?:lớp|khối)\s*(\d{1,2})\b", str(exam.get("title", "")), re.I)
+    if title_grade and normalize_grade(title_grade[1]) != grade:
+        raise ValueError("Tiêu đề đề thi khai báo khác lớp đang chọn.")
+    for item in items:
         declared = item.get("subject")
         if declared and canonical_subject(declared) != subject:
             raise ValueError(f"Đề/câu hỏi mang môn {declared}, không khớp môn {subject} đang chọn.")

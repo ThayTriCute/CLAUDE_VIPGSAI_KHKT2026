@@ -2,6 +2,7 @@
 import tempfile
 import time
 import unittest
+import json
 from types import SimpleNamespace
 from pathlib import Path
 from unittest.mock import patch
@@ -78,6 +79,56 @@ class TestStationUI(unittest.TestCase):
         self.assertEqual(at.session_state["current_lesson"], "")
         self.assertIn("Hóa học", at.session_state["orphaned_lesson"])
         self.assertEqual([e.message for e in at.exception], [])
+
+    def test_station3_grade6_uses_practice_counts_not_graduation(self):
+        at = self.app()
+        next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select("Lớp 6").run()
+        at.session_state["selected_station"] = "📝 Trạm 3: Luyện Tập & Khảo Thí"
+        at.run()
+        self.assertEqual([e.message for e in at.exception], [])
+        self.assertEqual(next(n for n in at.number_input if n.label == "Số câu TLN P.III:").value, 2)
+        self.assertEqual(next(s for s in at.selectbox if s.label == "⏱️ Thời lượng bài thi (Phút):").value, 45)
+        self.assertTrue(any("Luyện tập theo lớp" in c.value for c in at.caption))
+
+    def test_station3_geography_has_six_short_answers(self):
+        at = self.app()
+        next(s for s in at.selectbox if s.label == "📚 Môn học cần hỗ trợ:").select("Địa lý").run()
+        at.session_state["selected_station"] = "📝 Trạm 3: Luyện Tập & Khảo Thí"
+        at.run()
+        self.assertEqual([e.message for e in at.exception], [])
+        self.assertEqual(next(n for n in at.number_input if n.label == "Số câu TN P.I:").value, 18)
+        self.assertEqual(next(n for n in at.number_input if n.label == "Số câu TLN P.III:").value, 6)
+
+    def test_station1_blocks_explicit_different_grade_before_ai(self):
+        at = self.app()
+        next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select("Lớp 6").run()
+        next(t for t in at.text_input if "Bài học cần chiếm lĩnh" in t.label).set_value("Tích phân lớp 12")
+        with patch("google.genai.Client") as client:
+            next(b for b in at.button if b.label == "🚀 Soạn bài học").click().run()
+            client.assert_not_called()
+        self.assertEqual(at.session_state["current_lesson"], "")
+        self.assertEqual([e.message for e in at.exception], [])
+
+    def test_station3_generation_replaces_a_whole_missing_visual_question(self):
+        import real_exam_engine as engine
+        at = self.app()
+        at.secrets["GEMINI_API_KEY"] = "test-only-key"
+        at.session_state["selected_station"] = "📝 Trạm 3: Luyện Tập & Khảo Thí"
+        at.run()
+        for label, value in (("Số câu TN P.I:", 1), ("Số câu Đ/S P.II:", 0), ("Số câu TLN P.III:", 0)):
+            next(n for n in at.number_input if n.label == label).set_value(value)
+        initial = {"subject": "Toán học", "grade": 12, "p1": [{"q": "Quan sát hình vẽ bên để chọn hàm số", "topic": "Hàm số", "opt": ["A. 1", "B. 2", "C. 3", "D. 4"], "ans": "B"}], "p2": [], "p3": []}
+        replacement = {"subject": "Toán học", "grade": 12, "topic": "Hàm số", "q": "Đồ thị như hình bên của $y=x^3+2$. Tung độ giao Oy bằng bao nhiêu?", "opt": ["A. 1", "B. 2", "C. 3", "D. 4"], "ans": "B"}
+        with patch("google.genai.Client") as client, patch.object(engine, "get_baseline_questions_pool", return_value={"p1": [], "p2": [], "p3": []}):
+            response = client.return_value.__enter__.return_value.models.generate_content
+            response.side_effect = [SimpleNamespace(text=json.dumps(initial), candidates=[]),
+                                    SimpleNamespace(text=json.dumps({"replacement_question": replacement}), candidates=[])]
+            next(b for b in at.button if b.label == "🚀 Khởi Tạo Đề Mới (AI Sáng Tạo 2026)").click().run()
+        self.assertEqual([e.message for e in at.exception], [])
+        self.assertEqual(at.session_state["exam_state"], "testing")
+        self.assertEqual(at.session_state["exam_data"]["p1"][0]["q"], replacement["q"])
+        self.assertIn("f", at.session_state["exam_data"]["p1"][0])
+        self.assertEqual(at.session_state["exam_data"]["context_recovery"]["events"][0]["action"], "ai_replacement")
 
     def test_station3_wrong_decimal_gets_zero_and_saves_one_event(self):
         at = self.app()
