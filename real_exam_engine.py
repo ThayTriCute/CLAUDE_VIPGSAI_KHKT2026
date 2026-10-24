@@ -38,6 +38,7 @@ from threading import RLock
 from functools import wraps
 from copy import deepcopy
 from services.bank_storage import BoundedCache
+from services.academic_context import canonical_subject, normalize_grade, topic_matches, validate_exam_context
 
 _BANK_LOCK = RLock()
 
@@ -423,36 +424,7 @@ def load_live_feed():
     ]
 
 def normalize_subject_name(s: str) -> str:
-    """Chuẩn hóa tên môn học để so khớp linh hoạt không phân biệt dấu và viết tắt."""
-    if not s: return ""
-    s_clean = s.strip().lower()
-    if s_clean in ["toán", "toán học", "math", "toan", "toan hoc"]:
-        return "Toán học"
-    if s_clean in ["vật lý", "vật lí", "lí", "lý", "vat ly", "vat li", "physics"]:
-        return "Vật lý"
-    if s_clean in ["hóa học", "hóa", "hoa hoc", "hoa", "chemistry"]:
-        return "Hóa học"
-    if s_clean in ["sinh học", "sinh", "sinh hoc", "biology"]:
-        return "Sinh học"
-    if s_clean in ["ngữ văn", "văn", "ngu van", "van", "literature"]:
-        return "Ngữ văn"
-    if s_clean in ["tiếng anh", "anh", "tieng anh", "english"]:
-        return "Tiếng Anh"
-    if s_clean in ["lịch sử", "sử", "lich su", "su", "history"]:
-        return "Lịch sử"
-    if s_clean in ["địa lý", "địa lí", "địa", "dia ly", "dia li", "geography"]:
-        return "Địa lý"
-    if s_clean in ["tin học", "tin", "tin hoc", "informatics"]:
-        return "Tin học"
-    if s_clean in ["công nghệ", "cn", "cong nghe", "technology"]:
-        return "Công nghệ"
-    if s_clean in ["giáo dục kinh tế và pháp luật", "gdkt&pl", "giáo dục công dân", "gdcd", "giao duc kinh te va phap luat"]:
-        return "Giáo dục kinh tế và pháp luật"
-    if s_clean in ["khoa học tự nhiên", "khtn", "khoa hoc tu nhien"]:
-        return "Khoa học tự nhiên"
-    if s_clean in ["lịch sử & địa lý", "lịch sử và địa lý", "lich su va dia ly"]:
-        return "Lịch sử & Địa lý"
-    return s.strip()
+    return canonical_subject(s)
 
 def sanitize_question_visuals(q: dict, subject: str = "") -> dict:
     """
@@ -1582,7 +1554,7 @@ def ensure_full_exam_matrix(exam: dict, subject: str = "Toán học", grade = 12
         return exam
 
     is_ai_only = bool(exam.get("is_ai_generated", False) or exam.get("exam_source_type") == "ai_generated" or not allow_bank_pad or exam.get("is_uploaded_teacher_exam", False))
-    grade_val = int(grade) if str(grade).isdigit() else 12
+    grade_val = normalize_grade(grade)
 
     if is_ai_only:
         exam["p1"] = [attach_question_visuals(dict(q), subject=subject, grade=grade_val) for q in exam.get("p1", [])]
@@ -1603,6 +1575,10 @@ def ensure_full_exam_matrix(exam: dict, subject: str = "Toán học", grade = 12
         tgt_p1, tgt_p2, tgt_p3 = 24, 4, 0
         
     pool = get_baseline_questions_pool(subject, grade)
+    selected_topics = exam.get("chosen_topics") or []
+    if selected_topics:
+        pool = {part: [q for q in pool.get(part, []) if any(topic_matches(t, q.get("topic", "")) for t in selected_topics)] for part in ("p1", "p2", "p3")}
+
     clean_p1 = [dict(q) for q in pool.get("p1", []) if not is_placeholder_question(q)]
     clean_p2 = [dict(q) for q in pool.get("p2", []) if not is_placeholder_question(q)]
     clean_p3 = [dict(q) for q in pool.get("p3", []) if not is_placeholder_question(q)]
@@ -2101,7 +2077,10 @@ def build_multi_dimensional_index(subject: str = None, force: bool = False):
     
     for ex in exams_list:
         norm_subj = normalize_subject_name(ex.get("subject", "")).lower()
-        grade = int(ex.get("grade", 12)) if str(ex.get("grade", "")).isdigit() else 12
+        try:
+            grade = normalize_grade(ex.get("grade"))
+        except ValueError:
+            continue
         
         for part in ["p1", "p2", "p3"]:
             for q in ex.get(part, []):
@@ -2212,6 +2191,7 @@ def get_shard_exams(subject: str) -> list:
             cache.clear()
 
     SUBJECT_SHARD_MAP = {
+        "giáo dục công dân": "exams_Gi_o_d_c_kinh_t__v__ph_p_lu_t.json",
         "toán học": "exams_To_n_h_c.json",
         "toán": "exams_To_n_h_c.json",
         "vật lý": "exams_V_t_l_.json",
@@ -2252,42 +2232,11 @@ def get_shard_exams(subject: str) -> list:
         elif os.path.exists(shard_raw):
             loaded_exams = read_exam_shard(shard_raw)
         else:
-            # Fallback sang master file neu khong tim thay file shard
-            master_data = get_raw_baseline_data()
-            loaded_exams = [e for e in master_data.get("exams", []) if normalize_subject_name(e.get("subject", "")).lower() == norm_subj.lower()]
-            if not loaded_exams and isinstance(master_data.get("questions"), dict):
-                for s_k, g_dict in master_data["questions"].items():
-                    if normalize_subject_name(s_k).lower() == norm_subj.lower() and isinstance(g_dict, dict):
-                        for g_k, parts in g_dict.items():
-                            if isinstance(parts, dict):
-                                loaded_exams.append({
-                                    "code": f"25{g_k}",
-                                    "subject": s_k,
-                                    "grade": int(g_k) if str(g_k).isdigit() else g_k,
-                                    "title": f"Đề khảo sát chuẩn CT 2018 - Khối {g_k}",
-                                    "school": "THPT Chuyên Sư Phạm & Sở GD&ĐT Toàn Quốc",
-                                    "portal": "TOANMATH.com",
-                                    "year": "2025 - 2026",
-                                    "is_real_exam": True,
-                                    "p1": parts.get("p1", []),
-                                    "p2": [
-                                        {
-                                            "q": item.get("q") or item.get("intro", ""),
-                                            "stmts": item.get("stmts") or [{"t": st.get("statement", ""), "a": st.get("ans", True)} for st in item.get("items", [])],
-                                            "explain": item.get("explain", ""),
-                                            "source": item.get("source", ""),
-                                            "level": item.get("level", "TH-VD"),
-                                            "topic": item.get("topic", "")
-                                        }
-                                        for item in parts.get("p2", [])
-                                    ],
-                                    "p3": parts.get("p3", [])
-                                })
+            logging.warning("Không có shard cho môn %s; không nạp kho master lớn hoặc mượn môn khác.", norm_subj)
     except Exception as exc:
         logging.warning("Không thể nạp shard cho môn %s: %s", norm_subj, exc)
-        master_data = get_raw_baseline_data()
-        loaded_exams = [e for e in master_data.get("exams", []) if normalize_subject_name(e.get("subject", "")).lower() == norm_subj.lower()]
-        
+        loaded_exams = []
+
     _SHARD_CACHE[norm_subj] = loaded_exams
     return loaded_exams
 
@@ -2540,6 +2489,8 @@ def get_baseline_questions_pool(subject: str, grade):
                 orig_q_label = f"{part_name} - Câu {q_idx + 1}"
                 audit_id = f"{portal.split('.')[0]}_{exam_code}_{p_key}_{q_idx+1}"
 
+                q_copy["subject"] = canonical_subject(ex.get("subject", subject))
+                q_copy["grade"] = normalize_grade(ex.get("grade", grade))
                 q_copy["is_real_bank_question"] = True
                 q_copy["is_ai_generated"] = False
                 q_copy["school"] = school
@@ -2627,14 +2578,14 @@ def query_blended_real_exam_multi_dim(subject: str, grades, chosen_topics: list 
                 for ct in clean_topics:
                     for (s_idx, g_idx, t_idx, p_idx), q_list in _MULTI_INDEX_BY_TOPIC.items():
                         if s_idx == norm_subj and g_idx == g and p_idx == part:
-                            if ct in t_idx or t_idx in ct or any(w in t_idx for w in ct.split() if len(w) > 3):
+                            if topic_matches(ct, t_idx):
                                 for q in q_list:
                                     qid = q.get("qid")
                                     if qid and qid not in seen_qids:
                                         candidate_pool.append(q)
 
         # 2. Nếu không có chuyên đề hoặc chuyên đề chưa đủ: Bổ sung từ Part Pool của các khối lớp
-        if len(candidate_pool) < tgt_count:
+        if not clean_topics and len(candidate_pool) < tgt_count:
             for g in g_list:
                 p_key = (norm_subj, g, part)
                 for q in _MULTI_INDEX_BY_PART.get(p_key, []):
@@ -2823,18 +2774,22 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
     Tự động bốc và trộn các câu hỏi thật đã bóc tách từ nhiều trường THPT điểm khác nhau.
     Tích hợp cơ chế Dynamic Seed (time.time_ns) và Cooldown Rotation để triệt tiêu hoàn toàn hiện tượng lặp lại đề cũ.
     """
+    subject = canonical_subject(subject)
+    grade = normalize_grade(grade)
     global _RECENT_QUESTION_COOLDOWN, _RECENT_EXAM_COOLDOWN
     # Tự động gieo lại hạt giống ngẫu nhiên theo xung nhịp nano-giây phần cứng
     random.seed(time.time_ns())
     norm_subj = normalize_subject_name(subject)
     if norm_subj == "Ngữ văn":
         exams_list = get_baseline_full_exams(subject, grade)
+        if chosen_topics:
+            exams_list = [ex for ex in exams_list if any(topic_matches(t, ex.get("topic") or ex.get("title", "")) for t in chosen_topics)]
         if exams_list:
             fresh_nv = [e for e in exams_list if str(e.get("code", e.get("title", ""))) not in _RECENT_EXAM_COOLDOWN]
             if not fresh_nv:
                 _RECENT_EXAM_COOLDOWN.clear()
                 fresh_nv = exams_list
-            chosen_ex = dict(random.choice(fresh_nv))
+            chosen_ex = deepcopy(random.choice(fresh_nv))
             _RECENT_EXAM_COOLDOWN.add(str(chosen_ex.get("code", chosen_ex.get("title", ""))))
             if len(_RECENT_EXAM_COOLDOWN) > 50:
                 _RECENT_EXAM_COOLDOWN.pop()
@@ -2903,7 +2858,7 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
 
     # Nạp kho câu hỏi thật từ Shard môn học
     pool = get_baseline_questions_pool(subject, grade)
-    portal_info = EXAM_SOURCE_PORTALS.get(subject, EXAM_SOURCE_PORTALS.get("Toán học", {}))
+    portal_info = EXAM_SOURCE_PORTALS.get(subject, {})
     portal_name = portal_info.get("portal_name", "TOANMATH.com")
 
     if not counts or len(counts) != 3:
@@ -3012,6 +2967,8 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
         
         valid_items = []
         for it in clean_items:
+            if chosen_topics and not any(topic_matches(ct, it.get("topic", "")) for ct in chosen_topics):
+                continue
             it_text = (str(it.get("topic", "")) + " " + str(it.get("q", "")) + " " + str(it.get("explain", "")) + " " + str(it.get("source", ""))).lower()
             if any(fb in it_text for fb in forbidden_topic_terms):
                 continue
@@ -3027,7 +2984,7 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
             it_exp = str(it.get("explain", "")).lower()
             if any(tk in it_top or tk in it_q or tk in it_exp for tk in topic_keywords):
                 matched.append(it)
-        return matched if len(matched) >= 1 else valid_items
+        return matched
 
     # Phân tích xem người dùng có yêu cầu riêng cho Phần 1 hay không:
     # Nếu prompt quy định Phần 1 gồm các dạng cụ thể (hàm số, BBT, đồ thị 1/1, 2/1, bậc 3, MSLGN)
@@ -3177,7 +3134,7 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
                     break
 
         # Nếu thiếu câu, bổ sung từ kho CÙNG KHỐI LỚP (có xáo trộn ngẫu nhiên)
-        if len(selected) < target_count and pool.get(part):
+        if not chosen_topics and len(selected) < target_count and pool.get(part):
             fallback_pool = list(pool[part])
             random.shuffle(fallback_pool)
             for it in fallback_pool:
@@ -3335,11 +3292,13 @@ def blend_real_exam_with_ai(parsed_exam: dict, subject: str, grade, chosen_topic
     2. Nếu không có câu thật khớp chủ đề (hoặc giáo viên chọn chủ đề đặc thù), GIỮ NGUYÊN 100% câu do AI sinh theo chủ đề đó.
     3. Gán nhãn trường chuyên / cổng khảo thí uy tín cho toàn bộ đề thi để đảm bảo tính minh bạch sư phạm.
     """
+    subject = canonical_subject(subject)
+    grade = normalize_grade(grade)
     if not isinstance(parsed_exam, dict):
         return parsed_exam
         
     pool = get_baseline_questions_pool(subject, grade)
-    portal_info = EXAM_SOURCE_PORTALS.get(subject, EXAM_SOURCE_PORTALS["Toán học"])
+    portal_info = EXAM_SOURCE_PORTALS.get(subject, {})
     sample_schools = portal_info.get("sample_schools", ["THPT Phan Bội Châu - Hà Nội", "THPT Chuyên KHTN", "THPT Chuyên Sư Phạm", "THPT Tạ Quang Bửu - Hà Nội", "THPT Lê Hồng Phong - TPHCM"])
     portal_name = portal_info.get("portal_name", "TOANMATH.com")
     
@@ -3433,7 +3392,7 @@ def build_real_exam_context_injection(subject: str, grade_num: int, chosen_topic
     baseline_q = get_baseline_questions(subject, grade_num)
     live_items = [it for it in load_live_feed() if str(it.get("grade")) == str(grade_num)]
     
-    portal_info = EXAM_SOURCE_PORTALS.get(subject, EXAM_SOURCE_PORTALS["Toán học"])
+    portal_info = EXAM_SOURCE_PORTALS.get(subject, {})
     
     injection_text = f"""
 [🏛️ NGUỒN NGỮ LIỆU ĐỀ THI THẬT TOÀN QUỐC 24/7 (ĐÃ KIỂM DUYỆT CHUẨN CT 2018 - NÓI KHÔNG VỚI VIOLET CŨ)]:
@@ -3490,6 +3449,8 @@ def create_mixed_scanned_exam(scanned_exam: dict, subject: str = "Toán học", 
     - Gán nhãn nguồn gốc minh bạch cho từng câu hỏi.
     - Sinh mã đề thi ngẫu nhiên mới (ví dụ Mã 204, 308, 516...).
     """
+    subject = canonical_subject(subject)
+    grade = normalize_grade(grade)
     if not isinstance(scanned_exam, dict):
         return scanned_exam
         
