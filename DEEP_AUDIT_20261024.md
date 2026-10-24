@@ -35,11 +35,15 @@ Cùng Python 3.14.5, cùng kho Toán 4.238 đề, cùng `tracemalloc` bắt đ�
 
 ## Kết quả kiểm tra
 
-- Audit cuối: 63 kiểm thử đạt trong 61,361 giây; không còn hai tên hàm chưa định nghĩa đã phát hiện.
+- Audit cuối sau sửa tương thích: 64 kiểm thử đạt trong 68,322 giây; không còn hai tên hàm chưa định nghĩa đã phát hiện.
 - 13/13 shard và 33.679 đề giữ nguyên nội dung chuẩn hóa so với bộ nạp cũ. Không thay đổi câu hỏi, đáp án hoặc nguồn trong dữ liệu trên đĩa.
 - Bộ kiểm thử mới kiểm tra JSON/XZ/GZ, dạng object/array, cách ly mutable objects, eviction cache và mất kết nối sau khi đã nhận một phần phản hồi.
 - Các kiểm thử UI dùng AppTest, cơ sở dữ liệu tạm và không gọi Gemini thật. Không phải phép thử tải nhiều học sinh.
 - Bằng chứng cục bộ: `qa_fixtures/inventory_round2.json`, `bank_integrity_round2.json`, `bank_integrity_round2.log`, `deep_audit_round2_final.log` ở thư mục làm việc cha.
+
+### Bổ sung sau CI Python 3.10
+
+CI phát hiện `OrderedDict.popitem` trên Python 3.10 có thể gọi lại `__getitem__` của cache sau khi đã bỏ liên kết phần tử, gây `KeyError`. Đã thay thao tác lấy/bỏ phần tử bằng các phương thức lớp gốc và thêm kiểm thử thứ tự loại phần tử/đọc cache rỗng. Không merge lượt CI thất bại.
 
 ## Phần còn cần làm theo ưu tiên
 
