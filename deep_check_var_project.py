@@ -41,7 +41,7 @@ CRITICAL_SYMBOLS_HINT = {
 def find_python_files(root_dir: str) -> list:
     py_files = []
     ignore_dirs = {
-        ".git", "__pycache__", ".venv", "venv", "env", "node_modules", 
+        ".git", "__pycache__", ".venv", "venv", "env", "node_modules",
         ".devcontainer", ".backup_gsai_heal", "backup_vip66_pre_patch", "scratch"
     }
     for dirpath, dirnames, filenames in os.walk(root_dir):
@@ -294,7 +294,7 @@ def main():
     total_critical = len(syntax_errors) + len(undefined_errors) + len(data_errors) + (0 if test_passed else 1)
     print("=" * 78)
     if total_critical == 0:
-        print("🎉 KẾT LUẬN: HỆ THỐNG ĐẠT CHUẨN 100% (ZERO CRITICAL BUGS) - TICK XANH!")
+        print("KẾT QUẢ: Các kiểm tra tĩnh, dữ liệu và kiểm thử hiện có đã đạt. Chưa xác nhận tải đồng thời hoặc không còn lỗi.")
         sys.exit(0)
     else:
         print(f"🚨 PHÁT HIỆN {total_critical} LỖI CẦN VÁ ĐỂ LẤY LẠI TICK XANH!")

@@ -3,37 +3,36 @@ from qa_runtime import (split_api_keys, admin_password_matches, normalize_bool, 
 # VIP 76.0 - HỆ THỐNG GIA SƯ AI THPT 2026 (CHUẨN GDPT 2018 - EDTECH & PSYCHOMETRICS SOTA QUỐC TẾ)
 # -*- coding: utf-8 -*-
 
-"""
-
-================================================================================
-
-HỆ THỐNG GSAI - KHẢO THÍ ĐA NĂNG LỰC TOÀN DIỆN THCS & THPT 2026 (PHIÊN BẢN VIP)
-
-CẬP NHẬT CHÍNH THỨC: 18/10/2026 - BẢN VÁ VIP 65.3 (TOÀN DIỆN ĐỒ THỊ TRẮC NGHIỆM, TỐI ƯU INFOGRAPHIC A4 ĐA MÔN ĐA LỚP & CHỐNG TRÀN VIỀN 100%)
-
-- QUY MÔ KỶ LỤC: 33.679 ĐỀ THI THẬT HOÀN CHỈNH (948.902 CÂU HỎI ĐỘC NHẤT)
-
-- BỘ NHỚ XOAY VÒNG COOLDOWN ROTATION & HARDWARE DYNAMIC SEED (XUNG NHỊP NANO-GIÂY)
-
-- TRIỆT TIÊU 100% HIỆN TƯỢNG LẶP ĐỀ CŨ VÀ CÂU HỎI CŨ TRÊN TOÀN BỘ TRẠM 3
-
-- ĐỒNG BỘ COOLDOWN CHÉO GIỮA LUỒNG 1 (AI SÁNG TẠO) & LUỒNG 2 (KHO ĐỀ THẬT 600+)
-
-- PHỦ KÍN 64 TỈNH THÀNH x 10+ TRƯỜNG TOP ĐẦU x 4 KỲ THI (GK1, CK1, GK2, CK2)
-
-- 100% PHỤC DỰNG NGỮ LIỆU THỊ GIÁC ĐA MÔN: TIKZ VECTOR OVERLEAF + SVG NANO-PRECISION
-
-- CÔNG NGHỆ NÉN SOTA 2026: LZMA / XZ (PRESET 9 EXTREME) CHỈ CÒN 13.4 MB
-
-- 100% TƯƠNG THÍCH MỌI THIẾT BỊ: ANDROID, IOS, MACOS, WINDOWS (TRIPLE-FALLBACK)
-
-- 100% CHUẨN MA TRẬN BỘ GD&ĐT: QĐ 764/QĐ-BGDĐT, CV 3175 & TT 22/2021/TT-BGDĐT
-
-- 0 TOKEN GEMINI • 0 API KEY • TỐC ĐỘ BỐC ĐỀ TỨC THÌ 0.001 GIÂY
-
-================================================================================
-
-"""
+#
+#
+# ================================================================================
+#
+# HỆ THỐNG GSAI - KHẢO THÍ ĐA NĂNG LỰC TOÀN DIỆN THCS & THPT 2026 (PHIÊN BẢN VIP)
+#
+# CẬP NHẬT CHÍNH THỨC: 18/10/2026 - BẢN VÁ VIP 65.3 (TOÀN DIỆN ĐỒ THỊ TRẮC NGHIỆM, TỐI ƯU INFOGRAPHIC A4 ĐA MÔN ĐA LỚP & CHỐNG TRÀN VIỀN 100%)
+#
+# - QUY MÔ KỶ LỤC: 33.679 ĐỀ THI THẬT HOÀN CHỈNH (948.902 CÂU HỎI ĐỘC NHẤT)
+#
+# - BỘ NHỚ XOAY VÒNG COOLDOWN ROTATION & HARDWARE DYNAMIC SEED (XUNG NHỊP NANO-GIÂY)
+#
+# - TRIỆT TIÊU 100% HIỆN TƯỢNG LẶP ĐỀ CŨ VÀ CÂU HỎI CŨ TRÊN TOÀN BỘ TRẠM 3
+#
+# - ĐỒNG BỘ COOLDOWN CHÉO GIỮA LUỒNG 1 (AI SÁNG TẠO) & LUỒNG 2 (KHO ĐỀ THẬT 600+)
+#
+# - PHỦ KÍN 64 TỈNH THÀNH x 10+ TRƯỜNG TOP ĐẦU x 4 KỲ THI (GK1, CK1, GK2, CK2)
+#
+# - 100% PHỤC DỰNG NGỮ LIỆU THỊ GIÁC ĐA MÔN: TIKZ VECTOR OVERLEAF + SVG NANO-PRECISION
+#
+# - CÔNG NGHỆ NÉN SOTA 2026: LZMA / XZ (PRESET 9 EXTREME) CHỈ CÒN 13.4 MB
+#
+# - 100% TƯƠNG THÍCH MỌI THIẾT BỊ: ANDROID, IOS, MACOS, WINDOWS (TRIPLE-FALLBACK)
+#
+# - 100% CHUẨN MA TRẬN BỘ GD&ĐT: QĐ 764/QĐ-BGDĐT, CV 3175 & TT 22/2021/TT-BGDĐT
+#
+# - 0 TOKEN GEMINI • 0 API KEY • TỐC ĐỘ BỐC ĐỀ TỨC THÌ 0.001 GIÂY
+#
+# ================================================================================
+#
 
 
 
@@ -356,7 +355,7 @@ st.set_page_config(
 
 
 
-APP_URL = get_secret("APP_URL", "https://gsaithptth-khkt2026.streamlit.app")
+APP_URL = get_secret("APP_URL", "https://vip-demo-gsai-khkt2026.streamlit.app")
 
 
 
@@ -1466,7 +1465,11 @@ st.session_state.active_context_key = current_context_key
 
 st.sidebar.markdown("---")
 
-_SHEET_SYNC_EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=3, thread_name_prefix="gsai_sync")
+@st.cache_resource(show_spinner=False)
+def get_sheet_sync_executor():
+    return concurrent.futures.ThreadPoolExecutor(max_workers=3, thread_name_prefix="gsai_sync")
+
+_SHEET_SYNC_EXECUTOR = get_sheet_sync_executor()
 
 
 
@@ -1546,20 +1549,22 @@ def sync_event(entry: dict, background: bool = True) -> bool:
 
 
     if background:
-
-        def _bg_worker():
-
-            success = _post_to_google_sheet(sheet_webhook_url, payload)
-
-            if not success:
-
-                logging.info("Sự kiện %s chưa được Sheets xác nhận.", entry.get("event_id"))
-
-        _SHEET_SYNC_EXECUTOR.submit(_bg_worker)
-
-        st.session_state.setdefault("pending_sync", {}).pop(entry["event_id"], None)
-
-        return True
+        pending = st.session_state.setdefault("pending_sync", {})
+        futures = st.session_state.setdefault("sheet_sync_futures", {})
+        event_id = entry["event_id"]
+        pending[event_id] = dict(entry)
+        previous = futures.get(event_id)
+        if previous is not None and not previous.done():
+            return True
+        # Backpressure: keep excess events pending instead of an unlimited queue.
+        if sum(not future.done() for future in futures.values()) >= 32:
+            return False
+        try:
+            futures[event_id] = _SHEET_SYNC_EXECUTOR.submit(
+                _post_to_google_sheet, sheet_webhook_url, payload)
+            return True
+        except RuntimeError:
+            return False
 
     else:
 
@@ -1592,6 +1597,16 @@ def sync_event(entry: dict, background: bool = True) -> bool:
 
 
 
+
+# Only the Streamlit script thread reconciles background outcomes.
+for _event_id, _future in list(st.session_state.get("sheet_sync_futures", {}).items()):
+    if _future.done():
+        try:
+            if _future.result():
+                st.session_state.setdefault("pending_sync", {}).pop(_event_id, None)
+        except Exception:
+            logging.warning("Background Sheets synchronization did not complete")
+        st.session_state.sheet_sync_futures.pop(_event_id, None)
 
 with st.sidebar.expander("🛠️ Báo lỗi ứng dụng & Góp ý trải nghiệm", expanded=False):
 
@@ -2556,6 +2571,8 @@ def stream_gemini_with_fallback(prompt_or_contents, system_instruction=None):
 
                     break
 
+                first_chunk = False
+
                 try:
 
                     cfg = types.GenerateContentConfig(
@@ -2565,6 +2582,8 @@ def stream_gemini_with_fallback(prompt_or_contents, system_instruction=None):
                         system_instruction=effective_si,
 
                     )
+
+                    first_chunk = False
 
                     with genai.Client(api_key=current_key, http_options=types.HttpOptions(timeout=min(90000, remaining_ms))) as client:
 
@@ -2600,6 +2619,9 @@ def stream_gemini_with_fallback(prompt_or_contents, system_instruction=None):
 
                 except Exception as e:
 
+                    if first_chunk:
+                        raise RuntimeError("Kết nối AI bị gián đoạn. Phần trả lời đã nhận được giữ nguyên; hãy gửi yêu cầu tiếp tục.") from None
+
                     err_str = str(e)
 
                     code = str(getattr(e, "code", ""))
@@ -2624,11 +2646,9 @@ def stream_gemini_with_fallback(prompt_or_contents, system_instruction=None):
 
 
 
-    # Dự phòng an toàn: nếu stream gặp sự cố trước đó, gọi hàm fallback thông thường
-
-    fb_text = call_gemini_with_fallback(prompt_or_contents, system_instruction=system_instruction)
-
-    yield fb_text
+    # The streaming path has already tried the configured models and keys.
+    # Starting another full retry budget here could block the UI for 420 seconds.
+    raise RuntimeError("Chưa nhận được phản hồi AI sau các kênh dự phòng. Hãy thử lại sau.")
 
 
 
