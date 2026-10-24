@@ -1,3 +1,5 @@
+> **Bản vá kiểm thử 24/10/2026:** xem [QA_LIVE_20261024.md](QA_LIVE_20261024.md) để biết phạm vi đã kiểm tra, lỗi đã sửa và giới hạn còn lại. Dữ liệu mô phỏng được tách khỏi quan sát thật; các số lượng trong kho là bản ghi đề/lượt câu, chưa phải số câu độc nhất đã thẩm định. API Key cá nhân hỗ trợ danh sách cách nhau bằng dấu phẩy và không được đưa vào mã nguồn. `ADMIN_PASS` trong Streamlit Secrets có quyền ưu tiên thay mật khẩu demo đã được chủ dự án chỉ định.
+
 # 🏫 GIA SƯ AI - HỆ SINH THÁI HỖ TRỢ TỰ HỌC VÀ CÁ NHÂN HÓA GIÁO DỤC TRUNG HỌC
 
 > **Đề tài Nghiên cứu Khoa học Kỹ thuật (KHKT) Dành Cho Học Sinh Trung Học Năm 2026**  
@@ -34,7 +36,7 @@ Nhằm triệt tiêu thói quen học vẹt và chống việc lạm dụng AI �
 
 ### 3. Đạo Đức AI & Bảo Vệ Quyền Riêng Tư (UNESCO & Bộ GD&ĐT)
 - **Ẩn danh hóa dữ liệu (Anonymization):** Hệ thống không thu thập thông tin định danh cá nhân nhạy cảm (PII). Học sinh tham gia khảo sát được mã hóa bằng mã số học tập nội bộ.
-- **Bảo mật lưu trữ phía người dùng (Client-Side Storage):** Khóa API và dữ liệu học tập cá nhân được lưu trữ trực tiếp trên thiết bị của học sinh qua `localStorage`, không truyền dữ liệu riêng tư về máy chủ trung gian.
+- **Bảo mật lưu trữ phía người dùng (Client-Side Storage):** Bản nháp có thể được lưu trên thiết bị. Streamlit xử lý dữ liệu phía máy chủ; yêu cầu AI được gửi đến Gemini, nhật ký có thể được lưu vào SQLite và đồng bộ theo cấu hình. Cần thông báo luồng dữ liệu và quyền truy cập cho người dùng.
 - **Minh bạch mã nguồn & Thuật toán khoa học:** Toàn bộ công thức thống kê thực nghiệm (Paired $t$-Test, Cohen's $d$, Pearson $r$, Monte Carlo Simulation) được công khai minh bạch phục vụ công tác thẩm định khoa học.
 
 ---
@@ -81,7 +83,7 @@ flowchart LR
 ---
 
 ### 📝 TRẠM 3: LUYỆN TẬP & KHẢO THÍ CHUẨN QUỐC GIA (QĐ 764/QĐ-BGDĐT)
-- **Quy mô Ngân hàng Khảo thí Đa môn:** Lưu trữ và chỉ mục hơn **33.679 đề thi thật** (gần 1 triệu câu hỏi độc nhất) từ các trường THPT điểm và Sở GD&ĐT trên 64 tỉnh thành.
+- **Quy mô Ngân hàng Khảo thí Đa môn:** Lưu trữ và chỉ mục hơn **33.679 đề thi thật** (gần 1 triệu lượt câu hỏi; có nội dung lặp và biến thể) từ các trường THPT điểm và Sở GD&ĐT trên 64 tỉnh thành.
 - **Cấu trúc Đề thi Chuẩn Hóa Theo Quyết định 764/QĐ-BGDĐT:**
   * *Phần I:* Câu trắc nghiệm nhiều phương án lựa chọn (4 chọn 1).
   * *Phần II:* Câu trắc nghiệm Đúng/Sai với thang điểm lũy tiến quy định (Đúng 1 ý = 0.1đ; Đúng 2 ý = 0.25đ; Đúng 3 ý = 0.5đ; Đúng 4 ý = 1.0đ).
@@ -115,7 +117,7 @@ flowchart LR
 | Công nghệ tích hợp | Cơ sở khoa học & Chức năng sư phạm | Giá trị thực tiễn trong hệ thống |
 | :--- | :--- | :--- |
 | **Bayesian Knowledge Tracing (BKT)** | Mô hình xác suất Bayes (Corbett & Anderson, 1994) cập nhật liên tục xác suất làm chủ tri thức $P(L_t)$ qua từng bước tương tác Socratic. | Định lượng hóa sự tiến bộ nhận thức của học sinh; chứng minh tốc độ tiếp thu qua gợi mở cao hơn phương pháp đọc đáp án chép sẵn. |
-| **Neuro-Symbolic Verifier (SymPy + LLM)** | Kết hợp giữa mô hình ngôn ngữ lớn và Trí tuệ Nhân tạo Biểu tượng toán học (Symbolic AI). | Kiểm chứng độc lập các bước tính đạo hàm, cực trị, tiệm cận, tích phân; triệt tiêu hoàn toàn hiện tượng ảo giác toán học. |
+| **Neuro-Symbolic Verifier (SymPy + LLM)** | Kết hợp giữa mô hình ngôn ngữ lớn và Trí tuệ Nhân tạo Biểu tượng toán học (Symbolic AI). | Kiểm chứng độc lập các bước tính đạo hàm, cực trị, tiệm cận, tích phân; hỗ trợ phát hiện một số lỗi trong phạm vi biểu thức được hỗ trợ; không bảo đảm loại bỏ mọi lỗi AI. |
 | **FSRS Adaptive Spaced Repetition** | Mô hình thuật toán lặp ngắt quãng thích ứng dựa trên đường cong quên lãng Ebbinghaus. | Tính toán độ bền trí nhớ $S$ và xác định "Điểm rơi vàng ôn tập" (khi xác suất nhớ lại $R \approx 85\% - 90\%$) từ nhật ký sửa lỗi Trạm 2. |
 | **Khảo Thí Đo Lường ETS (Psychometrics)** | Tiêu chuẩn đo lường khảo thí của Viện Khảo thí Giáo dục Hoa Kỳ (ETS). | Tự động tính hệ số tin cậy nội tại Cronbach's Alpha ($\alpha$) và hệ số phân biệt Point-Biserial ($r_{pbis}$) cho từng câu hỏi trong ngân hàng đề. |
 | **Universal Precision Visual Engine** | Động cơ phục dựng thị giác học thuật độc lập. | Tái hiện bảng biến thiên chuẩn mực, đồ thị hàm số và sơ đồ khoa học chuẩn xác; có chốt chặn chống gán nhầm đồ thị Toán vào các môn khác. |
