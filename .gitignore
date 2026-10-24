@@ -33,3 +33,10 @@ scratch/
 auto_heal_gsai_project.py
 deploy_to_github.py
 turbo_enterprise_optimizer.py
+
+# Runtime student records must not be published with source
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
