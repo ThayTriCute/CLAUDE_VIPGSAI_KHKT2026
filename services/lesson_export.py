@@ -74,6 +74,8 @@ def build_lesson_html(subject, grade, topic, lesson, style="handwritten"):
         raise ValueError("Bài học quá dài để xuất trong một lượt.")
     if style not in {"handwritten", "color", "monochrome"}:
         raise ValueError("Kiểu bản in không hợp lệ.")
+    from services.math_publication import validate_math_text
+    validate_math_text(lesson)
     css, font, js = renderer_assets()
     digest = hashlib.sha256(lesson.encode()).hexdigest()
     metadata = json.dumps({"subject": subject, "grade": grade, "topic": topic, "source_sha256": digest}, ensure_ascii=False).replace("<", "\\u003c")

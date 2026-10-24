@@ -9,6 +9,7 @@ from itertools import islice
 from services.academic_context import academic_context, canonical_subject, normalize_grade, topic_matches, validate_exam_context
 from services.curriculum_policy import policy_prompt, question_groups, validate_exam_structure
 from services.cognitive_levels import LEVEL_GUIDANCE, normalize_level
+from services.math_publication import validate_exam_math, MathPublicationError
 
 
 def _digest(question):
@@ -127,6 +128,10 @@ def _question_issue(question, part, subject, grade):
         validate_exam_structure({part: [question]}, subject)
     except (ValueError, TypeError):
         return "missing_or_invalid_question_data"
+    try:
+        validate_exam_math({part: [question]})
+    except MathPublicationError:
+        return "invalid_math_markup"
     if needs_visual(question) and not has_visual(question):
         return "missing_source_visual"
     if subject == "Toán học":

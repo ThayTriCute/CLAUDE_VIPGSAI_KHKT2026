@@ -1,5 +1,6 @@
 from services.context_recovery import repair_exam_context, recover_visual
 from services.cognitive_levels import annotate_question, level_caption
+from services.math_publication import math_for_web, validate_exam_math, MathPublicationError, generate_checked_text, normalize_real_aliases, escape_source_html
 from services.curriculum_policy import (assessment_profile, legal_references, matrix_html, prepare_exam_for_delivery, validate_exam_structure, validate_lesson_policy, lesson_prompt as build_curriculum_lesson_prompt, exam_prompt as build_curriculum_exam_prompt)
 from copy import deepcopy
 from services.academic_context import canonical_subject, academic_context, validate_exam_context
@@ -363,6 +364,32 @@ st.set_page_config(
 
 
 APP_URL = get_secret("APP_URL", "https://vip-demo-gsai-khkt2026.streamlit.app")
+
+_academic_css_ready = False
+
+
+def academic_markdown(text, trusted_layout=False):
+    """Render checked math with the same bundled KaTeX/mhchem as the gate."""
+    global _academic_css_ready
+    try:
+        rendered = math_for_web(text, trusted_layout=trusted_layout)
+    except MathPublicationError as error:
+        st.error("Nội dung đang được giữ lại vì chưa vượt qua kiểm tra công thức. " + str(error))
+        st.stop()
+    if "class=\"katex" in rendered and not _academic_css_ready:
+        from services.lesson_export import renderer_assets
+        st.markdown("<style>" + renderer_assets()[0] + ".katex-display{overflow-x:auto;overflow-y:hidden}</style>", unsafe_allow_html=True)
+        _academic_css_ready = True
+    st.markdown(rendered, unsafe_allow_html=True)
+
+
+def academic_options(options, label, key):
+    """Render options with checked math; store the original option for grading."""
+    for index, option in enumerate(options):
+        academic_markdown(f"**{chr(65 + index)}.** " + re.sub(r"^[A-D][.)]\s*", "", str(option), flags=re.I))
+    # Changing the widget domain must not reuse a value from the former full-text radio.
+    letter = st.radio(label, list("ABCD")[:len(options)], key=key + "_letter", horizontal=True, index=None)
+    return options[ord(letter) - 65] if letter else None
 
 
 
@@ -10030,7 +10057,7 @@ def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán h�
     Academic content still requires teacher review against authoritative sources.
     """
     if not raw_text or not isinstance(raw_text, str):
-        return ""
+        raise ValueError("Chưa nhận được nội dung bài học hợp lệ; hãy thử tạo lại bản nháp.")
 
     subject, grade = academic_context(subject, grade)
     t = str(raw_text)
@@ -10045,8 +10072,7 @@ def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán h�
     # 3. Chuẩn hóa tên hàm số & TXĐ cho môn Toán SGK KNTT
     if any(m in str(subject).lower() for m in ['toán', 'toan', 'math']):
         # Đảm bảo ký hiệu tập số thực R chuẩn \mathbb{R} (dùng lambda để chống lỗi bad escape \m trên Python 3.14)
-        t = re.sub(r'(?i)\bD\s*=\s*R\b', lambda _: r'D = \mathbb{R}', t)
-        t = re.sub(r'\\R\b', lambda _: r'\mathbb{R}', t)
+        t = normalize_real_aliases(t)
         # Khử \searrow và \nearrow nằm trơ trọi trong bảng markdown, cách chữ để không dính chùm
         t = re.sub(r'(?<!\$)\\(?:searrow|nearrow|downarrow|uparrow)(?!\$)', lambda m: ' ↘ ' if 'se' in m.group(0) else (' ↗ ' if 'ne' in m.group(0) else (' ↑ ' if 'up' in m.group(0) else ' ↓ ')), t)
 
@@ -10489,188 +10515,7 @@ def render_pedagogical_lesson_visuals(markdown_text: str, subject: str = "", gra
     )
     text = mslgn_pattern.sub(_replace_mslgn_table, text)
 
-    # 3. KÍCH HOẠT MÔ HÌNH THỊ GIÁC ĐA MÔN & ĐA LỚP GDPT 2018 (VẬT LÝ, HÓA HỌC, SINH HỌC, ĐỊA LÍ, OXYZ)
-    # Tự động chèn mô hình đồ họa vector trực quan khi bài học đề cập đến các chuyên đề trọng tâm
-    subj_norm = str(subject).strip().lower()
-    text_lower = text.lower()
-
-    try:
-        import precision_visual_engine as pve
-    except Exception:
-        pve = None
-
-    if pve:
-        # A. VẬT LÝ / KHOA HỌC TỰ NHIÊN:
-        if "vật lý" in subj_norm or "vật lí" in subj_norm or "khoa học tự nhiên" in subj_norm:
-            # 1. Nhiệt học p-V
-            if any(k in text_lower for k in ["chu trình", "đẳng áp", "đẳng tích", "đẳng nhiệt", "đồ thị p-v", "khí lý tưởng", "khí lí tưởng"]) and "svg_pv_inserted" not in text:
-                try:
-                    pv_model = pve.build_thermal_gas_pv_model()
-                    if pv_model and pv_model.get("svg"):
-                        pv_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(pv_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🔬 Đồ thị Chu trình Nhiệt động lực học p-V</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += pv_box
-                except Exception:
-                    pass
-            # 2. Lực từ & Bàn tay trái
-            if any(k in text_lower for k in ["lực từ", "từ trường", "bàn tay trái", "lorentz", "cảm ứng từ"]) and "svg_mag_inserted" not in text:
-                try:
-                    mag_model = pve.build_magnetic_force_model()
-                    if mag_model and mag_model.get("svg"):
-                        mag_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(mag_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🧲 Mô hình Quy tắc Bàn tay trái & Chiều Lực từ</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += mag_box
-                except Exception:
-                    pass
-            # 3. Phóng xạ hạt nhân
-            if any(k in text_lower for k in ["phóng xạ", "chu kỳ bán rã", "chu kì bán rã", "hạt nhân", "độ phóng xạ"]) and "svg_nuc_inserted" not in text:
-                try:
-                    nuc_model = pve.build_nuclear_decay_model()
-                    if nuc_model and nuc_model.get("svg"):
-                        nuc_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(nuc_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>⚛️ Đồ thị Phân rã phóng xạ theo Thời gian</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += nuc_box
-                except Exception:
-                    pass
-            # 4. Mạch RLC & Sóng cơ
-            if any(k in text_lower for k in ["mạch rlc", "cuộn cảm", "tụ điện", "dao động điều hòa", "bước sóng", "sóng dừng"]) and "svg_wave_inserted" not in text:
-                try:
-                    wave_model = pve.build_oscillation_wave_model()
-                    if wave_model and wave_model.get("svg"):
-                        wave_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(wave_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>〰️ Đồ thị Dao động & Lan truyền Sóng cơ</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += wave_box
-                except Exception:
-                    pass
-
-        # B. HÓA HỌC / KHOA HỌC TỰ NHIÊN:
-        elif "hóa học" in subj_norm or "hóa" in subj_norm:
-            # 1. Thí nghiệm điều chế khí
-            if any(k in text_lower for k in ["điều chế", "thu khí", "ống nghiệm", "đẩy nước", "đẩy không khí", "bình tam giác"]) and "svg_chem_inserted" not in text:
-                try:
-                    chem_model = pve.build_gas_preparation_model("C2H4")
-                    if chem_model and chem_model.get("svg"):
-                        chem_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(chem_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🧪 Mô hình Thí nghiệm Điều chế & Thu khí Phòng Lab</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += chem_box
-                except Exception:
-                    pass
-            # 2. Pin điện hóa Daniell
-            if any(k in text_lower for k in ["pin điện hóa", "daniell", "cực âm", "cực dương", "anode", "cathode", "cầu muối"]) and "svg_daniell_inserted" not in text:
-                try:
-                    dan_model = pve.build_daniell_cell_model()
-                    if dan_model and dan_model.get("svg"):
-                        dan_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(dan_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🔋 Sơ đồ Hoạt động Pin điện hóa Daniell</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += dan_box
-                except Exception:
-                    pass
-
-        # C. SINH HỌC:
-        elif "sinh học" in subj_norm or "sinh" in subj_norm:
-            # 1. Phả hệ di truyền
-            if any(k in text_lower for k in ["phả hệ", "di truyền", "gen trội", "gen lặn", "thế hệ i", "thế hệ ii"]) and "svg_ped_inserted" not in text:
-                try:
-                    ped_model = pve.build_pedigree_chart_model()
-                    if ped_model and ped_model.get("svg"):
-                        ped_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(ped_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🧬 Sơ đồ Phả hệ Di truyền Menđen & Y học</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += ped_box
-                except Exception:
-                    pass
-            # 2. Lưới thức ăn
-            if any(k in text_lower for k in ["lưới thức ăn", "chuỗi thức ăn", "sinh vật sản xuất", "sinh vật tiêu thụ", "hệ sinh thái"]) and "svg_food_inserted" not in text:
-                try:
-                    food_model = pve.build_food_web_model()
-                    if food_model and food_model.get("svg"):
-                        food_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 340px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(food_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🌿 Sơ đồ Lưới thức ăn trong Quần xã Sinh vật</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += food_box
-                except Exception:
-                    pass
-
-        # D. TOÁN HỌC & HÌNH HỌC KHÔNG GIAN OXYZ:
-        elif "toán" in subj_norm:
-            # 1. Tọa độ Oxyz & Quỹ đạo bay
-            if any(k in text_lower for k in ["tọa độ không gian", "oxyz", "hệ trục oxyz", "đường bay", "thiết bị bay", "mặt cầu", "vectơ trong không gian"]) and "svg_oxyz_inserted" not in text:
-                try:
-                    if any(k in text_lower for k in ["đường bay", "thiết bị bay", "trạm phát sóng"]):
-                        oxyz_m = pve.build_oxyz_flight_path_model(text_lower)
-                    else:
-                        oxyz_m = pve.build_oxyz_tetrahedron_model(text_lower)
-                    if oxyz_m and oxyz_m.get("svg"):
-                        oxyz_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 280px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(oxyz_m['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>📐 Trực quan hóa Không gian Tọa độ Oxyz</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += oxyz_box
-                except Exception:
-                    pass
-            # 2. Khối chóp, Khối lăng trụ & Hình hộp
-            elif any(k in text_lower for k in ["hình chóp", "khối chóp", "tứ diện", "lăng trụ", "hình hộp chữ nhật", "lập phương"]) and "svg_geom_inserted" not in text:
-                try:
-                    if "lăng trụ" in text_lower:
-                        g_model = pve.build_pure_triangular_prism_model()
-                    elif any(k in text_lower for k in ["hình hộp", "lập phương"]):
-                        g_model = pve.build_pure_box_model()
-                    elif "tứ diện" in text_lower:
-                        g_model = pve.build_pure_tetrahedron_model()
-                    else:
-                        g_model = pve.build_pure_pyramid_quad_model()
-                    if g_model and g_model.get("svg"):
-                        geom_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 280px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(g_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🏛️ Mô hình Hình học Không gian Chuẩn SGK</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += geom_box
-                except Exception:
-                    pass
+    # Visuals require source data; keyword-only stock diagrams remain in the explicit Lab.
 
     return text
 
@@ -10917,7 +10762,8 @@ if selected_station == station_labels[0]:
 
             try:
 
-                res_text = call_gemini_with_fallback(study_prompt)
+                res_text = generate_checked_text(study_prompt, call_gemini_with_fallback,
+                    lambda draft: station1_master_sovereign_brain_gate(draft, subject=subject, grade=grade_num, topic=topic_input.strip()))
 
                 # ==============================================================================
                 # BỘ NÃO KIỂM SOÁT BIGDATA CUỐI CÙNG TRẠM 1 (MASTER SOVEREIGN QUALITY GATE)
@@ -10939,7 +10785,11 @@ if selected_station == station_labels[0]:
         st.warning("Bài từ phiên cũ chưa có ngữ cảnh môn/lớp khớp. Hãy soạn lại bài trước khi xuất.")
 
     if st.session_state.get("current_lesson"):
-        lesson_text = station1_master_sovereign_brain_gate(st.session_state.current_lesson, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''))
+        try:
+            lesson_text = station1_master_sovereign_brain_gate(st.session_state.current_lesson, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''))
+        except MathPublicationError as error:
+            st.error("Bài trong phiên cũ chưa qua kiểm tra công thức; hãy soạn lại hoặc sửa bản nháp. " + str(error))
+            st.stop()
         part2_split = re.split(r'(?i)(?:###\s*)?PHẦN 2[\:\.]?', lesson_text)
         part3_split = re.split(r'(?i)(?:###\s*)?PHẦN 3[\:\.]?', lesson_text)
 
@@ -10948,8 +10798,8 @@ if selected_station == station_labels[0]:
             cleaned_p1 = re.sub(r'\n\s*\n', '\n\n', part2_split[0].strip())
             cleaned_p1 = re.sub(r'(?:\s*\-\-\-\s*)+$', '', cleaned_p1)
             cleaned_p1 = station1_master_sovereign_brain_gate(cleaned_p1, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''))
-            cleaned_p1_vis = render_pedagogical_lesson_visuals(cleaned_p1, subject=subject, grade=grade_num)
-            st.markdown(cleaned_p1_vis, unsafe_allow_html=True)
+            cleaned_p1_vis = render_pedagogical_lesson_visuals(escape_source_html(cleaned_p1), subject=subject, grade=grade_num)
+            academic_markdown(cleaned_p1_vis, trusted_layout=True)
 
             # ==============================================================================
             # BẢO CHỨNG ĐỊNH VỊ CHỈ MỤC ADN BÀI HỌC SGK KNTT & VIDEO YOUTUBE ĐA MÔN ĂN KHỚP 100%
@@ -11113,7 +10963,7 @@ if selected_station == station_labels[0]:
                 # 2. Tách sạch sẽ văn bản câu hỏi và khử hoàn toàn rác bảng markdown dính liền:
                 clean_q_display = clean_question_bbt_text(q['question'])
                 clean_q_display = sanitize_katex_latex(clean_q_display)
-                st.markdown(f"**Câu {idx+1}:** `[{level_caption(q)}]`\n\n{clean_q_display}")
+                academic_markdown(f"**Câu {idx+1}:** `[{level_caption(q)}]`\n\n{clean_q_display}")
 
                 # 3. Hiển thị Bảng Biến Thiên (BBT) WebP siêu nét chuẩn Bộ GD&ĐT (Trạm 3 Master Quality):
                 raw_bbt_content = q_dict_vis.get("bbt") or q.get("bbt")
@@ -11155,7 +11005,7 @@ if selected_station == station_labels[0]:
                 except Exception as _e_vis:
                     pass
 
-                user_choice = st.radio(f"Chọn đáp án câu {idx+1}:", q['options'], key=f"q_{idx}", label_visibility="collapsed", index=None)
+                user_choice = academic_options(q['options'], f"Chọn đáp án câu {idx+1}:", f"q_{idx}")
 
                 if st.button(f"🔍 Kiểm tra câu {idx+1}", key=f"btn_{idx}"):
 
@@ -11190,8 +11040,8 @@ if selected_station == station_labels[0]:
             st.warning("💡 Hệ thống AI vừa sinh ra một định dạng trắc nghiệm mới. Đang hiển thị ở chế độ xem tĩnh:")
 
             fallback_p2 = re.split(r'(?i)###\s*PHẦN\s*3', part2_split[1])[0]
-            fallback_p2_vis = render_pedagogical_lesson_visuals(fallback_p2.strip(), subject=subject, grade=grade_num)
-            st.markdown(fallback_p2_vis, unsafe_allow_html=True)
+            fallback_p2_vis = render_pedagogical_lesson_visuals(escape_source_html(fallback_p2.strip()), subject=subject, grade=grade_num)
+            academic_markdown(fallback_p2_vis, trusted_layout=True)
 
 
 
@@ -11201,8 +11051,8 @@ if selected_station == station_labels[0]:
 
             st.markdown("### ✍️ Phần 3: Bài tập tự luận & Hướng dẫn tư duy")
             st.caption("Mức độ tự luận là đề xuất của AI; cần đối chiếu yêu cầu cần đạt, lời giải và rubric theo đúng môn/lớp. Bài dài hoặc nhiều bước không tự động là VDC.")
-            p3_vis = render_pedagogical_lesson_visuals(part3_split[-1].strip(), subject=subject, grade=grade_num)
-            st.markdown(p3_vis, unsafe_allow_html=True)
+            p3_vis = render_pedagogical_lesson_visuals(escape_source_html(part3_split[-1].strip()), subject=subject, grade=grade_num)
+            academic_markdown(p3_vis, trusted_layout=True)
 
 
 
@@ -14619,6 +14469,14 @@ if selected_station == station_labels[2]:
     elif st.session_state.exam_state == "testing":
 
         exam = st.session_state.exam_data
+        try:
+            validate_exam_math(exam)
+        except MathPublicationError as error:
+            st.error("Đề đang được giữ lại vì lỗi công thức; chưa mở các câu làm bài. " + str(error))
+            if st.button("Quay lại cấu hình để tạo lại đề", key="math_gate_reset_exam"):
+                st.session_state.exam_state = "config"
+                st.rerun()
+            st.stop()
         with st.expander("📋 Đối soát nhãn mức độ câu hỏi (chưa thẩm định)"):
             cognitive_report = exam.get("cognitive_audit", {})
             st.caption("Chỉ thống kê nhãn khai báo; chưa xác nhận yêu cầu tư duy thực tế hoặc tỷ lệ điểm. Từng ý Đúng/Sai được liệt kê riêng. Không có dữ liệu là chưa xác định.")
@@ -14760,7 +14618,7 @@ if selected_station == station_labels[2]:
 
                 render_question_source_badge(q, idx)
 
-                st.markdown(f"**{q.get('q')}**")
+                academic_markdown(f"**{q.get('q')}**")
 
                 st.session_state.exam_answers[f"nv_dh_{idx}"] = st.text_area(f"Trả lời câu {idx+1}:", key=f"nv_dh_{idx}", height=70)
 
@@ -14788,7 +14646,7 @@ if selected_station == station_labels[2]:
 
                 render_question_source_badge(v, idx)
 
-                st.markdown(f"**{v.get('q')}**")
+                academic_markdown(f"**{v.get('q')}**")
 
                 st.session_state.exam_answers[f"nv_v_{idx}"] = st.text_area(f"Bài làm viết câu {idx+1}:", key=f"nv_v_{idx}", height=140)
 
@@ -14824,11 +14682,11 @@ if selected_station == station_labels[2]:
 
                     render_question_source_badge(q, idx)
 
-                    st.markdown(f"**Câu {idx+1}:** {clean_question_bbt_text(q.get('q'))}")
+                    academic_markdown(f"**Câu {idx+1}:** {clean_question_bbt_text(q.get('q'))}")
 
                     render_fast_visual(q, f"test_p1_{idx}")
 
-                    user_ans = st.radio(f"Lựa chọn câu {idx+1}:", q.get("opt", []), key=f"t3_p1_{idx}", label_visibility="collapsed", index=None)
+                    user_ans = academic_options(q.get("opt", []), f"Lựa chọn câu {idx+1}:", f"t3_p1_{idx}")
 
                     st.session_state.exam_answers[f"p1_{idx}"] = user_ans
 
@@ -14846,7 +14704,7 @@ if selected_station == station_labels[2]:
 
                         clean_hint = sanitize_socratic_hint(expl, q.get("ans", ""), q.get("q", ""), q.get("opt", []), q.get("level", "TH"), subject=subject, grade_num=grade_num)
 
-                        st.info(f"💡 **Định hướng tư duy Socratic:**\n\n{clean_hint}")
+                        academic_markdown(f"💡 **Định hướng tư duy Socratic:**\n\n{clean_hint}")
 
                     st.markdown("---")
 
@@ -14860,7 +14718,7 @@ if selected_station == station_labels[2]:
 
                     render_question_source_badge(q, idx)
 
-                    st.markdown(f"**Câu {idx+1}:** {clean_question_bbt_text(q.get('q'))}")
+                    academic_markdown(f"**Câu {idx+1}:** {clean_question_bbt_text(q.get('q'))}")
 
                     render_fast_visual(q, f"test_p2_{idx}")
 
@@ -14872,7 +14730,7 @@ if selected_station == station_labels[2]:
 
                         clean_stmt = clean_question_bbt_text(clean_stmt)
 
-                        st.markdown(f"**Ý {chr(97+s_idx)})** {clean_stmt}")
+                        academic_markdown(f"**Ý {chr(97+s_idx)})** {clean_stmt}")
                         c_ans = st.radio(f"Chọn Đúng/Sai cho câu {idx+1}, ý {chr(97+s_idx)}", ["Chưa chọn", "Đúng", "Sai"], horizontal=True, key=f"t3_p2_{idx}_{s_idx}", label_visibility="collapsed")
 
                         st.session_state.exam_answers[f"p2_{idx}_{s_idx}"] = c_ans
@@ -14887,7 +14745,7 @@ if selected_station == station_labels[2]:
 
                         clean_hint2 = sanitize_socratic_hint(expl2, "", q.get("q", ""), None, q.get("level", "VD"), subject=subject, grade_num=grade_num)
 
-                        st.info(f"💡 **Định hướng tư duy Socratic câu {idx+1}:**\n\n{clean_hint2}")
+                        academic_markdown(f"💡 **Định hướng tư duy Socratic câu {idx+1}:**\n\n{clean_hint2}")
 
                     st.markdown("---")
 
@@ -14901,7 +14759,7 @@ if selected_station == station_labels[2]:
 
                     render_question_source_badge(q, idx)
 
-                    st.markdown(f"**Câu {idx+1}:** {clean_question_bbt_text(q.get('q'))}")
+                    academic_markdown(f"**Câu {idx+1}:** {clean_question_bbt_text(q.get('q'))}")
 
                     render_fast_visual(q, f"test_p3_{idx}")
 
@@ -14931,7 +14789,7 @@ if selected_station == station_labels[2]:
 
                         clean_hint3 = sanitize_socratic_hint(expl3, q.get("ans", ""), q.get("q", ""), None, q.get("level", "VDC"), subject=subject, grade_num=grade_num)
 
-                        st.info(f"💡 **Định hướng tư duy Socratic câu {idx+1}:**\n\n{clean_hint3}")
+                        academic_markdown(f"💡 **Định hướng tư duy Socratic câu {idx+1}:**\n\n{clean_hint3}")
 
                     st.markdown("---")
 
@@ -15300,7 +15158,7 @@ if selected_station == station_labels[2]:
 
                         st.markdown(f'<div style="font-size: 11.5px; color: #38bdf8; background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 2px 8px; margin-bottom: 6px; border-radius: 3px;">🏛️ <b>Nguồn tham khảo:</b> {html.escape(str(q["source"]))}</div>', unsafe_allow_html=True)
 
-                    st.markdown(f"**Câu {idx+1}:** {q.get('q')}")
+                    academic_markdown(f"**Câu {idx+1}:** {q.get('q')}")
 
                     render_fast_visual(q, f"sol_p1_{idx}")
 
@@ -15324,7 +15182,7 @@ if selected_station == station_labels[2]:
                     expl = q.get('explain', '')
                     if not expl or len(expl) < 15:
                         expl = f"Áp dụng trực tiếp định nghĩa và tính chất cốt lõi trong SGK Kết Nối Tri Thức để xác định đáp án chuẩn {correct_a}."
-                    st.info(f"💡 **Lời giải chi tiết & Phương pháp luận chuẩn Bộ GD&ĐT câu {idx+1}:**\n\n{expl}")
+                    academic_markdown(f"💡 **Lời giải chi tiết câu {idx+1}:**\n\n{expl}")
                     st.markdown("---")
 
             if exam.get("p2"):
@@ -15332,7 +15190,7 @@ if selected_station == station_labels[2]:
                 for idx, q in enumerate(exam["p2"]):
                     if q.get("source"):
                         st.markdown(f'<div style="font-size: 11.5px; color: #38bdf8; background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 2px 8px; margin-bottom: 6px; border-radius: 3px;">🏛️ <b>Nguồn tham khảo:</b> {html.escape(str(q["source"]))}</div>', unsafe_allow_html=True)
-                    st.markdown(f"**Câu {idx+1}:** {q.get('q')}")
+                    academic_markdown(f"**Câu {idx+1}:** {q.get('q')}")
                     render_fast_visual(q, f"sol_p2_{idx}")
                     for s_idx, stmt in enumerate(q.get("stmts", [])):
                         user_ans_s = st.session_state.exam_answers.get(f"p2_{idx}_{s_idx}", "Chưa chọn")
@@ -15342,7 +15200,7 @@ if selected_station == station_labels[2]:
                         st.markdown(f"- Ý {chr(97+s_idx)}): *{stmt.get('t')}* -> Em chọn: **{user_ans_s}** | **Chuẩn Bộ:** **{expected_str}** {mark_icon}")
 
                     expl2 = q.get('explain', 'Xét từng mệnh đề theo định lý và điều kiện cần - đủ.')
-                    st.info(f"💡 **Lời giải chi tiết & Phương pháp luận chuẩn Bộ GD&ĐT câu {idx+1}:**\n\n{expl2}")
+                    academic_markdown(f"💡 **Lời giải chi tiết câu {idx+1}:**\n\n{expl2}")
                     st.markdown("---")
 
             if exam.get("p3"):
@@ -15352,12 +15210,12 @@ if selected_station == station_labels[2]:
                         st.markdown(f'<div style="font-size: 11.5px; color: #38bdf8; background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 2px 8px; margin-bottom: 6px; border-radius: 3px;">🏛️ <b>Nguồn tham khảo:</b> {html.escape(str(q["source"]))}</div>', unsafe_allow_html=True)
                     user_val = str(st.session_state.exam_answers.get(f"p3_{idx}", "Chưa điền")).strip()
                     correct_val = str(q.get("ans", "")).strip()
-                    st.markdown(f"**Câu {idx+1}:** {q.get('q')}")
+                    academic_markdown(f"**Câu {idx+1}:** {q.get('q')}")
                     render_fast_visual(q, f"sol_p3_{idx}")
                     st.markdown(f"- **Đáp số em điền:** `{user_val}` &nbsp;|&nbsp; **Đáp số chuẩn:** `{correct_val}`")
 
                     expl3 = q.get('explain', 'Tính toán theo công thức vi phân, tọa độ hoặc mô hình thực tiễn.')
-                    st.info(f"💡 **Lời giải chi tiết & Phương pháp luận chuẩn Bộ GD&ĐT câu {idx+1}:**\n\n{expl3}")
+                    academic_markdown(f"💡 **Lời giải chi tiết câu {idx+1}:**\n\n{expl3}")
                     st.markdown("---")
 
 

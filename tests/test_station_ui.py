@@ -78,6 +78,38 @@ class TestStationUI(unittest.TestCase):
         at.run()
         self.assertEqual(at.session_state["current_lesson"], "")
         self.assertIn("Hóa học", at.session_state["orphaned_lesson"])
+
+    def test_station1_chemistry_options_render_and_still_grade_original_answer(self):
+        at = self.app()
+        at.secrets["GEMINI_API_KEY"] = "test-only-key"
+        next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select("Lớp 10").run()
+        next(s for s in at.selectbox if s.label == "📚 Môn học cần hỗ trợ:").select("Hóa học").run()
+        next(t for t in at.text_input if "Bài học cần chiếm lĩnh" in t.label).set_value("Kí hiệu hóa học")
+        lesson = r'''### PHẦN 1: BÀI HỌC
+Nước có công thức $\ce{H2O}$.
+### PHẦN 2: TRẮC NGHIỆM KHÁCH QUAN SOCRATIC
+Câu 1. [Mức độ: NB] Công thức của nước là gì?
+A. $\ce{H2O}$
+B. $\ce{CO2}$
+C. $\ce{O2}$
+D. $\ce{N2}$
+CORRECT: A
+EXPLAIN: Nước có hai nguyên tử H và một nguyên tử O.
+### PHẦN 3: BÀI TẬP TỰ LUẬN
+Nêu thành phần nguyên tố của nước.
+'''
+        with patch("google.genai.Client") as client:
+            client.return_value.__enter__.return_value.models.generate_content.return_value = SimpleNamespace(text=lesson, candidates=[])
+            next(b for b in at.button if b.label == "🚀 Soạn bài học").click().run()
+        self.assertEqual([e.message for e in at.exception], [])
+        self.assertTrue(any('class="katex' in m.value for m in at.markdown))
+        radio = next(r for r in at.radio if r.label == "Chọn đáp án câu 1:")
+        self.assertEqual(radio.options, ["A", "B", "C", "D"])
+        water_index = next(i for i, option in enumerate(at.session_state["parsed_quiz"][0]["options"]) if "H2O" in option)
+        radio.set_value(chr(65 + water_index)).run()
+        next(b for b in at.button if b.label == "🔍 Kiểm tra câu 1").click().run()
+        self.assertEqual(at.session_state["quiz_states"][0][0], "correct")
+        self.assertEqual([e.message for e in at.exception], [])
         self.assertEqual([e.message for e in at.exception], [])
 
     def test_station3_grade6_uses_practice_counts_not_graduation(self):

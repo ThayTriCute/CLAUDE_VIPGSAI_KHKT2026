@@ -634,8 +634,16 @@ def deep_clean_pua_and_artifacts(text: str) -> str:
     # 4. KaTeX \\middle| không có \\left
     text = re.sub(r'\\middle\s*\|', r'\\mid', text)
     # 5. Khử công thức rỗng
-    text = re.sub(r'\$\s*\$', '', text)
-    text = re.sub(r'\$\$\s*\$\$', '', text)
+    from services.math_publication import TOKENS
+    def discard_empty_math(match):
+        raw = match[0]
+        if raw.startswith(("`", "~~~")):
+            return raw
+        width = 2 if raw.startswith(("$$", r"\[", r"\(")) else 1
+        return raw if raw[width:-width].strip() else ""
+    # A regex matching '$' followed by '$' destroys every display delimiter,
+    # and '$x$ $y$' must not be joined into a different expression.
+    text = TOKENS.sub(discard_empty_math, text)
     return text.strip()
 
 def detect_exam_grade_and_topics(raw_content: str, filename: str = "", current_grade = 12):
