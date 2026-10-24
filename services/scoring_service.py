@@ -39,7 +39,7 @@ def grade_part1(questions: List[Dict[str, Any]], user_answers: Dict[str, Any], m
         target_max = float(max_score)
     elif subject == "Tiếng Anh":
         target_max = 10.0
-    elif any(k in str(subject).lower() for k in ["vật lý", "vật lí", "hóa học", "sinh học", "khtn", "khoa học tự nhiên"]):
+    elif any(k in str(subject).lower() for k in ["vật lý", "vật lí", "hóa học", "sinh học", "khtn", "khoa học tự nhiên", "địa lý", "địa lí"]):
         target_max = 4.5
     elif any(k in str(subject).lower() for k in ["lịch sử", "địa lý", "địa lí", "gdkt", "công dân", "tin học", "công nghệ"]):
         target_max = 6.0
@@ -84,7 +84,7 @@ def grade_part3(questions: List[Dict[str, Any]], user_answers: Dict[str, Any], m
             correct_count += 1
     if max_score is not None:
         score = (correct_count / total) * float(max_score) if total > 0 else 0.0
-    elif any(k in str(subject).lower() for k in ["vật lý", "vật lí", "hóa học", "sinh học", "khtn", "khoa học tự nhiên"]):
+    elif any(k in str(subject).lower() for k in ["vật lý", "vật lí", "hóa học", "sinh học", "khtn", "khoa học tự nhiên", "địa lý", "địa lí"]):
         score = correct_count * 0.25 # 6 câu x 0.25 = 1.5 điểm
     else:
         score = correct_count * 0.5 # Môn Toán 6 câu x 0.5 = 3.0 điểm

@@ -1,3 +1,5 @@
+from services.curriculum_policy import assessment_profile
+from qa_runtime import normalize_bool
 # VIP 74.3 - HỆ THỐNG GIA SƯ AI THPT 2026 (CHUẨN GDPT 2018 - BỘ NÃO KIỂM SOÁT BIGDATA & THI THỰC CHIẾN)
 # -*- coding: utf-8 -*-
 """
@@ -607,23 +609,11 @@ def is_toxic_defective_question(q: dict) -> bool:
     return False
 
 def attach_question_visuals(q: dict, subject: str = "Toán học", grade = 12) -> dict:
-    """
-    TỰ ĐỘNG PHỤC DỰNG NGỮ LIỆU HÌNH VẼ & MÃ TIKZ VECTOR CHUẨN XÁC KHI ĐỀ HỎI HÌNH VẼ.
-    Sử dụng Precision Visual Reconstruction Engine đa môn, đa khối lớp (Toán, Lý, Hóa, Sinh, Địa, Tin).
-    Đảm bảo 100% câu hỏi bóc tách từ link hoặc file scan khi có yêu cầu đồ thị/hình vẽ
-    đều có sẵn mô hình toán (f/geom_3d), SVG và mã TikZ LaTeX để hiển thị và xuất PDF A4 hoàn hảo.
-    """
-    if not isinstance(q, dict): return q
-    q = sanitize_question_visuals(q, subject=subject)
-    try:
-        import precision_visual_engine as pve
-        q = pve.enrich_question_visual_precision(q, subject=subject, grade=grade)
-        if hasattr(pve, "audit_and_heal_visual_context_gdpt2018"):
-            q = pve.audit_and_heal_visual_context_gdpt2018(q, subject=subject, grade=grade)
-        q = sanitize_question_visuals(q, subject=subject)
-    except Exception as e:
-        logging.warning("Lỗi precision visual engine: %s", e)
-    return q
+    """Recover supported explicit data; legacy template guessing is not a fallback."""
+    if not isinstance(q, dict):
+        return q
+    from services.context_recovery import recover_visual
+    return recover_visual(q, subject, grade)
 
 def deep_clean_pua_and_artifacts(text: str) -> str:
     """
@@ -645,13 +635,6 @@ def deep_clean_pua_and_artifacts(text: str) -> str:
     # 5. Khử công thức rỗng
     text = re.sub(r'\$\s*\$', '', text)
     text = re.sub(r'\$\$\s*\$\$', '', text)
-    # 6. Khử mega / omega vô cực
-    text = re.sub(r'(?i)(?<=[\(\[\s;,-])-+\s*mega\b', r'-\\infty', text)
-    text = re.sub(r'(?i)\b-\s*mega\b', r'-\\infty', text)
-    text = re.sub(r'(?i)\+\s*mega\b', r'+\\infty', text)
-    text = re.sub(r'(?i)(?<=[;,\s])\s*\+?mega(?=[\)\]\s;,])', r'+\\infty', text)
-    text = re.sub(r'(?i)(?<=[(\[\s])-?\s*\\?[oO]mega\b', r'-\\infty', text)
-    text = re.sub(r'(?i);\s*\+?\s*\\?[oO]mega\s*(?=[)\]])', r'; +\\infty', text)
     return text.strip()
 
 def detect_exam_grade_and_topics(raw_content: str, filename: str = "", current_grade = 12):
@@ -695,12 +678,8 @@ def apply_full_7layer_quality_pipeline(exam: dict, subject: str = "Toán học",
     if not isinstance(exam, dict):
         return exam
     
-    # 0. Tự động nhận diện lại khối lớp đúng
-    actual_grade = detect_exam_grade_and_topics(
-        str(exam.get("title", "")) + " " + str(exam.get("source", "")) + " " + str(exam.get("p1", [])),
-        str(exam.get("title", "")),
-        grade
-    )
+    validate_exam_context(exam, subject, grade)
+    actual_grade = normalize_grade(grade)
     exam["grade"] = actual_grade
     norm_subj = normalize_subject_name(subject)
 
@@ -1392,11 +1371,12 @@ def normalize_exam_schema(exam: dict, subject: str = None, grade = None) -> dict
                 if not re.match(r'^[A-D][\.:\)]\s*', o_str, re.I):
                     o_str = prefix + o_str
                 clean_opts.append(o_str)
-            raw_ans = str(q.get("ans") or q.get("answer") or q.get("correct_answer") or "A").strip().upper()
-            m_ans = re.search(r'[A-D]', raw_ans)
-            ans = m_ans.group(0) if m_ans else "A"
+            raw_ans = str(next((q[k] for k in ("ans", "answer", "correct_answer") if k in q and q[k] is not None), "")).strip().upper()
+            m_ans = re.fullmatch(r"(?:ĐÁP ÁN[: ]*)?([A-D])[.)]?", raw_ans)
+            ans = m_ans.group(1) if m_ans else raw_ans
             expl = str(q.get("explain") or q.get("explanation") or "").strip()
             clean_p1.append({
+                **q,
                 "q": q_txt,
                 "opt": clean_opts,
                 "ans": ans,
@@ -1421,24 +1401,22 @@ def normalize_exam_schema(exam: dict, subject: str = None, grade = None) -> dict
                 for s in q["stmts"]:
                     if isinstance(s, dict):
                         t_val = _sanitize_field_math(str(s.get("t") or s.get("text") or s.get("statement") or "").strip())
-                        a_val = bool(s.get("a", True))
+                        a_val = normalize_bool(s.get("a", s.get("ans")))
                         stmts.append({"t": t_val, "a": a_val})
             elif "items" in q and isinstance(q["items"], list):
                 answers = q.get("answers") or []
                 for idx_item, item_val in enumerate(q["items"]):
-                    a_val = True
-                    if idx_item < len(answers):
-                        raw_a = str(answers[idx_item]).strip().lower()
-                        a_val = raw_a in ['đúng', 'dung', 'true', 't', 'd', '1']
+                    a_val = normalize_bool(answers[idx_item]) if idx_item < len(answers) else None
                     stmts.append({"t": _sanitize_field_math(str(item_val).strip()), "a": a_val})
             elif "statements" in q and isinstance(q["statements"], list):
                 for s in q["statements"]:
                     if isinstance(s, dict):
-                        stmts.append({"t": _sanitize_field_math(str(s.get("text") or s.get("t") or "").strip()), "a": bool(s.get("correct", s.get("a", True)))})
+                        stmts.append({"t": _sanitize_field_math(str(s.get("text") or s.get("t") or "").strip()), "a": normalize_bool(s.get("correct", s.get("a")))})
             if not q_txt and stmts:
                 q_txt = "Xét tính đúng hoặc sai của các mệnh đề sau:"
             if q_txt:
                 clean_p2.append({
+                **q,
                     "q": q_txt,
                     "stmts": stmts,
                     "explain": _sanitize_field_math(str(q.get("explain") or q.get("explanation") or "").strip()),
@@ -1458,8 +1436,9 @@ def normalize_exam_schema(exam: dict, subject: str = None, grade = None) -> dict
             if not isinstance(q, dict): continue
             q_txt = _sanitize_field_math(str(q.get("q") or q.get("question") or q.get("intro") or "").strip())
             if not q_txt: continue
-            ans = _sanitize_field_math(str(q.get("ans") or q.get("answer") or q.get("result") or "0").strip())
+            ans = _sanitize_field_math(str(next((q[k] for k in ("ans", "answer", "result") if k in q and q[k] is not None), "")).strip())
             clean_p3.append({
+                **q,
                 "q": q_txt,
                 "ans": ans,
                 "explain": str(q.get("explain") or q.get("explanation") or "").strip(),
@@ -1565,15 +1544,9 @@ def ensure_full_exam_matrix(exam: dict, subject: str = "Toán học", grade = 12
     counts_cfg = target_counts or exam.get("target_counts")
     if counts_cfg and isinstance(counts_cfg, (list, tuple)) and len(counts_cfg) == 3:
         tgt_p1, tgt_p2, tgt_p3 = int(counts_cfg[0]), int(counts_cfg[1]), int(counts_cfg[2])
-    elif norm_subj in ["Toán học"]:
-        tgt_p1, tgt_p2, tgt_p3 = 12, 4, 6
-    elif norm_subj in ["Vật lý", "Hóa học", "Sinh học", "KHTN", "Khoa học tự nhiên"]:
-        tgt_p1, tgt_p2, tgt_p3 = 18, 4, 6
-    elif norm_subj in ["Tiếng Anh"]:
-        tgt_p1, tgt_p2, tgt_p3 = 40, 0, 0
-    else: # Lịch sử, Địa lí, Tin học, Công nghệ, GDKT&PL
-        tgt_p1, tgt_p2, tgt_p3 = 24, 4, 0
-        
+    else:
+        tgt_p1, tgt_p2, tgt_p3 = assessment_profile(subject, grade)["counts"]
+
     pool = get_baseline_questions_pool(subject, grade)
     selected_topics = exam.get("chosen_topics") or []
     if selected_topics:
@@ -1742,52 +1715,12 @@ def extract_smart_exam_slice_from_megadoc(raw_text: str, user_prompt: str = "", 
     return slice_text, detected_title, 1
 
 def extract_question_images_from_pdf(file_bytes: bytes) -> dict:
-    """
-    TRÍCH XUẤT VÀ CẮT ẢNH THÔNG MINH CHO TỪNG CÂU HỎI TRONG FILE PDF:
-    Sử dụng PyMuPDF quét từng trang:
-      1. Tìm vị trí các khối câu hỏi (Câu 1, Câu 2... hoặc Phần II Câu 1...).
-      2. Nếu trên trang có chứa hình ảnh nhúng (XObject) hoặc nét vẽ vector (Drawing Path)
-         nằm trong phạm vi toạ độ của câu hỏi đó, hoặc câu hỏi có từ khóa 'hình bên', 'như hình':
-      3. Cắt (crop) chính xác vùng ảnh chữ nhật tại độ phân giải 160 DPI.
-      4. Encode thành Base64 Data URI ('data:image/png;base64,...').
-    """
-    results = {}
+    from services.pdf_source_visuals import extract_pdf_question_visuals
     try:
-        import pymupdf
-        d = pymupdf.open(stream=file_bytes, filetype="pdf")
-        for pno, pg in enumerate(d):
-            text_blocks = pg.get_text("blocks")
-            q_blocks = []
-            for blk in text_blocks:
-                txt = blk[4]
-                matches = list(re.finditer(r'(?:Câu|Bài)\s*(\d+)', txt, re.IGNORECASE))
-                if matches:
-                    for m in matches:
-                        q_num = int(m.group(1))
-                        q_blocks.append((q_num, blk[1], blk[3]))
-            
-            q_blocks.sort(key=lambda x: x[1])
-            drawings = pg.get_drawings()
-            images_list = pg.get_images()
-
-            for i, (q_num, y0, y1) in enumerate(q_blocks):
-                next_y0 = q_blocks[i+1][1] if i + 1 < len(q_blocks) else pg.rect.height - 30
-                q_rect = pymupdf.Rect(30, max(0, y0 - 5), pg.rect.width - 30, min(pg.rect.height, next_y0 - 5))
-                has_drawing_inside = any(q_rect.contains(d_item["rect"]) or q_rect.intersects(d_item["rect"]) for d_item in drawings)
-                q_text = pg.get_text("text", clip=q_rect)
-                has_visual_cue = any(kw in q_text.lower() for kw in ["hình bên", "như hình", "hình vẽ", "đồ thị", "mô hình", "sơ đồ"])
-
-                if (has_drawing_inside or len(images_list) > 0) and has_visual_cue:
-                    mat = pymupdf.Matrix(160 / 72, 160 / 72)
-                    fig_rect = pymupdf.Rect(35, y1 + 2, pg.rect.width - 35, next_y0 - 2)
-                    if fig_rect.height > 25:
-                        pix = pg.get_pixmap(matrix=mat, clip=fig_rect)
-                        b64_png = "data:image/png;base64," + base64.b64encode(pix.tobytes("png")).decode("ascii")
-                        results[f"q_{q_num}"] = b64_png
-        d.close()
+        return extract_pdf_question_visuals(file_bytes)
     except Exception as exc:
-        logging.warning("extract_question_images_from_pdf error: %s", exc)
-    return results
+        logging.warning("Không quét được hình gốc PDF: %s", type(exc).__name__)
+        return {}
 
 def parse_raw_exam_text(raw_text: str, subject: str, grade, school: str, title: str, ai_caller=None, user_prompt: str = ""):
     """
@@ -1827,7 +1760,7 @@ def parse_raw_exam_text(raw_text: str, subject: str, grade, school: str, title: 
                 p1.append({
                     "q": degarble_mathtype_pdf_text(q_text),
                     "opt": opts,
-                    "ans": "A",
+                    "ans": "",
                     "explain": f"Trích xuất từ đề thi thật {school}.",
                     "source": f"{title} - {school}",
                     "school": school,
@@ -1846,7 +1779,7 @@ def parse_raw_exam_text(raw_text: str, subject: str, grade, school: str, title: 
                 stmts = []
                 for s in stmts_match[:4]:
                     cleaned_s = re.sub(r'^[a-d]\)\s*', '', s.strip())
-                    stmts.append({"t": cleaned_s, "a": True})
+                    stmts.append({"t": cleaned_s, "a": None})
                 p2.append({
                     "q": q_text,
                     "stmts": stmts,
@@ -1861,16 +1794,15 @@ def parse_raw_exam_text(raw_text: str, subject: str, grade, school: str, title: 
         blocks = re.findall(r'(Câu\s+\d+[\.:][\s\S]*?)(?=Câu\s+\d+[\.:]|$)', p3_match.group(1))
         for b in blocks:
             q_text = re.sub(r'^Câu\s+\d+[\.:]\s*', '', b).strip()
-            ans_val = "0"
+            ans_val = ""
             ans_m = re.search(r'Đáp\s*(?:số|án)[\s:]*([^\n\r]+)', q_text, re.I)
             if ans_m:
                 ans_val = ans_m.group(1).strip()
                 q_text = q_text[:ans_m.start()].strip()
             q_text_clean = degarble_mathtype_pdf_text(q_text)
-            ans_val = solve_part3_optimization_fallback(q_text_clean, ans_val)
             p3.append({
                 "q": q_text_clean,
-                "ans": ans_val[:6],
+                "ans": ans_val,
                 "explain": f"Trích xuất từ đề thi thật {school}.",
                 "source": f"{title} - {school}",
                 "school": school,
@@ -1907,7 +1839,7 @@ Nội dung đề thi:
 
 Yêu cầu xuất JSON duy nhất định dạng:
 {{
-  "p1": [{{"q": "câu hỏi kèm công thức $...$", "opt": ["A. ...", "B. ...", "C. ...", "D. ..."], "ans": "A", "explain": "..."}}],
+  "p1": [{{"q": "câu hỏi kèm công thức $...$", "opt": ["A. ...", "B. ...", "C. ...", "D. ..."], "ans": "", "explain": "..."}}],
   "p2": [{{"q": "lời dẫn", "stmts": [{{"t": "mệnh đề a", "a": true}}, {{"t": "mệnh đề b", "a": false}}, {{"t": "mệnh đề c", "a": true}}, {{"t": "mệnh đề d", "a": false}}], "explain": "..."}}],
   "p3": [{{"q": "câu hỏi trả lời ngắn", "ans": "đáp số", "explain": "..."}}]
 }}"""
@@ -1974,7 +1906,7 @@ Nhiệm vụ trọng tâm:
    - "p3": Danh sách câu hỏi trắc nghiệm Trả lời ngắn / Tự luận (chuyển đổi câu hỏi tự luận thành dạng tính toán kết quả ngắn gọn). Mỗi phần tử gồm:
      {{"q": "Nội dung câu hỏi", "ans": "đáp số ngắn gọn", "explain": "Lời giải chi tiết"}}
 
-CHỈ XUẤT DUY NHẤT một chuỗi JSON hợp lệ với các khóa "p1", "p2", "p3".
+CHỈ XUẤT DUY NHẤT JSON với p1/p2/p3; mỗi câu giữ source_question_number là số câu trong phần gốc. Không tự gán A/Đúng/0 khi không đọc được đáp án; dùng null để yêu cầu kiểm tra hoặc sinh nguyên câu thay thế.
 QUY TẮC BẮT BUỘC: Thoát kép tất cả các ký tự gạch chéo ngược \\ trong công thức LaTeX (ví dụ: \\\\frac, \\\\alpha, \\\\le, \\\\ge, \\\\in, \\\\sqrt, \\\\infty). Không thêm bất kỳ lời dẫn hay văn bản đàm thoại nào ngoài JSON."""
 
             pdf_crops = {}
@@ -1994,25 +1926,31 @@ QUY TẮC BẮT BUỘC: Thoát kép tất cả các ký tự gạch chéo ngư�
                         q["school"] = school
                         if "level" not in q: q["level"] = "NB-TH"
                         m_no = re.search(r'Câu\s*(\d+)', str(q.get("q", "")))
-                        q_no = int(m_no.group(1)) if m_no else (idx_q + 1)
-                        if f"q_{q_no}" in pdf_crops and not q.get("image_base64"):
-                            q["image_base64"] = pdf_crops[f"q_{q_no}"]
+                        q_no = int(q.get("source_question_number")) if str(q.get("source_question_number", "")).isdigit() else int(m_no.group(1)) if m_no else (idx_q + 1)
+                        crop_key = f"p1_q_{q_no}"
+                        if crop_key in pdf_crops and not q.get("image_base64"):
+                            q["image_base64"] = pdf_crops[crop_key]
+                            q["image_provenance"] = pdf_crops.get("_regions", {}).get(crop_key, {})
                     for idx_q, q in enumerate(p2):
                         q["source"] = f"{title} - {school}"
                         q["school"] = school
                         if "level" not in q: q["level"] = "TH-VD"
                         m_no = re.search(r'Câu\s*(\d+)', str(q.get("q", "")))
-                        q_no = int(m_no.group(1)) if m_no else (idx_q + 1)
-                        if f"q_{q_no}" in pdf_crops and not q.get("image_base64"):
-                            q["image_base64"] = pdf_crops[f"q_{q_no}"]
+                        q_no = int(q.get("source_question_number")) if str(q.get("source_question_number", "")).isdigit() else int(m_no.group(1)) if m_no else (idx_q + 1)
+                        crop_key = f"p2_q_{q_no}"
+                        if crop_key in pdf_crops and not q.get("image_base64"):
+                            q["image_base64"] = pdf_crops[crop_key]
+                            q["image_provenance"] = pdf_crops.get("_regions", {}).get(crop_key, {})
                     for idx_q, q in enumerate(p3):
                         q["source"] = f"{title} - {school}"
                         q["school"] = school
                         if "level" not in q: q["level"] = "VD-VDC"
                         m_no = re.search(r'Câu\s*(\d+)', str(q.get("q", "")))
-                        q_no = int(m_no.group(1)) if m_no else (idx_q + 1)
-                        if f"q_{q_no}" in pdf_crops and not q.get("image_base64"):
-                            q["image_base64"] = pdf_crops[f"q_{q_no}"]
+                        q_no = int(q.get("source_question_number")) if str(q.get("source_question_number", "")).isdigit() else int(m_no.group(1)) if m_no else (idx_q + 1)
+                        crop_key = f"p3_q_{q_no}"
+                        if crop_key in pdf_crops and not q.get("image_base64"):
+                            q["image_base64"] = pdf_crops[crop_key]
+                            q["image_provenance"] = pdf_crops.get("_regions", {}).get(crop_key, {})
                     exam_obj = {
                         "code": str(random.randint(1011, 9999)),
                         "subject": subject,
@@ -2540,14 +2478,7 @@ def query_blended_real_exam_multi_dim(subject: str, grades, chosen_topics: list 
 
     # Chuẩn hóa số lượng câu hỏi theo ma trận QĐ 764
     if not counts or len(counts) != 3:
-        if norm_subj in ["toán học"]:
-            tgt_p1, tgt_p2, tgt_p3 = (12, 4, 6)
-        elif norm_subj in ["vật lý", "hóa học", "sinh học", "khoa học tự nhiên"]:
-            tgt_p1, tgt_p2, tgt_p3 = (18, 4, 6)
-        elif norm_subj in ["tiếng anh"]:
-            tgt_p1, tgt_p2, tgt_p3 = (40, 0, 0)
-        else:
-            tgt_p1, tgt_p2, tgt_p3 = (24, 4, 0)
+        tgt_p1, tgt_p2, tgt_p3 = assessment_profile(subject, max(g_list))["counts"]
     else:
         tgt_p1, tgt_p2, tgt_p3 = counts
 
@@ -2862,17 +2793,10 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
     portal_name = portal_info.get("portal_name", "TOANMATH.com")
 
     if not counts or len(counts) != 3:
-        if subject in ["Toán học"]:
-            num_p1, num_p2, num_p3 = (12, 4, 6)
-        elif subject in ["Vật lý", "Hóa học", "Sinh học", "KHTN"]:
-            num_p1, num_p2, num_p3 = (18, 4, 6)
-        elif subject in ["Tiếng Anh"]:
-            num_p1, num_p2, num_p3 = (40, 0, 0)
-        else:
-            num_p1, num_p2, num_p3 = (24, 4, 0)
+        num_p1, num_p2, num_p3 = assessment_profile(subject, grade)["counts"]
     else:
         num_p1, num_p2, num_p3 = counts
-    
+
     # 1. HÓA CHẶT MA TRẬN CHUYÊN ĐỀ ĐƯỢC CHỌN & ÁP DỤNG PROMPT TÙY BIẾN
     chosen_str = " ".join(str(ct) for ct in (chosen_topics or [])).lower()
     custom_str = str(custom_prompt or "").lower()
@@ -3466,15 +3390,8 @@ def create_mixed_scanned_exam(scanned_exam: dict, subject: str = "Toán học", 
     if norm_subj == "Ngữ văn":
         return enrich_exam_visuals_jit(new_exam, subject=subject, grade=grade)
         
-    if norm_subj in ["Toán học"]:
-        tgt_p1, tgt_p2, tgt_p3 = 12, 4, 6
-    elif norm_subj in ["Vật lý", "Hóa học", "Sinh học", "KHTN"]:
-        tgt_p1, tgt_p2, tgt_p3 = 18, 4, 6
-    elif norm_subj in ["Tiếng Anh"]:
-        tgt_p1, tgt_p2, tgt_p3 = 40, 0, 0
-    else:
-        tgt_p1, tgt_p2, tgt_p3 = 24, 4, 0
-        
+    tgt_p1, tgt_p2, tgt_p3 = assessment_profile(subject, grade)["counts"]
+
     pool = get_baseline_questions_pool(subject, grade)
 
     def prioritize_fresh(raw_q_list):
