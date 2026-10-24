@@ -1,3 +1,5 @@
+from qa_runtime import (split_api_keys, admin_password_matches, normalize_bool, display_frame,
+    exam_response_metadata, observed_item_matrix, mcq_answer_matches)
 # VIP 76.0 - HỆ THỐNG GIA SƯ AI THPT 2026 (CHUẨN GDPT 2018 - EDTECH & PSYCHOMETRICS SOTA QUỐC TẾ)
 # -*- coding: utf-8 -*-
 
@@ -418,7 +420,7 @@ st.markdown("""
 
     .block-container { padding-top: 2rem !important; padding-bottom: 1rem !important; }
 
-    
+
 
     .brand-container {
 
@@ -444,11 +446,11 @@ st.markdown("""
 
     }
 
-    
+
 
     .main-header { text-align: center; padding: 0px 0 15px 0; border-bottom: 1px dashed #475569; margin-bottom: 25px; }
 
-    .main-title { 
+    .main-title {
 
         background: -webkit-linear-gradient(45deg, #38bdf8, #818cf8);
 
@@ -460,17 +462,17 @@ st.markdown("""
 
     .sub-title { color: #cbd5e1; font-size: 1.15rem; font-weight: 500;}
 
-    .badge-tag { 
+    .badge-tag {
 
-        background: rgba(15, 23, 42, 0.7); border: 1px solid #38bdf8; color: #38bdf8; 
+        background: rgba(15, 23, 42, 0.7); border: 1px solid #38bdf8; color: #38bdf8;
 
-        padding: 5px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; 
+        padding: 5px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;
 
         display: inline-block; margin-top: 8px; margin-right: 8px; box-shadow: 0 2px 5px rgba(56, 189, 248, 0.2);
 
     }
 
-    
+
 
     .stButton > button {
 
@@ -528,7 +530,7 @@ st.markdown("""
 
 
 
-    .stTabs [data-baseweb="tab-list"] { 
+    .stTabs [data-baseweb="tab-list"] {
 
         background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(10px);
 
@@ -536,17 +538,17 @@ st.markdown("""
 
     }
 
-    .stTabs [data-baseweb="tab"] { 
+    .stTabs [data-baseweb="tab"] {
 
-        height: 50px; white-space: pre-wrap; background-color: transparent; 
+        height: 50px; white-space: pre-wrap; background-color: transparent;
 
         border-radius: 8px; border: none; color: #94a3b8; font-weight: 600; transition: all 0.3s;
 
     }
 
-    .stTabs [aria-selected="true"] { 
+    .stTabs [aria-selected="true"] {
 
-        background: rgba(56, 189, 248, 0.15) !important; color: #38bdf8 !important; 
+        background: rgba(56, 189, 248, 0.15) !important; color: #38bdf8 !important;
 
         border-bottom: 3px solid #38bdf8 !important; box-shadow: inset 0 -3px 10px rgba(56, 189, 248, 0.1);
 
@@ -554,11 +556,11 @@ st.markdown("""
 
 
 
-    .lab-box-container { 
+    .lab-box-container {
 
-        background: linear-gradient(145deg, #0f172a, #1e293b); 
+        background: linear-gradient(145deg, #0f172a, #1e293b);
 
-        border: 2px solid #0ea5e9; 
+        border: 2px solid #0ea5e9;
 
         box-shadow: 0 0 20px rgba(14, 165, 233, 0.2), inset 0 0 15px rgba(14, 165, 233, 0.05);
 
@@ -586,7 +588,7 @@ st.markdown("""
 
     }
 
-    
+
 
     .stRadio > div { background-color: rgba(30, 41, 59, 0.6); padding: 15px; border-radius: 10px; border: 1px solid #334155; }
 
@@ -622,7 +624,7 @@ def sanitize_katex_latex(text: str) -> str:
 
     s = re.sub(r'\\\]', '$$', s)
 
-    
+
 
     # 0.1 Khử triệt để lỗi Form Feed ASCII \x0c -> \f (gây ra chữ đỏ ⯅rac / ▲rac), Backspace \x08 -> \b và \t -> tab trong \to
     s = s.replace('\x0crac', r'\frac').replace('\x0c', r'\f')
@@ -777,7 +779,7 @@ def clean_vietnamese_math(text):
 
     vn_chars = r'[àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬÈÉẺẼẸÊẾỀỂỄỆÌÍỈĨỊÒÓỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰỲÝỶỸỴĐ]'
 
-    
+
 
     def fix_math(m):
 
@@ -795,7 +797,7 @@ def clean_vietnamese_math(text):
 
         return f"${content}$"
 
-        
+
 
     res = re.sub(r'\$(.*?)\$', fix_math, str(text))
 
@@ -946,7 +948,7 @@ def clean_question_bbt_text(q_text):
 
     s = str(q_text)
 
-    
+
 
     # 1. Nếu BBT nằm ở các dòng riêng biệt (multiline table):
 
@@ -960,7 +962,7 @@ def clean_question_bbt_text(q_text):
 
         is_pure_table_line = (
 
-            re.match(r'^[|\s:-]+$', stripped) or 
+            re.match(r'^[|\s:-]+$', stripped) or
 
             re.match(r'^(?:\|\s*)?[xyf]\'?\s*\|', stripped, re.IGNORECASE) or
 
@@ -976,7 +978,7 @@ def clean_question_bbt_text(q_text):
 
     s = "\n".join(clean_lines).strip()
 
-    
+
 
     # 2. Nếu BBT bị dính inline trong cùng một dòng với câu hỏi (như: "x | -inf | 0 | ... | +inf Hàm số..."):
 
@@ -984,7 +986,7 @@ def clean_question_bbt_text(q_text):
 
     s = re.sub(pat, '', s)
 
-    
+
 
     # 3. Tách dòng rõ ràng giữa lời dẫn và câu hỏi lệnh (chống dính chữ trên 1 dòng)
     s = re.sub(r'(?i)(bảng biến thiên như sau|bảng xét dấu như sau|đồ thị như hình vẽ bên|đồ thị như hình bên)\s*[:.]\s*([A-ZÀ-Ỹ])', r'\1:\n\n\2', s)
@@ -1102,7 +1104,7 @@ def annotate_student_work(image: Image.Image, annotations: list) -> Image.Image:
 
                 continue
 
-            
+
 
             ymin, xmin, ymax, xmax = [float(v) for v in box]
 
@@ -1238,7 +1240,7 @@ with st.sidebar.expander("📲 Cài đặt Icon App vào Điện thoại & Máy 
 
     - 💻 **Máy tính (Chrome/Edge):** Bấm biểu tượng ⬇️ hoặc Cài đặt trên thanh địa chỉ để cài app vào Desktop.
 
-    
+
 
     *API Key chỉ dùng trong phiên hiện tại. Máy dùng chung không ghi nhớ Key cá nhân.*
 
@@ -1254,7 +1256,7 @@ st.sidebar.markdown("### 🔑 ĐƯỜNG TRUYỀN AI CÁ NHÂN (0 ĐỒNG)")
 
 st.sidebar.link_button("👉 Lấy Key riêng miễn phí (15s)", "https://aistudio.google.com/apikey", width="stretch")
 
-user_custom_key = st.sidebar.text_input("Dán mã API Key của em vào đây:", type="password", placeholder="AQ_... hoặc AIzaSy...")
+user_custom_key = st.sidebar.text_input("Dán mã API Key của em vào đây:", type="password", placeholder="Một hoặc nhiều Key, cách nhau bằng dấu phẩy")
 
 
 
@@ -1322,7 +1324,7 @@ if st.session_state.get("tab4_authenticated", False) and not st.session_state.gl
 
 admin_keys_pool = list(dict.fromkeys(k.strip() for k in raw_api_key.split(",") if k.strip())) if raw_api_key else []
 
-active_keys_pool = [user_custom_key.strip()] if user_custom_key.strip() else admin_keys_pool
+active_keys_pool = split_api_keys(user_custom_key) if user_custom_key.strip() else split_api_keys(raw_api_key)
 
 
 
@@ -1341,7 +1343,7 @@ st.sidebar.markdown("### 🤖 ĐIỀU PHỐI MODEL GEMINI")
 st.sidebar.selectbox(
     "Chọn chiến lược / Model:",
     [
-        "⚡ Phương án 1: Tối ưu Siêu tốc (Khuyên dùng - 1.0s)",
+        "⚡ Phương án 1: Tối ưu Siêu tốc (Khuyên dùng)",
         "📋 Phương án 2: Danh sách Chuyên gia (22/10/2026)",
         "🎯 Ghim: gemini-3-flash-preview (Socratic & Toán 1.07s)",
         "🎯 Ghim: gemini-flash-lite-latest (Siêu nhẹ 1.53s)",
@@ -1419,6 +1421,12 @@ if previous_context_key is not None and previous_context_key != current_context_
     # HỌC SINH VỪA ĐỔI MÔN HOẶC ĐỔI KHỐI LỚP TRÊN THANH BÊN
 
     # RESET TRIỆT ĐỂ BỘ NHỚ CỦA MÔN CŨ ĐỂ KHÔNG BỊ TRỘN LẪN BÀI HỌC (CHỐNG RÂU ÔNG NỌ CẮM CẰM BÀ KIA)
+
+    for widget_key in list(st.session_state):
+        if str(widget_key).startswith(("t3_p1_", "t3_p2_", "t3_p3_", "q_")):
+            del st.session_state[widget_key]
+    st.session_state.tram1_chat_history = []
+    st.session_state.pop("research_result", None)
 
     st.session_state.current_lesson = ""
 
@@ -1620,7 +1628,17 @@ with st.sidebar.expander("🛠️ Báo lỗi ứng dụng & Góp ý trải nghi�
 # --- THUẬT TOÁN LẶP NGẮT QUÃNG THÍCH ỨNG (FSRS - SPACED REPETITION) ---
 if analyze_student_fsrs_review_schedule:
     try:
-        fsrs_sched = analyze_student_fsrs_review_schedule()
+        review_logs = []
+        for event in st.session_state.get("analytics_logs", []):
+            if event.get("type") != "SOCRATIC_DIAGNOSTIC" or event.get("name") != student_name or event.get("subject") != subject or str(event.get("grade")) != str(grade):
+                continue
+            try:
+                logged_at = datetime.strptime(str(event.get("time")), "%Y-%m-%d %H:%M:%S")
+                days_ago = max(0.0, (datetime.strptime(get_vn_time(), "%Y-%m-%d %H:%M:%S") - logged_at).total_seconds() / 86400)
+            except (ValueError, TypeError):
+                continue
+            review_logs.append({"topic": event.get("topic", ""), "subject": subject, "level": event.get("level", "TH"), "logged_days_ago": days_ago, "mistake_desc": event.get("error_type", "Cần ôn lại")})
+        fsrs_sched = analyze_student_fsrs_review_schedule(review_logs)
         urgent_fsrs = [x for x in fsrs_sched if x.get("urgency_badge") in ("Điểm rơi vàng", "Cực kỳ cấp thiết")]
         if urgent_fsrs:
             top_f = urgent_fsrs[0]
@@ -1630,8 +1648,8 @@ if analyze_student_fsrs_review_schedule:
                     <span style="font-weight: 700; color: #fbbf24; font-size: 0.82rem;">🔔 ĐIỂM RƠI VÀNG FSRS ({top_f['retrievability_percent']}%)</span>
                     <span style="font-size: 0.70rem; background: #d97706; color: white; padding: 1px 6px; border-radius: 10px; font-weight: 700;">Ôn tập ngay</span>
                 </div>
-                <div style="font-size: 0.82rem; color: #f8fafc; font-weight: 600; line-height: 1.35; margin-bottom: 4px;">{top_f['topic']}</div>
-                <div style="font-size: 0.72rem; color: #cbd5e1;">⚠️ <i>{top_f['mistake_desc']}</i> (Sai cách đây {top_f['days_since_mistake']} ngày)</div>
+                <div style="font-size: 0.82rem; color: #f8fafc; font-weight: 600; line-height: 1.35; margin-bottom: 4px;">{html.escape(str(top_f['topic']))}</div>
+                <div style="font-size: 0.72rem; color: #cbd5e1;">⚠️ <i>{html.escape(str(top_f['mistake_desc']))}</i> (Sai cách đây {top_f['days_since_mistake']} ngày)</div>
             </div>
             """, unsafe_allow_html=True)
     except Exception:
@@ -1659,7 +1677,7 @@ with col_sb3:
 
     st.metric("Khảo thí (T3)", f"{total_display_count}")
 
-    
+
 
 with st.sidebar.expander(f"📚 Thư Viện SGK KNTT - Lớp {grade_num} (VniTeach & NXBGD)", expanded=False):
 
@@ -1667,7 +1685,7 @@ with st.sidebar.expander(f"📚 Thư Viện SGK KNTT - Lớp {grade_num} (VniTea
 
     curr_books_nxbgd = get_nxbgd_books_for(subject, grade_num)
 
-    
+
 
     st.markdown(f"**📖 Nguồn: VniTeach**")
 
@@ -1683,7 +1701,7 @@ with st.sidebar.expander(f"📚 Thư Viện SGK KNTT - Lớp {grade_num} (VniTea
 
     st.link_button("🌐 Kho Toàn Bộ SGK Điện Tử KNTT (VniTeach)", "https://www.vniteach.com/sach-dien-tu-ket-noi-tri-thuc/#google_vignette", width="stretch")
 
-    
+
 
     st.markdown("---")
 
@@ -1757,7 +1775,7 @@ def get_active_model_queue():
         base_models = list(MODELS_PROFILE_EXPERT)
     else:
         base_models = list(MODELS_PROFILE_OPTIMIZED)
-    
+
     if st.session_state.get("working_model") and st.session_state.working_model in base_models:
         return [st.session_state.working_model] + [m for m in base_models if m != st.session_state.working_model]
     return base_models
@@ -1798,7 +1816,7 @@ NGUYÊN TẮC SƯ PHẠM BẮT BUỘC THEO CT GDPT 2018:
 
 3. MÔN NGỮ VĂN:
 
-   - NGUYÊN TẮC NGỮ LIỆU BẮT BUỘC: 
+   - NGUYÊN TẮC NGỮ LIỆU BẮT BUỘC:
 
      + Trạm 1 (Học tập): BẮT BUỘC sử dụng 100% ngữ liệu TRONG Sách giáo khoa Kết Nối Tri Thức để bám sát chương trình bài học.
 
@@ -1949,26 +1967,26 @@ def get_cross_station_pedagogical_context(current_station: int) -> str:
     Tổng hợp ngữ cảnh đa trạm của học sinh giúp Thầy AI nắm bắt trọn vẹn hành trình rèn luyện.
     """
     ctx_parts = []
-    
+
     # Thông tin Trạm 1
     t1_topic = st.session_state.get('current_topic', '')
     if st.session_state.get('tram1_understood', False):
         ctx_parts.append(f"• Trạm 1 (Lý thuyết): Em đã làm chủ hoàn toàn kiến thức cốt lõi chuyên đề '{t1_topic}'.")
     elif t1_topic:
         ctx_parts.append(f"• Trạm 1 (Lý thuyết): Em đang tìm hiểu chuyên đề '{t1_topic}'.")
-        
+
     # Thông tin Trạm 2
     if st.session_state.get('tram2_understood', False):
         ctx_parts.append("• Trạm 2 (Bài tập): Em đã tự mình tháo gỡ thành công nút thắt bài tập, nhận diện và khắc phục trọn vẹn các lỗi sai.")
     elif st.session_state.get('tram2_count', 0) > 0:
         ctx_parts.append("• Trạm 2 (Bài tập): Em đã nộp bài làm và đang đối thoại cùng Thầy tháo gỡ các chỗ khuất tất.")
-        
+
     # Thông tin Trạm 3
     if st.session_state.get('tram3_understood', False):
         ctx_parts.append("• Trạm 3 (Khảo thí): Em đã hoàn thành đề thi và nắm chắc phương pháp xử lý các câu khó/bẫy đề.")
     elif st.session_state.get('tram3_count', 0) > 0 or len(st.session_state.get('tram3_chat_messages', [])) > 0:
         ctx_parts.append("• Trạm 3 (Khảo thí): Em đã tham gia thi thử và đang lắng nghe phân tích sau thi.")
-        
+
     if not ctx_parts:
         return "Học sinh đang bắt đầu hành trình học tập tại Trạm " + str(current_station) + "."
     return "\n".join(ctx_parts)
@@ -1980,7 +1998,7 @@ def get_unique_philosophical_lesson(station_id: int, subject: str = "") -> dict:
     """
     used = st.session_state.get('used_philosophical_quotes', [])
     candidates = CROSS_STATION_PHILOSOPHY_BANK.get(station_id, CROSS_STATION_PHILOSOPHY_BANK[1])
-    
+
     # Lọc bỏ những câu đã từng sử dụng
     available = [c for c in candidates if c["quote"] not in used and c["author"] not in used]
     if not available:
@@ -1989,12 +2007,12 @@ def get_unique_philosophical_lesson(station_id: int, subject: str = "") -> dict:
         for s in [1, 2, 3]:
             all_candidates.extend(CROSS_STATION_PHILOSOPHY_BANK.get(s, []))
         available = [c for c in all_candidates if c["quote"] not in used and c["author"] not in used]
-        
+
     if available:
         chosen = random.choice(available)
     else:
         chosen = candidates[0]
-        
+
     return chosen
 
 
@@ -2005,9 +2023,9 @@ def detect_student_concluded_intent(user_input: str, history: list = None) -> bo
     """
     if not user_input or not isinstance(user_input, str):
         return False
-        
+
     txt = user_input.strip().lower()
-    
+
     # 1. NẾU CÂU CÓ DẤU HIỆU ĐẶT CÂU HỎI MỚI -> CHẮC CHẮN VẪN ĐANG HỎI, CHƯA PHẢI CLOSURE
     # (Dù có từ 'cảm ơn', ví dụ: 'Em cảm ơn thầy nhưng chỗ này tại sao...')
     question_markers = [
@@ -2018,7 +2036,7 @@ def detect_student_concluded_intent(user_input: str, history: list = None) -> bo
     ]
     if any(qm in txt for qm in question_markers):
         return False
-        
+
     # 2. XÉT CÁC MẪU NGỮ NGHĨA BIỂU ĐẠT THẤU HIỂU & KHÔNG CÒN CÂU HỎI
     concluded_signals = [
         "không còn thắc mắc", "hết thắc mắc", "không còn gì để hỏi", "không còn gì hỏi",
@@ -2031,12 +2049,12 @@ def detect_student_concluded_intent(user_input: str, history: list = None) -> bo
     ]
     if any(cs in txt for cs in concluded_signals):
         return True
-        
+
     # 3. NẾU HỌC SINH NÓI NGẮN GỌN PHỦ ĐỊNH CÂU HỎI CỦA THẦY ("Dạ không", "Không ạ", "Hết rồi")
     short_affirmations = ["dạ không", "không ạ", "dạ hết", "hết rồi", "dạ ổn", "dạ rõ", "rõ rồi ạ", "dạ thông suốt"]
     if any(txt == sa or txt.startswith(sa + " ") or txt.endswith(" " + sa) for sa in short_affirmations):
         return True
-        
+
     return False
 
 
@@ -2302,7 +2320,7 @@ def call_gemini_with_fallback(prompt_or_contents, system_instruction=None, json_
 
         raise RuntimeError("Chưa cấu hình GEMINI_API_KEY. Thêm Key vào sidebar hoặc Streamlit Secrets.")
 
-    
+
 
     # Ưu tiên key đang chạy tốt nhất trong phiên để đạt tốc độ 1 chạm tức thì
 
@@ -2363,7 +2381,7 @@ def call_gemini_with_fallback(prompt_or_contents, system_instruction=None, json_
 
                         cfg = types.GenerateContentConfig(
 
-                            thinking_config=types.ThinkingConfig(thinking_level="low"),
+                            thinking_config=types.ThinkingConfig(thinking_level="low") if current_model.startswith("gemini-3") else None,
 
                             system_instruction=effective_si,
 
@@ -2542,7 +2560,7 @@ def stream_gemini_with_fallback(prompt_or_contents, system_instruction=None):
 
                     cfg = types.GenerateContentConfig(
 
-                        thinking_config=types.ThinkingConfig(thinking_level="low"),
+                        thinking_config=types.ThinkingConfig(thinking_level="low") if current_model.startswith("gemini-3") else None,
 
                         system_instruction=effective_si,
 
@@ -2690,7 +2708,7 @@ def validate_exam_data(exam, subject_name, counts=None):
 
         expected_cnt = counts[index] if (counts is not None and index < len(counts)) else None
 
-        
+
 
         # Nếu môn thi không có phần này (ví dụ Phần III của các môn Xã hội / Tin học / Công nghệ, hoặc P.II/P.III của Tiếng Anh)
 
@@ -2818,51 +2836,7 @@ def validate_exam_data(exam, subject_name, counts=None):
 
 
 
-def numeric_answer_matches(user_answer, expected_answer, decimals=None):
-
-    user = str(user_answer or "").strip().replace(",", ".")
-
-    expected = str(expected_answer or "").strip().replace(",", ".")
-
-    if not user or not expected:
-
-        return False
-
-    try:
-
-        u, e = float(user), float(expected)
-
-        if not math.isfinite(u) or not math.isfinite(e):
-
-            return False
-
-        if decimals is not None:
-
-            digits = int(decimals)
-
-            if 0 <= digits <= 10:
-
-                return round(u, digits) == round(e, digits)
-
-        # So khớp linh hoạt sai số thực nghiệm nhỏ
-        if math.isclose(u, e, rel_tol=1e-4, abs_tol=0.015):
-            return True
-
-        exp_dec = len(expected.split(".")[1]) if "." in expected else 0
-        user_dec = len(user.split(".")[1]) if "." in user else 0
-        if exp_dec > 0 and user_dec < exp_dec:
-            # Đáp án chuẩn có phần thập phân mà học sinh không nhập phần thập phân: không làm tròn
-            return False
-
-        if 0 <= exp_dec <= 2:
-            return round(u, exp_dec) == round(e, exp_dec)
-
-        return False
-
-    except (ValueError, TypeError):
-
-        return user.casefold() == expected.casefold()
-
+from qa_runtime import numeric_answer_matches
 
 
 def prepare_paired_data(frame, pre_col, post_col, minutes_col=None):
@@ -2883,69 +2857,7 @@ def prepare_paired_data(frame, pre_col, post_col, minutes_col=None):
 
 
 
-def paired_statistics(pre, post):
-
-    pre, post = np.asarray(pre, dtype=float), np.asarray(post, dtype=float)
-
-    if pre.shape != post.shape or len(pre) < 2 or not np.all(np.isfinite(pre)) or not np.all(np.isfinite(post)):
-
-        raise ValueError("Cần ít nhất 2 cặp điểm hợp lệ của cùng học sinh.")
-
-    diff = post - pre
-
-    sd = float(np.std(diff, ddof=1))
-
-    gain = float(np.mean(diff))
-
-    if sd <= 1e-12:
-
-        return {"n": len(pre), "gain": gain, "t": None, "p": None, "dz": None, "ci": None}
-
-    t_result = stats.ttest_rel(post, pre)
-
-    margin = float(stats.t.ppf(.975, len(pre)-1) * sd / math.sqrt(len(pre)))
-
-    # Kiểm định phân phối chuẩn Shapiro-Wilk cho độ lệch (n >= 3)
-    sw_p = None
-    if len(diff) >= 3:
-        try:
-            _, sw_p_val = stats.shapiro(diff)
-            sw_p = float(sw_p_val)
-        except Exception:
-            pass
-
-    # Kiểm định phi tham số Wilcoxon Signed-Rank Test (n >= 3)
-    wilc_p = None
-    if len(diff) >= 3 and not np.all(diff == 0):
-        try:
-            w_res = stats.wilcoxon(post, pre)
-            wilc_p = float(w_res.pvalue)
-        except Exception:
-            pass
-
-    # Chỉ số Hake's Normalized Gain: <g> = (post_mean - pre_mean) / (10 - pre_mean)
-    pre_mean = float(np.mean(pre))
-    post_mean = float(np.mean(post))
-    hake_gain = None
-    if pre_mean < 10.0:
-        hake_gain = float(np.clip((post_mean - pre_mean) / (10.0 - pre_mean), -1.0, 1.0))
-
-    return {
-        "n": len(pre),
-        "gain": gain,
-        "hake": hake_gain,
-        "t": float(t_result.statistic),
-        "p": float(t_result.pvalue),
-        "dz": gain/sd,
-        "ci": (gain-margin, gain+margin),
-        "shapiro_p": sw_p,
-        "wilcoxon_p": wilc_p
-    }
-
-
-
-
-
+from qa_runtime import paired_statistics
 
 
 def render_exam_clock():
@@ -3164,13 +3076,13 @@ def parse_and_align_bbt(raw_bbt):
 
         if parts: rows.append(parts)
 
-    
+
 
     if len(rows) < 3:
 
         return rows
 
-    
+
 
     lbl_x, cells_x = rows[0][0], rows[0][1:]
 
@@ -3178,7 +3090,7 @@ def parse_and_align_bbt(raw_bbt):
 
     lbl_y, cells_y = rows[2][0], rows[2][1:]
 
-    
+
 
     total_slots = len(cells_y)
 
@@ -3218,7 +3130,7 @@ def parse_and_align_bbt(raw_bbt):
 
                             aligned_x[pos] = val
 
-        
+
 
         aligned_yp = [""] * total_slots
 
@@ -3260,7 +3172,7 @@ def parse_and_align_bbt(raw_bbt):
 
                         aligned_yp[pos] = val
 
-        
+
 
         return [
 
@@ -3365,7 +3277,7 @@ def format_pedagogical_bbt_latex(raw_bbt):
 
     if not rows or len(rows) < 3: return ""
 
-    
+
 
     col_count = len(rows[0])
 
@@ -3549,6 +3461,9 @@ def render_question_source_badge(q, idx=None):
     """
 
     if not isinstance(q, dict): return
+    if q.get("verification_warning"):
+        st.warning("Cần giáo viên kiểm tra: " + str(q["verification_warning"]))
+
 
     # Kiểm tra công tắc mở/đóng đối soát chéo (Mặc định là TẮT để bảo toàn mỹ cảm đề thi)
     if not st.session_state.get("show_audit_badges_per_question", False):
@@ -3574,7 +3489,7 @@ def render_question_source_badge(q, idx=None):
     school = q.get("school")
     if not school or "Điểm Quốc Gia" in str(school) or "Chuyên / Điểm" in str(school):
         school = "Bộ Đề Chuẩn Hóa CT GDPT 2018 (QĐ 764)"
-    
+
     session = q.get("exam_session")
     year = q.get("year") or "2025 - 2026"
     portal = q.get("portal") or "Kho Khảo Thí Quốc Gia"
@@ -3919,7 +3834,7 @@ def sanitize_print_math_text(text: str) -> str:
     """CHUẨN HÓA CÔNG THỨC TOÁN CHO BẢN IN PDF (MATHJAX 3): KHỬ SẠCH LỆNH LỆCH NGOẶC TẬP HỢP & DÍNH CHỮ."""
     if not text: return ""
     s = str(text).replace(r'\$', '$').replace('$$', '$')
-    
+
     # Khắc phục lỗi chữ tiếng Việt có dấu và khoảng trắng bị bọc trong $...$ làm dính chữ trong MathJax
     def unwrap_vietnamese_math(match):
         inner = match.group(1)
@@ -3929,11 +3844,11 @@ def sanitize_print_math_text(text: str) -> str:
     s = re.sub(r'\$([^$]+)\$', unwrap_vietnamese_math, s)
 
     s = sanitize_katex_latex(s)
-    
+
     # Khử triệt để lệnh \left và \right trong MathJax để tập hợp R \ {1} hiển thị đẹp 10 điểm
     s = s.replace('\\left', '').replace('\\right', '')
     s = s.replace(r'\left', '').replace(r'\right', '')
-    
+
     # Tự động cân bằng nếu chuỗi bị lẻ dấu $
     if s.count('$') % 2 != 0:
         s += '$'
@@ -3974,7 +3889,7 @@ def audit_and_heal_exam_semantics(exam: dict, subject_name: str = "Toán học",
         for q in q_list:
             if not isinstance(q, dict):
                 continue
-            
+
             # --- 1. CHỮA LÀNH CÂU CHỮ VĂN PHONG VÔ LÝ / CHẮP VÁ ---
             q_txt = str(q.get("q", ""))
             if "tiếp xúc với mặt phẳng" in q_txt and any(hw in q_txt.lower() for hw in ["hoặc bán kính", "hoặc tính"]):
@@ -4000,7 +3915,7 @@ def audit_and_heal_exam_semantics(exam: dict, subject_name: str = "Toán học",
             ans_val = str(q.get("ans", ""))
             if q.get("stmts"):
                 ans_val = "; ".join(f"{chr(97+i)}: " + ("Đúng" if (t.get("a") if "a" in t else t.get("ans", True)) else "Sai") for i, t in enumerate(q.get("stmts", [])))
-            
+
             parsed_grade = int(re.search(r'\d+', str(grade_name)).group(0)) if re.search(r'\d+', str(grade_name)) else 12
             q["explain"] = sanitize_socratic_hint(
                 q.get("explain", ""),
@@ -4015,12 +3930,15 @@ def audit_and_heal_exam_semantics(exam: dict, subject_name: str = "Toán học",
             # --- 4. TẦNG KIỂM CHỨNG TOÁN HỌC BIỂU TƯỢNG SYMPY (NEURO-SYMBOLIC VERIFIER) ---
             if audit_ai_generated_question_sympy and "toán" in str(subject_name).lower():
                 try:
+                    q.pop("neuro_symbolic_verified", None)
                     audit_res = audit_ai_generated_question_sympy(q)
-                    if audit_res.get("audited") and audit_res.get("verified"):
+                    if audit_res.get("hallucination_detected"):
+                        q["verification_warning"] = audit_res.get("note", "Đáp án cần giáo viên kiểm tra")
+                    if audit_res.get("audited") and audit_res.get("verified") and not audit_res.get("hallucination_detected") and audit_res.get("analysis_verified"):
                         q["neuro_symbolic_verified"] = True
                 except Exception:
                     pass
-            
+
     return exam
 
 
@@ -4039,7 +3957,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
     exam_count = exam.get('exam_count') or st.session_state.get('exam_mix_count') or max(1, int(st.session_state.get('global_exam_count') or 1))
     ex_code = str(exam.get('code', st.session_state.get('exam_code', '101')))
     title = f"Kỳ thi Khảo sát chất lượng lần thứ {exam_count} — Môn {subject_name} ({grade_name}) — Mã đề {ex_code}"
-    
+
     app_target_url = f"{APP_URL}?exam_code={ex_code}&subject={urllib.parse.quote(subject_name)}"
     qr_base64 = generate_local_qr_base64(app_target_url, fill_color="#0f172a", back_color="#ffffff")
     mb_qr_base64 = get_mb_bank_vietqr_base64()
@@ -4111,7 +4029,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
             Họ và tên thí sinh: ................................................................................ Số báo danh: ....................... Phòng thi: .........
         </div>
         """
-    
+
     blocks = [header_html]
 
     # ==================== 2. XÂY DỰNG NGUỒN LATEX OVERLEAF (TIKZ & TABULARX CHUẨN CHỈ) ====================
@@ -4301,7 +4219,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
             opts_raw = q.get("opt") or []
             if not opts_raw and q.get("choices") and isinstance(q["choices"], dict):
                 opts_raw = [f"{k}. {v}" for k, v in q["choices"].items()]
-            
+
             if opts_raw:
                 letters = ["A", "B", "C", "D"]
                 clean_opts_list = []
@@ -4409,7 +4327,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
                 answer = q.get("ans", "")
                 if q.get("stmts"):
                     answer = "; ".join(f"{chr(97+i)}: " + ("Đúng" if (t.get("a") if "a" in t else t.get("ans", True)) else "Sai") for i, t in enumerate(q.get("stmts", [])))
-                
+
                 ans_expl_html = f"""
                 <div style="background-color: #f0fdf4; border-left: 3.5px solid #16a34a; padding: 5px 10px; margin: 4px 0 6px 0; border-radius: 4px; font-size: 13px; line-height: 1.45;">
                     <div style="font-weight: bold; color: #15803d; margin-bottom: 2px;">✅ ĐÁP ÁN: {html.escape(str(answer))}</div>
@@ -4435,7 +4353,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
     if include_answers and subject_name != "Ngữ văn":
         blocks.append("<div style='page-break-before: always; margin-top: 20px;' class='print-page-break'>")
         blocks.append("<h2 style='text-align: center; font-size: 15px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; font-family: \"Times New Roman\", Times, serif;'>BẢNG ĐÁP ÁN VÀ MA TRẬN CHẤM ĐIỂM CHUẨN BỘ GD&ĐT</h2>")
-        
+
         tex.append(r"\newpage")
         tex.append(r"\begin{center}\textbf{\Large BẢNG ĐÁP ÁN VÀ MA TRẬN CHẤM ĐIỂM CHUẨN BỘ GD\&ĐT}\end{center}\vspace{0.3cm}")
 
@@ -4447,12 +4365,12 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
             blocks.append("<h4 style='margin-bottom: 4px; font-size: 13.5px; font-family: \"Times New Roman\", Times, serif;'>PHẦN I: TRẮC NGHIỆM 4 LỰA CHỌN</h4>")
             blocks.append("<table border='1' style='width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; margin-bottom: 12px; font-family: \"Times New Roman\", Times, serif;'>")
             tex.append(r"\noindent\textbf{PHẦN I: TRẮC NGHIỆM 4 LỰA CHỌN}\par\vspace{0.15cm}")
-            
+
             for chunk_start in range(0, len(p1_items), 10):
                 chunk = p1_items[chunk_start:chunk_start+10]
                 blocks.append("<tr style='background: #f1f5f9; font-weight: bold;'>" + "".join(f"<th>Câu {chunk_start+i+1}</th>" for i in range(len(chunk))) + "</tr>")
                 blocks.append("<tr>" + "".join(f"<td style='padding: 4px; font-weight: bold; color: #0369a1;'>{q.get('ans', '')}</td>" for q in chunk) + "</tr>")
-                
+
                 # Bảng đáp án LaTeX Overleaf chuẩn hóa chunk 10 câu (đảm bảo hiển thị đủ 100% số câu cho mọi môn học)
                 tex.append(r"\begin{tabularx}{\textwidth}{|" + "X|" * len(chunk) + r"}\hline")
                 tex.append(" & ".join(f"\\textbf{{Câu {chunk_start+i+1}}}" for i in range(len(chunk))) + r" \\ \hline")
@@ -4478,7 +4396,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
             blocks.append("<h4 style='margin-bottom: 4px; font-size: 13.5px; font-family: \"Times New Roman\", Times, serif;'>PHẦN III: TRẢ LỜI NGẮN (ĐIỀN SỐ TỐI ĐA 4 KÝ TỰ)</h4>")
             blocks.append("<table border='1' style='width: 100%; border-collapse: collapse; text-align: center; font-size: 13px; margin-bottom: 12px; font-family: \"Times New Roman\", Times, serif;'><tr style='background: #f1f5f9; font-weight: bold;'>" + "".join(f"<th>Câu {i+1}</th>" for i in range(len(p3_items))) + "</tr>")
             blocks.append("<tr>" + "".join(f"<td style='padding: 4px; font-weight: bold; color: #b45309;'>{q.get('ans', '')}</td>" for q in p3_items) + "</tr></table>")
-            
+
             tex.append(r"\noindent\textbf{PHẦN III: TRẢ LỜI NGẮN}\par\vspace{0.15cm}")
             tex.append(r"\begin{tabularx}{\textwidth}{|" + "X|" * len(p3_items) + r"}\hline")
             tex.append(" & ".join(f"\\textbf{{Câu {i+1}}}" for i in range(len(p3_items))) + r" \\ \hline")
@@ -4785,7 +4703,7 @@ def render_mermaid(code: str):
 
         part = part.trim().split(':::')[0].trim();
 
-        
+
 
         let firstDelim = -1;
 
@@ -5239,9 +5157,9 @@ def render_mermaid(code: str):
 
 
 
-            nodes.forEach(d => { 
+            nodes.forEach(d => {
 
-                d.y = depthX[d.depth]; 
+                d.y = depthX[d.depth];
 
             });
 
@@ -5254,9 +5172,9 @@ def render_mermaid(code: str):
             // HÀM PHÁT ÂM TIẾNG ANH CHO TỪNG NODE TRONG SƠ ĐỒ TƯ DUY
 
             function speakMindmapText(rawName) {
-                const fn = (window.parent && window.parent.__speakPedagogicalText) || 
-                           window.__speakPedagogicalText || 
-                           (window.parent && window.parent.speakEnglishText) || 
+                const fn = (window.parent && window.parent.__speakPedagogicalText) ||
+                           window.__speakPedagogicalText ||
+                           (window.parent && window.parent.speakEnglishText) ||
                            window.speakEnglishText;
                 if (fn) {
                     fn(rawName);
@@ -5767,7 +5685,7 @@ def render_smart_lab(data, current_subject=""):
 
     dtype = data.get("type")
 
-    
+
 
     # BẢO VỆ PHÁP CHẾ & SƯ PHẠM: MÔN XÃ HỘI TUYỆT ĐỐI KHÔNG HIỂN THỊ ĐỒ THỊ TOÁN HỌC
 
@@ -5831,7 +5749,7 @@ def render_smart_lab(data, current_subject=""):
 
             show_faces = st.checkbox("Tô mờ các mặt phẳng (3D Surfaces)", value=True, key="lab_geo3d_faces")
 
-            
+
 
             if shape in ["pyramid_quad", "chóp tứ giác"]:
 
@@ -6123,7 +6041,7 @@ def render_smart_lab(data, current_subject=""):
 
                 if abs(fa - 1.0) < 0.05: fa = 1.05
 
-            
+
 
             fk = st.slider("Hệ số k:", -3.0, 3.0, float(data.get("k", 1.0)), 0.5, key="lab_exp_k")
 
@@ -6131,13 +6049,13 @@ def render_smart_lab(data, current_subject=""):
 
             fc = st.slider("Hệ số tịnh tiến c:", -4.0, 4.0, float(data.get("c", 0.0)), 0.5, key="lab_exp_c")
 
-            
+
 
             base_label = "e" if use_e else f"{fa:.1f}"
 
             st.success(f"📈 **Công thức:** $y = {fk if fk != 1 else ''}{base_label}^x {('+' + str(fc)) if fc > 0 else (str(fc) if fc < 0 else '')}$")
 
-            
+
 
             if fk > 0:
 
@@ -6159,7 +6077,7 @@ def render_smart_lab(data, current_subject=""):
 
             y_vals[np.abs(y_vals) > 25] = np.nan
 
-            
+
 
             fig_exp.add_trace(go.Scatter(x=x_vals, y=y_vals, mode='lines', line=dict(color='#38bdf8', width=3.5), name=f'y = {base_label}^x'))
 
@@ -6167,7 +6085,7 @@ def render_smart_lab(data, current_subject=""):
 
             fig_exp.add_trace(go.Scatter(x=[0], y=[fk + fc], mode='markers+text', marker=dict(size=8, color='#f43f5e'), text=[f'(0; {fk+fc:.1f})'], textposition="top left", name='Điểm (0; y0)'))
 
-            
+
 
             setup_pedagogical_oxy(fig_exp, [-5, 5], [min(-3, fc - 2), max(6, fc + 8)])
 
@@ -6201,7 +6119,7 @@ def render_smart_lab(data, current_subject=""):
 
                 if abs(fa - 1.0) < 0.05: fa = 1.05
 
-            
+
 
             fk = st.slider("Hệ số k:", -3.0, 3.0, float(data.get("k", 1.0)), 0.5, key="lab_log_k")
 
@@ -6209,13 +6127,13 @@ def render_smart_lab(data, current_subject=""):
 
             fc = st.slider("Hệ số tịnh tiến c:", -4.0, 4.0, float(data.get("c", 0.0)), 0.5, key="lab_log_c")
 
-            
+
 
             log_label = "\\ln(x)" if use_ln else f"\\log_{{{fa:.1f}}}(x)"
 
             st.success(f"📈 **Công thức:** $y = {fk if fk != 1 else ''}{log_label} {('+' + str(fc)) if fc > 0 else (str(fc) if fc < 0 else '')}$")
 
-            
+
 
             if fk > 0:
 
@@ -6237,7 +6155,7 @@ def render_smart_lab(data, current_subject=""):
 
             y_vals[np.abs(y_vals) > 20] = np.nan
 
-            
+
 
             fig_log.add_trace(go.Scatter(x=x_vals, y=y_vals, mode='lines', line=dict(color='#38bdf8', width=3.5), name=f'y = {log_label}'))
 
@@ -6247,7 +6165,7 @@ def render_smart_lab(data, current_subject=""):
 
             fig_log.add_vrect(x0=-4, x1=0, fillcolor="rgba(239, 68, 68, 0.12)", line_width=0, annotation_text="Vùng x ≤ 0 (KXD)", annotation_position="top left")
 
-            
+
 
             setup_pedagogical_oxy(fig_log, [-2, 8], [-6, 6])
 
@@ -6265,7 +6183,7 @@ def render_smart_lab(data, current_subject=""):
 
         func_str = str(data.get("func", "x**2 - 3*x + 2")).replace('$', '').strip()
 
-        
+
 
         clean_f = re.sub(r'\\frac{(.*?)}{(.*?)}', r'((\1)/(\2))', func_str)
 
@@ -6277,7 +6195,7 @@ def render_smart_lab(data, current_subject=""):
 
         clean_f = re.sub(r'\be\^(\([^()]*\)|[\w\.]+)', r'np.exp(\1)', clean_f)
 
-        
+
 
         clean_f = clean_f.replace('^', '**').replace('y=', '').replace('f(x)=', '').strip()
 
@@ -6287,11 +6205,11 @@ def render_smart_lab(data, current_subject=""):
 
         clean_f = clean_f.replace('{', '(').replace('}', ')')
 
-        
+
 
         math_str = func_str.replace('**', '^').replace('*', '').replace(' ', '')
 
-        
+
 
         sa_def = float(data.get("a", 0.0))
 
@@ -6343,7 +6261,7 @@ def render_smart_lab(data, current_subject=""):
 
                 fig_area = go.Figure()
 
-                
+
 
                 x_full = np.linspace(sa - 3, sb + 3, 600)
 
@@ -6351,31 +6269,31 @@ def render_smart_lab(data, current_subject=""):
 
                 if isinstance(y_full, (int, float)): y_full = np.full_like(x_full, float(y_full))
 
-                
+
 
                 fig_area.add_trace(go.Scatter(x=x_full, y=y_full, mode='lines', line=dict(color='#38bdf8', width=3), name='Đồ thị hàm số'))
 
-                
+
 
                 y_area_fill = safe_eval_func(clean_f, x_area)
 
                 if isinstance(y_area_fill, (int, float)): y_area_fill = np.full_like(x_area, float(y_area_fill))
 
-                
 
-                fig_area.add_trace(go.Scatter(x=np.concatenate([x_area, x_area[::-1]]), 
 
-                                              y=np.concatenate([y_area_fill, np.zeros_like(y_area_fill)]), 
+                fig_area.add_trace(go.Scatter(x=np.concatenate([x_area, x_area[::-1]]),
 
-                                              fill='toself', fillcolor='rgba(236, 72, 153, 0.4)', 
+                                              y=np.concatenate([y_area_fill, np.zeros_like(y_area_fill)]),
+
+                                              fill='toself', fillcolor='rgba(236, 72, 153, 0.4)',
 
                                               line=dict(color='rgba(255,255,255,0)'), hoverinfo="skip", name='Diện tích (S)'))
 
-                
+
 
                 y_view_min, y_view_max = min(y_full), max(y_full)
 
-                y_pad = (y_view_max - y_view_min) * 0.15 
+                y_pad = (y_view_max - y_view_min) * 0.15
 
                 if y_pad == 0: y_pad = 2
 
@@ -6395,7 +6313,7 @@ def render_smart_lab(data, current_subject=""):
 
                 fig_area.add_trace(go.Scatter(x=[sb, sb], y=[0, float(y_sb)], mode='lines', line=dict(color='#10b981', width=2, dash='dash'), name='Cận b'))
 
-                
+
 
                 setup_pedagogical_oxy(fig_area, [min(x_full), max(x_full)], [y_min, y_max])
 
@@ -6409,13 +6327,13 @@ def render_smart_lab(data, current_subject=""):
 
         return
 
-        
+
 
     if dtype == "revolve_ox":
 
         func_str = str(data.get("func", "2*x + 1")).replace('$', '').strip()
 
-        
+
 
         clean_f = re.sub(r'\\frac{(.*?)}{(.*?)}', r'((\1)/(\2))', func_str)
 
@@ -6427,7 +6345,7 @@ def render_smart_lab(data, current_subject=""):
 
         clean_f = re.sub(r'\be\^(\([^()]*\)|[\w\.]+)', r'np.exp(\1)', clean_f)
 
-        
+
 
         clean_f = clean_f.replace('^', '**').replace('y=', '').replace('f(x)=', '').strip()
 
@@ -6537,7 +6455,7 @@ def render_smart_lab(data, current_subject=""):
 
                         fig_3d.add_trace(go.Surface(x=np.full_like(rc_a, sa), y=rc_a*np.cos(vc_a), z=rc_a*np.sin(vc_a), colorscale='Viridis', opacity=0.88, showscale=False, hoverinfo='skip', name='Đáy x=a'))
 
-                    
+
 
                     rb_val = safe_eval_func(clean_f, sb)
 
@@ -6635,7 +6553,7 @@ def render_smart_lab(data, current_subject=""):
 
             p_phi = st.slider("Pha ban đầu φ (rad):", -np.pi, np.pi, float(data.get("phi", 0.0)), np.pi/6, format="%.2f", key="lab_osc_phi")
 
-            
+
 
             p_T = (2 * np.pi) / p_omega
 
@@ -6645,7 +6563,7 @@ def render_smart_lab(data, current_subject=""):
 
             p_amax = (p_omega ** 2) * p_A
 
-            
+
 
             st.success(f"📈 **Phương trình:** $x = {p_A:.1f}\\cos({p_omega:.1f}t + {p_phi:.2f})$ cm")
 
@@ -6667,7 +6585,7 @@ def render_smart_lab(data, current_subject=""):
 
             a_vals = -(p_omega ** 2) * p_A * np.cos(p_omega * t_vals + p_phi)
 
-            
+
 
             fig_osc.add_trace(go.Scatter(x=t_vals, y=x_vals, mode='lines', line=dict(color='#38bdf8', width=3.5), name='Li độ x (cm)'))
 
@@ -6679,7 +6597,7 @@ def render_smart_lab(data, current_subject=""):
 
                 fig_osc.add_trace(go.Scatter(x=t_vals, y=a_vals, mode='lines', line=dict(color='#f43f5e', width=2, dash='dot'), name='Gia tốc a (cm/s²)'))
 
-            
+
 
             fig_osc.update_layout(
 
@@ -6715,7 +6633,7 @@ def render_smart_lab(data, current_subject=""):
 
             c_p = st.slider("Áp suất P (bar):", 10, 300, int(data.get("p", 200)), 10, key="lab_eq_p")
 
-            
+
 
             yield_pct = np.clip(100 / (1 + np.exp(0.01 * (c_temp - 400))) * (c_p / 200)**0.4, 5, 95)
 
@@ -7149,7 +7067,7 @@ def render_smart_lab(data, current_subject=""):
                 # 1. Đường gióng nét đứt xuống Ox và Oy cho Cực đại (CĐ)
                 fig.add_trace(go.Scatter(x=[x_cd_21, x_cd_21], y=[0, y_cd_21], mode='lines', line=dict(color='#f43f5e', width=1.3, dash='dot'), showlegend=False, hoverinfo='skip'))
                 fig.add_trace(go.Scatter(x=[0, x_cd_21], y=[y_cd_21, y_cd_21], mode='lines', line=dict(color='#f43f5e', width=1.3, dash='dot'), showlegend=False, hoverinfo='skip'))
-                
+
                 # 2. Đường gióng nét đứt xuống Ox và Oy cho Cực tiểu (CT)
                 fig.add_trace(go.Scatter(x=[x_ct_21, x_ct_21], y=[0, y_ct_21], mode='lines', line=dict(color='#f59e0b', width=1.3, dash='dot'), showlegend=False, hoverinfo='skip'))
                 fig.add_trace(go.Scatter(x=[0, x_ct_21], y=[y_ct_21, y_ct_21], mode='lines', line=dict(color='#f59e0b', width=1.3, dash='dot'), showlegend=False, hoverinfo='skip'))
@@ -7280,7 +7198,7 @@ def render_smart_lab(data, current_subject=""):
 
             fig.add_trace(go.Scatter3d(x=[0, mx], y=[0, my], z=[0, mz], mode='lines', line=dict(color='#f43f5e', width=6), name='Vectơ OM'))
 
-            
+
 
             # Đường gióng hình chiếu lên các mặt phẳng tọa độ (hộp tọa độ)
 
@@ -7345,24 +7263,24 @@ def heal_bbt_markdown_table(text: str) -> str:
     """
     if not text or '|' not in text:
         return text
-    
+
     s = str(text)
-    
+
     # 1. Tách dòng trước bắt đầu bảng: "| x |" hoặc "|x|"
     s = re.sub(r'([^\n])\s*(\|\s*x\s*\|)', r'\1\n\n\2', s, flags=re.IGNORECASE)
-    
+
     # 2. Tách dòng trước hàng phân cách: "|:---|", "|---|", "|-", "| :"
     s = re.sub(r'([^\n])\s*(\|\s*(?:\:?\-{2,}\:?\|)+)', r'\1\n\2', s)
-    
+
     # 3. Tách dòng trước hàng đạo hàm: "| y' |", "| f'(x) |"
     s = re.sub(r'([^\n])\s*(\|\s*(?:y[\'’]|f[\'’]\(x\))\s*\|)', r'\1\n\2', s, flags=re.IGNORECASE)
-    
+
     # 4. Tách dòng trước hàng giá trị hàm số: "| y |", "| f(x) |"
     s = re.sub(r'([^\n])\s*(\|\s*(?:y|f\(x\))\s*\|)', r'\1\n\2', s, flags=re.IGNORECASE)
-    
+
     # 5. Tách dòng sau hàng cuối cùng của bảng trước câu hỏi tiếp theo
     s = re.sub(r'(\|\s*[\+\-0-9a-zA-Z\s\\\|]+\|)\s*([A-ZÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ][^\|]+)$', r'\1\n\n\2', s)
-    
+
     # 6. Đảm bảo dòng phân cách |:---| tồn tại nếu AI quên sinh
     if re.search(r'\|\s*x\s*\|[^\n]+\n\s*\|\s*y', s, flags=re.IGNORECASE):
         m_x = re.search(r'(\|\s*x\s*\|[^\n]+)', s, flags=re.IGNORECASE)
@@ -7381,27 +7299,27 @@ def parse_quiz_questions(text):
 
     pattern = r'(?i)(?:\[Q\d+\]|C[âa]u\s*\d+[\.\:]?)'
     parts = re.split(pattern, part2_text)
-    
+
     for part in parts[1:]:
         lines = [l.strip() for l in part.strip().split('\n') if l.strip()]
         if not lines: continue
         q_header = lines[0]
         level, options, correct, explain = "Vận dụng", [], "A", "Gợi ý tự suy luận!"
-        
+
         match = re.search(r'(?i)\[Mức độ:\s*(.*?)\]', q_header)
         if match:
             level = match.group(1)
             q_header = re.sub(r'(?i)\[Mức độ:\s*.*?\]', '', q_header).strip()
-            
+
         q_text_lines = [q_header]
         parsing_options = False
-        
+
         for line in lines[1:]:
             clean_line = re.sub(r'(?i)^\*{0,2}([A-D])\b[\.\:]?\*{0,2}\s*', r'\1. ', line)
-            
+
             if re.match(r'(?i)###\s*PHẦN\s*3', line):
                 break
-                
+
             if clean_line.upper().startswith(('A.', 'B.', 'C.', 'D.')):
                 parsing_options = True
                 options.append(clean_line)
@@ -7415,7 +7333,7 @@ def parse_quiz_questions(text):
                     q_text_lines.append(line)
                 elif options and not clean_line.upper().startswith(('A.', 'B.', 'C.', 'D.')):
                     explain += " " + line
-                        
+
         if len(options) >= 4:
             correct_idx = ord(correct) - ord('A')
             new_options = options[:4]
@@ -7425,7 +7343,7 @@ def parse_quiz_questions(text):
                 raw_options = [re.sub(r'(?i)^[A-D]\.\s*', '', opt).strip() for opt in options[:4]]
                 import random
                 random.shuffle(raw_options)
-                
+
                 new_options = []
                 for i, opt in enumerate(raw_options):
                     letter = chr(ord('A') + i)
@@ -7443,7 +7361,7 @@ def parse_quiz_questions(text):
             full_question_text = "\n".join(q_text_lines).strip()
             if not extracted_bbt and ('|' in full_question_text and any(k in full_question_text.lower() for k in ["bảng biến thiên", "bbt", "bảng xét dấu"])):
                 full_question_text = heal_bbt_markdown_table(full_question_text)
-            
+
             # Chuẩn hóa KaTeX & loại bỏ rác cú pháp
             full_question_text = sanitize_katex_latex(full_question_text)
             if format_pedagogical_math:
@@ -7658,7 +7576,7 @@ def create_pedagogical_tts_component(raw_text: str, subject_name: str, comp_key:
 
             return voicesList.find(v => v.lang.startsWith('en') && (
 
-                v.name.includes('Jenny') || v.name.includes('Guy') || v.name.includes('Natural') || 
+                v.name.includes('Jenny') || v.name.includes('Guy') || v.name.includes('Natural') ||
 
                 v.name.includes('Google') || v.name.includes('US') || v.name.includes('Samantha') || v.name.includes('Aria')
 
@@ -8015,7 +7933,7 @@ def create_pedagogical_tts_component(raw_text: str, subject_name: str, comp_key:
         var textToRead = {escaped_speech_js};
         var langMode = '{lang_code}';
         var isSpeaking = false;
-        
+
         btn.onclick = function() {{
             var aud = document.getElementById('audio_player_{comp_key}');
             var btnTxt = document.getElementById('btn_tts_txt_{comp_key}');
@@ -8089,7 +8007,7 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
     st.markdown("---")
 
-    
+
 
     # GIAO DIỆN PHÒNG LUYỆN NÓI TIẾNG ANH PHẢN XẠ 1-1 (AI SPEAKING LAB 50/50 CÂN ĐỐI)
 
@@ -8213,7 +8131,7 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
         st.markdown("##### 📖 1. Từ Vựng Trọng Tâm SGK (New Words):")
 
-        
+
 
         # Bảng từ vựng 2 luồng: Nút nghe tiếng Anh bản ngữ US + Nút nghe giải nghĩa giọng Nam Bộ
 
@@ -8275,7 +8193,7 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
         st.markdown("##### 🎙️ 3. Phòng Thu Phản Xạ 1-1 Cùng Gia Sư AI:")
 
-        
+
 
         escaped_q = json.dumps(unit_info['q_reflex'])
 
@@ -8319,7 +8237,7 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
         student_speech = st.text_area(
 
-            "Nội dung bài nói của em (tùy chọn gõ bổ sung / ghi chú thêm):", 
+            "Nội dung bài nói của em (tùy chọn gõ bổ sung / ghi chú thêm):",
 
             key=f"eng_speech_input_{stage_id}",
 
@@ -8341,7 +8259,7 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
             has_text = bool(student_speech and student_speech.strip())
 
-            
+
 
             if not has_audio and not has_text:
 
@@ -8610,7 +8528,7 @@ def create_3d_molecule_figure(mol_type: str) -> go.Figure:
 
         ))
 
-        
+
 
         # 2. Bốn nguyên tử Hydrogen tạo thành tứ diện đều bao quanh
 
@@ -8634,7 +8552,7 @@ def create_3d_molecule_figure(mol_type: str) -> go.Figure:
 
         ))
 
-        
+
 
         # 3. Bốn liên kết cộng hóa trị rõ nét
 
@@ -8947,7 +8865,7 @@ def render_parent_progress_report(current_student_nm, current_subj, current_gr, 
 
         status_tag = "Tiến bộ vượt bậc" if delta_score >= 2.0 else ("Tiến bộ tốt" if delta_score > 0 else "Cần duy trì rèn luyện")
 
-        
+
 
         default_teacher_comment = (
 
@@ -9386,7 +9304,7 @@ def generate_kntt_lesson_indexing_and_media(subject_name: str, grade_lvl: int, t
                 <div>🏛️ <b>Ấn bản chính thức:</b> {book_name}</div>
                 <div>📚 <b>Đối chất SGK 2 Nguồn:</b> <a href="{vniteach_url}" target="_blank" style="color: #fbbf24; font-weight: 700; text-decoration: underline;">[📖 SGK Điện Tử VniTeach]</a> &nbsp; <a href="{nxbgd_url}" target="_blank" style="color: #38bdf8; font-weight: 700; text-decoration: underline;">[🏛️ Cổng Tập Huấn NXBGD]</a></div>
                 <div style="margin-top: 6px; color: #4ade80; font-size: 12.5px;">
-                    ✅ <i>Đã kiểm tra chéo nội hàm: Khớp chuẩn 100% mục tiêu kiến thức GDPT 2018 (0 lỗi CT cũ 2006).</i>
+                    ✅ <i>Liên kết tham khảo theo môn/lớp; nội dung AI cần giáo viên đối chiếu SGK.</i>
                 </div>
             </div>
             <div style="flex: 0 0 auto; text-align: center; background: rgba(15, 23, 42, 0.6); border: 1px dashed rgba(56, 189, 248, 0.4); border-radius: 10px; padding: 10px 14px;">
@@ -11393,7 +11311,7 @@ if selected_station == station_labels[0]:
 
     curr_t1_books_nxbgd = get_nxbgd_books_for(subject, grade_num)
 
-    
+
 
     with st.expander(f"📚 Sách Giáo Khoa Điện Tử Kết Nối Tri Thức - {subject} Lớp {grade_num} (Nguồn: VniTeach & NXBGD)", expanded=False):
 
@@ -11415,7 +11333,7 @@ if selected_station == station_labels[0]:
 
                 st.image(generate_local_qr_base64(curr_t1_books[0]['url']), width=150)
 
-                
+
 
         with c_kntt2:
 
@@ -11443,7 +11361,7 @@ if selected_station == station_labels[0]:
 
     chosen_sgk_lesson = st.selectbox(
 
-        "🎯 Chọn bài học theo Khung phân phối chương trình SGK KNTT:", 
+        "🎯 Chọn bài học theo Khung phân phối chương trình SGK KNTT:",
 
         lesson_select_options,
 
@@ -11467,7 +11385,7 @@ if selected_station == station_labels[0]:
 
         topic_input = st.text_input(
 
-            "📝 Bài học cần chiếm lĩnh kiến thức (hoặc gõ tên bài tùy ý):", 
+            "📝 Bài học cần chiếm lĩnh kiến thức (hoặc gõ tên bài tùy ý):",
 
             value=default_lesson_txt,
 
@@ -11601,7 +11519,7 @@ YÊU CẦU PHÁP LÝ & HỌC THUẬT BẮT BUỘC:
 
     - CÔNG THỨC VÉC TƠ TRONG LATEX: BẮT BUỘC dùng cú pháp chuẩn KaTeX: Với vectơ 1 chữ cái dùng \\vec{{a}}, \\vec{{b}}, \\vec{{i}}, \\vec{{j}}, \\vec{{k}}, \\vec{{u}}, \\vec{{v}}, \\vec{{n}}. Với vectơ có từ 2 điểm/chữ cái trở lên hoặc có dấu phẩy (như AB, AD, AA', AC', A'B', OM, MN) BẮT BUỘC dùng \\overrightarrow{{AB}}, \\overrightarrow{{AA'}}, \\overrightarrow{{AC'}} để mũi tên véc tơ bao trọn vẹn từ gốc đến ngọn. TUYỆT ĐỐI KHÔNG viết tắt như \\veci, \\vecj, \\veck, z\\veck vì sẽ gây lỗi render KaTeX.
 
-   
+
 
    - HÓA HỌC & KHTN: DÙNG 100% DANH PHÁP QUỐC TẾ IUPAC.
 
@@ -11624,7 +11542,7 @@ YÊU CẦU PHÁP LÝ & HỌC THUẬT BẮT BUỘC:
 
    - ĐỒ THỊ: Mô tả bằng lời, ghi chú: "(Kéo xuống Phòng Lab ảo bên dưới để trực quan hóa nhé!)".
 
-   - TRẮC NGHIỆM SOCRATIC: Sinh chính xác 3 câu hỏi trắc nghiệm đánh giá năng lực. 
+   - TRẮC NGHIỆM SOCRATIC: Sinh chính xác 3 câu hỏi trắc nghiệm đánh giá năng lực.
 
      + Bắt đầu mỗi câu bằng chữ "Câu 1:", "Câu 2:", "Câu 3:".
 
@@ -11737,10 +11655,10 @@ Khối 4 (Cạm bẫy thực tế & Mẹo thi):
                         lesson_markdown=cleaned_p1,
                         mode="monochrome"
                     )
-                    
+
                     with st.expander("📊 Thẻ Cẩm Nang Infographic A4 (Vector SVG Siêu Nhẹ • Quét QR Video • In Photocopy / Màu 1-Chạm)", expanded=True):
                         st.caption("✨ **Bản tóm tắt đồ họa A4 Vector chuẩn GDPT 2018:** Tự động cân chỉnh chữ, ngắt dòng tiếng Việt, công thức Toán - KHTN & Phiên âm IPA quốc tế chuẩn mực. Học sinh có thể tải về lưu điện thoại hoặc in ra giấy kẹp SGK để ôn tập!")
-                        
+
                         col_mode, col_space = st.columns([3, 1])
                         with col_mode:
                             mode_choice = st.radio(
@@ -11749,7 +11667,7 @@ Khối 4 (Cạm bẫy thực tế & Mẹo thi):
                                 horizontal=True,
                                 key=f"infog_mode_{t1_indexing_data['index_code']}"
                             )
-                        
+
                         chosen_svg = svg_mono if "Trắng Đen" in mode_choice else svg_color
                         b64_svg = base64.b64encode(chosen_svg.encode('utf-8')).decode('utf-8')
                         st.markdown(
@@ -11758,7 +11676,7 @@ Khối 4 (Cạm bẫy thực tế & Mẹo thi):
                             f'</div>',
                             unsafe_allow_html=True
                         )
-                        
+
                         col_dl1, col_dl2 = st.columns(2)
                         with col_dl1:
                             st.download_button(
@@ -11812,11 +11730,11 @@ Khối 4 (Cạm bẫy thực tế & Mẹo thi):
 
                 st.caption(f"🎓 **Gia sư Socratic Môn {subject} - Lớp {grade_num}:** Đối thoại khai phóng tư duy • 100% Text & công thức $\\text{{\\LaTeX}}$, không Voice • Hỏi đáp cùng Thầy cho thông suốt trước khi xuống làm bài tập nhé!")
 
-                
+
 
                 chat_container = st.container()
 
-                
+
 
                 with chat_container:
 
@@ -11830,7 +11748,7 @@ Khối 4 (Cạm bẫy thực tế & Mẹo thi):
 
                 t1_input = st.chat_input("Gõ câu trả lời hoặc chỗ chưa hiểu gửi Thầy...", key=f"t1_inp_{chat_context_key}")
 
-                
+
 
                 if t1_input:
 
@@ -11844,9 +11762,9 @@ Khối 4 (Cạm bẫy thực tế & Mẹo thi):
 
                         t1_hist_ctx = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.tram1_chat_history[-4:-1]])
                         t1_sys_inst = build_socratic_master_instruction(
-                            subject, grade_num, student_name, 
-                            mode="theory", 
-                            topic_nm=st.session_state.get('current_topic', subject), 
+                            subject, grade_num, student_name,
+                            mode="theory",
+                            topic_nm=st.session_state.get('current_topic', subject),
                             context_data=cleaned_p1
                         )
                         with st.chat_message("assistant"):
@@ -11854,7 +11772,7 @@ Khối 4 (Cạm bẫy thực tế & Mẹo thi):
                                 is_t1_understood = detect_student_concluded_intent(t1_input, st.session_state.tram1_chat_history)
                                 t1_quote_data = get_unique_philosophical_lesson(1, subject)
                                 t1_cross_ctx = get_cross_station_pedagogical_context(1)
-                                
+
                                 if is_t1_understood:
                                     t1_prompt_msg = (
                                         f"Bối cảnh liên trạm của học sinh:\n{t1_cross_ctx}\n"
@@ -11940,7 +11858,7 @@ Khối 4 (Cạm bẫy thực tế & Mẹo thi):
                             bbt_txt = pve.heal_bbt_mathematics(bbt_txt)
                         except Exception:
                             pass
-                    
+
                     b64_bbt = render_bbt_to_webp_base64(bbt_txt)
                     if b64_bbt:
                         st.caption("📋 **Bảng biến thiên chuẩn hóa LaTeX & Bộ GD&ĐT:**")
@@ -11964,7 +11882,7 @@ Khối 4 (Cạm bẫy thực tế & Mẹo thi):
                 except Exception as _e_vis:
                     pass
 
-                user_choice = st.radio(f"Chọn đáp án câu {idx+1}:", q['options'], key=f"q_{idx}", label_visibility="collapsed")
+                user_choice = st.radio(f"Chọn đáp án câu {idx+1}:", q['options'], key=f"q_{idx}", label_visibility="collapsed", index=None)
 
                 if st.button(f"🔍 Kiểm tra câu {idx+1}", key=f"btn_{idx}"):
 
@@ -11972,11 +11890,11 @@ Khối 4 (Cạm bẫy thực tế & Mẹo thi):
 
                         choice_letter = re.sub(r'[^A-D]', '', user_choice.strip()[:3]).upper()[:1]
 
-                        if choice_letter == q['correct']: 
+                        if choice_letter == q['correct']:
 
                             st.session_state.quiz_states[idx] = ("correct", "🎉 Xuất sắc! Em tư duy rất chuẩn.")
 
-                        else: 
+                        else:
 
                             st.session_state.quiz_states[idx] = ("incorrect", f"💡 **Gợi ý Socratic:** {q['explain']}")
 
@@ -12002,7 +11920,7 @@ Khối 4 (Cạm bẫy thực tế & Mẹo thi):
             fallback_p2_vis = render_pedagogical_lesson_visuals(fallback_p2.strip(), subject=subject, grade=grade_num)
             st.markdown(fallback_p2_vis, unsafe_allow_html=True)
 
-        
+
 
         # In Phần 3
 
@@ -12014,7 +11932,7 @@ Khối 4 (Cạm bẫy thực tế & Mẹo thi):
 
 
 
-    
+
 
     render_voice_speech_tex_and_english_evaluator('Tram 1', subject, grade_num)
 
@@ -12048,7 +11966,7 @@ Khối 4 (Cạm bẫy thực tế & Mẹo thi):
 
     st.markdown(f'<div style="color: #cbd5e1; font-size: 15px; margin-bottom: 12px;">{lab_intro_text}</div>', unsafe_allow_html=True)
 
-    
+
 
     is_social_subject = subject in ["Ngữ văn", "Lịch sử", "Địa lý", "Giáo dục công dân", "Giáo dục kinh tế và pháp luật", "Lịch sử & Địa lý", "Tiếng Anh"]
 
@@ -12439,7 +12357,7 @@ Khối 4 (Cạm bẫy thực tế & Mẹo thi):
 
     lab_command = st.text_input("Lệnh mô phỏng:", placeholder=lab_ph, key=f"lab_cmd_{current_context_key}", label_visibility="collapsed")
 
-    
+
 
     if st.button("✨ Khởi chạy Phòng Lab", key=f"btn_lab_{current_context_key}") and lab_command.strip():
 
@@ -12465,7 +12383,7 @@ Khối 4 (Cạm bẫy thực tế & Mẹo thi):
 
                 full_context_blocks.append(q_text)
 
-            
+
 
             # TẦNG 1: TỰ ĐỘNG BƠM NGỮ CẢNH NẾU CHƯA CÓ BÀI HỌC (CHỐNG MÙ 100%)
 
@@ -12485,7 +12403,7 @@ Hệ thống AI BẮT BUỘC dựa vào toàn bộ kiến thức chuẩn SGK K�
 
             context_text = "\n\n".join(full_context_blocks)
 
-            
+
 
             social_constraint = ""
 
@@ -12503,7 +12421,7 @@ QUY TẮC BẮT BUỘC ĐẶC THÙ CHO MÔN KHOA HỌC XÃ HỘI / NGOẠI NGỮ
 
             lab_prompt = f"""[HỆ TRI THỨC SƯ PHẠM QUỐC GIA - CHUẨN CT GDPT 2018 & QUY CHẾ THI 2026 (Cập nhật QĐ 764/QĐ-BGDĐT & TT 13/2026/TT-BGDĐT)]
 
-Môn học: {subject} | Khối lớp: {grade_num}. 
+Môn học: {subject} | Khối lớp: {grade_num}.
 
 NGỮ CẢNH BÀI HỌC, TRẮC NGHIỆM VÀ TỰ LUẬN HIỆN TẠI (BẮT BUỘC THAM CHIẾU KHI HỌC SINH NÓI 'CÂU 1', 'CÂU 2', 'BÀI TỰ LUẬN TRÊN', 'HÌNH Ở TRÊN'...):
 
@@ -12659,7 +12577,7 @@ QUY TẮC PHÂN LOẠI MÔ HÌNH:
 
                 topic_title = st.session_state.get("current_topic", "") or f"CHỦ ĐỀ {subject.upper()} LỚP {grade_num}"
 
-                
+
 
                 if is_mindmap_req or is_social_subject:
 
@@ -12751,7 +12669,7 @@ QUY TẮC PHÂN LOẠI MÔ HÌNH:
 
         st.caption("Học sinh có thể dùng chuột hoặc ngón tay xoay 360 độ, phóng to, thu nhỏ và quan sát liên kết không gian chân thực:")
 
-        
+
 
         c_3d1, c_3d2 = st.columns([1.5, 3.5])
 
@@ -12781,7 +12699,7 @@ QUY TẮC PHÂN LOẠI MÔ HÌNH:
 
                 st.info("Trực quan hóa cấu trúc nguyên tử và phân tử phục vụ học tập tích hợp STEM.")
 
-        
+
 
         with c_3d2:
 
@@ -12821,7 +12739,7 @@ if selected_station == station_labels[1]:
 
         st.markdown("<div style='height: 6px;'></div>", unsafe_allow_html=True)
 
-        if st.button("🔄 Làm mới buổi học", key=f"btn_reset_chat_{current_context_key}", width="stretch"): 
+        if st.button("🔄 Làm mới buổi học", key=f"btn_reset_chat_{current_context_key}", width="stretch"):
 
             st.session_state.messages = []
 
@@ -12896,8 +12814,8 @@ if selected_station == station_labels[1]:
             st.markdown("##### 📁 Cách 2: Tải ảnh từ thiết bị (Nhiều trang - Nhanh nhất)")
             st.caption("💡 **Mẹo làm bài dài nhiều trang:** Em hãy dùng Camera điện thoại chụp sẵn các trang 1, 2, 3... Sau đó chọn **tất cả các ảnh cùng lúc** từ Bộ sưu tập:")
             uploaded_files = st.file_uploader(
-                "Chọn 1 hoặc nhiều ảnh bài làm:", 
-                type=["jpg", "png", "jpeg", "webp", "heic"], 
+                "Chọn 1 hoặc nhiều ảnh bài làm:",
+                type=["jpg", "png", "jpeg", "webp", "heic"],
                 accept_multiple_files=True,
                 key=f"t2_upload_{current_context_key}"
             )
@@ -12986,7 +12904,7 @@ if selected_station == station_labels[1]:
 
         st.success(f"✨ **Đã tiếp nhận thành công {total_pages} trang bài làm!** Em xem trước bên dưới và bấm bắt đầu nhận xét nhé:")
 
-        
+
 
         # Hiển thị ảnh xem trước các trang bài làm (hoặc ảnh đã chấm bút tích của Thầy nếu đã nhận xét)
 
@@ -13036,11 +12954,11 @@ if selected_station == station_labels[1]:
 
             btn_start_review = st.button(
 
-                f"🚀 Bắt đầu nhận xét bài làm ({total_pages} trang)" if total_pages > 1 else "🚀 Bắt đầu nhận xét bài làm", 
+                f"🚀 Bắt đầu nhận xét bài làm ({total_pages} trang)" if total_pages > 1 else "🚀 Bắt đầu nhận xét bài làm",
 
-                type="primary", 
+                type="primary",
 
-                width="stretch", 
+                width="stretch",
 
                 key=f"btn_review_{current_context_key}"
 
@@ -13084,7 +13002,7 @@ if selected_station == station_labels[1]:
 
                     full_res = call_gemini_with_fallback(
 
-                        review_payload, 
+                        review_payload,
 
                         system_instruction=socratic_system_instruction
 
@@ -13150,15 +13068,15 @@ if selected_station == station_labels[1]:
 
                                 "event_id": str(uuid.uuid4()),
 
-                                "time": get_vn_time(), 
+                                "time": get_vn_time(),
 
                                 "name": student_name,
 
-                                "grade": grade, 
+                                "grade": grade,
 
-                                "subject": subject, 
+                                "subject": subject,
 
-                                "topic": diag.get("topic", "Kiến thức SGK KNTT"), 
+                                "topic": diag.get("topic", "Kiến thức SGK KNTT"),
 
                                 "error_type": diag.get("error_type", "Chưa rõ"),
 
@@ -13176,7 +13094,7 @@ if selected_station == station_labels[1]:
 
                             sync_event(entry)
 
-                        except Exception: 
+                        except Exception:
 
                             pass
 
@@ -13184,7 +13102,7 @@ if selected_station == station_labels[1]:
 
                     st.rerun()
 
-                except Exception as e: 
+                except Exception as e:
 
                     st.error(f"Lỗi phân tích bài làm: {e}")
 
@@ -13208,7 +13126,7 @@ if selected_station == station_labels[1]:
 
             sc = radar_scores
 
-            
+
 
             # Chọn nhãn 5 trục năng lực chuẩn hóa theo CT GDPT 2018 & Thông tư 22/2021/TT-BGDĐT
 
@@ -13264,21 +13182,7 @@ if selected_station == station_labels[1]:
 
             st.caption("Ước lượng tham khảo của AI từ bài vừa nộp; không phải điểm năng lực đã được kiểm định.")
 
-            # --- THUẬT TOÁN TRUY VẾT TRI THỨC BAYES (BKT) ---
-            if evaluate_competencies_bkt:
-                try:
-                    bkt_scores = evaluate_competencies_bkt(
-                        socratic_interactions_count=max(3, len(progress)),
-                        recent_correct_ratio=0.75
-                    )
-                    bkt_col1, bkt_col2 = st.columns([1.5, 3.5])
-                    with bkt_col1:
-                        avg_p_l = sum(v["p_mastery"] for v in bkt_scores.values()) / len(bkt_scores)
-                        st.metric("Xác suất Nắm vững Bayes P(Lₜ)", f"{avg_p_l:.1%}", delta="+35% Tốc độ Socratic P(T)")
-                    with bkt_col2:
-                        st.caption("📈 **Mô hình BKT (Bayesian Knowledge Tracing):** Cập nhật xác suất lĩnh hội tri thức qua đối thoại gợi mở Socratic Polya 4 bước. Tốc độ chuyển dịch nhận thức $P(T)_{Socratic} = 0.35$ chứng minh tính hiệu quả vượt bậc so với phương pháp xem lời giải chép sẵn ($0.08$).")
-                except Exception:
-                    pass
+            st.caption("Chưa hiển thị xác suất BKT khi chưa có chuỗi quan sát đúng/sai theo từng kỹ năng.")
 
             col_dg1, col_dg2 = st.columns([3, 1.2])
 
@@ -13308,7 +13212,7 @@ if selected_station == station_labels[1]:
 
     for idx_m, m in enumerate(st.session_state.get("messages", [])):
 
-        with st.chat_message(m["role"]): 
+        with st.chat_message(m["role"]):
 
             st.markdown(m["content"])
 
@@ -13443,16 +13347,16 @@ if selected_station == station_labels[1]:
         if q := st.chat_input("Em chưa hiểu chỗ nào, hãy hỏi Thầy nhé..."):
             st.session_state.tram2_count += 1
             st.session_state.messages.append({"role": "user", "content": q})
-            with st.chat_message("user"): 
+            with st.chat_message("user"):
                 st.markdown(q)
             with st.chat_message("assistant"):
                 try:
                     history_context = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[-4:]])
-                    
+
                     is_student_understood = detect_student_concluded_intent(q, st.session_state.messages)
                     t2_quote_data = get_unique_philosophical_lesson(2, subject)
                     t2_cross_ctx = get_cross_station_pedagogical_context(2)
-                    
+
                     if is_student_understood:
                         t2_followup_inst = build_socratic_master_instruction(subject, grade_num, student_name, mode="theory")
                         prompt_msg = (
@@ -13477,7 +13381,7 @@ if selected_station == station_labels[1]:
                             f"LƯU Ý SƯ PHẠM: Cuối câu gợi mở, hãy hỏi tự nhiên: 'Chỗ này em đã nắm chắc các bước chưa, còn điều gì băn khoăn muốn hỏi Thầy nữa không?'. "
                             f"TUYỆT ĐỐI CHƯA chốt bài học triết lý đạo đức ở bước này khi học sinh vẫn đang gỡ rối bài tập."
                         )
-                    
+
                     stream_gen2 = stream_gemini_with_fallback(
                         prompt_msg,
                         system_instruction=t2_followup_inst
@@ -13486,7 +13390,7 @@ if selected_station == station_labels[1]:
                     if "<DIAGNOSTIC>" in clean_rep:
                         clean_rep = clean_rep.split("<DIAGNOSTIC>")[0].strip()
                     st.session_state.messages.append({"role": "assistant", "content": clean_rep})
-                except Exception as e: 
+                except Exception as e:
                     st.error(f"Lỗi phản hồi: {e}")
 
 
@@ -14878,7 +14782,7 @@ if selected_station == station_labels[2]:
 
                 q = auto_extract_mslgn(q)
 
-                
+
 
                 # 2. KHỬ TRIỆT ĐỂ KHÁI NIỆM "ĐIỂM UỐN" & y'' = 0 (VI PHẠM CT GDPT 2018)
 
@@ -14986,7 +14890,7 @@ if selected_station == station_labels[2]:
 
                 # CHỐT CHẶN CÁCH LY PHÂN MÔN & THỐNG KÊ MSLGN (CHUẨN GDPT 2018):
                 is_statistical_mslgn = any(k in q_txt_lower for k in [
-                    "ghép nhóm", "mẫu số liệu", "mslgn", "tần số", "khoảng tứ phân vị", 
+                    "ghép nhóm", "mẫu số liệu", "mslgn", "tần số", "khoảng tứ phân vị",
                     "độ lệch chuẩn", "phương sai", "cỡ mẫu", "trung vị", "mốt", "giá trị đại diện",
                     "tần số ghép nhóm", "bảng số liệu ghép nhóm"
                 ]) or bool(re.search(r'\[\s*\d+(?:[\.,]\d+)?\s*[;,]\s*\d+(?:[\.,]\d+)?\s*\)', q_text))
@@ -15091,7 +14995,7 @@ if selected_station == station_labels[2]:
                         if opts and isinstance(opts, list):
                             ans_idx = ord(ans_letter) - ord("A") if ans_letter in ("A", "B", "C", "D") else 0
                             target_opt_str = str(opts[ans_idx]) if 0 <= ans_idx < len(opts) else str(opts[0])
-                        
+
                         opts_str = " ".join(str(o) for o in opts)
                         combined_all = (q_text + " " + target_opt_str + " " + opts_str).lower()
 
@@ -15287,7 +15191,7 @@ if selected_station == station_labels[2]:
                         y_parsed = _parse_bbt_cells_safe(bbt_lines[2])
                         lbl_yp = yp_parsed[0] if yp_parsed else "y'"
                         raw_yp_cells = yp_parsed[1:] if len(yp_parsed) > 1 else []
-                        
+
                         # Nếu hàng y có vạch đôi mà hàng y' không có hoặc hàng y' ghi 0
                         if is_tiem_can_q:
                             healed_cells = []
@@ -15434,7 +15338,7 @@ if selected_station == station_labels[2]:
 
                 f'<div style="margin: 4px 0 10px 0; font-size: 11.5px; color: #38bdf8; background: rgba(56, 189, 248, 0.08); padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.25); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">'
 
-                f'<span>🛡️ <b>DEEP CHECK VAR:</b> Chuẩn hóa 100% SGK/SBT Kết Nối Tri Thức (CT GDPT 2018) • Tuyệt đối không vi phạm chương trình cũ</span>'
+                f'<span>🛡️ <b>DEEP CHECK VAR:</b> Nội dung được phần mềm chuẩn hóa; nguồn và đáp án cần giáo viên kiểm tra</span>'
 
                 f'<span><a href="https://www.vniteach.com/sach-dien-tu-ket-noi-tri-thuc/#google_vignette" target="_blank" style="color: #fbbf24; text-decoration: underline; font-weight: 600;">[📖 Lật trang đối soát VniTeach]</a> &nbsp; <a href="https://hanhtrangso.nxbgd.vn/" target="_blank" style="color: #34d399; text-decoration: underline; font-weight: 600;">[🏛️ Cổng Hành Trang Số NXBGD]</a></span>'
 
@@ -15461,7 +15365,7 @@ if selected_station == station_labels[2]:
                 q.pop("f", None)
 
         is_stat_q = any(k in q_txt_fast for k in [
-            "ghép nhóm", "mẫu số liệu", "mslgn", "tần số", "khoảng tứ phân vị", 
+            "ghép nhóm", "mẫu số liệu", "mslgn", "tần số", "khoảng tứ phân vị",
             "độ lệch chuẩn", "phương sai", "cỡ mẫu", "trung vị", "mốt", "giá trị đại diện",
             "tần số ghép nhóm", "bảng số liệu ghép nhóm"
         ]) or bool(re.search(r'\[\s*\d+(?:[\.,]\d+)?\s*[;,]\s*\d+(?:[\.,]\d+)?\s*\)', q_txt_fast))
@@ -16501,7 +16405,7 @@ if selected_station == station_labels[2]:
 
         ex_c = str(exam_obj.get("code", st.session_state.get("exam_code", "101")))
 
-        
+
 
         # 1. BỘ CHỌN 2 LUỒNG MẪU IN ĐỀ THI
 
@@ -16529,7 +16433,7 @@ if selected_station == station_labels[2]:
 
             template_style = "form1" if "Mẫu 1" in tmpl_choice else "form2"
 
-            
+
 
         with c_mode2:
 
@@ -16579,7 +16483,7 @@ if selected_station == station_labels[2]:
 
             include_answers = st.checkbox("✅ In 1-Chạm: Kèm Toàn Bộ Đáp Án, Lời Giải Chi Tiết & Ma Trận Chấm Điểm Chuẩn Bộ", value=include_ans_default, key=f"{key_prefix}_export_answers")
 
-            
+
 
         try:
 
@@ -16633,13 +16537,13 @@ if selected_station == station_labels[2]:
 
                     st.download_button(
 
-                        f"🖨️ Tải File In HTML ({'Mẫu 1' if template_style == 'form1' else 'Mẫu 2'})", 
+                        f"🖨️ Tải File In HTML ({'Mẫu 1' if template_style == 'form1' else 'Mẫu 2'})",
 
-                        print_html, 
+                        print_html,
 
-                        f"De_{ex_c}_{subject_nm}_{template_style}.html", 
+                        f"De_{ex_c}_{subject_nm}_{template_style}.html",
 
-                        "text/html", 
+                        "text/html",
 
                         type="primary",
 
@@ -16653,7 +16557,7 @@ if selected_station == station_labels[2]:
 
                     st.caption("💡 **Mẹo In/Lưu PDF 1-Chạm:** Mở tệp HTML bằng Chrome/Edge ➔ Bấm nút **'In đề / Lưu PDF'** (hoặc Ctrl+P) ➔ Chọn 'Save as PDF' với khổ giấy A4.")
 
-                
+
 
                 st.markdown(f"##### 📄 Khung Xem Trước Trực Quan Bản In Giấy A4 ({'🏛️ Mẫu 1: Chuẩn Khảo Thí Truyền Thống' if template_style == 'form1' else '📘 Mẫu 2: Chuẩn Sư Phạm Hiện Đại'}):")
 
@@ -16717,13 +16621,13 @@ if selected_station == station_labels[2]:
 
                     st.download_button(
 
-                        f"⬇️ Tải Nguồn LaTeX ({'Mẫu 1' if template_style == 'form1' else 'Mẫu 2'})", 
+                        f"⬇️ Tải Nguồn LaTeX ({'Mẫu 1' if template_style == 'form1' else 'Mẫu 2'})",
 
-                        latex_code, 
+                        latex_code,
 
-                        f"De_{ex_c}_{subject_nm}_{template_style}.tex", 
+                        f"De_{ex_c}_{subject_nm}_{template_style}.tex",
 
-                        "text/plain", 
+                        "text/plain",
 
                         type="secondary",
 
@@ -16775,11 +16679,11 @@ if selected_station == station_labels[2]:
 
                 st.download_button(
 
-                    "⬇️ Tải Đề Dữ Liệu JSON (Đầy đủ đồ thị & tham số)", 
+                    "⬇️ Tải Đề Dữ Liệu JSON (Đầy đủ đồ thị & tham số)",
 
-                    json.dumps(exam_obj, ensure_ascii=False, indent=2), 
+                    json.dumps(exam_obj, ensure_ascii=False, indent=2),
 
-                    f"De_{ex_c}_{subject_nm}.json", 
+                    f"De_{ex_c}_{subject_nm}.json",
 
                     "application/json",
 
@@ -16825,7 +16729,7 @@ if selected_station == station_labels[2]:
 
             col_ex1, col_ex2 = st.columns([1.15, 0.95], gap="medium")
 
-            
+
 
             with col_ex1:
 
@@ -16839,7 +16743,7 @@ if selected_station == station_labels[2]:
 
                     st.info(f"🏷️ **Mã đề thi tự động:** `MÃ ĐỀ {st.session_state.exam_code}` (Chuẩn 4 chữ số Bộ GD&ĐT)")
 
-                
+
 
                 # GIAO DIỆN CHỌN CHUYÊN ĐỀ THEO TABS & CHECKBOXES NHỎ GỌN, THANH LỊCH
 
@@ -16847,7 +16751,7 @@ if selected_station == station_labels[2]:
 
                 st.markdown("##### 📚 Chọn Chuyên đề Khảo thí theo Khối lớp:")
 
-                
+
 
                 chosen_topics = []
 
@@ -16931,7 +16835,7 @@ if selected_station == station_labels[2]:
 
                             chosen_topics.append(f"[Lớp {grade_num}] {t_name}")
 
-                    
+
 
                 if not chosen_topics:
 
@@ -16941,7 +16845,7 @@ if selected_station == station_labels[2]:
 
                 st.caption(f"📌 **Đã chọn ({len(chosen_topics)} chuyên đề):** {', '.join(chosen_topics[:2])}{'...' if len(chosen_topics) > 2 else ''}")
 
-                
+
 
                 def handle_custom_prompt_commit():
                     val = str(st.session_state.get("area_custom_prompt_main", "")).strip()
@@ -16989,7 +16893,7 @@ if selected_station == station_labels[2]:
 
                 st.markdown("#### 📊 Cấu trúc Điểm số & Thời Gian Thi:")
 
-                
+
 
                 if subject == "Ngữ văn":
 
@@ -17011,9 +16915,9 @@ if selected_station == station_labels[2]:
 
                     exam_time_mins = st.selectbox(
 
-                        "⏱️ Thời lượng bài thi Ngữ văn (Phút):", 
+                        "⏱️ Thời lượng bài thi Ngữ văn (Phút):",
 
-                        [45, 60, 90, 120], 
+                        [45, 60, 90, 120],
 
                         index=3
 
@@ -17043,11 +16947,11 @@ if selected_station == station_labels[2]:
 
                         num_p1 = st.selectbox(
 
-                            "📝 Số câu trắc nghiệm (0.25đ/câu):", 
+                            "📝 Số câu trắc nghiệm (0.25đ/câu):",
 
-                            [40, 30, 20], 
+                            [40, 30, 20],
 
-                            index=0, 
+                            index=0,
 
                             help="Đề thi chính thức của Bộ GD&ĐT gồm 40 câu (10.0 điểm)."
 
@@ -17057,9 +16961,9 @@ if selected_station == station_labels[2]:
 
                         exam_time_mins = st.selectbox(
 
-                            "⏱️ Thời lượng bài thi (Phút):", 
+                            "⏱️ Thời lượng bài thi (Phút):",
 
-                            [15, 30, 45, 50, 60], 
+                            [15, 30, 45, 50, 60],
 
                             index=3
 
@@ -17113,13 +17017,13 @@ if selected_station == station_labels[2]:
 
                         num_p3 = st.number_input("Số câu TLN P.III:", min_value=0, max_value=10, value=def_p3)
 
-                        
+
 
                     exam_time_mins = st.selectbox(
 
-                        "⏱️ Thời lượng bài thi (Phút):", 
+                        "⏱️ Thời lượng bài thi (Phút):",
 
-                        [15, 30, 45, 50, 60, 90, 120], 
+                        [15, 30, 45, 50, 60, 90, 120],
 
                         index=[15, 30, 45, 50, 60, 90, 120].index(def_time) if def_time in [15, 30, 45, 50, 60, 90, 120] else 3
 
@@ -17143,13 +17047,13 @@ if selected_station == station_labels[2]:
 
                 st.markdown("---")
 
-                
+
 
                 # --- KHU VỰC KHỞI ĐỘNG BÀI THI CHO THÍ SINH (ACTION CENTER - BUỒNG LÁI COCKPIT) ---
 
                 real_exams_list = ree.get_baseline_full_exams(subject, grade_num) if ree else []
 
-                
+
 
                 def detect_exam_type(ex_item):
 
@@ -17165,7 +17069,7 @@ if selected_station == station_labels[2]:
 
                     if c_str.startswith("TT26"): return "Thi thử Tốt nghiệp THPT"
 
-                    
+
 
                     t_str = str(ex_item.get("exam_type") or "").strip()
 
@@ -17201,7 +17105,7 @@ if selected_station == station_labels[2]:
 
                 thithu_exams = [it for it in real_exams_list if detect_exam_type(it) == "Thi thử Tốt nghiệp THPT" or any(kw in detect_exam_type(it).lower() for kw in ["thử", "khảo sát"])]
 
-                
+
 
                 gk1_count = len(gk1_exams)
 
@@ -17213,7 +17117,7 @@ if selected_station == station_labels[2]:
 
                 thithu_count = len(thithu_exams)
 
-                
+
 
                 exam_mode_options = [
 
@@ -17229,7 +17133,7 @@ if selected_station == station_labels[2]:
 
                 selected_exam_mode = st.radio("Lựa chọn hình thức đề thi:", exam_mode_options, horizontal=True, key="radio_exam_mode_choice")
 
-                
+
 
                 if "Làm Nguyên Đề Thi Thật" in selected_exam_mode and real_exams_list:
 
@@ -17245,7 +17149,7 @@ if selected_station == station_labels[2]:
 
                     if thithu_count > 0: filter_opts.append(f"🏛️ Thi thử ({thithu_count} đề)")
 
-                    
+
 
                     col_f1, col_f2 = st.columns([1.2, 2.8])
 
@@ -17267,11 +17171,11 @@ if selected_station == station_labels[2]:
 
                         elif "Thi thử" in filter_ex_type: filtered_exams = thithu_exams or real_exams_list
 
-                        
+
 
                         r_opts = [
 
-                            f"[{detect_exam_type(item)}] {item.get('title', 'Đề')} - {item.get('school', '')}" 
+                            f"[{detect_exam_type(item)}] {item.get('title', 'Đề')} - {item.get('school', '')}"
 
                             for item in filtered_exams
 
@@ -17282,7 +17186,7 @@ if selected_station == station_labels[2]:
 
                         chosen_real_idx = st.selectbox(f"Chọn đề ({len(filtered_exams)} đề):", range(len(r_opts)), format_func=lambda i: r_opts[i], key="sel_real_exam_t3")
 
-                    
+
 
                     col_b1, col_b2 = st.columns([1.1, 1.3])
 
@@ -17300,12 +17204,12 @@ if selected_station == station_labels[2]:
                             random.seed(time.time_ns())
                             if "seen_whole_exam_codes" not in st.session_state:
                                 st.session_state.seen_whole_exam_codes = set()
-                            
+
                             fresh_exams = [e for e in filtered_exams if str(e.get("code", e.get("title", ""))) not in st.session_state.seen_whole_exam_codes]
                             if not fresh_exams:
                                 st.session_state.seen_whole_exam_codes.clear()
                                 fresh_exams = filtered_exams
-                            
+
                             sel_real_item = random.choice(fresh_exams)
                             st.session_state.seen_whole_exam_codes.add(str(sel_real_item.get("code", sel_real_item.get("title", ""))))
                             st.toast(f"🎲 Đã bốc ngẫu nhiên đề mới: Mã {sel_real_item.get('code', 'Chính thức')} — {sel_real_item.get('title', 'Đề thi')[:35]}...", icon="🎯")
@@ -17372,7 +17276,7 @@ if selected_station == station_labels[2]:
 
                         up_raw_paste = st.text_area("Hoặc dán trực tiếp nội dung đề thi vào đây:", height=95, placeholder="Dán nội dung câu hỏi hoặc toàn bộ đề thi thô...", key="up_paste_direct_t3")
 
-                        
+
 
                     raw_extracted_t3 = ""
 
@@ -17410,7 +17314,7 @@ if selected_station == station_labels[2]:
 
                         raw_extracted_t3 = up_raw_paste.strip()
 
-                        
+
 
                     if raw_extracted_t3 or up_file_t3_bytes is not None:
 
@@ -17468,7 +17372,7 @@ if selected_station == station_labels[2]:
 
                                     st.error("Không thể tự động phân tích cấu trúc đề thi. Vui lòng kiểm tra lại định dạng câu hỏi.")
 
-                                    
+
 
                     if st.session_state.get("t3_parsed_exam_temp"):
 
@@ -17620,7 +17524,7 @@ if selected_station == station_labels[2]:
 
                             ) if ree else None
 
-                            
+
 
                             if extracted_res and (extracted_res.get("p1") or extracted_res.get("p2") or extracted_res.get("p3")):
 
@@ -17630,7 +17534,7 @@ if selected_station == station_labels[2]:
 
                                     final_exam_to_use = ree.create_mixed_scanned_exam(extracted_res, subject, grade_num, mix_ratio=0.5, shuffle_options=True)
 
-                                
+
 
                                 st.session_state.exam_data = enrich_exam_data(final_exam_to_use)
 
@@ -17673,22 +17577,22 @@ if selected_station == station_labels[2]:
                     c_btn1, c_btn2 = st.columns([1.1, 1.1])
 
                     has_custom_prompt = bool(custom_matrix_prompt and custom_matrix_prompt.strip())
-                    btn1_label = f"📚 Trích Xuất Đề Tùy Biến (Kho 600+ Đề Thật & Vân Tay)" if has_custom_prompt else f"🎲 Trộn Siêu Đề Mới (0.1s - Kho Ngân Hàng)"
+                    btn1_label = f"📚 Trích Xuất Đề Tùy Biến (Kho 600+ Đề Thật & Vân Tay)" if has_custom_prompt else f"🎲 Trộn Siêu Đề Mới (Kho Ngân Hàng)"
                     btn2_label = f"🤖 AI Tạo Đề Theo Tùy Biến (Ưu Tiên Số 1 - Mới Tinh 100%)" if has_custom_prompt else "🚀 Khởi Tạo Đề Mới (AI Sáng Tạo 2026)"
                     btn1_type = "primary" if has_custom_prompt else "secondary"
 
                     with c_btn1:
                         btn_blend_direct = st.button(
-                            btn1_label, 
-                            type=btn1_type, 
+                            btn1_label,
+                            type=btn1_type,
                             width="stretch",
                             help=f"LUỒNG 2: Trích xuất câu hỏi thật từ kho 600+ đề thi chính thức/thi thử toàn quốc ({portal_name_ui}) bám sát yêu cầu tùy biến. Lọc sạch 100% câu hỏi lạc đề qua Bộ lọc 5 lớp và hiển thị Bảng đối chứng vân tay nguồn gốc!"
                         )
 
                     with c_btn2:
                         btn_ai_gen = st.button(
-                            btn2_label, 
-                            type="primary", 
+                            btn2_label,
+                            type="primary",
                             width="stretch",
                             help=f"LUỒNG 1: AI Gemini biên soạn 100% ngữ liệu độc bản mới tinh, không lấy bất kỳ câu nào trong ngân hàng, tự động chạy Bộ Lọc Giải Ngầm (Deep Solver Guard) để xác minh nghiệm và số liệu chuẩn xác tuyệt đối!"
                         )
@@ -17717,7 +17621,7 @@ if selected_station == station_labels[2]:
                             current_cooldown_fps = set()
                             if "seen_question_fps" not in st.session_state:
                                 st.session_state.seen_question_fps = set()
-                            
+
                             # Nếu phiên trước đã có đề, nạp fingerprint của đề cũ vào cooldown
                             if st.session_state.get("exam_data") and isinstance(st.session_state.exam_data, dict):
                                 for p_key in ("p1", "p2", "p3"):
@@ -17728,7 +17632,7 @@ if selected_station == station_labels[2]:
                                             st.session_state.seen_question_fps.add(fp_c)
 
                             blended = ree.generate_blended_real_exam(
-                                subject, grade_num, chosen_topics, (num_p1, num_p2, num_p3), 
+                                subject, grade_num, chosen_topics, (num_p1, num_p2, num_p3),
                                 custom_prompt=custom_matrix_prompt,
                                 exclude_fingerprints=st.session_state.seen_question_fps
                             )
@@ -17805,7 +17709,7 @@ if selected_station == station_labels[2]:
 
                         st.session_state.exam_start_timestamp = time.time()
 
-                        
+
 
                         selected_topics_str = "; ".join(chosen_topics)
 
@@ -17863,7 +17767,7 @@ NGUYÊN TẮC LINH HOẠT SƯ PHẠM TỐI THƯỢNG (HIỆU LỰC GHI ĐÈ TUY�
 - PHẦN III (ĐIỀN SỐ): Đáp án 'ans' PHẢI là số thực hoặc số nguyên có độ dài TỐI ĐA 4 KÝ TỰ (ví dụ: "2.5", "-3", "12", "0.75").
 """
 
-                        
+
 
                         if subject == "Ngữ văn":
 
@@ -18015,7 +17919,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                             exam_prompt = f"""[HỆ THỐNG RA ĐỀ THI TRẮC NGHIỆM CHUẨN 100% CHƯƠNG TRÌNH GDPT 2018 - QĐ 764/QĐ-BGDĐT]
 
-Môn học: {subject} | Khối lớp: {grade_num}. 
+Môn học: {subject} | Khối lớp: {grade_num}.
 
 Chuyên đề liên khối lựa chọn: '{selected_topics_str}'. Mã đề: {st.session_state.exam_code}.
 
@@ -18274,7 +18178,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
             st.caption("Khu vực dành riêng cho Thầy/Cô cấu hình ma trận tùy biến, tải lên đề riêng hoặc trích xuất đề thi từ các nguồn bên ngoài:")
 
-            
+
 
             # 1. TÙY BIẾN MA TRẬN RIÊNG
 
@@ -18330,9 +18234,9 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
             enable_real_exam_blend = st.checkbox(
 
-                f"🎯 Tự Động Trộn Ngữ Liệu Đề Thi Thật (Cập nhật 24/7 từ {portal_name_ui} & Các Trường Điểm)", 
+                f"🎯 Tự Động Trộn Ngữ Liệu Đề Thi Thật (Cập nhật 24/7 từ {portal_name_ui} & Các Trường Điểm)",
 
-                value=True, 
+                value=True,
 
                 key="cb_enable_blend_gv",
 
@@ -18455,15 +18359,15 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                                 parsed_gv = ree.parse_raw_exam_text(
 
-                                    gv_extracted_text, 
+                                    gv_extracted_text,
 
-                                    subject, 
+                                    subject,
 
-                                    grade_num, 
+                                    grade_num,
 
-                                    gv_school_name, 
+                                    gv_school_name,
 
-                                    gv_exam_title, 
+                                    gv_exam_title,
 
                                     ai_caller=lambda p, json_mode=False: call_gemini_with_fallback(p, json_mode=json_mode),
 
@@ -18609,7 +18513,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                 custom_scan_url = st.text_input("Nhập Link Chuyên Mục hoặc Link Bài Viết:", value=st.session_state.get("last_crawled_url", def_cat_url), key="inp_crawl_url")
 
-                
+
 
                 col_c1, col_c2 = st.columns(2)
 
@@ -18655,7 +18559,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                     st.markdown(f"**Link nguồn:** [{target_article.get('url')}]({target_article.get('url')})")
 
-                    
+
 
                     if st.button("🚀 Bóc Tách File PDF & Nạp Làm Ngay (0.1s)", key="btn_extract_selected_cat", type="primary"):
 
@@ -18679,7 +18583,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                                     extracted_exam = None
 
-                                
+
 
                                 if extracted_exam and (extracted_exam.get("p1") or extracted_exam.get("p2") or extracted_exam.get("p3")):
 
@@ -18739,7 +18643,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                                 extracted_direct = None
 
-                            
+
 
                             if extracted_direct and (extracted_direct.get("p1") or extracted_direct.get("p2") or extracted_direct.get("p3")):
 
@@ -18808,12 +18712,12 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
                             random.seed(time.time_ns())
                             if "seen_cached_exam_codes" not in st.session_state:
                                 st.session_state.seen_cached_exam_codes = set()
-                            
+
                             fresh_cached = [e for e in cached_list if str(e.get("code", "")) not in st.session_state.seen_cached_exam_codes]
                             if not fresh_cached:
                                 st.session_state.seen_cached_exam_codes.clear()
                                 fresh_cached = cached_list
-                            
+
                             sel_cached_item = random.choice(fresh_cached)
                             st.session_state.seen_cached_exam_codes.add(str(sel_cached_item.get("code", "")))
                             st.toast(f"🎲 Đã bốc đề ngẫu nhiên mới: Mã {sel_cached_item.get('code')}", icon="🎯")
@@ -18921,7 +18825,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
         disp_title = exam.get("title") or f"Đề thi chuẩn hóa - {exam.get('school', 'Trường điểm toàn quốc')}"
 
-        
+
 
         st.markdown(f"""<div style="background: rgba(15, 23, 42, 0.7); border: 1.5px solid #0284c7; border-radius: 8px; padding: 12px 18px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
 <div>
@@ -18931,7 +18835,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 <span style="background: #0284c7; color: #ffffff; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: bold;">ĐANG LÀM BÀI</span>
 </div>""", unsafe_allow_html=True)
 
-        
+
 
         if st.session_state.get("custom_request_text"):
 
@@ -18939,7 +18843,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
             st.info(f"🎯 **CHẾ ĐỘ TÙY BIẾN GIÁO VIÊN ĐANG HOẠT ĐỘNG:** Đề thi đã được biên soạn theo yêu cầu riêng: *\"{req_str}\"*")
 
-        
+
 
         if "exam_deadline" not in st.session_state or not st.session_state.exam_deadline:
 
@@ -19050,7 +18954,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                 st.session_state.exam_answers[f"nv_dh_{idx}"] = st.text_area(f"Trả lời câu {idx+1}:", key=f"nv_dh_{idx}", height=70)
 
-                
+
 
                 # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
 
@@ -19066,7 +18970,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                 st.markdown("---")
 
-            
+
 
             st.markdown("### PHẦN II: VIẾT (6.0 điểm)")
 
@@ -19078,7 +18982,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                 st.session_state.exam_answers[f"nv_v_{idx}"] = st.text_area(f"Bài làm viết câu {idx+1}:", key=f"nv_v_{idx}", height=140)
 
-                
+
 
                 # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
 
@@ -19118,7 +19022,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                     st.session_state.exam_answers[f"p1_{idx}"] = user_ans
 
-                    
+
 
                     # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
 
@@ -19158,11 +19062,12 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                         clean_stmt = clean_question_bbt_text(clean_stmt)
 
-                        c_ans = st.radio(f"Ý {chr(97+s_idx)}) {clean_stmt}", ["Chưa chọn", "Đúng", "Sai"], horizontal=True, key=f"t3_p2_{idx}_{s_idx}")
+                        st.markdown(f"**Ý {chr(97+s_idx)})** {clean_stmt}")
+                        c_ans = st.radio(f"Chọn Đúng/Sai cho câu {idx+1}, ý {chr(97+s_idx)}", ["Chưa chọn", "Đúng", "Sai"], horizontal=True, key=f"t3_p2_{idx}_{s_idx}", label_visibility="collapsed")
 
                         st.session_state.exam_answers[f"p2_{idx}_{s_idx}"] = c_ans
 
-                    
+
 
                     # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
 
@@ -19192,9 +19097,9 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                     short_ans = st.text_input(
 
-                        f"Nhập đáp số câu {idx+1}:", 
+                        f"Nhập đáp số câu {idx+1}:",
 
-                        key=f"t3_p3_{idx}", 
+                        key=f"t3_p3_{idx}",
 
                         max_chars=6,
 
@@ -19206,7 +19111,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                     st.session_state.exam_answers[f"p3_{idx}"] = short_ans
 
-                    
+
 
                     # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
 
@@ -19291,7 +19196,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
         score_p3 = 0.0
 
-        
+
 
         if subject == "Ngữ văn":
 
@@ -19415,7 +19320,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                     user_letter = re.sub(r'[^A-D]', '', user_a.strip()[:3]).upper()[:1] if user_a else ""
 
-                    if user_letter == q.get("ans", ""): p1_correct += 1
+                    if mcq_answer_matches(q, user_a): p1_correct += 1
 
                 score_p1 = round((p1_correct / len(p1_items)) * w_p1_total, 2)
 
@@ -19441,13 +19346,13 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                         user_choice = st.session_state.exam_answers.get(f"p2_{idx}_{s_idx}", "")
 
-                        expected_bool = stmt["a"] if "a" in stmt else stmt.get("ans", True)
+                        expected_bool = normalize_bool(stmt["a"] if "a" in stmt else stmt.get("ans"))
 
                         if (user_choice == "Đúng" and expected_bool is True) or (user_choice == "Sai" and expected_bool is False):
 
                             correct_stmts_cnt += 1
 
-                    
+
 
                     score_p2 += calculate_part2_statement_score(correct_stmts_cnt) * w_per_q2
 
@@ -19481,9 +19386,9 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
             total_score = min(10.0, round(score_p1 + score_p2 + score_p3, 2))
 
-            
 
-            st.success(f"🏆 **TỔNG ĐIỂM KHẢO THÍ CHUẨN BỘ CỦA {student_name}: {total_score} / 10.0 ĐIỂM**")
+
+            st.success(f"🏆 **ĐIỂM LUYỆN TẬP CỦA {student_name}: {total_score} / 10.0 ĐIỂM**")
 
             if subject == "Tiếng Anh":
 
@@ -19545,11 +19450,11 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                       "phase": st.session_state.get("exam_context", {}).get("phase", "practice"),
 
-                      "student_id": st.session_state.get("exam_context", {}).get("student_id", ""),
+                      "student_id": st.session_state.get("exam_context", {}).get("student_id") or st.session_state.setdefault("anonymous_student_id", str(uuid.uuid4())),
 
                       "duration_seconds": duration_sec,
 
-                      "answers": st.session_state.get("exam_answers", {})}
+                      "answers": {**st.session_state.get("exam_answers", {}), **exam_response_metadata(exam, st.session_state.get("exam_answers", {}))}}
 
         if not any(x.get("event_id") == attempt_id for x in st.session_state.analytics_logs):
 
@@ -19591,7 +19496,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                     render_fast_visual(q, f"sol_p1_{idx}")
 
-                    
+
 
                     is_p1_right = (re.sub(r'[^A-D]', '', user_c[:3]).upper()[:1] == correct_a)
 
@@ -19605,7 +19510,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
 
                     st.markdown(f"- **Đáp án chuẩn của Bộ:** **{opt_full}** &nbsp;({badge_p1})")
 
-                    
+
 
                     # LỜI GIẢI CHI TIẾT & PHƯƠNG PHÁP LUẬN BỘ GD&ĐT
                     expl = q.get('explain', '')
@@ -19627,7 +19532,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
                         expected_str = "Đúng" if expected_bool_rev else "Sai"
                         mark_icon = "✅" if user_ans_s == expected_str else "❌"
                         st.markdown(f"- Ý {chr(97+s_idx)}): *{stmt.get('t')}* -> Em chọn: **{user_ans_s}** | **Chuẩn Bộ:** **{expected_str}** {mark_icon}")
-                    
+
                     expl2 = q.get('explain', 'Xét từng mệnh đề theo định lý và điều kiện cần - đủ.')
                     st.info(f"💡 **Lời giải chi tiết & Phương pháp luận chuẩn Bộ GD&ĐT câu {idx+1}:**\n\n{expl2}")
                     st.markdown("---")
@@ -19642,7 +19547,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
                     st.markdown(f"**Câu {idx+1}:** {q.get('q')}")
                     render_fast_visual(q, f"sol_p3_{idx}")
                     st.markdown(f"- **Đáp số em điền:** `{user_val}` &nbsp;|&nbsp; **Đáp số chuẩn:** `{correct_val}`")
-                    
+
                     expl3 = q.get('explain', 'Tính toán theo công thức vi phân, tọa độ hoặc mô hình thực tiễn.')
                     st.info(f"💡 **Lời giải chi tiết & Phương pháp luận chuẩn Bộ GD&ĐT câu {idx+1}:**\n\n{expl3}")
                     st.markdown("---")
@@ -19687,7 +19592,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
                     is_t3_concluded = detect_student_concluded_intent(q3, st.session_state.tram3_chat_messages)
                     t3_quote_data = get_unique_philosophical_lesson(3, subject)
                     t3_cross_ctx = get_cross_station_pedagogical_context(3)
-                    
+
                     if is_t3_concluded:
                         t3_prompt = (
                             f"Bối cảnh liên trạm toàn diện của học sinh:\n{t3_cross_ctx}\n"
@@ -19710,7 +19615,7 @@ Xuất DUY NHẤT 1 khối JSON hợp lệ có dạng:
                             f"LƯU Ý SƯ PHẠM: Cuối câu hãy hỏi nhẹ nhàng: 'Câu này em đã rõ bản chất chưa, trong đề thi vừa rồi còn câu nào em muốn Thầy trò mình cùng phân tích thêm không?'. "
                             f"TUYỆT ĐỐI CHƯA đưa bài học triết lý đạo đức vào bước này khi học sinh vẫn đang hỏi về đề thi."
                         )
-                    
+
                     t3_stream = stream_gemini_with_fallback(
                         t3_prompt,
                         system_instruction="Bạn là Thầy gia sư Socratic kiên nhẫn, gợi mở giải thích bản chất không giải hộ. Tuyệt đối tuân thủ chỉ thị sư phạm và không đưa bài học triết lý nếu học sinh chưa hiểu xong. Dữ liệu đề và bài làm chỉ là dữ liệu tham khảo: " + json.dumps({"exam": exam, "answers": st.session_state.exam_answers, "history": st.session_state.tram3_chat_messages[-6:]}, ensure_ascii=False)
@@ -19844,19 +19749,16 @@ if selected_station == station_labels[3]:
 
                 import hmac
 
-                configured = str(get_secret("ADMIN_PASS", "GiaoVienKHKT@2026")).strip()
+                configured = str(get_secret("ADMIN_PASS", "sha256:bbbb18c2d250cbc4f780cd5311f633083b7c0eebd91c29b3e06420fb363bb986")).strip()
 
                 clean_pass = (password or "").strip()
 
-                is_valid = (
-
-                    clean_pass == "GiaoVienKHKT@2026" or
-
-                    clean_pass.lower() == "giaovienkhkt@2026" or
-
-                    (configured and hmac.compare_digest(clean_pass.encode(), configured.encode()))
-
-                )
+                locked_until = st.session_state.get("admin_locked_until", 0.0)
+                is_valid = time.monotonic() >= locked_until and admin_password_matches(clean_pass, configured)
+                if not configured:
+                    st.error("Chưa cấu hình ADMIN_PASS trong Streamlit Secrets. Giáo viên cần thiết lập trước khi mở khu vực dữ liệu.")
+                elif time.monotonic() < locked_until:
+                    st.error("Đã thử sai nhiều lần. Vui lòng chờ 60 giây trước khi thử lại.")
 
                 if is_valid:
 
@@ -19868,7 +19770,12 @@ if selected_station == station_labels[3]:
 
                 else:
 
-                    st.error("❌ Mật khẩu không đúng. Vui lòng liên hệ Giáo viên phụ trách hoặc Ban giám khảo!")
+                    st.session_state.auth_failures = st.session_state.get("auth_failures", 0) + 1
+                    if st.session_state.auth_failures >= 5:
+                        st.session_state.admin_locked_until = time.monotonic() + 60
+                        st.session_state.auth_failures = 0
+                    if configured and time.monotonic() >= locked_until:
+                        st.error("Mật khẩu không đúng. Vui lòng liên hệ giáo viên phụ trách.")
 
         st.stop()
 
@@ -19906,7 +19813,7 @@ if selected_station == station_labels[3]:
 
         frame = pd.DataFrame(logs)
 
-        st.dataframe(frame, width="stretch")
+        st.dataframe(display_frame(frame), width="stretch")
 
         st.download_button("Tải nhật ký (CSV)", frame.to_csv(index=False).encode("utf-8-sig"), "nhat_ky_hoc_tap.csv", "text/csv")
 
@@ -19956,7 +19863,7 @@ if selected_station == station_labels[3]:
 
         available = [c for c in ("name", "grade", "subject", "topic", "error_type", "evaluation") if c in errors]
 
-        st.dataframe(errors[available], width="stretch")
+        st.dataframe(display_frame(errors[available]), width="stretch")
 
         if "topic" in errors:
 
@@ -19980,7 +19887,7 @@ if selected_station == station_labels[3]:
 
     if source == "Cơ sở dữ liệu thực (DB / SQL)":
 
-        st.caption("⚡ **Truy vấn CSDL với B-Tree Indexing (<5ms):** Tự động truy vấn và ghép cặp điểm Pre-test và Post-test của cùng học sinh theo môn và khối lớp.")
+        st.caption("⚡ **Truy vấn CSDL theo môn và khối lớp:** Tự động truy vấn và ghép cặp điểm Pre-test và Post-test của cùng học sinh theo môn và khối lớp.")
 
         col_db_subj, col_db_gr = st.columns(2)
 
@@ -19997,7 +19904,7 @@ if selected_station == station_labels[3]:
 
             db_gr = st.selectbox("Khối lớp:", [10, 11, 12, 6, 7, 8, 9], index=2, key="db_filter_gr")
 
-        
+
 
         if db_manager:
 
@@ -20157,7 +20064,7 @@ if selected_station == station_labels[3]:
                 st.metric("Hake's Normalized Gain ⟨g⟩", f"{hg:.3f}", delta=hg_label)
 
         if result.get("shapiro_p") is not None:
-            sw_note = "Phân phối chuẩn (p ≥ 0.05)" if result['shapiro_p'] >= 0.05 else "Lệch chuẩn (p < 0.05)"
+            sw_note = "Chưa bác bỏ giả thuyết phân phối chuẩn (p ≥ 0.05)" if result['shapiro_p'] >= 0.05 else "Có bằng chứng lệch chuẩn (p < 0.05)"
             sw_txt = f"Kiểm định phân phối chuẩn Shapiro-Wilk: p = {result['shapiro_p']:.4f} ({sw_note})"
             wilc_txt = f" • Kiểm định phi tham số Wilcoxon: p = {result['wilcoxon_p']:.4f}" if result.get('wilcoxon_p') is not None else ""
             st.caption(f"🔬 **Độ tin cậy đo lường (Chuẩn APA 7th & Scopus):** {sw_txt}{wilc_txt}")
@@ -20212,84 +20119,90 @@ if selected_station == station_labels[3]:
         with st.expander("📊 Thẩm Định Khảo Thí Chuẩn ETS: Hệ Số Tin Cậy Cronbach's Alpha (α) & Độ Phân Biệt (r_pbis)", expanded=True):
             st.markdown(r"""
             **Căn cứ Đo lường Khảo thí Quốc tế (ETS & Psychometrics):**
-            Hệ số tin cậy nội tại Cronbach's Alpha ($\alpha$) và Hệ số tương quan phân biệt Point-Biserial ($r_{\text{pbis}}$) 
+            Hệ số tin cậy nội tại Cronbach's Alpha ($\alpha$) và Hệ số tương quan phân biệt Point-Biserial ($r_{\text{pbis}}$)
             được tính toán trực tiếp từ ma trận câu hỏi nhị phân ($X_{ij} \in \{0, 1\}$) của học sinh để đánh giá chất lượng đề thi chuẩn hóa.
             $$\alpha = \frac{K}{K - 1} \left(1 - \frac{\sum_{i=1}^K \sigma_i^2}{\sigma_X^2}\right)$$
             """)
             if compute_cronbach_alpha and generate_benchmark_psychometric_sample and compute_item_analysis:
-                psy_matrix, psy_item_names = generate_benchmark_psychometric_sample(n_students=35, k_items=22)
-                alpha_data = compute_cronbach_alpha(psy_matrix)
-                item_details = compute_item_analysis(psy_matrix, psy_item_names)
+                psy_matrix, psy_item_names = observed_item_matrix(logs) if not analysis["demo"] else generate_benchmark_psychometric_sample(n_students=35, k_items=22)
+                if analysis["demo"]:
+                    st.warning("MÔ PHỎNG ĐO LƯỜNG: ma trận minh họa độc lập, không phải bài làm của học sinh.")
+                elif psy_matrix.size == 0:
+                    st.info("Chưa đủ 3 bài làm có dữ liệu đúng/sai trên cùng phiên bản đề. Nhật ký cũ không được tự suy ra kết quả từng câu.")
+                if psy_matrix.size:
+                    alpha_data = compute_cronbach_alpha(psy_matrix)
+                    item_details = compute_item_analysis(psy_matrix, psy_item_names)
 
-                p_col1, p_col2, p_col3 = st.columns(3)
-                with p_col1:
-                    st.metric("Hệ số Cronbach's Alpha (α)", f"{alpha_data['alpha']:.3f}", delta=alpha_data['interpretation'].split('(')[0].strip())
-                with p_col2:
-                    st.metric("Quy mô Mẫu Thẩm định", f"N = {alpha_data['n_students']} HS x K = {alpha_data['k_items']} Câu")
-                with p_col3:
-                    well_discrim = len([it for it in item_details if it['rpbis'] >= 0.20])
-                    st.metric("Câu hỏi Đạt chuẩn ETS (r_pbis ≥ 0.2)", f"{well_discrim}/{len(item_details)} ({well_discrim/len(item_details):.0%})")
+                    p_col1, p_col2, p_col3 = st.columns(3)
+                    with p_col1:
+                        st.metric("Hệ số Cronbach's Alpha (α)", f"{alpha_data['alpha']:.3f}", delta=alpha_data['interpretation'].split('(')[0].strip())
+                    with p_col2:
+                        st.metric("Số bài cùng phiên bản đề", f"N = {alpha_data['n_students']} HS x K = {alpha_data['k_items']} Câu")
+                    with p_col3:
+                        well_discrim = len([it for it in item_details if it['rpbis'] >= 0.20])
+                        st.metric("Câu hỏi Đạt chuẩn ETS (r_pbis ≥ 0.2)", f"{well_discrim}/{len(item_details)} ({well_discrim/len(item_details):.0%})")
 
-                st.caption(f"🎯 **Đánh giá Sư phạm:** `{alpha_data['interpretation']}` (Phương sai tổng $\\sigma_X^2 = {alpha_data['total_variance']:.2f}$ | Tổng phương sai câu $\\sum \\sigma_i^2 = {alpha_data['sum_item_variances']:.2f}$)")
+                    st.caption(f"🎯 **Đánh giá Sư phạm:** `{alpha_data['interpretation']}` (Phương sai tổng $\\sigma_X^2 = {alpha_data['total_variance']:.2f}$ | Tổng phương sai câu $\\sum \\sigma_i^2 = {alpha_data['sum_item_variances']:.2f}$)")
 
-                warned_items = [it for it in item_details if it['rpbis'] < 0.20]
-                if warned_items:
-                    st.warning(f"⚠️ **Cảnh báo Khảo thí:** Phát hiện {len(warned_items)} câu hỏi có độ phân biệt thấp ($r_{{\\text{{pbis}}}} < 0.20$): " + ", ".join([w['item_name'] for w in warned_items]) + ". Cần rà soát lại phương án nhiễu.")
+                    warned_items = [it for it in item_details if it['rpbis'] < 0.20]
+                    if warned_items:
+                        st.warning(f"⚠️ **Cảnh báo Khảo thí:** Phát hiện {len(warned_items)} câu hỏi có độ phân biệt thấp ($r_{{\\text{{pbis}}}} < 0.20$): " + ", ".join([w['item_name'] for w in warned_items]) + ". Cần rà soát lại phương án nhiễu.")
 
-                df_items = pd.DataFrame([{
-                    "Câu hỏi": it["item_name"],
-                    "Độ khó P_i": it["difficulty_p"],
-                    "Phân loại độ khó": it["difficulty_label"],
-                    "Độ phân biệt r_pbis": it["rpbis"],
-                    "Chuẩn phân hóa ETS": it["discrimination_label"],
-                    "Khuyến nghị khảo thí": it["recommendation"]
-                } for it in item_details])
+                    df_items = pd.DataFrame([{
+                        "Câu hỏi": it["item_name"],
+                        "Độ khó P_i": it["difficulty_p"],
+                        "Phân loại độ khó": it["difficulty_label"],
+                        "Độ phân biệt r_pbis": it["rpbis"],
+                        "Chuẩn phân hóa ETS": it["discrimination_label"],
+                        "Khuyến nghị khảo thí": it["recommendation"]
+                    } for it in item_details])
 
-                st.dataframe(df_items, use_container_width=True, height=260)
-                st.download_button(
-                    "📥 Tải Báo Cáo Đo Lường Khảo Thí (CSV Item Analysis)",
-                    df_items.to_csv(index=False).encode("utf-8-sig"),
-                    "bao_cao_khao_thi_cronbach_alpha.csv",
-                    "text/csv",
-                    key="dl_cronbach_csv"
-                )
+                    st.dataframe(df_items, use_container_width=True, height=260)
+                    st.download_button(
+                        "📥 Tải Báo Cáo Đo Lường Khảo Thí (CSV Item Analysis)",
+                        df_items.to_csv(index=False).encode("utf-8-sig"),
+                        "bao_cao_khao_thi_cronbach_alpha.csv",
+                        "text/csv",
+                        key="dl_cronbach_csv"
+                    )
+
             else:
                 st.info("Module psychometrics đang được nạp...")
 
         # --- MÔ PHỎNG MONTE CARLO N = 10.000 (KHẢO THÍ GDPT 2018 & KHKT 2026) ---
         with st.expander("🎲 Mô phỏng Mở rộng Toàn tỉnh (Monte Carlo Simulation - N = 10.000 học sinh)", expanded=False):
             st.markdown(r"""
-            **Căn cứ khoa học:** Căn cứ tiêu chuẩn thống kê APA 7th và mô hình đánh giá diện rộng GDPT 2018, 
-            thuật toán Monte Carlo thực hiện $10.000$ phép lặp ngẫu nhiên dựa trên tham số phân phối thực nghiệm 
-            ($\mu_{pre}, \sigma_{pre}, \mu_{gain}, \sigma_{gain}$) để dự báo độ hội tụ phổ điểm và xác suất cải thiện năng lực toàn tỉnh.
+            **Căn cứ khoa học:** Căn cứ tiêu chuẩn thống kê APA 7th và mô hình đánh giá diện rộng GDPT 2018,
+            mô phỏng sinh các mức điểm giả định dựa trên tham số mẫu quan sát
+            ($\mu_{pre}, \sigma_{pre}, \mu_{gain}, \sigma_{gain}$) để minh họa phân phối dưới giả định mô hình; không suy rộng hiệu quả toàn tỉnh.
             """)
             mc_col1, mc_col2 = st.columns(2)
             with mc_col1:
                 mc_runs = st.number_input("Số lượt mô phỏng (N):", min_value=1000, max_value=50000, value=10000, step=1000, key="mc_runs_num")
             with mc_col2:
-                mc_conf = st.selectbox("Độ tin cậy kỳ vọng:", [0.95, 0.99], index=0, key="mc_conf_level")
-            
+                mc_conf = st.selectbox("Tỷ lệ bao phủ phân vị mô phỏng:", [0.95, 0.99], index=0, key="mc_conf_level")
+
             if st.button("🚀 Kích hoạt Mô phỏng Monte Carlo (N = 10.000)", key="run_monte_carlo_btn"):
                 with st.spinner("Đang tính toán ma trận phân phối Monte Carlo N = 10.000..."):
                     rng_mc = np.random.default_rng(2026)
                     base_mean_pre = float(data[pre_col].mean()) if data is not None and not data.empty else 5.4
                     base_std_pre = float(data[pre_col].std(ddof=1)) if data is not None and not data.empty else 1.2
                     gain_mean = float(result.get("gain", 1.0))
-                    gain_std = float(data[post_col].std(ddof=1)) if data is not None and not data.empty else 0.8
-                    
+                    gain_std = float((data[post_col] - data[pre_col]).std(ddof=1)) if data is not None and not data.empty else 0.8
+
                     sim_pre = np.clip(rng_mc.normal(base_mean_pre, max(0.2, base_std_pre), mc_runs), 0, 10)
-                    sim_gain = rng_mc.normal(gain_mean, max(0.15, gain_std), mc_runs)
+                    sim_gain = rng_mc.normal(gain_mean, max(0.0, gain_std), mc_runs)
                     sim_post = np.clip(sim_pre + sim_gain, 0, 10)
-                    
+
                     p_improve = np.mean(sim_post > sim_pre) * 100
                     ci_lower = np.percentile(sim_post - sim_pre, (1 - mc_conf)/2 * 100)
                     ci_upper = np.percentile(sim_post - sim_pre, (1 - (1 - mc_conf)/2) * 100)
-                    
+
                     m_c1, m_c2, m_c3 = st.columns(3)
-                    m_c1.metric("Kỳ vọng tăng điểm E(Δ)", f"+{np.mean(sim_gain):.3f} đ")
+                    m_c1.metric("Mức tăng mô phỏng sau giới hạn điểm", f"{np.mean(sim_post - sim_pre):+.3f} đ")
                     m_c2.metric("Xác suất cải thiện P(Post > Pre)", f"{p_improve:.1f}%")
-                    m_c3.metric(f"Khoảng tin cậy {int(mc_conf*100)}%", f"[{ci_lower:.2f}; {ci_upper:.2f}]")
-                    
+                    m_c3.metric(f"Khoảng phân vị mô phỏng {int(mc_conf*100)}%", f"[{ci_lower:.2f}; {ci_upper:.2f}]")
+
                     mc_fig_df = pd.DataFrame({
                         "Giai đoạn": ["Trước can thiệp (Pre)"] * mc_runs + ["Sau can thiệp AI (Post)"] * mc_runs,
                         "Điểm số": np.concatenate([sim_pre, sim_post])
@@ -20297,7 +20210,7 @@ if selected_station == station_labels[3]:
                     st.plotly_chart(px.histogram(mc_fig_df, x="Điểm số", color="Giai đoạn", barmode="overlay",
                                                 opacity=0.65, title=f"Mô phỏng Phổ điểm Monte Carlo (N = {mc_runs:,})"),
                                     width="stretch")
-                    st.success(f"✅ Mô phỏng hoàn tất: Độ hội tụ đạt chuẩn Gaussian ($p < 0.001$), minh chứng tính khả thi và bền vững khi mở rộng toàn tỉnh.")
+                    st.info("Mô phỏng hoàn tất theo giả định phân phối đã chọn. Khoảng trên mô tả mức tăng cá nhân mô phỏng, không phải khoảng tin cậy trung bình hay bằng chứng hiệu quả toàn tỉnh.")
 
 
 
