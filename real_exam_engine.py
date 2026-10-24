@@ -34,6 +34,19 @@ import logging
 import urllib.parse
 from datetime import datetime
 import requests
+from threading import RLock
+from functools import wraps
+from copy import deepcopy
+from services.bank_storage import BoundedCache
+
+_BANK_LOCK = RLock()
+
+def _serialized_bank(function):
+    @wraps(function)
+    def wrapped(*args, **kwargs):
+        with _BANK_LOCK:
+            return function(*args, **kwargs)
+    return wrapped
 import hashlib
 import base64
 
@@ -2065,6 +2078,7 @@ _MULTI_INDEX_MTIME = 0
 _INDEXED_SUBJECTS = set()
 _PROCESSED_FULL_EXAMS_CACHE = {}
 
+@_serialized_bank
 def build_multi_dimensional_index(subject: str = None, force: bool = False):
     """Xây dựng chỉ mục tra cứu ngược O(1) theo môn học (Sharded Indexing).
     Tiết kiệm 97% RAM, chống tràn bộ nhớ trên Streamlit Cloud!"""
@@ -2072,7 +2086,6 @@ def build_multi_dimensional_index(subject: str = None, force: bool = False):
     idx_key = normalize_subject_name(subject).lower() if subject else "__ALL__"
     if not force and idx_key in _INDEXED_SUBJECTS:
         return
-    _INDEXED_SUBJECTS.add(idx_key)
     if subject:
         exams_list = get_shard_exams(subject)
     else:
@@ -2116,6 +2129,7 @@ def build_multi_dimensional_index(subject: str = None, force: bool = False):
     _MULTI_INDEX_BY_TOPIC = idx_topic
     _MULTI_INDEX_BY_PART = idx_part
     _QUESTION_STORE_BY_QID = q_store
+    _INDEXED_SUBJECTS.add(idx_key)
     _MULTI_INDEX_MTIME = time.time()
     logging.info("Đã xây dựng thành công Multi-Index O(1) cho %d câu hỏi.", len(q_store))
 
@@ -2174,8 +2188,9 @@ def get_raw_baseline_data():
         logging.warning("Không thể đọc baseline 2025: %s", exc)
     return {}
 
-_SHARD_CACHE = {}
+_SHARD_CACHE = BoundedCache(2)
 
+@_serialized_bank
 def get_shard_exams(subject: str) -> list:
     """Nạp dữ liệu đề thi theo từng môn học (Sharded Lazy Loader).
     Giảm tiêu thụ RAM từ 1.2 GB xuống còn ~30 MB (tiết kiệm 97% RAM),
@@ -2186,6 +2201,16 @@ def get_shard_exams(subject: str) -> list:
     if norm_subj in _SHARD_CACHE:
         return _SHARD_CACHE[norm_subj]
         
+    # Release derived references before loading a third subject; otherwise an
+    # evicted shard remains alive in question pools and multi-dimensional indices.
+    if len(_SHARD_CACHE) >= 2:
+        _SHARD_CACHE.popitem(last=False)
+        globals().get("_FAST_EXAM_LIST_CACHE", {}).clear()
+        globals().get("_QUESTIONS_POOL_CACHE", {}).clear()
+        for cache in (_MULTI_INDEX_BY_TOPIC_LEVEL, _MULTI_INDEX_BY_TOPIC,
+                      _MULTI_INDEX_BY_PART, _QUESTION_STORE_BY_QID, _INDEXED_SUBJECTS):
+            cache.clear()
+
     SUBJECT_SHARD_MAP = {
         "toán học": "exams_To_n_h_c.json",
         "toán": "exams_To_n_h_c.json",
@@ -2219,20 +2244,13 @@ def get_shard_exams(subject: str) -> list:
     
     loaded_exams = []
     try:
+        from services.bank_storage import read_exam_shard
         if os.path.exists(shard_xz):
-            import lzma
-            with lzma.open(shard_xz, "rt", encoding="utf-8") as f:
-                d = json.load(f)
-                loaded_exams = d.get("exams", []) if isinstance(d, dict) else d
+            loaded_exams = read_exam_shard(shard_xz)
         elif os.path.exists(shard_gz):
-            import gzip
-            with gzip.open(shard_gz, "rt", encoding="utf-8") as f:
-                d = json.load(f)
-                loaded_exams = d.get("exams", []) if isinstance(d, dict) else d
+            loaded_exams = read_exam_shard(shard_gz)
         elif os.path.exists(shard_raw):
-            with open(shard_raw, "r", encoding="utf-8") as f:
-                d = json.load(f)
-                loaded_exams = d.get("exams", []) if isinstance(d, dict) else d
+            loaded_exams = read_exam_shard(shard_raw)
         else:
             # Fallback sang master file neu khong tim thay file shard
             master_data = get_raw_baseline_data()
@@ -2273,6 +2291,16 @@ def get_shard_exams(subject: str) -> list:
     _SHARD_CACHE[norm_subj] = loaded_exams
     return loaded_exams
 
+def enrich_exam_visuals_jit(exam, subject="Toán học", grade=12):
+    """Enrich only the selected exam and preserve the cached source data."""
+    result = deepcopy(exam)
+    for part in ("p1", "p2", "p3"):
+        result[part] = [attach_question_visuals(q, subject=subject, grade=grade)
+                        for q in result.get(part, [])]
+    return result
+
+
+@_serialized_bank
 def get_baseline_full_exams(subject: str, grade, enrich_visuals: bool = False):
     """
     Lấy danh sách các đề thi thật hoàn chỉnh từ kho 2025-2026, 2026-2027
@@ -2284,7 +2312,7 @@ def get_baseline_full_exams(subject: str, grade, enrich_visuals: bool = False):
     """
     global _FAST_EXAM_LIST_CACHE
     if "_FAST_EXAM_LIST_CACHE" not in globals():
-        _FAST_EXAM_LIST_CACHE = {}
+        _FAST_EXAM_LIST_CACHE = BoundedCache(8)
 
     norm_subj = normalize_subject_name(subject).lower()
     grade_key = str(grade) if grade is not None else "all"
@@ -2460,8 +2488,9 @@ def shuffle_question_options(q: dict) -> dict:
     q_copy["ans"] = new_ans
     return q_copy
 
-_QUESTIONS_POOL_CACHE = {}
+_QUESTIONS_POOL_CACHE = BoundedCache(4)
 
+@_serialized_bank
 def get_baseline_questions_pool(subject: str, grade):
     """
     Tập hợp toàn bộ câu hỏi đề thi thật từ tất cả các đề thi có sẵn
