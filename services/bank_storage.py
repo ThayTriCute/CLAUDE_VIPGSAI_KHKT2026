@@ -27,6 +27,17 @@ class BoundedCache(OrderedDict):
         while len(self) > self.max_entries:
             self.popitem(last=False)
 
+    def popitem(self, last=True):
+        # Python 3.10's OrderedDict.popitem can re-enter our __getitem__ after
+        # unlinking the key. Its recency update then raises KeyError. Remove
+        # explicitly through base methods so eviction never refreshes recency.
+        if not self:
+            raise KeyError("dictionary is empty")
+        key = next(reversed(self)) if last else next(iter(self))
+        value = super().__getitem__(key)
+        super().__delitem__(key)
+        return key, value
+
 
 def read_exam_shard(path):
     """Support JSON object/array and XZ/GZ without materializing the JSON text.
