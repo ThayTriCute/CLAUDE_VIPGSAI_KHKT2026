@@ -1,4 +1,5 @@
 from services.context_recovery import repair_exam_context, recover_visual
+from services.cognitive_levels import annotate_question, level_caption
 from services.curriculum_policy import (assessment_profile, legal_references, matrix_html, prepare_exam_for_delivery, validate_exam_structure, validate_lesson_policy, lesson_prompt as build_curriculum_lesson_prompt, exam_prompt as build_curriculum_exam_prompt)
 from copy import deepcopy
 from services.academic_context import canonical_subject, academic_context, validate_exam_context
@@ -6840,7 +6841,8 @@ def parse_quiz_questions(text):
         lines = [l.strip() for l in part.strip().split('\n') if l.strip()]
         if not lines: continue
         q_header = lines[0]
-        level, options, correct, explain = "Vận dụng", [], "A", "Gợi ý tự suy luận!"
+        level, options, correct, explain = "", [], "A", "Gợi ý tự suy luận!"
+        cognitive_evidence = {}
 
         match = re.search(r'(?i)\[Mức độ:\s*(.*?)\]', q_header)
         if match:
@@ -6851,6 +6853,17 @@ def parse_quiz_questions(text):
         parsing_options = False
 
         for line in lines[1:]:
+            evidence_match = re.match(r'^(OUTCOME|COGNITIVE_REASON|COGNITIVE_STEPS):\s*(.*)', line, re.I)
+            if evidence_match:
+                field = {"OUTCOME": "learning_outcome", "COGNITIVE_REASON": "cognitive_rationale", "COGNITIVE_STEPS": "solution_steps"}[evidence_match[1].upper()]
+                value = evidence_match[2].strip()
+                if field == "solution_steps":
+                    try:
+                        value = json.loads(value)
+                    except (ValueError, TypeError):
+                        value = []
+                cognitive_evidence[field] = value
+                continue
             clean_line = re.sub(r'(?i)^\*{0,2}([A-D])\b[\.\:]?\*{0,2}\s*', r'\1. ', line)
 
             if re.match(r'(?i)###\s*PHẦN\s*3', line):
@@ -6933,7 +6946,8 @@ def parse_quiz_questions(text):
             if extracted_bbt:
                 q_item["bbt"] = extracted_bbt
 
-            questions.append(q_item)
+            q_item.update(cognitive_evidence)
+            questions.append(annotate_question(q_item))
     return questions
 
 
@@ -11077,6 +11091,7 @@ if selected_station == station_labels[0]:
             st.markdown("<br>", unsafe_allow_html=True)
 
             st.markdown("### 🎯 Phần 2: Trắc nghiệm khách quan Socratic")
+            st.caption("NB/TH/VD/VDC là nhãn đề xuất cần giáo viên duyệt theo yêu cầu cần đạt và thao tác tư duy; không phải chứng nhận của Bộ. Nhãn trống hoặc nhãn ghép được ghi chưa xác định.")
 
             for idx, q in enumerate(quiz_list):
 
@@ -11098,7 +11113,7 @@ if selected_station == station_labels[0]:
                 # 2. Tách sạch sẽ văn bản câu hỏi và khử hoàn toàn rác bảng markdown dính liền:
                 clean_q_display = clean_question_bbt_text(q['question'])
                 clean_q_display = sanitize_katex_latex(clean_q_display)
-                st.markdown(f"**Câu {idx+1}:** `[{q['level']}]`\n\n{clean_q_display}")
+                st.markdown(f"**Câu {idx+1}:** `[{level_caption(q)}]`\n\n{clean_q_display}")
 
                 # 3. Hiển thị Bảng Biến Thiên (BBT) WebP siêu nét chuẩn Bộ GD&ĐT (Trạm 3 Master Quality):
                 raw_bbt_content = q_dict_vis.get("bbt") or q.get("bbt")
@@ -11185,6 +11200,7 @@ if selected_station == station_labels[0]:
         if len(part3_split) > 1 and part3_split[-1].strip():
 
             st.markdown("### ✍️ Phần 3: Bài tập tự luận & Hướng dẫn tư duy")
+            st.caption("Mức độ tự luận là đề xuất của AI; cần đối chiếu yêu cầu cần đạt, lời giải và rubric theo đúng môn/lớp. Bài dài hoặc nhiều bước không tự động là VDC.")
             p3_vis = render_pedagogical_lesson_visuals(part3_split[-1].strip(), subject=subject, grade=grade_num)
             st.markdown(p3_vis, unsafe_allow_html=True)
 
@@ -12688,6 +12704,7 @@ if selected_station == station_labels[2]:
     active_profile = assessment_profile(subject, grade_num)
     st.caption(active_profile["label"])
     st.warning("Ngữ liệu AI/kho đề chưa được xác minh toàn bộ theo từng yêu cầu cần đạt, phiên bản KNTT và nguồn gốc. Giáo viên cần duyệt trước khi dùng đánh giá chính thức.")
+    st.caption("Mức độ không suy từ Phần I/II/III. Tham chiếu CV 7991: Biết–Hiểu–Vận dụng; VDC là nhãn phân hóa mở rộng trong app. Tỷ lệ điểm cần ma trận được duyệt, không tính thay bằng tỷ lệ số câu.")
     with st.expander(f"📋 Cấu trúc luyện tập tham khảo - Môn {subject}", expanded=False):
         st.markdown(render_subject_exam_matrix_spec(subject, grade_num), unsafe_allow_html=True)
 
@@ -14602,6 +14619,17 @@ if selected_station == station_labels[2]:
     elif st.session_state.exam_state == "testing":
 
         exam = st.session_state.exam_data
+        with st.expander("📋 Đối soát nhãn mức độ câu hỏi (chưa thẩm định)"):
+            cognitive_report = exam.get("cognitive_audit", {})
+            st.caption("Chỉ thống kê nhãn khai báo; chưa xác nhận yêu cầu tư duy thực tế hoặc tỷ lệ điểm. Từng ý Đúng/Sai được liệt kê riêng. Không có dữ liệu là chưa xác định.")
+            cognitive_rows = [{"Phần": row["part"], "Câu": row["question"], "Ý": str(row.get("statement", "")),
+                "Nhãn đề xuất": row.get("level") or "Chưa xác định",
+                "Có căn cứ tự khai": bool(row.get("self_reported_evidence_present")), "Trạng thái": "Cần giáo viên duyệt"}
+                for row in cognitive_report.get("rows", [])]
+            if cognitive_rows:
+                st.dataframe(cognitive_rows, hide_index=True)
+            else:
+                st.info("Bản đề chưa có báo cáo mức độ; cần nạp lại để đối soát.")
 
         ex_code = str(exam.get('code', st.session_state.get('exam_code', '1011')))
 
@@ -15260,7 +15288,7 @@ if selected_station == station_labels[2]:
 
                 else:
 
-                    st.markdown("##### 🔹 Phần I: Trắc nghiệm 4 lựa chọn (Năng lực Nhận biết & Thông hiểu)")
+                    st.markdown("##### 🔹 Phần I: Trắc nghiệm 4 lựa chọn (mức độ theo từng câu)")
 
                 for idx, q in enumerate(exam["p1"]):
 
@@ -15318,7 +15346,7 @@ if selected_station == station_labels[2]:
                     st.markdown("---")
 
             if exam.get("p3"):
-                st.markdown("##### 🔹 Phần III: Trả lời ngắn (Năng lực Vận dụng cao & Điền số)")
+                st.markdown("##### 🔹 Phần III: Trả lời ngắn (mức độ theo từng câu)")
                 for idx, q in enumerate(exam["p3"]):
                     if q.get("source"):
                         st.markdown(f'<div style="font-size: 11.5px; color: #38bdf8; background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 2px 8px; margin-bottom: 6px; border-radius: 3px;">🏛️ <b>Nguồn tham khảo:</b> {html.escape(str(q["source"]))}</div>', unsafe_allow_html=True)

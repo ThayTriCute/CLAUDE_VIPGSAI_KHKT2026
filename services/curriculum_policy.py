@@ -127,7 +127,8 @@ def prepare_exam_for_delivery(exam, subject, grade, duration=45):
         "status": "needs_teacher_review", "academic_verified": False,
         "source_sha256": hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode()).hexdigest(),
         "note": "Đã kiểm tra ngữ cảnh khai báo và một số mâu thuẫn xác định; chưa xác minh từng yêu cầu cần đạt/trang SGK/nguồn gốc."}
-    return result
+    from services.cognitive_levels import audit_exam_levels
+    return audit_exam_levels(result)
 
 
 def validate_exam_structure(exam, subject, counts=None):
@@ -177,16 +178,19 @@ def matrix_html(subject, grade):
 
 
 def lesson_prompt(subject, grade, topic):
-    return policy_prompt(subject, grade, 1, topic) + r"""
+    from services.cognitive_levels import LEVEL_GUIDANCE
+    return policy_prompt(subject, grade, 1, topic) + LEVEL_GUIDANCE + r"""
 Soạn bài học với ba tiêu đề chính: '### PHẦN 1: BÀI HỌC', '### PHẦN 2: TRẮC NGHIỆM KHÁCH QUAN SOCRATIC', '### PHẦN 3: BÀI TẬP TỰ LUẬN'.
 Phần 1: khởi động, hình thành kiến thức, ví dụ có lời giải phù hợp lớp, luyện tập và vận dụng; đặc trưng thể loại/môn học phải được giữ.
 Phần 2: câu hỏi trắc nghiệm có 4 phương án A/B/C/D, ghi đáp án và gợi ý riêng; Phần 3: bài tập tự luận và gợi ý.
+Mỗi câu Phần 2 và Phần 3 mở đầu 'Câu n. [Mức độ: NB/TH/VD/VDC]' (chọn một nhãn, hoặc để rỗng nếu chưa đủ căn cứ). Tiếp theo là nội dung câu, các dòng OUTCOME: yêu cầu cần đạt; COGNITIVE_REASON: căn cứ phân loại; COGNITIVE_STEPS: ["thao tác tư duy 1", "thao tác tư duy 2"]. Đây là đề xuất cần giáo viên duyệt, không mặc định tất cả câu là vận dụng.
 Công thức đặt trong $...$ hoặc $$...$$; hóa học dùng \ce{...}, đơn vị và chỉ số đúng bản chất. Không bọc công thức bằng backtick, không tự thay omega thành vô cực.
 Chỉ tạo hình/bảng khi có đủ dữ kiện của bài, không chèn bảng mẫu hoặc số liệu không có căn cứ. Nội dung ngắn gọn, đầy đủ, không tự gắn nhãn đã được Bộ kiểm duyệt.
 """
 
 
 def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
+    from services.cognitive_levels import LEVEL_GUIDANCE
     subject, grade = academic_context(subject, grade)
     if subject == "Ngữ văn":
         schema = {"code": str(code), "subject": subject, "grade": grade,
@@ -200,7 +204,15 @@ def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
                   "p2": [{"q": "Ngữ liệu", "stmts": [{"t": "Mệnh đề", "a": True}], "topic": "Chủ đề", "explain": "Gợi ý"}],
                   "p3": [{"q": "Câu trả lời ngắn", "ans": "2.5", "topic": "Chủ đề", "explain": "Gợi ý"}]}
         structure = f"Sinh đúng số câu p1/p2/p3 = {tuple(counts)}. Phần có 0 câu phải là []. Mỗi câu p2 có đúng 4 mệnh đề boolean. p3 có đáp số, đơn vị và quy tắc làm tròn rõ ràng. Tiếng Anh: câu hỏi, đoạn đọc và phương án bằng tiếng Anh; giải thích có thể bằng tiếng Việt."
-    return (policy_prompt(subject, grade, 3, "; ".join(topics), pathway) + "\n"
+    evidence_schema = {"level": "", "learning_outcome": "", "cognitive_rationale": "", "solution_steps": []}
+    for key in ("p1", "p2", "p3", "part_viet"):
+        for question in schema.get(key, []):
+            question.update(evidence_schema)
+            for stmt in question.get("stmts", []):
+                stmt.update(evidence_schema)
+    for question in schema.get("part_doc_hieu", {}).get("questions", []):
+        question.update(evidence_schema)
+    return (policy_prompt(subject, grade, 3, "; ".join(topics), pathway) + LEVEL_GUIDANCE + "\n"
             + structure + "\nYêu cầu tùy biến trong phạm vi môn/lớp đã chọn: " + str(custom)
             + "\nTự giải và đối chiếu đáp án với giả thiết; thiếu hình thì không đặt câu yêu cầu đọc hình đó. Không sao chép nguồn thiếu bằng chứng hoặc tự nhận là đề thật."
             + "\nChỉ xuất JSON hợp lệ theo schema sau (mở rộng số câu theo cấu hình):\n" + json.dumps(schema, ensure_ascii=False))

@@ -129,6 +129,8 @@ class TestStationUI(unittest.TestCase):
         self.assertEqual(at.session_state["exam_data"]["p1"][0]["q"], replacement["q"])
         self.assertIn("f", at.session_state["exam_data"]["p1"][0])
         self.assertEqual(at.session_state["exam_data"]["context_recovery"]["events"][0]["action"], "ai_replacement")
+        self.assertFalse(at.session_state["exam_data"]["cognitive_audit"]["verified"])
+        self.assertTrue(any("Đối soát nhãn mức độ" in expander.label for expander in at.expander))
 
     def test_station3_wrong_decimal_gets_zero_and_saves_one_event(self):
         at = self.app()
