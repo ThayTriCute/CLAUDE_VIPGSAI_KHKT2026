@@ -35,3 +35,6 @@ ijson>=3.3,<4
 
 # Deterministic lesson HTML export
 markdown-it-py>=3,<5
+
+# Execute the packaged KaTeX/mhchem parser before academic content is published.
+mini-racer==0.14.1

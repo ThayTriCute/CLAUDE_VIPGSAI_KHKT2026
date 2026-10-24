@@ -91,6 +91,8 @@ def validate_lesson_policy(text, subject, grade):
             if normalize_grade(declared_grade[1]) != grade:
                 raise ValueError("Tiêu đề bài học khai báo khác lớp đang chọn.")
     check_current_facts(text)
+    from services.math_publication import validate_math_text
+    validate_math_text(text)
     return text
 
 
@@ -108,6 +110,8 @@ def prepare_exam_for_delivery(exam, subject, grade, duration=45):
     subject, grade = validate_exam_context(exam, subject, grade)
     result = deepcopy(exam)
     validate_exam_structure(result, subject)
+    from services.math_publication import validate_exam_math
+    validate_exam_math(result)
     declared_book = folded(result.get("textbook") or result.get("textbook_series") or "")
     if "canh dieu" in declared_book or "chan troi sang tao" in declared_book:
         raise ValueError("Đề khai báo bộ sách khác KNTT; cần đối chiếu và chọn lại nguồn.")
