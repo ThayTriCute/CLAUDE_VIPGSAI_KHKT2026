@@ -13373,6 +13373,8 @@ if selected_station == station_labels[2]:
                             (num_p1, num_p2, num_p3), st.session_state.exam_code, custom_matrix_prompt,
                             st.session_state.get("curriculum_pathway", ""))
 
+                        raw_json_ex = ""
+                        st.session_state.pop("_last_exam_json_failure", None)
                         try:
 
                             raw_json_ex = call_gemini_with_fallback(exam_prompt, json_mode=True)
@@ -13434,6 +13436,16 @@ if selected_station == station_labels[2]:
 
                         except Exception as e:
 
+                            if raw_json_ex and isinstance(e, ValueError) and "JSON" in str(e):
+                                diagnostic_raw = raw_json_ex[:2_000_000]
+                                for secret_key in active_keys_pool:
+                                    if secret_key:
+                                        diagnostic_raw = diagnostic_raw.replace(secret_key, "[API_KEY]")
+                                st.session_state["_last_exam_json_failure"] = {
+                                    "subject": subject, "grade": grade_num, "counts": [num_p1, num_p2, num_p3],
+                                    "error": str(e), "received_characters": len(raw_json_ex),
+                                    "truncated_for_diagnostics": len(raw_json_ex) > 2_000_000,
+                                    "raw": diagnostic_raw}
                             st.error(f"Lỗi khởi tạo đề thi: {e}")
 
 
@@ -15019,6 +15031,13 @@ if selected_station == station_labels[3]:
 
 
     st.markdown("### Nhật ký và đồng bộ")
+
+    failed_json = st.session_state.get("_last_exam_json_failure")
+    if failed_json:
+        with st.expander("Chẩn đoán bản nháp JSON lỗi trong phiên này", expanded=False):
+            st.caption("Chỉ dành cho quản trị đã đăng nhập. Bản nháp chưa hợp lệ có thể chứa khóa chấm; không dùng làm đề cho học sinh. Dữ liệu chỉ giữ trong phiên, không gửi dịch vụ khác.")
+            st.download_button("Tải bản nháp lỗi để kiểm tra tại máy", json.dumps(failed_json, ensure_ascii=False, indent=2),
+                               "chan_doan_json_de_ai.json", "application/json", key="download_failed_exam_json")
 
     db_logs = db_manager.get_all_logs() if db_manager else []
 
