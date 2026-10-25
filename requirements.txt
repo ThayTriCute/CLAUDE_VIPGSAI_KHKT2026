@@ -5,7 +5,7 @@
 # Lưu ý: Các module 'lzma', 'gzip', 'json' là Python Standard Libraries (Built-in)
 # đã tích hợp sẵn từ Python 3.3+, không cần cài qua pip để tránh xung đột thư viện.
 # ==============================================================================
-streamlit>=1.50
+streamlit>=1.64
 google-genai>=2.6.0
 pillow
 pandas
