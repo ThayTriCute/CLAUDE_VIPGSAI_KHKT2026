@@ -305,6 +305,20 @@ class TestStationUI(unittest.TestCase):
         next(b for b in at.button if b.label == '🔓 Mở khóa').click().run()
         self.assertEqual([e.message for e in at.exception], [])
         self.assertTrue(any(b.key == 'download_failed_exam_json' for b in at.get('download_button')))
+        # Valid JSON can fail a later structure/content gate.
+        at.session_state['selected_station'] = '📝 Trạm 3: Luyện Tập & Khảo Thí'
+        at.session_state['last_context_recovery'] = {'events': ['stale prior attempt']}
+        at.run()
+        raw_valid = json.dumps({'subject': 'Toán học', 'grade': 12, 'p1': [], 'p2': [], 'p3': []}, ensure_ascii=False)
+        with patch('google.genai.Client') as client:
+            generate = client.return_value.__enter__.return_value.models.generate_content
+            generate.return_value = SimpleNamespace(text=raw_valid, candidates=[])
+            next(b for b in at.button if b.label == '🚀 Khởi Tạo Đề Mới (AI Sáng Tạo 2026)').click().run()
+            self.assertEqual(generate.call_count, 1)
+        diagnostic = at.session_state['_last_exam_json_failure']
+        self.assertEqual(diagnostic['raw'], raw_valid)
+        self.assertEqual(diagnostic['context_recovery'], {})
+        self.assertFalse(any(b.key == 'download_failed_exam_json' for b in at.get('download_button')))
 
 
 if __name__ == "__main__":
