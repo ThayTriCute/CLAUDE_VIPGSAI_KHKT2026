@@ -73,3 +73,21 @@ class TestLessonPublicationRegression(unittest.TestCase):
     def test_repeated_given_numeric_data_does_not_include_prose_in_equation_match(self):
         hint = 'Em sẽ dùng giả thiết $a = 2$ để đối chiếu điều kiện nào?'
         self.assertEqual(validate_socratic_question(hint, 'Cho tham số $a=2$.'), hint)
+
+    def test_inline_polya_question_does_not_repeat_step_title_in_body(self):
+        text = complete_lesson()
+        for n, title in enumerate(('Tìm hiểu đề', 'Lập kế hoạch', 'Thực hiện kế hoạch', 'Kiểm tra và nhìn lại'), 1):
+            text = text.replace(f'Bước {n}: {title}\n', f'Bước {n}: {title}. ')
+        rendered = student_polya(text, 'Toán', 6)
+        for title in ('Tìm hiểu đề', 'Lập kế hoạch', 'Thực hiện kế hoạch', 'Kiểm tra và nhìn lại'):
+            self.assertEqual(rendered.count(title), 2)
+
+    def test_bold_question_number_does_not_leave_dangling_stars_in_essay(self):
+        text = complete_lesson().replace('Câu 1. [Mức độ: VD]', '**Câu 1. [Mức độ: VD]**')
+        self.assertNotIn('\n\n** Tự tính', student_polya(text, 'Toán', 6))
+
+    def test_repeated_step_heading_inside_body_is_not_rendered_twice(self):
+        text = complete_lesson().replace('Em cần tự xem xét thông tin nào ở bước này?',
+                                         'Tìm hiểu đề\nEm cần tự xem xét thông tin nào ở bước này?')
+        rendered = student_polya(text, 'Toán', 6)
+        self.assertEqual(rendered.count('Tìm hiểu đề'), 2)

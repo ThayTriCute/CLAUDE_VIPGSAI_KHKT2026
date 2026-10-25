@@ -284,6 +284,28 @@ class TestStationUI(unittest.TestCase):
         self.assertEqual([e.message for e in at.exception], [])
         self.assertFalse(any("Gaussian" in m.value and "p < 0.001" in m.value for m in at.success))
 
+    def test_failed_json_is_retained_for_authenticated_admin_only(self):
+        at = self.app()
+        at.secrets["GEMINI_API_KEY"] = "test-only-key"
+        at.session_state["selected_station"] = "📝 Trạm 3: Luyện Tập & Khảo Thí"
+        at.run()
+        raw = '{"p1":[{"q":"Bản nháp lỗi test-only-key", "ans":'
+        with patch("google.genai.Client") as client:
+            generate = client.return_value.__enter__.return_value.models.generate_content
+            generate.return_value = SimpleNamespace(text=raw, candidates=[])
+            next(b for b in at.button if b.label == "🚀 Khởi Tạo Đề Mới (AI Sáng Tạo 2026)").click().run()
+            self.assertEqual(generate.call_count, 1)
+        self.assertIn('_last_exam_json_failure', at.session_state)
+        self.assertNotIn('test-only-key', at.session_state['_last_exam_json_failure']['raw'])
+        self.assertFalse(any(b.key == 'download_failed_exam_json' for b in at.get('download_button')))
+        at.session_state['selected_station'] = '📊 Trạm 4: Dữ Liệu & Nghiên Cứu'
+        at.run()
+        self.assertFalse(any(b.key == 'download_failed_exam_json' for b in at.get('download_button')))
+        next(t for t in at.text_input if t.label == 'Mật khẩu quản trị:').set_value('qa-private-password')
+        next(b for b in at.button if b.label == '🔓 Mở khóa').click().run()
+        self.assertEqual([e.message for e in at.exception], [])
+        self.assertTrue(any(b.key == 'download_failed_exam_json' for b in at.get('download_button')))
+
 
 if __name__ == "__main__":
     unittest.main()

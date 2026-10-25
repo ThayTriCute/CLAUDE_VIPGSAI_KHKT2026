@@ -55,6 +55,7 @@ def essay_stems(text):
         stem = without_metadata(block[:steps[0].start()])
         stem = re.sub(r"(?i)^\s*\[Mức độ:[^\]]*\]\s*", "", stem)
         stem = re.sub(r"(?im)^\s*(?:Hướng dẫn[^\n]*|Gợi ý[^\n]*)$", "", stem).strip()
+        stem = stem.strip('* \n')
         if not stem or re.search(r"(?im)^\s*(?:Đáp án|Đáp số|Lời giải|Giải chi tiết|Answer|Solution|CORRECT)\s*:", stem):
             raise LessonContractError("Đề tự luận thiếu nội dung hoặc trộn sẵn lời giải/đáp số.")
         stems.append(stem)
@@ -143,7 +144,12 @@ def essay_guidance(text):
             heading, _, body = section.partition("\n")
             # Canonical Vietnamese titles are rendered separately from the model's title.
             if "?" in heading:
-                body = heading.split(":", 1)[-1] + "\n" + body
+                inline = re.sub(r'^\s*\*{0,2}Bước\s*[1-4]\s*[:.]?\s*', '', heading, flags=re.I).strip('* ')
+                for title in POLYA_LABELS:
+                    inline = re.sub(r'^' + re.escape(title) + r'\s*[:.–-]?\s*', '', inline, flags=re.I)
+                body = inline + "\n" + body
+            labels = '|'.join(re.escape(label) for label in POLYA_LABELS)
+            body = re.sub(r'^\s*\*{0,2}(?:Bước\s*[1-4]\s*[:.]\s*)?(?:' + labels + r')\*{0,2}\s*[:.–-]?\s*', '', body, flags=re.I)
             hints.append(validate_socratic_question(body, stem))
         result.append((stem, hints))
     return result
