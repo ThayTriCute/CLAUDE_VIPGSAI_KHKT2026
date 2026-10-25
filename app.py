@@ -13375,6 +13375,7 @@ if selected_station == station_labels[2]:
 
                         raw_json_ex = ""
                         st.session_state.pop("_last_exam_json_failure", None)
+                        st.session_state.pop("last_context_recovery", None)
                         try:
 
                             raw_json_ex = call_gemini_with_fallback(exam_prompt, json_mode=True)
@@ -13436,7 +13437,7 @@ if selected_station == station_labels[2]:
 
                         except Exception as e:
 
-                            if raw_json_ex and isinstance(e, ValueError) and "JSON" in str(e):
+                            if raw_json_ex and isinstance(e, ValueError):
                                 diagnostic_raw = raw_json_ex[:2_000_000]
                                 for secret_key in active_keys_pool:
                                     if secret_key:
@@ -13444,6 +13445,7 @@ if selected_station == station_labels[2]:
                                 st.session_state["_last_exam_json_failure"] = {
                                     "subject": subject, "grade": grade_num, "counts": [num_p1, num_p2, num_p3],
                                     "error": str(e), "received_characters": len(raw_json_ex),
+                                    "context_recovery": st.session_state.get("last_context_recovery", {}),
                                     "truncated_for_diagnostics": len(raw_json_ex) > 2_000_000,
                                     "raw": diagnostic_raw}
                             st.error(f"Lỗi khởi tạo đề thi: {e}")
@@ -15034,7 +15036,7 @@ if selected_station == station_labels[3]:
 
     failed_json = st.session_state.get("_last_exam_json_failure")
     if failed_json:
-        with st.expander("Chẩn đoán bản nháp JSON lỗi trong phiên này", expanded=False):
+        with st.expander("Chẩn đoán bản nháp đề lỗi trong phiên này", expanded=False):
             st.caption("Chỉ dành cho quản trị đã đăng nhập. Bản nháp chưa hợp lệ có thể chứa khóa chấm; không dùng làm đề cho học sinh. Dữ liệu chỉ giữ trong phiên, không gửi dịch vụ khác.")
             st.download_button("Tải bản nháp lỗi để kiểm tra tại máy", json.dumps(failed_json, ensure_ascii=False, indent=2),
                                "chan_doan_json_de_ai.json", "application/json", key="download_failed_exam_json")
