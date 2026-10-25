@@ -114,8 +114,15 @@ def validate_socratic_question(hint, question="", correct_text=""):
         raise LessonContractError("Câu hỏi hướng dẫn phải bằng tiếng Việt.")
     if re.search(r"(?i)(?:đáp án|đáp số|kết quả là|nghiệm là|(?:chọn|phương án)\s+[A-D]\b|the answer|therefore|solution)", hint):
         raise LessonContractError("Gợi mở đang chứa chỉ dẫn đáp án hoặc lời giải.")
-    for expression in re.findall(r"[A-Za-z][^$\n]{0,35}=\s*[-+]?\d+(?:[.,]\d+)?", hint):
-        if expression not in question:
+    # Match an equation's left hand side, not an arbitrary prose prefix such
+    # as 'Em sẽ ...'. Asking how to solve f'(x)=0 is a method question, not a
+    # computed root. A new numeric root x=77 remains disallowed.
+    compact = lambda value: re.sub(r"[\s${}]", "", value)
+    equations = re.finditer(r"(?<![\w])([A-Za-z](?:_{?[A-Za-z0-9]+}?)?['′]?(?:\s*\(\s*x\s*\))?)\s*=\s*([-+]?\d+(?:[.,]\d+)?)", hint)
+    for match in equations:
+        expression, lhs, number = match[0], compact(match[1]), match[2]
+        method_condition = number == "0" and ("(x)" in lhs or lhs.endswith(("'", "′")))
+        if not method_condition and compact(expression) not in compact(question):
             raise LessonContractError("Gợi mở không được tính toán ra số thay học sinh.")
     answer = re.sub(r"^[A-D][.):]\s*", "", str(correct_text)).strip()
     if len(answer) >= 3 and answer.casefold() in hint.casefold() and answer.casefold() not in question.casefold():
