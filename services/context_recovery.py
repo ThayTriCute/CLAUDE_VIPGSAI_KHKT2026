@@ -72,7 +72,12 @@ def model_from_explicit_formula(text):
 
 def needs_visual(question):
     value = str(question.get("q", "")).lower()
-    return any(t in value for t in ("hình vẽ bên", "hình bên", "như hình", "hình dưới", "bảng biến thiên", "bảng xét dấu", "đồ thị sau", "bảng số liệu sau"))
+    # Asking the learner to construct/choose a table is not a reference to a
+    # missing input image. Keep explicit deictic references fail-closed.
+    if any(t in value for t in ("hình vẽ bên", "hình bên", "như hình", "hình dưới", "đồ thị sau", "bảng số liệu sau")):
+        return True
+    return bool(re.search(r"(?:bảng biến thiên|bảng xét dấu)\s*(?:sau(?: đây)?|dưới(?: đây)?|bên|được cho|như sau)", value)
+                or re.search(r"(?:cho|dựa vào|quan sát|theo)\s+(?:hàm số có\s+)?(?:bảng biến thiên|bảng xét dấu)", value))
 
 
 def has_visual(question):

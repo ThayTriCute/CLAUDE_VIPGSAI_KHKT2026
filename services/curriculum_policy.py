@@ -191,7 +191,7 @@ Phần 3: sinh CHÍNH XÁC 2 bài tập tự làm, đánh số Câu 1. và Câu 
 Phân biệt rõ: Phần 1 được có ví dụ minh họa có lời giải để hình thành kiến thức; Phần 2 và Phần 3 là bài tập học sinh tự làm, không dùng lại lời giải ví dụ để giải hộ. Các trường OUTCOME/COGNITIVE_REASON/COGNITIVE_STEPS chỉ phục vụ đối soát nội bộ, viết trên dòng riêng, không đưa lời giải vào hướng dẫn cho học sinh.
 Mỗi câu Phần 2 và Phần 3 mở đầu 'Câu n. [Mức độ: NB/TH/VD/VDC]' (chọn một nhãn, hoặc để rỗng nếu chưa đủ căn cứ). Tiếp theo là nội dung câu, các dòng OUTCOME: yêu cầu cần đạt; COGNITIVE_REASON: căn cứ phân loại; COGNITIVE_STEPS: ["thao tác tư duy 1", "thao tác tư duy 2"]. Đây là đề xuất cần giáo viên duyệt, không mặc định tất cả câu là vận dụng.
 Công thức đặt trong $...$ hoặc $$...$$; hóa học dùng \ce{...}, đơn vị và chỉ số đúng bản chất. Không bọc công thức bằng backtick, không tự thay omega thành vô cực.
-Chỉ tạo hình/bảng khi có đủ dữ kiện của bài, không chèn bảng mẫu hoặc số liệu không có căn cứ. Nội dung ngắn gọn, đầy đủ, không tự gắn nhãn đã được Bộ kiểm duyệt.
+Chỉ tạo hình/bảng khi có đủ dữ kiện của bài, không chèn bảng mẫu hoặc số liệu không có căn cứ. Với ba câu trắc nghiệm trong đầu ra văn bản này, ưu tiên câu tự đủ dữ kiện bằng văn bản/công thức: phải ghi đầy đủ hàm số và dữ kiện, không viết 'như hình bên', 'bảng biến thiên sau' khi không kèm hình/bảng đọc được. Có thể hỏi về cách lập bảng biến thiên khi đã cho đủ công thức; đây không phải bảng dữ liệu đầu vào bị thiếu. Ghi nhãn ĐÁP ÁN và GỢI MỞ SOCRATIC bằng chữ thường định dạng văn bản, không bọc cả nhãn bằng Markdown. Mỗi tiêu đề Bước 1–4 trên dòng riêng và câu hỏi hướng dẫn ở dòng tiếp theo. Nội dung ngắn gọn, đầy đủ, không tự gắn nhãn đã được Bộ kiểm duyệt.
 """
 
 

@@ -11,6 +11,18 @@ class LessonContractError(ValueError):
 POLYA_LABELS = ("Tìm hiểu đề", "Lập kế hoạch", "Thực hiện kế hoạch", "Kiểm tra và nhìn lại")
 
 
+def normalize_lesson_layout(text):
+    """Normalize presentation only; never invent a question, hint or answer."""
+    text = str(text).replace("\r\n", "\n")
+    fields = r"(?:GỢI MỞ SOCRATIC|SOCRATIC|GỢI MỞ|GIẢI THÍCH|EXPLAIN|ĐÁP ÁN|CORRECT|Đáp án đúng)"
+    text = re.sub(r"(?im)^\s*\*\*(" + fields + r"\s*:[^\n]+)\*\*\s*$", r"\1", text)
+    text = re.sub(r"(?im)^\s*\*\*(" + fields + r")\s*:\s*\*\*\s*", r"\1: ", text)
+    text = re.sub(r"(?im)^\s*\*\*(" + fields + r")\*\*\s*:\s*", r"\1: ", text)
+    # AI often places a leading question directly after a bold Pólya heading.
+    text = re.sub(r"(?im)^(\s*\*\*Bước\s*[1-4][^\n]*?\*\*)\s*([^\n]+)", r"\1\n\2", text)
+    return text
+
+
 def lesson_sections(text):
     markers = list(re.finditer(r"(?im)^\s*#{0,6}\s*PHẦN\s*([123])\s*[:.]", str(text)))
     if [m[1] for m in markers] != ["1", "2", "3"]:
@@ -50,6 +62,7 @@ def essay_stems(text):
 
 
 def validate_lesson_contract(text, subject, grade):
+    text = normalize_lesson_layout(text)
     academic_context(subject, grade)
     _, quiz, _ = lesson_sections(text)
     blocks = question_blocks(quiz)
@@ -92,8 +105,10 @@ def validate_lesson_contract(text, subject, grade):
 
 
 def validate_socratic_question(hint, question="", correct_text=""):
-    hint = without_metadata(str(hint or "")).strip().strip("* ")
-    if not hint or len(hint) > 500 or hint.count("?") != 1 or not hint.endswith("?"):
+    hint = without_metadata(str(hint or "")).strip().strip('* "“”')
+    hint = re.sub(r"(?m)^\s*(?:-{3,}|\*{3,}|_{3,})\s*$", "", hint).strip()
+    hint = re.sub(r"(?m)^\s*[-•]\s+", "", hint).strip()
+    if not hint or len(hint) > 900 or not 1 <= hint.count("?") <= 3 or not hint.endswith("?"):
         raise LessonContractError("Gợi mở Socratic phải là một câu hỏi dẫn dắt, không phải lời giải.")
     if not re.search(r"[ăâđêôơưàáảãạèéẻẽẹìíỉĩịòóỏõọùúủũụỳýỷỹỵ]", hint, re.I):
         raise LessonContractError("Câu hỏi hướng dẫn phải bằng tiếng Việt.")
@@ -109,6 +124,7 @@ def validate_socratic_question(hint, question="", correct_text=""):
 
 
 def essay_guidance(text):
+    text = normalize_lesson_layout(text)
     stems = essay_stems(text)
     blocks = question_blocks(lesson_sections(text)[2])
     result = []
