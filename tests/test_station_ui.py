@@ -243,6 +243,29 @@ class TestStationUI(unittest.TestCase):
         at.run()
         self.assertEqual(len([e for e in at.session_state["analytics_logs"] if e.get("event_id") == "qa-ui-decimal"]), 1)
 
+    def test_station3_accepts_complete_json_without_closing_markdown_fence(self):
+        import real_exam_engine as engine
+        at = self.app()
+        at.secrets["GEMINI_API_KEY"] = "test-only-key"
+        at.session_state["selected_station"] = "📝 Trạm 3: Luyện Tập & Khảo Thí"
+        at.run()
+        for label, value in (("Số câu TN P.I:", 1), ("Số câu Đ/S P.II:", 0), ("Số câu TLN P.III:", 0)):
+            next(n for n in at.number_input if n.label == label).set_value(value)
+        question = {"q": "Cho $y=x^3-3x+1$. Giá trị $y'(0)$ bằng bao nhiêu?",
+                    "opt": ["A. -3", "B. 0", "C. 1", "D. 3"], "ans": "A"}
+        exam = {"subject": "Toán học", "grade": 12, "p1": [question], "p2": [], "p3": []}
+        with patch("google.genai.Client") as client, patch.object(engine, "ingest_ai_generated_exam_to_bank", return_value=None):
+            generate = client.return_value.__enter__.return_value.models.generate_content
+            generate.return_value = SimpleNamespace(text='```json\n' + json.dumps(exam, ensure_ascii=False), candidates=[])
+            next(b for b in at.button if b.label == "🚀 Khởi Tạo Đề Mới (AI Sáng Tạo 2026)").click().run()
+            self.assertEqual(generate.call_count, 1)
+        self.assertEqual([e.message for e in at.exception], [])
+        self.assertEqual(at.session_state["exam_state"], "testing")
+        result = at.session_state["exam_data"]["p1"][0]
+        self.assertEqual(result["q"], question["q"])
+        self.assertEqual(result["opt"], question["opt"])
+        self.assertEqual(result["ans"], "A")
+
     def test_station4_auth_demo_statistics_and_monte_carlo(self):
         at = self.app()
         at.session_state["selected_station"] = "📊 Trạm 4: Dữ Liệu & Nghiên Cứu"
