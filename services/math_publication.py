@@ -250,7 +250,19 @@ def generate_checked_text(prompt, generator, validator):
     try:
         return validator(text)
     except (MathPublicationError, LessonContractError) as error:
+        if isinstance(error, LessonContractError):
+            instruction = ("Sửa đầy đủ cấu trúc và tất cả câu hỏi/hướng dẫn chưa hợp lệ trong bản nháp. "
+                           "Giữ nguyên môn, lớp, chủ đề, tùy biến và các phần đúng. "
+                           "Với câu thiếu hình/dữ kiện không thể phục dựng: được biên soạn lại TOÀN BỘ câu đó cùng bốn phương án và khóa chấm, "
+                           "dùng dữ kiện tường minh và kiểm tra đúng một đáp án; không sửa riêng một phương án để ép khớp. "
+                           "Ưu tiên câu tự đủ dữ kiện bằng văn bản/công thức, không tham chiếu hình hoặc bảng không có trong đầu ra. "
+                           "Mỗi gợi mở và mỗi bước Pólya là câu hỏi tiếng Việt bám đúng đề, không giải hộ hoặc nêu kết quả. "
+                           "Viết nhãn trường trên dòng riêng dạng ĐÁP ÁN: B, GỢI MỞ SOCRATIC: ...?; "
+                           "bốn tiêu đề Bước 1–4 trên dòng riêng, câu hỏi ở dòng kế tiếp. "
+                           "Xuất lại đủ ba phần, ba câu trắc nghiệm và hai bài tự luận.")
+        else:
+            instruction = "Sửa cú pháp/dấu phân cách, giữ nguyên nhiệm vụ, số liệu và ý nghĩa; không thêm kiến thức hoặc đổi môn/lớp. Xuất lại đầy đủ định dạng yêu cầu."
         repair = (prompt + "\nBản nháp chưa đạt kiểm tra công thức/cấu trúc bài học: " + str(error)[:240]
-                  + "\nSửa cú pháp/dấu phân cách trong bản nháp sau, giữ nguyên nhiệm vụ, số liệu và ý nghĩa; không thêm kiến thức hoặc đổi môn/lớp. Xuất lại đầy đủ định dạng yêu cầu.\n"
+                  + "\n" + instruction + "\nBản nháp cần sửa:\n"
                   + str(text)[:250000])
         return validator(generator(repair))
