@@ -10,6 +10,7 @@ from services.lesson_sources import books_for, lesson_references, PUBLISHER_PORT
 from services.speech_service import speech_controls, speech_button, speech_preview_bridge, speech_bootstrap
 from services.speech_audio import render_speech_audio
 from services.lesson_contract import validate_lesson_contract, student_polya, validate_socratic_question, LessonContractError, socratic_prompt
+from services.academic_scope import check_lesson_scope, check_exam_question_scope
 from services.math_publication import native_radio_label
 from qa_runtime import (split_api_keys, admin_password_matches, normalize_bool, display_frame,
     exam_response_metadata, observed_item_matrix, mcq_answer_matches)
@@ -9625,6 +9626,7 @@ def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán h�
         # Khử \searrow và \nearrow nằm trơ trọi trong bảng markdown, cách chữ để không dính chùm
         t = re.sub(r'(?<!\$)\\(?:searrow|nearrow|downarrow|uparrow)(?!\$)', lambda m: ' ↘ ' if 'se' in m.group(0) else (' ↗ ' if 'ne' in m.group(0) else (' ↑ ' if 'up' in m.group(0) else ' ↓ ')), t)
 
+    check_lesson_scope(t, subject, grade, topic)
     return validate_lesson_policy(t, subject, grade)
 
 
@@ -12140,14 +12142,17 @@ if selected_station == station_labels[2]:
         validate_exam_context(exam, subject, grade_num)
         use_ai_recovery = st.session_state.get("enable_ai_context_recovery", True)
         generator = (lambda prompt: call_gemini_with_fallback(prompt, json_mode=True)) if use_ai_recovery else None
+        requested_topics = st.session_state.get("policy_selected_topics", [])
+        requested_custom = st.session_state.get("custom_request_text", "")
+        scope_check = lambda question: check_exam_question_scope(question, subject, grade_num, requested_topics, requested_custom)
         draft = repair_exam_context(exam, subject, grade_num,
-            topics=st.session_state.get("policy_selected_topics", []),
+            topics=requested_topics,
             bank_provider=ree.get_baseline_questions_pool if ree else None,
-            ai_generator=generator, max_ai_questions=2)
+            ai_generator=generator, max_ai_questions=2, scope_validator=scope_check)
         st.session_state.last_context_recovery = draft.get("context_recovery", {})
         if draft.get("context_recovery", {}).get("unresolved"):
             raise ValueError("Còn câu chưa đủ dữ liệu hoặc đáp án sau khi quét nguồn, tìm câu cùng chủ đề và thử sinh thay thế. Hãy bổ sung nguồn gốc hoặc kiểm tra lại bản nháp; chưa mở lượt làm bài này.")
-        result = prepare_exam_for_delivery(draft, subject, grade_num, st.session_state.get("exam_time_mins", 45))
+        result = prepare_exam_for_delivery(draft, subject, grade_num, st.session_state.get("exam_time_mins", 45), requested_topics, requested_custom)
         st.session_state.exam_mix_count = st.session_state.get("exam_mix_count", 0) + 1
         result["exam_count"] = st.session_state.exam_mix_count
         return result
@@ -13453,7 +13458,7 @@ if selected_station == station_labels[2]:
 
             elif subject == "Toán học":
 
-                custom_ph = "Ví dụ: Cần 12 câu KSHS Lớp 12 (6 NB, 6 TH), 1 câu khảo sát hàm bậc 4 trùng phương để rèn luyện, bài toán tối ưu hóa chi phí thực tế..."
+                custom_ph = "Ví dụ: Cần 12 câu KSHS Lớp 12 (6 NB, 6 TH), 1 câu đồ thị phân thức bậc hai/bậc nhất, bài toán tối ưu hóa chi phí thực tế..."
 
             elif subject == "Vật lý":
 

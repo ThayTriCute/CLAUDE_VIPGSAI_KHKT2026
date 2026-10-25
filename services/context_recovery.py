@@ -186,7 +186,7 @@ def recover_visual(question, subject, grade):
     return result
 
 
-def _question_issue(question, part, subject, grade):
+def _question_issue(question, part, subject, grade, scope_validator=None):
     try:
         validate_exam_context({part: [question]}, subject, grade)
         validate_exam_structure({part: [question]}, subject)
@@ -196,6 +196,11 @@ def _question_issue(question, part, subject, grade):
         validate_exam_math({part: [question]})
     except MathPublicationError:
         return "invalid_math_markup"
+    if scope_validator is not None:
+        try:
+            scope_validator(question)
+        except ValueError:
+            return "outside_requested_academic_scope"
     if needs_visual(question) and not has_visual(question):
         return "missing_source_visual"
     if subject == "Toán học":
@@ -205,7 +210,7 @@ def _question_issue(question, part, subject, grade):
     return ""
 
 
-def _candidate_ok(candidate, part, subject, grade, topics, require_visual=False, required_level=""):
+def _candidate_ok(candidate, part, subject, grade, topics, require_visual=False, required_level="", scope_validator=None):
     if not isinstance(candidate, dict) or canonical_subject(candidate.get("subject")) != subject:
         return False
     try:
@@ -215,7 +220,7 @@ def _candidate_ok(candidate, part, subject, grade, topics, require_visual=False,
         return False
     if not topics or not any(topic_matches(t, candidate.get("topic", "")) for t in topics):
         return False
-    if _question_issue(candidate, part, subject, grade):
+    if _question_issue(candidate, part, subject, grade, scope_validator):
         return False
     if require_visual and not has_visual(candidate):
         return False
@@ -229,7 +234,7 @@ def _candidate_ok(candidate, part, subject, grade, topics, require_visual=False,
     return True
 
 
-def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_generator=None, max_ai_questions=2):
+def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_generator=None, max_ai_questions=2, scope_validator=None):
     """Bounded, atomic substitution. No caller input mutation or hidden source relabel."""
     subject, grade = academic_context(subject, grade)
     result = deepcopy(exam)
@@ -245,7 +250,7 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                 events.append({"part": part, "index": index, "action": "needs_review", "reason": "invalid_question_structure"})
                 continue
             recovered = recover_visual(original, subject, grade)
-            issue = _question_issue(recovered, part, subject, grade)
+            issue = _question_issue(recovered, part, subject, grade, scope_validator)
             if not issue:
                 questions[index] = recovered
                 if recovered != original:
@@ -264,7 +269,7 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                               and any(topic_matches(t, c.get("topic", "")) for t in requested))
                 for candidate in islice(candidates, 250):
                     item = recover_visual(candidate, subject, grade)
-                    if _content_digest(candidate) not in used and _candidate_ok(item, part, subject, grade, requested, needs_visual(original), required_level):
+                    if _content_digest(candidate) not in used and _candidate_ok(item, part, subject, grade, requested, needs_visual(original), required_level, scope_validator):
                         replacement, origin = item, "bank_replacement"
                         break
             if replacement is None and ai_generator is not None and ai_calls < max_ai_questions:
@@ -275,6 +280,8 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                     "required_keys": ["subject", "grade", "topic", "q", "ans", "opt (p1)", "stmts (p2)", "complete f/bbt/image if required"],
                     "must_preserve_visual_reading_task": needs_visual(original),
                     "required_claimed_level": required_level,
+                    "repair_reason": issue,
+                    "academic_scope": ("For the requested basic function-survey task, use cubic, linear/linear or quadratic/linear functions; do not substitute a quartic survey question. Preserve the requested topic." if issue == "outside_requested_academic_scope" and subject == "Toán học" else None),
                     "output": {"replacement_question": "object"},
                     "original": {k: original[k] for k in ("q", "opt", "ans", "stmts", "topic") if k in original}}, ensure_ascii=False)
                 try:
@@ -282,7 +289,7 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                     if isinstance(response, str):
                         response = json.loads(response.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip())
                     item = recover_visual(response.get("replacement_question", {}), subject, grade)
-                    if _candidate_ok(item, part, subject, grade, requested, needs_visual(original), required_level):
+                    if _candidate_ok(item, part, subject, grade, requested, needs_visual(original), required_level, scope_validator):
                         replacement, origin = item, "ai_replacement"
                 except Exception:
                     pass

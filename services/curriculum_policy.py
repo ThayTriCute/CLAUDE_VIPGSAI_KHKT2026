@@ -1,6 +1,7 @@
 """Versioned references and conservative checks, not an academic certification."""
 from copy import deepcopy
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 import hashlib
 import html
 import json
@@ -15,7 +16,8 @@ REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
 def legal_references(on_date=None, include_upcoming=False):
-    today = date.fromisoformat(on_date or POLICY_DATE)
+    # Source audit date is provenance, not the date used to apply a law.
+    today = date.fromisoformat(on_date) if on_date else datetime.now(ZoneInfo('Asia/Ho_Chi_Minh')).date()
     rows = json.loads(REGISTRY.read_text(encoding="utf-8"))["documents"]
     return [r for r in rows if r.get("status") != "draft"
             and (include_upcoming or date.fromisoformat(r["effective_from"]) <= today)
@@ -53,11 +55,14 @@ def policy_prompt(subject, grade, station, topic="", pathway=""):
     refs = legal_references()
     codes = "; ".join(r["code"] for r in refs if r["scope"] in {"curriculum", "textbook", "assessment"})
     profile = assessment_profile(subject, grade)
+    from services.academic_scope import academic_scope_instruction
+    scope_instruction = academic_scope_instruction(subject, grade, topic)
     return f"""\n[NGỮ CẢNH CHƯƠNG TRÌNH — rà soát nguồn ngày {POLICY_DATE}]
 Trạm {station}; môn {subject}; lớp {grade}; chủ đề {topic}; định hướng {pathway or 'chưa khai báo'}.
 Chương trình GDPT 2018 đọc cùng các sửa đổi còn áp dụng: {codes}.
 Sử dụng Kết nối tri thức với cuộc sống, đối chiếu đính chính/cập nhật NXBGD; bộ sách thống nhất từ năm học 2026–2027 theo QĐ 3588 ngày 26/12/2025.
 {profile['label']}. {profile['note']}
+{scope_instruction}
 Không có nội dung SGK hoặc văn bản gốc trong ngữ cảnh thì KHÔNG tuyên bố đã đọc/đối chiếu từng trang, không bịa số trang, trích dẫn, tác giả, URL hay xác nhận của Bộ.
 Chỉ dùng nội dung đúng yêu cầu cần đạt của môn/lớp; danh sách chủ đề gợi ý của app không phải mục lục SGK đã kiểm định. Yêu cầu tùy biến không được đổi môn/lớp hoặc tự miễn kiểm tra chương trình.
 Ngữ văn: dạy học có thể dùng văn bản KNTT đã học; đánh giá cuối học kì/cuối năm/cuối cấp tránh dùng lại văn bản đã học trong SGK theo CV 3175. Không được bịa tác giả/trích đoạn rồi gán cho tác phẩm có thật. Không áp yêu cầu này thành lệnh cấm mọi ngữ liệu SGK ở Trạm 1.
@@ -105,7 +110,7 @@ def question_groups(exam):
         yield "part_doc_hieu", reading["questions"]
 
 
-def prepare_exam_for_delivery(exam, subject, grade, duration=45):
+def prepare_exam_for_delivery(exam, subject, grade, duration=45, topics=(), custom=""):
     """Preserve academic payload; do not call heuristic answer/diagram healers."""
     subject, grade = validate_exam_context(exam, subject, grade)
     result = deepcopy(exam)
@@ -123,6 +128,8 @@ def prepare_exam_for_delivery(exam, subject, grade, duration=45):
             if not isinstance(question, dict):
                 raise ValueError("Câu hỏi không đúng cấu trúc; cần sửa dữ liệu nguồn.")
             validate_exam_context({"p1": [question]}, subject, grade)
+            from services.academic_scope import check_exam_question_scope
+            check_exam_question_scope(question, subject, grade, topics, custom)
             texts.extend(str(question.get(k, "")) for k in ("q", "explain"))
     check_current_facts("\n".join(texts))
     payload = {k: result[k] for k in ("p1", "p2", "p3", "part_doc_hieu", "part_viet") if k in result}
