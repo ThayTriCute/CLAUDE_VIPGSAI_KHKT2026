@@ -56,6 +56,32 @@ class TestStationUI(unittest.TestCase):
         self.assertEqual(at.session_state["tram2_count"], 0)
         self.assertFalse(any("85.4%" in m.value for m in at.markdown))
 
+    def test_station_navigation_keeps_attempt_and_answers(self):
+        at = self.app()
+        at.session_state["exam_state"] = "testing"
+        at.session_state["exam_data"] = {"code": "QA-NAV",
+            "p1": [{"q": "Tính 2 + 1.", "opt": ["A. 1", "B. 3", "C. 4", "D. 5"], "ans": "B"}],
+            "p2": [{"q": "Xét các số", "stmts": [{"t": "3 > 2", "a": True}, {"t": "2 > 1", "a": True}, {"t": "1 > 2", "a": False}, {"t": "3 = 3", "a": True}]}],
+            "p3": [{"q": "Tính 2 + 1.", "ans": "3"}]}
+        at.session_state["exam_context"] = {"name": "QA", "grade": "Lớp 12", "subject": "Toán học", "student_id": "qa-nav"}
+        deadline = time.time() + 300
+        at.session_state["exam_deadline"] = deadline
+        at.session_state["attempt_id"] = "qa-nav"
+        next(b for b in at.button if b.key == "top_nav_station_2").click().run()
+        next(r for r in at.radio if r.key == "t3_p1_0_letter").set_value("B").run()
+        next(r for r in at.radio if r.key == "t3_p2_0_0").set_value("Đúng").run()
+        next(t for t in at.text_input if t.label == "Nhập đáp số câu 1:").set_value("3").run()
+        for index in (1, 3, 2):
+            next(b for b in at.button if b.key == f"top_nav_station_{index}").click().run()
+            self.assertEqual([e.message for e in at.exception], [])
+        self.assertEqual(at.session_state["attempt_id"], "qa-nav")
+        self.assertEqual(at.session_state["exam_deadline"], deadline)
+        self.assertEqual(at.session_state["exam_answers"]["p3_0"], "3")
+        self.assertEqual(next(r for r in at.radio if r.key == "t3_p1_0_letter").value, "B")
+        self.assertEqual(next(r for r in at.radio if r.key == "t3_p2_0_0").value, "Đúng")
+        self.assertEqual(next(t for t in at.text_input if t.label == "Nhập đáp số câu 1:").value, "3")
+        self.assertEqual(at.session_state["sb_station_radio_selector"], at.session_state["selected_station"])
+
     def test_generated_lesson_export_is_bound_to_subject_and_grade(self):
         at = self.app()
         at.secrets["GEMINI_API_KEY"] = "test-only-key"
@@ -67,9 +93,21 @@ class TestStationUI(unittest.TestCase):
             next(b for b in at.button if b.label == "🚀 Soạn bài học").click().run()
         self.assertEqual([e.message for e in at.exception], [])
         self.assertEqual(at.session_state["current_lesson_context"], ("Toán học", 6))
+        self.assertEqual(at.session_state["current_topic"], "Phân số")
         self.assertIn("lớp 6", at.session_state["current_lesson"])
         next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select("Lớp 7").run()
         self.assertEqual(at.session_state["current_lesson"], "")
+        self.assertEqual([e.message for e in at.exception], [])
+
+    def test_lesson_suggestion_updates_form_input_without_calling_ai(self):
+        at = self.app()
+        select = next(s for s in at.selectbox if s.label == "🎯 Chọn chủ đề gợi ý theo môn/lớp:")
+        value = select.options[1]
+        with patch("google.genai.Client") as client:
+            select.select(value).run()
+            self.assertFalse(client.called)
+        field = next(t for t in at.text_input if "Bài học cần chiếm lĩnh" in t.label)
+        self.assertEqual(field.value, value.split(":")[-1].strip())
         self.assertEqual([e.message for e in at.exception], [])
 
     def test_stale_unbound_lesson_is_not_exported_as_current_subject(self):

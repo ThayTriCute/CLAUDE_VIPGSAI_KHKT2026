@@ -319,6 +319,7 @@ if "current_topic" not in st.session_state: st.session_state.current_topic = ""
 if "lab_data" not in st.session_state: st.session_state.lab_data = None
 
 if "quiz_states" not in st.session_state: st.session_state.quiz_states = {}
+if "quiz_selections" not in st.session_state: st.session_state.quiz_selections = {}
 
 if "global_stats_loaded" not in st.session_state: st.session_state.global_stats_loaded = False
 
@@ -383,13 +384,25 @@ def academic_markdown(text, trusted_layout=False):
     st.markdown(rendered, unsafe_allow_html=True)
 
 
-def academic_options(options, label, key):
+def academic_options(options, label, key, previous=None):
     """Render options with checked math; store the original option for grading."""
     for index, option in enumerate(options):
         academic_markdown(f"**{chr(65 + index)}.** " + re.sub(r"^[A-D][.)]\s*", "", str(option), flags=re.I))
     # Changing the widget domain must not reuse a value from the former full-text radio.
-    letter = st.radio(label, list("ABCD")[:len(options)], key=key + "_letter", horizontal=True, index=None)
+    widget_key = key + "_letter"
+    if widget_key not in st.session_state and previous is not None:
+        if previous in options:
+            st.session_state[widget_key] = chr(65 + options.index(previous))
+        elif previous in list("ABCD")[:len(options)]:
+            st.session_state[widget_key] = previous
+    letter = st.radio(label, list("ABCD")[:len(options)], key=widget_key, horizontal=True, index=None)
     return options[ord(letter) - 65] if letter else None
+
+
+def apply_lesson_suggestion(context_key):
+    value = st.session_state.get(f"kntt_lesson_sel_{context_key}", "")
+    if value and not value.startswith("--") and value != "Tự gõ bài học khác bên dưới...":
+        st.session_state[f"topic_input_{context_key}"] = value.split(":")[-1].strip()
 
 
 
@@ -1447,6 +1460,7 @@ if previous_context_key is not None and previous_context_key != current_context_
     st.session_state.parsed_quiz = []
 
     st.session_state.quiz_states = {}
+    st.session_state.quiz_selections = {}
 
     st.session_state.lab_data = None
 
@@ -7008,6 +7022,13 @@ if "sb_station_radio_selector" not in st.session_state:
 elif st.session_state.sb_station_radio_selector != st.session_state.selected_station:
     st.session_state.sb_station_radio_selector = st.session_state.selected_station
 
+
+def navigate_to_station(label):
+    """Apply navigation before the click-triggered run; no second full rerun."""
+    if label in station_labels:
+        st.session_state.selected_station = label
+        st.session_state.sb_station_radio_selector = label
+
 st.markdown('<div style="font-size: 13px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.8px; margin-top: -12px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">🧭 KHÔNG GIAN HỌC TẬP & KHẢO THÍ SƯ PHẠM (CHỌN TRẠM HOẠT ĐỘNG):</div>', unsafe_allow_html=True)
 
 nav_t1, nav_t2, nav_t3, nav_t4 = st.columns(4)
@@ -7016,11 +7037,8 @@ for idx_st, (col_st, label_st) in enumerate(zip([nav_t1, nav_t2, nav_t3, nav_t4]
         is_cur_active = (st.session_state.selected_station == label_st)
         btn_type = "primary" if is_cur_active else "secondary"
         btn_title = f"⭐ {label_st}" if is_cur_active else label_st
-        if st.button(btn_title, key=f"top_nav_station_{idx_st}", type=btn_type, use_container_width=True):
-            if st.session_state.selected_station != label_st:
-                st.session_state.selected_station = label_st
-                st.session_state.sb_station_radio_selector = label_st
-                st.rerun()
+        st.button(btn_title, key=f"top_nav_station_{idx_st}", type=btn_type, use_container_width=True,
+                  on_click=navigate_to_station, args=(label_st,))
 
 st.markdown('<div style="border-bottom: 1px solid rgba(51, 65, 85, 0.45); margin-top: 6px; margin-bottom: 18px;"></div>', unsafe_allow_html=True)
 
@@ -10049,7 +10067,7 @@ def render_math_graph_to_webp_base64(graph_data, extra_points=None, xlabel=r'$x$
     except Exception:
         return ""
 
-@st.cache_data(show_spinner=False, max_entries=256)
+@st.cache_data(max_entries=4, show_spinner=False)
 def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán học", grade: int = 12, topic: str = "") -> str:
     """Validate the selected curriculum context and normalize display syntax.
 
@@ -10643,7 +10661,8 @@ if selected_station == station_labels[0]:
 
         lesson_select_options,
 
-        key=f"kntt_lesson_sel_{current_context_key}"
+        key=f"kntt_lesson_sel_{current_context_key}",
+        on_change=apply_lesson_suggestion, args=(current_context_key,)
 
     )
 
@@ -10657,28 +10676,28 @@ if selected_station == station_labels[0]:
 
 
 
-    col_inp, col_btn = st.columns([3.8, 1.2])
+    with st.form(f"lesson_request_{current_context_key}", border=False):
+        col_inp, col_btn = st.columns([3.8, 1.2])
 
-    with col_inp:
+        with col_inp:
 
-        topic_input = st.text_input(
+            topic_input = st.text_input(
 
-            "📝 Bài học cần chiếm lĩnh kiến thức (hoặc gõ tên bài tùy ý):",
+                "📝 Bài học cần chiếm lĩnh kiến thức (hoặc gõ tên bài tùy ý):",
 
-            value=default_lesson_txt,
+                value=default_lesson_txt,
 
-            placeholder=curr_ph,
+                placeholder=curr_ph,
 
-            key=f"topic_input_{current_context_key}"
+                key=f"topic_input_{current_context_key}"
 
-        )
+            )
 
-    with col_btn:
+        with col_btn:
 
-        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
 
-        btn_submit_lesson = st.button("🚀 Soạn bài học", key=f"btn_soan_{current_context_key}", type="primary", width="stretch")
-
+            btn_submit_lesson = st.form_submit_button("🚀 Soạn bài học", type="primary", width="stretch")
 
 
     if curr_curriculum:
@@ -10752,6 +10771,9 @@ if selected_station == station_labels[0]:
     if btn_submit_lesson and conflict_grade:
         st.error("Hãy chuyển sang đúng lớp được nhắc trong yêu cầu trước khi soạn bài; không gắn bài khác lớp vào lớp đang chọn.")
 
+    if btn_submit_lesson and not topic_input.strip():
+        st.warning("Hãy nhập tên bài học hoặc chọn chủ đề trước khi soạn bài.")
+
     if btn_submit_lesson and topic_input.strip() and not conflict_grade:
 
         st.session_state.tram1_count += 1
@@ -10768,13 +10790,17 @@ if selected_station == station_labels[0]:
                 # ==============================================================================
                 # BỘ NÃO KIỂM SOÁT BIGDATA CUỐI CÙNG TRẠM 1 (MASTER SOVEREIGN QUALITY GATE)
                 # ==============================================================================
-                res_text = station1_master_sovereign_brain_gate(res_text, subject=subject, grade=grade_num, topic=topic_input.strip())
+                # generate_checked_text already returns the validated lesson.
 
                 st.session_state.current_lesson = res_text
                 st.session_state.current_lesson_context = (subject, grade_num)
                 st.session_state.current_topic = topic_input.strip()
                 st.session_state.parsed_quiz = parse_quiz_questions(res_text)
                 st.session_state.quiz_states = {}
+                st.session_state.quiz_selections = {}
+                for stale_quiz_key in list(st.session_state):
+                    if str(stale_quiz_key).startswith("q_"):
+                        del st.session_state[stale_quiz_key]
 
             except Exception as e:
                 st.error(f"Lỗi: {e}")
@@ -11005,7 +11031,9 @@ if selected_station == station_labels[0]:
                 except Exception as _e_vis:
                     pass
 
-                user_choice = academic_options(q['options'], f"Chọn đáp án câu {idx+1}:", f"q_{idx}")
+                user_choice = academic_options(q['options'], f"Chọn đáp án câu {idx+1}:", f"q_{idx}", st.session_state.quiz_selections.get(idx))
+                if user_choice is not None:
+                    st.session_state.quiz_selections[idx] = user_choice
 
                 if st.button(f"🔍 Kiểm tra câu {idx+1}", key=f"btn_{idx}"):
 
@@ -14686,7 +14714,7 @@ if selected_station == station_labels[2]:
 
                     render_fast_visual(q, f"test_p1_{idx}")
 
-                    user_ans = academic_options(q.get("opt", []), f"Lựa chọn câu {idx+1}:", f"t3_p1_{idx}")
+                    user_ans = academic_options(q.get("opt", []), f"Lựa chọn câu {idx+1}:", f"t3_p1_{idx}", st.session_state.exam_answers.get(f"p1_{idx}"))
 
                     st.session_state.exam_answers[f"p1_{idx}"] = user_ans
 
@@ -14731,6 +14759,10 @@ if selected_station == station_labels[2]:
                         clean_stmt = clean_question_bbt_text(clean_stmt)
 
                         academic_markdown(f"**Ý {chr(97+s_idx)})** {clean_stmt}")
+                        if f"t3_p2_{idx}_{s_idx}" not in st.session_state:
+                            previous_tf = st.session_state.exam_answers.get(f"p2_{idx}_{s_idx}")
+                            if previous_tf in ("Chưa chọn", "Đúng", "Sai"):
+                                st.session_state[f"t3_p2_{idx}_{s_idx}"] = previous_tf
                         c_ans = st.radio(f"Chọn Đúng/Sai cho câu {idx+1}, ý {chr(97+s_idx)}", ["Chưa chọn", "Đúng", "Sai"], horizontal=True, key=f"t3_p2_{idx}_{s_idx}", label_visibility="collapsed")
 
                         st.session_state.exam_answers[f"p2_{idx}_{s_idx}"] = c_ans
@@ -14763,6 +14795,10 @@ if selected_station == station_labels[2]:
 
                     render_fast_visual(q, f"test_p3_{idx}")
 
+                    if f"t3_p3_{idx}" not in st.session_state:
+                        previous_short = st.session_state.exam_answers.get(f"p3_{idx}")
+                        if previous_short is not None:
+                            st.session_state[f"t3_p3_{idx}"] = str(previous_short)
                     short_ans = st.text_input(
 
                         f"Nhập đáp số câu {idx+1}:",

@@ -18,8 +18,37 @@ if ROOT_DIR not in sys.path:
 class TestAppSmoke(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        import app
-        cls.app = app
+        import streamlit as st
+        # Bare-mode imports reuse global layout generators. Restore form metadata
+        # so subsequent AppTest sessions start outside any form.
+        generators = (st._main, st.sidebar)
+        prior = [dg._form_data for dg in generators]
+        try:
+            import app
+            cls.app = app
+        finally:
+            for dg, form_data in zip(generators, prior):
+                dg._form_data = form_data
+
+    def test_lesson_gate_reuses_only_identical_content_and_context(self):
+        from unittest.mock import patch
+        gate = self.app.station1_master_sovereign_brain_gate
+        gate.clear()
+        source = "Bài kiểm tra bộ nhớ đệm: $1+1=2$."
+        try:
+            with patch.object(self.app, "validate_lesson_policy", wraps=self.app.validate_lesson_policy) as validate:
+                first = gate(source, "Toán học", 6, "Phép cộng")
+                self.assertEqual(gate(source, "Toán học", 6, "Phép cộng"), first)
+                self.assertEqual(validate.call_count, 1)
+                gate(source, "Toán học", 7, "Phép cộng")
+                gate(source, "Toán học", 6, "Phép trừ")
+                gate(source + " Nội dung mới.", "Toán học", 6, "Phép cộng")
+                gate(source, "Ngữ văn", 6, "Phép cộng")
+                self.assertEqual(validate.call_count, 5)
+            with self.assertRaises(ValueError):
+                gate(source, "Vật lý", 6, "Phép cộng")
+        finally:
+            gate.clear()
 
     def test_app_core_functions_exist(self):
         """Kiểm tra sự tồn tại của 5 hàm trụ cột trong app.py"""

@@ -74,6 +74,12 @@ def build_lesson_html(subject, grade, topic, lesson, style="handwritten"):
         raise ValueError("Bài học quá dài để xuất trong một lượt.")
     if style not in {"handwritten", "color", "monochrome"}:
         raise ValueError("Kiểu bản in không hợp lệ.")
+    return _build_lesson_html_cached(subject, grade, str(topic or subject), lesson, style)
+
+
+@lru_cache(maxsize=4)
+def _build_lesson_html_cached(subject, grade, topic, lesson, style):
+    """Small immutable cache, keyed by all content/context/style inputs."""
     from services.math_publication import validate_math_text
     validate_math_text(lesson)
     css, font, js = renderer_assets()
