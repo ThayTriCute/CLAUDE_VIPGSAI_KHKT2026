@@ -6,7 +6,7 @@ import math
 import re
 from itertools import islice
 
-from services.academic_context import academic_context, canonical_subject, normalize_grade, topic_matches, validate_exam_context
+from services.academic_context import academic_context, canonical_subject, folded, normalize_grade, topic_matches, validate_exam_context
 from services.curriculum_policy import policy_prompt, question_groups, validate_exam_structure
 from services.cognitive_levels import LEVEL_GUIDANCE, normalize_level
 from services.math_publication import validate_exam_math, MathPublicationError
@@ -101,14 +101,73 @@ def has_visual(question):
     return False
 
 
+def cubic_from_qualitative_constraints(question):
+    """Construct a representative only for the fully constrained a/d sign task.
+
+    Never infer the graph from the supplied answer. Every option is evaluated
+    independently, and any extra numerical/geometrical demand is unsupported.
+    """
+    text = str(question.get("q", ""))
+    prose = folded(text)
+    if not any(value in prose for value in ("dau cua he so", "dau cac he so", "ve dau cua")):
+        return None
+    if not re.search(r"a\s*(?:và|,|va)\s*d", text.replace("$", ""), re.I):
+        return None
+    if any(value in prose for value in ("hoanh do", "toa do", "nghiem", "dien tich", "tiep tuyen", "bang bien thien")):
+        return None
+    upward = "chu n di len" in prose or "chu n huong len" in prose
+    downward = "chu n nguoc" in prose or "chu n di xuong" in prose
+    if upward == downward:
+        return None
+    intercepts = re.findall(r"cat truc tung[^.!?\n]{0,100}?\b(duong|am)\b", prose)
+    if len(set(intercepts)) != 1 or "khong" in prose:
+        return None
+    leading = 1 if upward else -1
+    intercept = 1 if intercepts[0] == "duong" else -1
+    for coefficient, sign in (("a", leading), ("d", intercept)):
+        direct = re.findall(r"\b" + coefficient + r"\s*([<>])\s*0", text)
+        if any((1 if op == ">" else -1) != sign for op in direct):
+            return None
+    options = question.get("opt", [])
+    if len(options) != 4:
+        return None
+    matches = []
+    combinations = []
+    for index, option in enumerate(options):
+        conditions = re.findall(r"\b([a-z])\s*([<>])\s*0", str(option))
+        if len(conditions) != 2 or {coefficient for coefficient, _ in conditions} != {"a", "d"}:
+            return None
+        signs = {coefficient: 1 if op == ">" else -1 for coefficient, op in conditions}
+        combinations.append((signs["a"], signs["d"]))
+        if signs == {"a": leading, "d": intercept}:
+            matches.append(chr(65 + index))
+    if len(matches) != 1 or len(set(combinations)) != 4:
+        return None
+    model = {"type": "func_3", "a": leading, "b": 0, "c": -3*leading, "d": intercept}
+    # f'(x)=3a(x²−1): two turning points and the stipulated orientation.
+    if model["b"]**2 - 3*model["a"]*model["c"] <= 0:
+        return None
+    return model, matches[0]
+
+
 def recover_visual(question, subject, grade):
-    """Leave complete supplied payloads alone; reconstruct explicit formulas only."""
+    """Reconstruct from explicit data or independently checked qualitative constraints."""
     subject, grade = academic_context(subject, grade)
     result = deepcopy(question)
     if has_visual(result) or not needs_visual(result):
         return result
     if subject == "Toán học" and grade >= 10:
         model = model_from_explicit_formula(result.get("q", ""))
+        qualitative = cubic_from_qualitative_constraints(result) if grade == 12 and model is None else None
+        if qualitative:
+            model, answer = qualitative
+            result["f"] = model
+            result["ans"] = answer
+            result["visual_recovery"] = {"method": "verified_qualitative_constraints", "representative": True,
+                "unique_answer": answer, "original_answer": question.get("ans"),
+                "conditions": {"leading_sign": model["a"], "intercept_sign": model["d"], "two_turning_points": True},
+                "input_sha256": _digest(question)}
+            return result
         # A function does not supply a missing variation table; do not invent it.
         if model and "bảng biến thiên" not in str(result.get("q", "")).lower() and "bảng xét dấu" not in str(result.get("q", "")).lower():
             result["f"] = model
