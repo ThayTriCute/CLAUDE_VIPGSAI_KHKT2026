@@ -63,3 +63,13 @@ class TestLessonPublicationRegression(unittest.TestCase):
         self.assertEqual(len(calls), 2)
         self.assertIn('TOÀN BỘ', calls[1])
         self.assertNotIn('giữ nguyên nhiệm vụ, số liệu và ý nghĩa', calls[1])
+
+    def test_derivative_zero_is_a_method_not_a_computed_root(self):
+        hint = "Em sẽ giải điều kiện $f'(x)=0$ để xác định các mốc xét dấu như thế nào?"
+        self.assertEqual(validate_socratic_question(hint, 'Khảo sát hàm số đã cho.'), hint)
+        with self.assertRaises(LessonContractError):
+            validate_socratic_question('Em đã tính được $x=77$ chưa?', 'Tìm nghiệm của phương trình.')
+
+    def test_repeated_given_numeric_data_does_not_include_prose_in_equation_match(self):
+        hint = 'Em sẽ dùng giả thiết $a = 2$ để đối chiếu điều kiện nào?'
+        self.assertEqual(validate_socratic_question(hint, 'Cho tham số $a=2$.'), hint)

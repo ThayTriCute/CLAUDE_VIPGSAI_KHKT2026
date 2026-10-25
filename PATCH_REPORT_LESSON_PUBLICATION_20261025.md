@@ -25,3 +25,7 @@ Bộ lọc cú pháp và mẫu ngôn ngữ không chứng minh nội dung AI ch�
 ## Kiểm thử trước phát hành
 
 58 kiểm thử tập trung đạt; bản cuối đạt 199 kiểm thử toàn bộ trong 239,337 giây. Biên dịch tệp sửa và kiểm tra whitespace theo CRLF đạt. Kiểm thử tự động không thay thế việc soạn bài thật trên Cloud; kết quả bước đó được lưu riêng sau phát hành.
+
+## Bổ sung sau kiểm chứng Cloud
+
+Lượt sinh bài thật sau PR #12 vẫn bị chặn bởi quy tắc phát hiện phương trình số trong gợi mở. Regex cũ có thể lấy cả tiền tố văn xuôi trước dấu bằng, và xem câu hỏi về điều kiện phương pháp f'(x)=0 như đã tính ra nghiệm. Tinh chỉnh chỉ nhận vế trái phương trình; đối chiếu dữ kiện bỏ khác biệt khoảng trắng/dấu ngoặc TeX; cho phép hỏi về điều kiện hàm/đạo hàm bằng 0 nhưng vẫn chặn nghiệm số mới dạng x=77. Bản tinh chỉnh thêm hai kiểm thử hồi quy và toàn bộ 201 kiểm thử đạt trong 324,060 giây. Chưa suy ra mọi gợi mở AI đều đúng hoặc không thể rò lời giải.
