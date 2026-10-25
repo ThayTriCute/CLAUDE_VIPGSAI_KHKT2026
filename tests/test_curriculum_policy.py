@@ -3,6 +3,7 @@ import ast
 import html
 from pathlib import Path
 import unittest
+from datetime import datetime
 from unittest.mock import patch
 
 from services.academic_context import validate_exam_context
@@ -24,6 +25,12 @@ class TestCurriculumPolicy(unittest.TestCase):
         current = {r["code"] for r in legal_references("2026-10-24")}
         self.assertNotIn("89/2026/TT-BGDĐT", current)
         self.assertIn("89/2026/TT-BGDĐT", {r["code"] for r in legal_references("2026-12-01")})
+
+    def test_default_effective_date_is_not_frozen_at_source_audit_date(self):
+        with patch('services.curriculum_policy.datetime') as clock:
+            clock.now.return_value = datetime(2026, 12, 1)
+            self.assertIn('89/2026/TT-BGDĐT', {r['code'] for r in legal_references()})
+            self.assertEqual(str(clock.now.call_args.args[0]), 'Asia/Ho_Chi_Minh')
 
     def test_geography_has_short_answers_and_correct_weights(self):
         profile = assessment_profile("Địa lí", 12)
