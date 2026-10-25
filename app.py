@@ -3,9 +3,12 @@ from services.cognitive_levels import annotate_question, level_caption
 from services.math_publication import math_for_web, validate_exam_math, MathPublicationError, generate_checked_text, normalize_real_aliases, escape_source_html
 from services.curriculum_policy import (assessment_profile, legal_references, matrix_html, prepare_exam_for_delivery, validate_exam_structure, validate_lesson_policy, lesson_prompt as build_curriculum_lesson_prompt, exam_prompt as build_curriculum_exam_prompt)
 from copy import deepcopy
+import hashlib
 from services.academic_context import canonical_subject, academic_context, validate_exam_context
 from services.lesson_export import build_lesson_html, handwritten_prompt
 from services.lesson_sources import books_for, lesson_references, PUBLISHER_PORTAL
+from services.lesson_contract import validate_lesson_contract, student_polya, validate_socratic_question, LessonContractError, socratic_prompt
+from services.math_publication import native_radio_label
 from qa_runtime import (split_api_keys, admin_password_matches, normalize_bool, display_frame,
     exam_response_metadata, observed_item_matrix, mcq_answer_matches)
 # VIP 76.0 - HỆ THỐNG GIA SƯ AI THPT 2026 (CHUẨN GDPT 2018 - EDTECH & PSYCHOMETRICS SOTA QUỐC TẾ)
@@ -385,18 +388,47 @@ def academic_markdown(text, trusted_layout=False):
 
 
 def academic_options(options, label, key, previous=None):
-    """Render options with checked math; store the original option for grading."""
-    for index, option in enumerate(options):
-        academic_markdown(f"**{chr(65 + index)}.** " + re.sub(r"^[A-D][.)]\s*", "", str(option), flags=re.I))
-    # Changing the widget domain must not reuse a value from the former full-text radio.
-    widget_key = key + "_letter"
-    if widget_key not in st.session_state and previous is not None:
-        if previous in options:
-            st.session_state[widget_key] = chr(65 + options.index(previous))
-        elif previous in list("ABCD")[:len(options)]:
-            st.session_state[widget_key] = previous
-    letter = st.radio(label, list("ABCD")[:len(options)], key=widget_key, horizontal=True, index=None)
-    return options[ord(letter) - 65] if letter else None
+    """Original full-option vertical radios, with checked native math labels."""
+    for option in options:
+        native_radio_label(str(option))
+    if key not in st.session_state:
+        saved = previous if previous is not None else st.session_state.get(key + "_letter")
+        if saved in options:
+            st.session_state[key] = saved
+        elif saved in list("ABCD")[:len(options)]:
+            st.session_state[key] = options[ord(saved) - 65]
+    return st.radio(label, options, index=None, key=key, format_func=native_radio_label,
+                    label_visibility="collapsed" if key.startswith("t3_") else "visible")
+
+
+def render_contextual_socratic(question, subject_name, grade_number, widget_key):
+    """A dedicated contextual question, never the private worked explanation."""
+    stem = str(question.get("question", question.get("q", "")))
+    options = question.get("options", question.get("opt", []))
+    correct = str(question.get("correct", question.get("ans", "")))
+    correct_text = options[ord(correct)-65] if len(correct) == 1 and correct in "ABCD" and len(options) > ord(correct)-65 else correct
+    identity = hashlib.sha256(json.dumps([stem, options, correct, subject_name, grade_number], ensure_ascii=False).encode()).hexdigest()
+    cache = st.session_state.setdefault("contextual_socratic_hints", {})
+    hint = cache.get(identity, question.get("socratic_hint", ""))
+    try:
+        hint = validate_socratic_question(hint, stem, correct_text)
+    except LessonContractError:
+        hint = ""
+    if hint:
+        academic_markdown(hint)
+    else:
+        if st.button("💡 Tạo gợi mở theo nội dung câu này", key=f"socratic_{widget_key}"):
+            try:
+                with st.spinner("Đang tạo câu hỏi gợi mở theo đúng dữ kiện..."):
+                    candidate = call_gemini_with_fallback(socratic_prompt(stem, subject_name, grade_number, options))
+                    candidate = validate_socratic_question(candidate, stem, correct_text)
+                    native_radio_label(candidate)
+                if len(cache) >= 32:
+                    cache.pop(next(iter(cache)))
+                cache[identity] = candidate
+                academic_markdown(candidate)
+            except Exception as error:
+                st.warning("Chưa có gợi mở hợp lệ cho câu này; không thay bằng lời giải. " + str(error))
 
 
 def apply_lesson_suggestion(context_key):
@@ -3444,6 +3476,8 @@ def question_visual_html(question):
         image = render_math_graph_to_webp_base64(dict(function))
         if image:
             pieces.append("<img alt='Đồ thị theo hệ số đã cung cấp' style='max-width:100%' src='" + html.escape(image, quote=True) + "'/>")
+            if question.get("visual_recovery", {}).get("representative"):
+                pieces.append("<p>Hình phục dựng theo các điều kiện trong đề bài.</p>")
     image = question.get("image_base64") or question.get("image_url") or question.get("image")
     if isinstance(image, str) and image.startswith(("data:image/png;base64,", "data:image/jpeg;base64,", "data:image/webp;base64,")):
         pieces.append("<img alt='Hình trong ngữ liệu nguồn' style='max-width:100%' src='" + html.escape(image, quote=True) + "'/>")
@@ -6874,15 +6908,19 @@ def parse_quiz_questions(text):
     questions = []
     part3_match = re.search(r'(?i)###\s*PHẦN\s*3', text)
     part2_text = text[:part3_match.start()] if part3_match else text
+    part2_match = re.search(r'(?im)^\s*#{0,6}\s*PHẦN\s*2[.:]', part2_text)
+    if part2_match:
+        part2_text = part2_text[part2_match.end():]
 
-    pattern = r'(?i)(?:\[Q\d+\]|C[âa]u\s*\d+[\.\:]?)'
+    pattern = r'(?im)^\s*\*{0,2}(?:\[Q\d+\]|C[âa]u\s*\d+[\.\:]?)\s*'
     parts = re.split(pattern, part2_text)
 
     for part in parts[1:]:
         lines = [l.strip() for l in part.strip().split('\n') if l.strip()]
         if not lines: continue
         q_header = lines[0]
-        level, options, correct, explain = "", [], "A", "Gợi ý tự suy luận!"
+        level, options, correct, explain = "", [], "", ""
+        socratic_hint = ""
         cognitive_evidence = {}
 
         match = re.search(r'(?i)\[Mức độ:\s*(.*?)\]', q_header)
@@ -6890,11 +6928,13 @@ def parse_quiz_questions(text):
             level = match.group(1)
             q_header = re.sub(r'(?i)\[Mức độ:\s*.*?\]', '', q_header).strip()
 
-        q_text_lines = [q_header]
+        q_text_lines = [q_header.strip("* ")]
         parsing_options = False
+        skipping_metadata = False
 
         for line in lines[1:]:
-            evidence_match = re.match(r'^(OUTCOME|COGNITIVE_REASON|COGNITIVE_STEPS):\s*(.*)', line, re.I)
+            evidence_line = re.sub(r'^\s*[-*•]?\s*', '', line).replace('**', '')
+            evidence_match = re.match(r'^(OUTCOME|COGNITIVE_REASON|COGNITIVE_STEPS):\s*(.*)', evidence_line, re.I)
             if evidence_match:
                 field = {"OUTCOME": "learning_outcome", "COGNITIVE_REASON": "cognitive_rationale", "COGNITIVE_STEPS": "solution_steps"}[evidence_match[1].upper()]
                 value = evidence_match[2].strip()
@@ -6904,11 +6944,15 @@ def parse_quiz_questions(text):
                     except (ValueError, TypeError):
                         value = []
                 cognitive_evidence[field] = value
+                skipping_metadata = True
                 continue
             clean_line = re.sub(r'(?i)^\*{0,2}([A-D])\b[\.\:]?\*{0,2}\s*', r'\1. ', line)
 
             if re.match(r'(?i)###\s*PHẦN\s*3', line):
                 break
+
+            if skipping_metadata and not parsing_options and not clean_line.upper().startswith(('A.', 'B.', 'C.', 'D.')):
+                continue
 
             if clean_line.upper().startswith(('A.', 'B.', 'C.', 'D.')):
                 parsing_options = True
@@ -6916,6 +6960,8 @@ def parse_quiz_questions(text):
             elif re.search(r'(?i)^(CORRECT|ĐÁP ÁN|Đáp án đúng)\s*:', line):
                 ext = re.sub(r'[^A-D]', '', line.split(":")[-1].upper())
                 if ext: correct = ext[0]
+            elif re.search(r'(?i)^(SOCRATIC|GỢI MỞ SOCRATIC|GỢI MỞ)\s*:', line):
+                socratic_hint = line.split(":", 1)[-1].strip()
             elif re.search(r'(?i)^(EXPLAIN|GIẢI THÍCH|Gợi ý)\s*:', line):
                 explain = line.split(":", 1)[-1].strip()
             else:
@@ -6924,7 +6970,7 @@ def parse_quiz_questions(text):
                 elif options and not clean_line.upper().startswith(('A.', 'B.', 'C.', 'D.')):
                     explain += " " + line
 
-        if len(options) >= 4:
+        if len(options) == 4 and correct in ("A", "B", "C", "D"):
             correct_idx = ord(correct) - ord('A')
             new_options = options[:4]
             new_correct = correct
@@ -6982,7 +7028,8 @@ def parse_quiz_questions(text):
                 "level": level,
                 "options": cleaned_options,
                 "correct": new_correct,
-                "explain": cleaned_explain
+                "explain": cleaned_explain,
+                "socratic_hint": socratic_hint
             }
             if extracted_bbt:
                 q_item["bbt"] = extracted_bbt
@@ -10785,7 +10832,7 @@ if selected_station == station_labels[0]:
             try:
 
                 res_text = generate_checked_text(study_prompt, call_gemini_with_fallback,
-                    lambda draft: station1_master_sovereign_brain_gate(draft, subject=subject, grade=grade_num, topic=topic_input.strip()))
+                    lambda draft: validate_lesson_contract(station1_master_sovereign_brain_gate(draft, subject=subject, grade=grade_num, topic=topic_input.strip()), subject, grade_num))
 
                 # ==============================================================================
                 # BỘ NÃO KIỂM SOÁT BIGDATA CUỐI CÙNG TRẠM 1 (MASTER SOVEREIGN QUALITY GATE)
@@ -10962,7 +11009,7 @@ if selected_station == station_labels[0]:
 
         quiz_list = st.session_state.get("parsed_quiz", [])
 
-        if quiz_list:
+        if len(quiz_list) == 3:
 
             st.markdown("<br>", unsafe_allow_html=True)
 
@@ -10983,6 +11030,9 @@ if selected_station == station_labels[0]:
                 if pve is not None:
                     try:
                         q_dict_vis = recover_visual(q_dict_vis, subject=subject, grade=grade_num)
+                        if q_dict_vis.get("visual_recovery", {}).get("method") == "verified_qualitative_constraints":
+                            q["correct"] = q_dict_vis["ans"]
+                            q["visual_recovery"] = q_dict_vis["visual_recovery"]
                     except Exception as _e_enr:
                         pass
 
@@ -11035,6 +11085,9 @@ if selected_station == station_labels[0]:
                 if user_choice is not None:
                     st.session_state.quiz_selections[idx] = user_choice
 
+                with st.expander(f"💡 Gợi mở tư duy theo câu {idx+1}", expanded=False):
+                    render_contextual_socratic(q, subject, grade_num, f"t1_{idx}")
+
                 if st.button(f"🔍 Kiểm tra câu {idx+1}", key=f"btn_{idx}"):
 
                     if user_choice:
@@ -11047,7 +11100,7 @@ if selected_station == station_labels[0]:
 
                         else:
 
-                            st.session_state.quiz_states[idx] = ("incorrect", f"💡 **Gợi ý Socratic:** {q['explain']}")
+                            st.session_state.quiz_states[idx] = ("incorrect", "Em hãy mở mục gợi mở theo ngữ cảnh ngay dưới câu hỏi để tự kiểm tra hướng suy nghĩ.")
 
                     else:
 
@@ -11063,27 +11116,14 @@ if selected_station == station_labels[0]:
 
                 st.markdown("---")
 
-        elif len(part2_split) > 1 and "PHẦN 3" in part2_split[1].upper():
+        else:
+            st.warning("Bài trong phiên cũ chưa đủ 3 câu trắc nghiệm hợp lệ. Hãy soạn lại bài để khôi phục đủ cấu trúc; không hiển thị ngữ liệu thô có khóa đáp án.")
 
-            st.warning("💡 Hệ thống AI vừa sinh ra một định dạng trắc nghiệm mới. Đang hiển thị ở chế độ xem tĩnh:")
-
-            fallback_p2 = re.split(r'(?i)###\s*PHẦN\s*3', part2_split[1])[0]
-            fallback_p2_vis = render_pedagogical_lesson_visuals(escape_source_html(fallback_p2.strip()), subject=subject, grade=grade_num)
-            academic_markdown(fallback_p2_vis, trusted_layout=True)
-
-
-
-        # In Phần 3
-
-        if len(part3_split) > 1 and part3_split[-1].strip():
-
-            st.markdown("### ✍️ Phần 3: Bài tập tự luận & Hướng dẫn tư duy")
-            st.caption("Mức độ tự luận là đề xuất của AI; cần đối chiếu yêu cầu cần đạt, lời giải và rubric theo đúng môn/lớp. Bài dài hoặc nhiều bước không tự động là VDC.")
-            p3_vis = render_pedagogical_lesson_visuals(escape_source_html(part3_split[-1].strip()), subject=subject, grade=grade_num)
-            academic_markdown(p3_vis, trusted_layout=True)
-
-
-
+        st.markdown("### ✍️ Phần 3: Bài tập tự luận & Hướng dẫn tư duy")
+        try:
+            academic_markdown(student_polya(lesson_text, subject, grade_num))
+        except LessonContractError as error:
+            st.warning("Phần tự luận cũ chưa đủ 4 bước Pólya gợi mở. Hãy soạn lại bài. " + str(error))
 
 
     render_voice_speech_tex_and_english_evaluator('Tram 1', subject, grade_num)
@@ -14660,9 +14700,8 @@ if selected_station == station_labels[2]:
 
                 with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý)", expanded=False):
 
-                    clean_dh = sanitize_socratic_hint(expl_dh, q.get('ans', ''), q.get('q', ''), None, "TH", subject=subject, grade_num=grade_num)
+                    render_contextual_socratic(q, subject, grade_num, f"t3_reading_{idx}")
 
-                    st.info(f"💡 **Định hướng tư duy Socratic câu {idx+1}:**\n\n{clean_dh}")
 
                 st.markdown("---")
 
@@ -14688,9 +14727,8 @@ if selected_station == station_labels[2]:
 
                 with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý)", expanded=False):
 
-                    clean_v = sanitize_socratic_hint(expl_v, v.get('ans', ''), v.get('q', ''), None, "VD", subject=subject, grade_num=grade_num)
+                    render_contextual_socratic(v, subject, grade_num, f"t3_writing_{idx}")
 
-                    st.info(f"💡 **Định hướng tư duy Socratic câu {idx+1}:**\n\n{clean_v}")
 
                 st.markdown("---")
 
@@ -14730,9 +14768,8 @@ if selected_station == station_labels[2]:
 
                     with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý)", expanded=False):
 
-                        clean_hint = sanitize_socratic_hint(expl, q.get("ans", ""), q.get("q", ""), q.get("opt", []), q.get("level", "TH"), subject=subject, grade_num=grade_num)
+                        render_contextual_socratic(q, subject, grade_num, f"t3_p1_{idx}")
 
-                        academic_markdown(f"💡 **Định hướng tư duy Socratic:**\n\n{clean_hint}")
 
                     st.markdown("---")
 
@@ -14775,9 +14812,8 @@ if selected_station == station_labels[2]:
 
                     with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý)", expanded=False):
 
-                        clean_hint2 = sanitize_socratic_hint(expl2, "", q.get("q", ""), None, q.get("level", "VD"), subject=subject, grade_num=grade_num)
+                        render_contextual_socratic(q, subject, grade_num, f"t3_p2_{idx}")
 
-                        academic_markdown(f"💡 **Định hướng tư duy Socratic câu {idx+1}:**\n\n{clean_hint2}")
 
                     st.markdown("---")
 
@@ -14823,9 +14859,8 @@ if selected_station == station_labels[2]:
 
                     with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý)", expanded=False):
 
-                        clean_hint3 = sanitize_socratic_hint(expl3, q.get("ans", ""), q.get("q", ""), None, q.get("level", "VDC"), subject=subject, grade_num=grade_num)
+                        render_contextual_socratic(q, subject, grade_num, f"t3_p3_{idx}")
 
-                        academic_markdown(f"💡 **Định hướng tư duy Socratic câu {idx+1}:**\n\n{clean_hint3}")
 
                     st.markdown("---")
 

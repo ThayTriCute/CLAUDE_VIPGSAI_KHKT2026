@@ -186,7 +186,9 @@ def lesson_prompt(subject, grade, topic):
     return policy_prompt(subject, grade, 1, topic) + LEVEL_GUIDANCE + r"""
 Soạn bài học với ba tiêu đề chính: '### PHẦN 1: BÀI HỌC', '### PHẦN 2: TRẮC NGHIỆM KHÁCH QUAN SOCRATIC', '### PHẦN 3: BÀI TẬP TỰ LUẬN'.
 Phần 1: khởi động, hình thành kiến thức, ví dụ có lời giải phù hợp lớp, luyện tập và vận dụng; đặc trưng thể loại/môn học phải được giữ.
-Phần 2: câu hỏi trắc nghiệm có 4 phương án A/B/C/D, ghi đáp án và gợi ý riêng; Phần 3: bài tập tự luận và gợi ý.
+Phần 2: sinh CHÍNH XÁC 3 câu trắc nghiệm, đánh số Câu 1., Câu 2., Câu 3.; mỗi câu có đúng 4 phương án A./B./C./D. trên 4 dòng riêng. Ghi một dòng khóa chấm riêng 'ĐÁP ÁN: A/B/C/D' (chọn đúng một chữ), không đặt đáp án trong câu hỏi hay phương án. Sau khóa chấm, bắt buộc dòng 'GỢI MỞ SOCRATIC: ...?' là MỘT câu hỏi tiếng Việt, bám dữ kiện/khái niệm cụ thể của chính câu đó, gợi để học sinh tự làm bước tiếp theo. Không dùng một câu nhắc chung cho cả ba câu; không nhắc chữ cái phương án, không nêu kết quả, không tính toán thay học sinh. Nếu có 'GIẢI THÍCH:', đây là trường nội bộ riêng, tuyệt đối không dùng nó làm gợi mở cho học sinh.
+Phần 3: sinh CHÍNH XÁC 2 bài tập tự làm, đánh số Câu 1. và Câu 2.; viết đầy đủ đề bài trước. Sau mỗi đề, bắt buộc đủ bốn tiêu đề trên các dòng riêng 'Bước 1: Tìm hiểu đề', 'Bước 2: Lập kế hoạch', 'Bước 3: Thực hiện kế hoạch', 'Bước 4: Kiểm tra và nhìn lại'. Dòng dưới mỗi bước chỉ đặt MỘT câu hỏi gợi mở BẰNG TIẾNG VIỆT, gắn với đúng đối tượng/đại lượng/chi tiết trong đề, để học sinh tự tư duy. Tuyệt đối không giải chi tiết, không biến đổi/tính toán thay học sinh, không viết đáp án hoặc đáp số. Quy tắc tiếng Việt áp dụng cả khi dạy môn Tiếng Anh: ngữ liệu/đề bài có thể bằng tiếng Anh, nhưng tiêu đề và câu hỏi hướng dẫn bốn bước phải bằng tiếng Việt.
+Phân biệt rõ: Phần 1 được có ví dụ minh họa có lời giải để hình thành kiến thức; Phần 2 và Phần 3 là bài tập học sinh tự làm, không dùng lại lời giải ví dụ để giải hộ. Các trường OUTCOME/COGNITIVE_REASON/COGNITIVE_STEPS chỉ phục vụ đối soát nội bộ, viết trên dòng riêng, không đưa lời giải vào hướng dẫn cho học sinh.
 Mỗi câu Phần 2 và Phần 3 mở đầu 'Câu n. [Mức độ: NB/TH/VD/VDC]' (chọn một nhãn, hoặc để rỗng nếu chưa đủ căn cứ). Tiếp theo là nội dung câu, các dòng OUTCOME: yêu cầu cần đạt; COGNITIVE_REASON: căn cứ phân loại; COGNITIVE_STEPS: ["thao tác tư duy 1", "thao tác tư duy 2"]. Đây là đề xuất cần giáo viên duyệt, không mặc định tất cả câu là vận dụng.
 Công thức đặt trong $...$ hoặc $$...$$; hóa học dùng \ce{...}, đơn vị và chỉ số đúng bản chất. Không bọc công thức bằng backtick, không tự thay omega thành vô cực.
 Chỉ tạo hình/bảng khi có đủ dữ kiện của bài, không chèn bảng mẫu hoặc số liệu không có căn cứ. Nội dung ngắn gọn, đầy đủ, không tự gắn nhãn đã được Bộ kiểm duyệt.
@@ -212,10 +214,12 @@ def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
     for key in ("p1", "p2", "p3", "part_viet"):
         for question in schema.get(key, []):
             question.update(evidence_schema)
+            question["socratic_hint"] = "Một câu hỏi tiếng Việt gợi mở theo dữ kiện riêng của câu này; không giải hộ, không chỉ phương án hoặc kết quả"
             for stmt in question.get("stmts", []):
                 stmt.update(evidence_schema)
     for question in schema.get("part_doc_hieu", {}).get("questions", []):
         question.update(evidence_schema)
+        question["socratic_hint"] = "Câu hỏi gợi mở riêng theo ngữ liệu, không viết hộ câu trả lời"
     return (policy_prompt(subject, grade, 3, "; ".join(topics), pathway) + LEVEL_GUIDANCE + "\n"
             + structure + "\nYêu cầu tùy biến trong phạm vi môn/lớp đã chọn: " + str(custom)
             + "\nTự giải và đối chiếu đáp án với giả thiết; thiếu hình thì không đặt câu yêu cầu đọc hình đó. Không sao chép nguồn thiếu bằng chứng hoặc tự nhận là đề thật."

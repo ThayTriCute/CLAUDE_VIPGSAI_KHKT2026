@@ -8,6 +8,7 @@ import hashlib
 import html
 import re
 import threading
+from functools import lru_cache
 
 TOKENS = re.compile(r"```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$")
 NAKED = re.compile(r"\\(?:frac|dfrac|tfrac|sqrt|begin|end|ce|pu|omega|Omega|alpha|beta|Delta|int|sum|vec|mathbb|mathrm|left|right)\b")
@@ -64,8 +65,17 @@ def _engine():
         try:
             ctx.set_hard_memory_limit(96 * 1024 * 1024)
             vendor = Path(__file__).resolve().parents[1] / "assets/vendor/katex/dist"
-            for name in ("katex.min.js", "contrib/mhchem.min.js"):
-                ctx.eval((vendor / name).read_text(encoding="utf-8"), timeout_sec=3)
+            ctx.eval((vendor / "katex.min.js").read_text(encoding="utf-8"), timeout_sec=3)
+            ctx.eval("""var gsaiChemMacros={}; var gsaiDefineMacro=katex.__defineMacro;
+              katex.__defineMacro=function(name,body){gsaiChemMacros[name]=body;gsaiDefineMacro(name,body);};""", timeout_sec=1)
+            ctx.eval((vendor / "contrib/mhchem.min.js").read_text(encoding="utf-8"), timeout_sec=3)
+            ctx.eval("""katex.__defineMacro=gsaiDefineMacro;
+              function gsaiChemTex(command,body){
+                var tokens=Array.from(body).map(function(text,index){return {text:text,loc:{start:index}};}).reverse();
+                var value=gsaiChemMacros['\\\\'+command]({consumeArgs:function(){return [tokens];}});
+                Object.keys(gsaiChemMacros).forEach(function(name){if(typeof gsaiChemMacros[name]==='string')value=value.split(name).join(gsaiChemMacros[name]);});
+                return value;
+              }""", timeout_sec=1)
             ctx.eval("""function gsaiMathBatch(items) {
               return items.map(function(item) {
                 try { return {html:katex.renderToString(item[0], {displayMode:item[1],
@@ -131,6 +141,51 @@ def validate_math_text(text):
     return text
 
 
+@lru_cache(maxsize=128)
+def native_radio_label(text):
+    """Expand mhchem through its own parser for native full-option radio labels.
+
+    The original option remains the widget value and grading source. Streamlit's
+    native KaTeX does not consistently load the mhchem extension.
+    """
+    text = str(text)
+    validate_math_text(text)
+    chunks, last = [], 0
+    for start, end, tex, display in segments(text):
+        expanded, cursor = [], 0
+        while True:
+            match = re.search(r"\\(ce|pu)\s*\{", tex[cursor:])
+            if not match:
+                expanded.append(tex[cursor:])
+                break
+            begin = cursor + match.start()
+            body_start = cursor + match.end()
+            position, depth = body_start, 1
+            while position < len(tex) and depth:
+                if tex[position] == "{" and (position == 0 or tex[position-1] != "\\"):
+                    depth += 1
+                elif tex[position] == "}" and (position == 0 or tex[position-1] != "\\"):
+                    depth -= 1
+                position += 1
+            if depth:
+                raise MathPublicationError("Nhóm công thức hóa học chưa đóng.")
+            if not _lock.acquire(timeout=4):
+                raise MathPublicationError("Bộ dựng công thức đang bận.")
+            try:
+                value = _engine().call("gsaiChemTex", match[1], tex[body_start:position-1], timeout_sec=3)
+            finally:
+                _lock.release()
+            if len(value) > 24000:
+                raise MathPublicationError("Công thức hóa học quá dài để dựng phương án.")
+            expanded.extend((tex[cursor:begin], value))
+            cursor = position
+        formula = "".join(expanded)
+        chunks.extend((text[last:start], "$" + formula + "$"))
+        last = end
+    chunks.append(text[last:])
+    return "".join(chunks)
+
+
 def escape_source_html(text):
     """Escape source HTML outside code/math before adding trusted local diagrams."""
     chunks, last = [], 0
@@ -190,11 +245,12 @@ def validate_exam_math(exam):
 
 def generate_checked_text(prompt, generator, validator):
     """At most one repair attempt, then retain a clear failure instead of publishing."""
+    from services.lesson_contract import LessonContractError
     text = generator(prompt)
     try:
         return validator(text)
-    except MathPublicationError as error:
-        repair = (prompt + "\nBản nháp bị chặn vì cú pháp công thức: " + str(error)[:240]
+    except (MathPublicationError, LessonContractError) as error:
+        repair = (prompt + "\nBản nháp chưa đạt kiểm tra công thức/cấu trúc bài học: " + str(error)[:240]
                   + "\nSửa cú pháp/dấu phân cách trong bản nháp sau, giữ nguyên nhiệm vụ, số liệu và ý nghĩa; không thêm kiến thức hoặc đổi môn/lớp. Xuất lại đầy đủ định dạng yêu cầu.\n"
                   + str(text)[:250000])
         return validator(generator(repair))
