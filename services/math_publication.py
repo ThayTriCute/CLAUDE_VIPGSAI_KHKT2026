@@ -190,11 +190,12 @@ def validate_exam_math(exam):
 
 def generate_checked_text(prompt, generator, validator):
     """At most one repair attempt, then retain a clear failure instead of publishing."""
+    from services.lesson_contract import LessonContractError
     text = generator(prompt)
     try:
         return validator(text)
-    except MathPublicationError as error:
-        repair = (prompt + "\nBản nháp bị chặn vì cú pháp công thức: " + str(error)[:240]
+    except (MathPublicationError, LessonContractError) as error:
+        repair = (prompt + "\nBản nháp chưa đạt kiểm tra công thức/cấu trúc bài học: " + str(error)[:240]
                   + "\nSửa cú pháp/dấu phân cách trong bản nháp sau, giữ nguyên nhiệm vụ, số liệu và ý nghĩa; không thêm kiến thức hoặc đổi môn/lớp. Xuất lại đầy đủ định dạng yêu cầu.\n"
                   + str(text)[:250000])
         return validator(generator(repair))

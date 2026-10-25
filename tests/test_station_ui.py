@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from streamlit.testing.v1 import AppTest
+from tests.lesson_samples import complete_lesson
 
 
 class TestStationUI(unittest.TestCase):
@@ -87,7 +88,7 @@ class TestStationUI(unittest.TestCase):
         at.secrets["GEMINI_API_KEY"] = "test-only-key"
         next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select("Lớp 6").run()
         next(t for t in at.text_input if "Bài học cần chiếm lĩnh" in t.label).set_value("Phân số")
-        lesson = "### PHẦN 1: Phân số\nChỉ có nội dung lớp 6. Phân số $\\frac{1}{2}$."
+        lesson = complete_lesson("Chỉ có nội dung lớp 6. Phân số $\\frac{1}{2}$.")
         with patch("google.genai.Client") as client:
             client.return_value.__enter__.return_value.models.generate_content.return_value = SimpleNamespace(text=lesson, candidates=[])
             next(b for b in at.button if b.label == "🚀 Soạn bài học").click().run()
@@ -97,6 +98,37 @@ class TestStationUI(unittest.TestCase):
         self.assertIn("lớp 6", at.session_state["current_lesson"])
         next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select("Lớp 7").run()
         self.assertEqual(at.session_state["current_lesson"], "")
+        self.assertEqual([e.message for e in at.exception], [])
+
+    def test_generated_lesson_repairs_missing_questions_and_hides_solution_metadata(self):
+        at = self.app()
+        at.secrets["GEMINI_API_KEY"] = "test-only-key"
+        next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select("Lớp 6").run()
+        next(t for t in at.text_input if "Bài học cần chiếm lĩnh" in t.label).set_value("Phân số")
+        repaired = complete_lesson().replace("Em cần tự xem xét thông tin nào ở bước này?", "Understand the problem. PRIVATE_ANSWER_77.")
+        with patch("google.genai.Client") as client:
+            generate = client.return_value.__enter__.return_value.models.generate_content
+            generate.side_effect = [SimpleNamespace(text="### PHẦN 1: BÀI HỌC\nBài còn thiếu cấu trúc.", candidates=[]), SimpleNamespace(text=repaired, candidates=[])]
+            next(b for b in at.button if b.label == "🚀 Soạn bài học").click().run()
+            self.assertEqual(generate.call_count, 2)
+        self.assertEqual([e.message for e in at.exception], [])
+        self.assertEqual(len(at.session_state["parsed_quiz"]), 3)
+        displayed = "\n".join(str(m.value) for m in at.markdown)
+        self.assertEqual(displayed.count("Bước 1: Tìm hiểu đề"), 2)
+        self.assertEqual(displayed.count("Bước 4: Kiểm tra và nhìn lại"), 2)
+        for forbidden in ("PRIVATE_ANSWER_77", "PRIVATE_REASONING", "COGNITIVE_STEPS", "Understand the problem", "ĐÁP ÁN:"):
+            self.assertNotIn(forbidden, displayed)
+
+    def test_lesson_still_missing_structure_after_retry_is_not_published(self):
+        at = self.app()
+        at.secrets["GEMINI_API_KEY"] = "test-only-key"
+        next(t for t in at.text_input if "Bài học cần chiếm lĩnh" in t.label).set_value("Hàm số")
+        with patch("google.genai.Client") as client:
+            generate = client.return_value.__enter__.return_value.models.generate_content
+            generate.return_value = SimpleNamespace(text="### PHẦN 1: BÀI HỌC\nChỉ có lý thuyết.", candidates=[])
+            next(b for b in at.button if b.label == "🚀 Soạn bài học").click().run()
+            self.assertEqual(generate.call_count, 2)
+        self.assertFalse(at.session_state.get("current_lesson", ""))
         self.assertEqual([e.message for e in at.exception], [])
 
     def test_lesson_suggestion_updates_form_input_without_calling_ai(self):
@@ -123,19 +155,7 @@ class TestStationUI(unittest.TestCase):
         next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select("Lớp 10").run()
         next(s for s in at.selectbox if s.label == "📚 Môn học cần hỗ trợ:").select("Hóa học").run()
         next(t for t in at.text_input if "Bài học cần chiếm lĩnh" in t.label).set_value("Kí hiệu hóa học")
-        lesson = r'''### PHẦN 1: BÀI HỌC
-Nước có công thức $\ce{H2O}$.
-### PHẦN 2: TRẮC NGHIỆM KHÁCH QUAN SOCRATIC
-Câu 1. [Mức độ: NB] Công thức của nước là gì?
-A. $\ce{H2O}$
-B. $\ce{CO2}$
-C. $\ce{O2}$
-D. $\ce{N2}$
-CORRECT: A
-EXPLAIN: Nước có hai nguyên tử H và một nguyên tử O.
-### PHẦN 3: BÀI TẬP TỰ LUẬN
-Nêu thành phần nguyên tố của nước.
-'''
+        lesson = complete_lesson(r"Nước có công thức $\ce{H2O}$.", chemistry=True)
         with patch("google.genai.Client") as client:
             client.return_value.__enter__.return_value.models.generate_content.return_value = SimpleNamespace(text=lesson, candidates=[])
             next(b for b in at.button if b.label == "🚀 Soạn bài học").click().run()
