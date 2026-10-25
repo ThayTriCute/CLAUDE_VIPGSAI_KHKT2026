@@ -105,6 +105,15 @@ print("<script>")
         with self.assertRaises(ValueError):
             build_lesson_html("Hóa học", 6, "topic", "body")
 
+    def test_export_reuse_never_crosses_lesson_grade_or_style(self):
+        first = build_lesson_html("Toán", 6, "Chủ đề A", "Nội dung A")
+        second = build_lesson_html("Toán", 7, "Chủ đề B", "Nội dung B", "monochrome")
+        self.assertIn("Toán học · Lớp 6", first)
+        self.assertNotIn("Nội dung B", first)
+        self.assertIn("Toán học · Lớp 7", second)
+        self.assertIn('class="monochrome"', second)
+        self.assertNotIn("Nội dung A", second)
+
     def test_naked_math_is_flagged_without_changing_its_meaning(self):
         value = lesson_body_html(r"Công thức chưa đóng: $\frac{1}{2}")
         self.assertIn('data-source-issue="math-delimiter"', value)
