@@ -13374,10 +13374,6 @@ if selected_station == station_labels[2]:
 
                             raw_json_ex = raw_json_ex.strip()
 
-                            if raw_json_ex.startswith("```json"): raw_json_ex = raw_json_ex[7:-3].strip()
-
-                            elif raw_json_ex.startswith("```"): raw_json_ex = raw_json_ex[3:-3].strip()
-
                             parsed_exam = validate_exam_data(safe_json_loads(raw_json_ex), subject, None if subject == "Ngữ văn" else (num_p1, num_p2, num_p3))
                             parsed_exam["is_ai_generated"] = True
                             parsed_exam["is_real_exam"] = False
