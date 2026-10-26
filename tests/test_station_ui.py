@@ -258,6 +258,17 @@ class TestStationUI(unittest.TestCase):
                     self.assertTrue(at.get('file_uploader'))
             ai.assert_not_called()
 
+    def test_empty_original_exam_mode_never_falls_into_practice_ai_creation(self):
+        at = self.app()
+        at.session_state['selected_station'] = '📝 Trạm 3: Luyện Tập & Khảo Thí'
+        with patch('real_exam_engine.get_baseline_full_exams', return_value=[]), patch('google.genai.Client') as ai:
+            at.run()
+            radio = next(r for r in at.radio if r.key == 'radio_exam_mode_choice')
+            radio.set_value(next(o for o in radio.options if 'Làm Nguyên Đề Thi Thật' in o)).run()
+            self.assertEqual([e.message for e in at.exception], [])
+            self.assertFalse(any(b.key == 't3_create_practice_exam' for b in at.button))
+            ai.assert_not_called()
+
     def test_station3_generation_replaces_a_whole_missing_visual_question(self):
         import real_exam_engine as engine
         at = self.app()

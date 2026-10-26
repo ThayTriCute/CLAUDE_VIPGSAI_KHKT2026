@@ -3566,7 +3566,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
                        quote_author="THẦY PHAN MINH TRÍ",
                        show_support_qr=True):
     import datetime
-    # CHỐT CHẶN CUỐI CÙNG: Thẩm định ngữ nghĩa, khử đa đáp án và chuẩn hóa Socratic trước khi xuất bản
+    # Kiểm tra ngữ cảnh/cấu trúc/công thức trước xuất; không tự chứng nhận mọi đáp án hoặc sửa nội dung nguồn.
     exam = audit_and_heal_exam_semantics(exam, subject_name=subject_name, grade_name=grade_name)
     current_year = datetime.datetime.now().year
     school_year = f"{current_year} - {current_year+1}"
@@ -12791,121 +12791,124 @@ if selected_station == station_labels[2]:
 
 
 
-                if "Làm Nguyên Đề Thi Thật" in selected_exam_mode and real_exams_list:
+                if "Làm Nguyên Đề Thi Thật" in selected_exam_mode:
+                    if not real_exams_list:
+                        st.info("Chưa có đề gốc phù hợp cho môn/lớp này trong kho. Chọn chế độ luyện tập nếu muốn tạo đề có AI hỗ trợ.")
+                    else:
 
-                    filter_opts = ["Tất cả"]
+                        filter_opts = ["Tất cả"]
 
-                    if gk1_count > 0: filter_opts.append(f"🌟 Giữa HK1 ({gk1_count} đề)")
+                        if gk1_count > 0: filter_opts.append(f"🌟 Giữa HK1 ({gk1_count} đề)")
 
-                    if ck1_count > 0: filter_opts.append(f"🎯 Cuối HK1 ({ck1_count} đề)")
+                        if ck1_count > 0: filter_opts.append(f"🎯 Cuối HK1 ({ck1_count} đề)")
 
-                    if gk2_count > 0: filter_opts.append(f"🌟 Giữa HK2 ({gk2_count} đề)")
+                        if gk2_count > 0: filter_opts.append(f"🌟 Giữa HK2 ({gk2_count} đề)")
 
-                    if ck2_count > 0: filter_opts.append(f"🎯 Cuối HK2 ({ck2_count} đề)")
+                        if ck2_count > 0: filter_opts.append(f"🎯 Cuối HK2 ({ck2_count} đề)")
 
-                    if thithu_count > 0: filter_opts.append(f"🏛️ Thi thử ({thithu_count} đề)")
-
-
-
-                    col_f1, col_f2 = st.columns([1.2, 2.8])
-
-                    with col_f1:
-
-                        filter_ex_type = st.selectbox("Kỳ thi:", filter_opts, key="sel_filter_real_type")
-
-                    with col_f2:
-
-                        filtered_exams = real_exams_list
-
-                        if "Giữa HK1" in filter_ex_type: filtered_exams = gk1_exams or real_exams_list
-
-                        elif "Cuối HK1" in filter_ex_type: filtered_exams = ck1_exams or real_exams_list
-
-                        elif "Giữa HK2" in filter_ex_type: filtered_exams = gk2_exams or real_exams_list
-
-                        elif "Cuối HK2" in filter_ex_type: filtered_exams = ck2_exams or real_exams_list
-
-                        elif "Thi thử" in filter_ex_type: filtered_exams = thithu_exams or real_exams_list
+                        if thithu_count > 0: filter_opts.append(f"🏛️ Thi thử ({thithu_count} đề)")
 
 
 
-                        r_opts = [
+                        col_f1, col_f2 = st.columns([1.2, 2.8])
 
-                            f"[{detect_exam_type(item)}] {item.get('title', 'Đề')} - {item.get('school', '')}"
+                        with col_f1:
 
-                            for item in filtered_exams
+                            filter_ex_type = st.selectbox("Kỳ thi:", filter_opts, key="sel_filter_real_type")
 
-                        ]
+                        with col_f2:
 
-                        if "sel_real_exam_t3" in st.session_state and (not r_opts or st.session_state.sel_real_exam_t3 >= len(r_opts)):
-                            st.session_state.sel_real_exam_t3 = 0
+                            filtered_exams = real_exams_list
 
-                        chosen_real_idx = st.selectbox(f"Chọn đề ({len(filtered_exams)} đề):", range(len(r_opts)), format_func=lambda i: r_opts[i], key="sel_real_exam_t3")
+                            if "Giữa HK1" in filter_ex_type: filtered_exams = gk1_exams or real_exams_list
+
+                            elif "Cuối HK1" in filter_ex_type: filtered_exams = ck1_exams or real_exams_list
+
+                            elif "Giữa HK2" in filter_ex_type: filtered_exams = gk2_exams or real_exams_list
+
+                            elif "Cuối HK2" in filter_ex_type: filtered_exams = ck2_exams or real_exams_list
+
+                            elif "Thi thử" in filter_ex_type: filtered_exams = thithu_exams or real_exams_list
 
 
 
-                    col_b1, col_b2 = st.columns([1.1, 1.3])
+                            r_opts = [
 
-                    with col_b1:
+                                f"[{detect_exam_type(item)}] {item.get('title', 'Đề')} - {item.get('school', '')}"
 
-                        btn_load_chosen = st.button("🚀 Nạp Đề Đang Chọn Này (0.1s)", type="secondary", width="stretch", key="btn_load_real_exam")
+                                for item in filtered_exams
 
-                    with col_b2:
+                            ]
 
-                        btn_load_random = st.button(f"🎲 Bốc Ngẫu Nhiên 1 Đề Toàn Quốc ({len(filtered_exams)} Đề)", type="primary", width="stretch", key="btn_random_real_exam")
+                            if "sel_real_exam_t3" in st.session_state and (not r_opts or st.session_state.sel_real_exam_t3 >= len(r_opts)):
+                                st.session_state.sel_real_exam_t3 = 0
 
-                    if btn_load_chosen or btn_load_random:
+                            chosen_real_idx = st.selectbox(f"Chọn đề ({len(filtered_exams)} đề):", range(len(r_opts)), format_func=lambda i: r_opts[i], key="sel_real_exam_t3")
 
-                        if btn_load_random:
-                            random.seed(time.time_ns())
-                            if "seen_whole_exam_codes" not in st.session_state:
-                                st.session_state.seen_whole_exam_codes = set()
 
-                            fresh_exams = [e for e in filtered_exams if str(e.get("code", e.get("title", ""))) not in st.session_state.seen_whole_exam_codes]
-                            if not fresh_exams:
-                                st.session_state.seen_whole_exam_codes.clear()
-                                fresh_exams = filtered_exams
 
-                            sel_real_item = random.choice(fresh_exams)
-                            st.session_state.seen_whole_exam_codes.add(str(sel_real_item.get("code", sel_real_item.get("title", ""))))
-                            st.toast(f"🎲 Đã bốc ngẫu nhiên đề mới: Mã {sel_real_item.get('code', 'Chính thức')} — {sel_real_item.get('title', 'Đề thi')[:35]}...", icon="🎯")
-                        else:
-                            sel_real_item = filtered_exams[chosen_real_idx]
-                            if "seen_whole_exam_codes" not in st.session_state:
-                                st.session_state.seen_whole_exam_codes = set()
-                            st.session_state.seen_whole_exam_codes.add(str(sel_real_item.get("code", sel_real_item.get("title", ""))))
+                        col_b1, col_b2 = st.columns([1.1, 1.3])
 
-                        st.session_state.exam_data = enrich_exam_data(sel_real_item)
+                        with col_b1:
 
-                        st.session_state.exam_code = str(sel_real_item.get("code", random.randint(1011, 9999)))
+                            btn_load_chosen = st.button("🚀 Nạp Đề Đang Chọn Này (0.1s)", type="secondary", width="stretch", key="btn_load_real_exam")
 
-                        st.session_state.attempt_id = str(uuid.uuid4())
+                        with col_b2:
 
-                        st.session_state.exam_start_timestamp = time.time()
+                            btn_load_random = st.button(f"🎲 Bốc Ngẫu Nhiên 1 Đề Toàn Quốc ({len(filtered_exams)} Đề)", type="primary", width="stretch", key="btn_random_real_exam")
 
-                        st.session_state.exam_deadline = time.time() + exam_time_mins * 60
+                        if btn_load_chosen or btn_load_random:
 
-                        st.session_state.exam_context = {"name": student_name, "grade": grade, "subject": subject, "phase": measure_phase, "student_id": measure_student_id}
+                            if btn_load_random:
+                                random.seed(time.time_ns())
+                                if "seen_whole_exam_codes" not in st.session_state:
+                                    st.session_state.seen_whole_exam_codes = set()
 
-                        st.session_state.pop("literature_grade", None)
+                                fresh_exams = [e for e in filtered_exams if str(e.get("code", e.get("title", ""))) not in st.session_state.seen_whole_exam_codes]
+                                if not fresh_exams:
+                                    st.session_state.seen_whole_exam_codes.clear()
+                                    fresh_exams = filtered_exams
 
-                        st.session_state.pop("exam_submitted_at", None)
+                                sel_real_item = random.choice(fresh_exams)
+                                st.session_state.seen_whole_exam_codes.add(str(sel_real_item.get("code", sel_real_item.get("title", ""))))
+                                st.toast(f"🎲 Đã bốc ngẫu nhiên đề mới: Mã {sel_real_item.get('code', 'Chính thức')} — {sel_real_item.get('title', 'Đề thi')[:35]}...", icon="🎯")
+                            else:
+                                sel_real_item = filtered_exams[chosen_real_idx]
+                                if "seen_whole_exam_codes" not in st.session_state:
+                                    st.session_state.seen_whole_exam_codes = set()
+                                st.session_state.seen_whole_exam_codes.add(str(sel_real_item.get("code", sel_real_item.get("title", ""))))
 
-                        for widget_key in list(st.session_state):
+                            st.session_state.exam_data = enrich_exam_data(sel_real_item)
 
-                            if widget_key.startswith(("t3_p1_", "t3_p2_", "t3_p3_", "nv_dh_", "nv_v_")):
+                            st.session_state.exam_code = str(sel_real_item.get("code", random.randint(1011, 9999)))
 
-                                del st.session_state[widget_key]
+                            st.session_state.attempt_id = str(uuid.uuid4())
 
-                        st.session_state.exam_state = "testing"
+                            st.session_state.exam_start_timestamp = time.time()
 
-                        st.session_state.exam_answers = {}
+                            st.session_state.exam_deadline = time.time() + exam_time_mins * 60
 
-                        st.session_state.tram3_chat_messages = []
+                            st.session_state.exam_context = {"name": student_name, "grade": grade, "subject": subject, "phase": measure_phase, "student_id": measure_student_id}
 
-                        st.toast(f"⚡ Đã nạp thành công đề thi thật từ {sel_real_item.get('school', '')} trong 0.1 giây!", icon="✨")
+                            st.session_state.pop("literature_grade", None)
 
-                        st.rerun()
+                            st.session_state.pop("exam_submitted_at", None)
+
+                            for widget_key in list(st.session_state):
+
+                                if widget_key.startswith(("t3_p1_", "t3_p2_", "t3_p3_", "nv_dh_", "nv_v_")):
+
+                                    del st.session_state[widget_key]
+
+                            st.session_state.exam_state = "testing"
+
+                            st.session_state.exam_answers = {}
+
+                            st.session_state.tram3_chat_messages = []
+
+                            st.toast(f"⚡ Đã nạp thành công đề thi thật từ {sel_real_item.get('school', '')} trong 0.1 giây!", icon="✨")
+
+                            st.rerun()
 
 
 

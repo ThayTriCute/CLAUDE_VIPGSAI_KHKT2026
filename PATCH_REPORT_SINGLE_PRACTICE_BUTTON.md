@@ -18,6 +18,8 @@ Toàn bộ 246 kiểm thử tại máy đạt trong 349,530 giây trước khi t
 
 Hai ca tích hợp cuối với hàm nguồn dùng chung đạt trong 62,409 giây: kho đủ mở đề đúng khóa/thời hạn/tùy biến mà không gọi AI; kho rỗng hoặc thiếu câu và tắt AI giữ màn hình cấu hình, không gọi provider. CI phải kiểm tra toàn bộ mã cuối trước hợp nhất. Do thêm hàm được import, cần khởi động lại tiến trình Cloud khi phát hành để tránh trộn app mới và module cũ.
 
+Rà chế độ không có dữ liệu phát hiện điều kiện cũ chỉ vào nhánh nguyên đề thật khi danh sách khác rỗng; nếu kho môn/lớp rỗng, giao diện rơi nhầm sang nút tạo luyện tập. Ca hồi quy tái hiện thất bại trong 23,217 giây. Tách điều kiện chọn chế độ khỏi điều kiện có dữ liệu: nguyên đề thật rỗng chỉ thông báo chưa có đề gốc, không tự chuyển sang tạo AI. Hai ca kiểm tra bản sửa và giữ điều khiển các chế độ khác đạt trong 34,134 giây, không gọi provider.
+
 ## Giới hạn còn mở
 
 Đổi một nút không tự giải quyết mọi lỗi ngữ liệu. Lượt AI thật trước bản này vẫn bị chặn: một câu tham chiếu đồ thị thiếu hình, một câu có lệnh LaTeX ngoài vùng toán; dấu vết phục hồi ghi unavailable nhưng chưa đủ để xác định nguyên nhân ngoại lệ. Bản nháp đã lưu riêng tại máy để tiếp tục điều tra. Chưa xác minh Trạm 1 và Trạm 3 trên đủ 65 ngữ cảnh về kiến thức/nguồn SGK, không tuyên bố hệ thống hoàn thiện hoặc đúng 100%.
