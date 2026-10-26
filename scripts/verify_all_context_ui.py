@@ -62,7 +62,10 @@ def verify(output):
                         assert not at.exception, [e.message for e in at.exception]
                         row['station1_context_seconds'] = round(time.monotonic() - stage_start, 3)
                         theory = f'Môn: {subject}; lớp: {grade}\nNgữ liệu QA mô phỏng, không phải bài giảng đã thẩm định. Ký hiệu thử $\\frac{{1}}{{2}}$.'
-                        generate.return_value = SimpleNamespace(text=complete_lesson(theory), candidates=[])
+                        lesson = complete_lesson(theory).replace(
+                            'Em nhớ cách biểu diễn một nửa của một số như thế nào?',
+                            'Em có thể kiểm tra các đáp án bằng cách đối chiếu với một nửa của 4 như thế nào?')
+                        generate.return_value = SimpleNamespace(text=lesson, candidates=[])
                         next(t for t in at.text_input if 'Bài học cần chiếm lĩnh' in t.label).set_value('Kiểm thử tích hợp')
                         stage_start = time.monotonic()
                         next(b for b in at.button if b.label == '🚀 Soạn bài học').click().run()
@@ -74,6 +77,8 @@ def verify(output):
                         assert displayed.count('Bước 1: Tìm hiểu đề') == 2
                         assert displayed.count('Bước 4: Kiểm tra và nhìn lại') == 2
                         assert 'PRIVATE_REASONING' not in displayed
+                        assert 'PRIVATE_WORKED_EXPLANATION' not in displayed
+                        assert 'kiểm tra các đáp án' in displayed
                         assert sum(r.label.startswith('Chọn đáp án câu ') for r in at.radio) == 3
                         assert any('infographic chữ viết tay' in e.label for e in at.expander)
                         assert 'youtube.com/results?' in displayed
@@ -86,11 +91,21 @@ def verify(output):
                         assert not at.exception, [e.message for e in at.exception]
                         assert sum(b.key == 't3_create_practice_exam' for b in at.button) == 1
                         if subject != 'Ngữ văn':
-                            for label, count in (('Số câu TN P.I:', 1), ('Số câu Đ/S P.II:', 0), ('Số câu TLN P.III:', 0)):
+                            for label, count in (('Số câu TN P.I:', 1), ('Số câu Đ/S P.II:', 1), ('Số câu TLN P.III:', 1)):
                                 next(n for n in at.number_input if n.label == label).set_value(count)
                         exam = sample_exam(subject, grade)
                         if subject != 'Ngữ văn':
-                            exam['p2'], exam['p3'] = [], []
+                            groups = [exam['p1'], exam['p2'], exam['p3']]
+                            hints = ['Em sẽ đối chiếu thứ tự các nhãn với yêu cầu trong câu hỏi như thế nào?',
+                                     'Em sẽ đọc từng mệnh đề kiểm thử rồi đối chiếu các nhãn như thế nào?',
+                                     'Em sẽ đếm các nhãn trong dữ liệu kiểm thử theo cách nào?']
+                        else:
+                            groups = [exam['part_doc_hieu']['questions'], exam['part_viet']]
+                            hints = ['Em sẽ dựa vào những chi tiết nào để xác định mục đích của đoạn văn mô phỏng?',
+                                     'Em sẽ tổ chức ý cho đoạn văn mô phỏng của mình như thế nào?']
+                        for group, hint in zip(groups, hints):
+                            for question in group:
+                                question.update(socratic_hint=hint, explain='PRIVATE_T3_WORKED_EXPLANATION')
                         with patch('real_exam_engine.generate_blended_real_exam', return_value=exam):
                             row['stage'] = 'station3_create'
                             faulthandler.dump_traceback_later(40)
@@ -103,6 +118,11 @@ def verify(output):
                         assert at.session_state['exam_context']['subject'] == subject
                         assert at.session_state['exam_context']['grade'] == f'Lớp {grade}'
                         assert at.session_state['exam_data']['grade'] == grade
+                        shown_exam = '\n'.join(str(m.value) for m in at.markdown)
+                        assert 'PRIVATE_T3_WORKED_EXPLANATION' not in shown_exam
+                        assert all(hint in shown_exam for hint in hints)
+                        row['station3_parts_tested'] = ['doc_hieu', 'viet'] if subject == 'Ngữ văn' else ['p1', 'p2', 'p3']
+                        row['explanation_separated_from_socratic'] = True
                         assert generate.call_count - before_calls == 1, 'Unexpected AI fallback during bank test'
                         row['station3'] = True
                         row['stage'] = 'complete'
