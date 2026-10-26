@@ -239,8 +239,7 @@ def lesson_topic_placeholder(subject, grade, editorial_topics):
 
 def lesson_prompt(subject, grade, topic):
     from services.cognitive_levels import LEVEL_GUIDANCE
-    from services.academic_scope import three_basic_survey_instruction
-    return policy_prompt(subject, grade, 1, topic) + three_basic_survey_instruction(subject, grade, topic) + LEVEL_GUIDANCE + r"""
+    return policy_prompt(subject, grade, 1, topic) + LEVEL_GUIDANCE + r"""
 Soạn bài học với ba tiêu đề chính: '### PHẦN 1: BÀI HỌC', '### PHẦN 2: TRẮC NGHIỆM KHÁCH QUAN SOCRATIC', '### PHẦN 3: BÀI TẬP TỰ LUẬN'.
 Phần 1: khởi động, hình thành kiến thức, ví dụ có lời giải phù hợp lớp, luyện tập và vận dụng; đặc trưng thể loại/môn học phải được giữ.
 Với bài toán thực tế, phải khai báo miền biến (rời rạc/nguyên hay liên tục), điều kiện, đơn vị và giả thiết mô hình. Nếu số lượng sản phẩm được mô hình hóa liên tục, ghi rõ giả thiết đó; không dùng điều kiện đạo hàm bằng 0 thay cho kiểm tra biên hoặc so sánh các giá trị nguyên khi đề yêu cầu số nguyên. Với mọi môn, chỉ dùng thuật ngữ/mô hình phù hợp lớp đang chọn; kiến thức ví dụ không tự chứng minh đã đối chiếu SGK.
