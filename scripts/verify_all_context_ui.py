@@ -41,7 +41,9 @@ def verify(output):
                     continue
                 at = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=60)
                 at.secrets['GEMINI_API_KEY'] = 'test-only-key'
+                cold_start = time.monotonic()
                 at.run()
+                cold_start_seconds = round(time.monotonic() - cold_start, 3)
                 next(s for s in at.selectbox if s.label == '🎯 Chọn khối lớp:').select(f'Lớp {grade}').run()
                 for subject in subjects_for_grade(grade):
                     if (subject, grade) in completed:
@@ -51,15 +53,20 @@ def verify(output):
                     before_calls = generate.call_count
                     try:
                         row['stage'] = 'station1_select_context'
+                        row['app_start_seconds'] = cold_start_seconds
+                        stage_start = time.monotonic()
                         at.session_state['selected_station'] = '📖 Trạm 1: Học Tập & Phòng Lab'
                         faulthandler.dump_traceback_later(35)
                         next(s for s in at.selectbox if s.label == '📚 Môn học cần hỗ trợ:').select(subject).run()
                         faulthandler.cancel_dump_traceback_later()
                         assert not at.exception, [e.message for e in at.exception]
+                        row['station1_context_seconds'] = round(time.monotonic() - stage_start, 3)
                         theory = f'Môn: {subject}; lớp: {grade}\nNgữ liệu QA mô phỏng, không phải bài giảng đã thẩm định. Ký hiệu thử $\\frac{{1}}{{2}}$.'
                         generate.return_value = SimpleNamespace(text=complete_lesson(theory), candidates=[])
                         next(t for t in at.text_input if 'Bài học cần chiếm lĩnh' in t.label).set_value('Kiểm thử tích hợp')
+                        stage_start = time.monotonic()
                         next(b for b in at.button if b.label == '🚀 Soạn bài học').click().run()
+                        row['station1_mock_generation_seconds'] = round(time.monotonic() - stage_start, 3)
                         assert not at.exception, [e.message for e in at.exception]
                         assert at.session_state['current_lesson_context'] == (subject, grade)
                         assert len(at.session_state['parsed_quiz']) == 3
@@ -73,7 +80,9 @@ def verify(output):
                         row['station1'] = True
 
                         row['stage'] = 'station3_open'
+                        stage_start = time.monotonic()
                         next(b for b in at.button if b.key == 'top_nav_station_2').click().run()
+                        row['station3_open_seconds'] = round(time.monotonic() - stage_start, 3)
                         assert not at.exception, [e.message for e in at.exception]
                         assert sum(b.key == 't3_create_practice_exam' for b in at.button) == 1
                         if subject != 'Ngữ văn':
@@ -85,7 +94,9 @@ def verify(output):
                         with patch('real_exam_engine.generate_blended_real_exam', return_value=exam):
                             row['stage'] = 'station3_create'
                             faulthandler.dump_traceback_later(40)
+                            stage_start = time.monotonic()
                             next(b for b in at.button if b.key == 't3_create_practice_exam').click().run()
+                            row['station3_mock_generation_seconds'] = round(time.monotonic() - stage_start, 3)
                             faulthandler.cancel_dump_traceback_later()
                         assert not at.exception, [e.message for e in at.exception]
                         assert at.session_state['exam_state'] == 'testing'

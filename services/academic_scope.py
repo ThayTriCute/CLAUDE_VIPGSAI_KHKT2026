@@ -94,7 +94,31 @@ def check_lesson_scope(text, subject, grade, topic):
     return text
 
 
+def check_topic_content_consistency(question, subject):
+    """Reject one evidenced metadata conflict, not a general semantic classifier.
+
+    A statistical survey ('khảo sát thời gian') is not a function survey. Require
+    an explicit grouped-statistics task and a conflicting function-only label;
+    preserve integrated questions that actually ask about functions/derivatives.
+    """
+    from services.academic_context import canonical_subject
+    if canonical_subject(subject) != 'Toán học':
+        return question
+    declared = folded(question.get('topic', ''))
+    stem = folded(question.get('q', ''))
+    function_label = any(term in declared for term in ('ham so', 'dao ham', 'tiem can', 'don dieu'))
+    statistics_label = any(term in declared for term in ('ghep nhom', 'thong ke', 'phan tan', 'mau so lieu'))
+    grouped_task = ('ghep nhom' in stem or bool(question.get('mslgn_data'))) and any(
+        term in stem for term in ('khoang bien thien', 'tu phan vi', 'phuong sai', 'do lech chuan', 'trung vi', 'tan so'))
+    function_task = any(term in stem for term in ('ham so', 'dao ham', 'tiem can', 'dong bien', 'nghich bien', 'cuc tri'))
+    if function_label and not statistics_label and grouped_task and not function_task:
+        raise AcademicScopeError('Nhãn khảo sát hàm số mâu thuẫn với câu hỏi thống kê mẫu ghép nhóm. '
+                                 'Cần chọn hoặc biên soạn lại toàn câu đúng chủ đề; không chỉ đổi nhãn hay đáp án.')
+    return question
+
+
 def check_exam_question_scope(question, subject, grade, topics=(), custom=''):
+    check_topic_content_consistency(question, subject)
     selected = [topics] if isinstance(topics, str) else list(topics)
     # For a mixed-topic exam, use the item's stated topic if it matches one of
     # the selected topics; final context validation remains a separate gate.
