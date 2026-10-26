@@ -12613,7 +12613,7 @@ if selected_station == station_labels[2]:
                 st.caption(f"📌 **Đã chọn ({len(chosen_topics)} chuyên đề):** {', '.join(chosen_topics[:2])}{'...' if len(chosen_topics) > 2 else ''}")
                 st.session_state.policy_selected_topics = list(chosen_topics)
                 st.checkbox("Cho phép AI sinh nguyên câu thay thế khi thiếu dữ liệu", value=True, key="enable_ai_context_recovery")
-                st.caption("Ưu tiên dữ liệu gốc và câu cùng môn/lớp/chủ đề; tối đa 2 lần gọi AI bổ sung mỗi lượt tạo đề. Câu thay mới được ghi dấu vết, không giả là câu nguồn.")
+                st.caption("Tùy chọn này chỉ cho phép gọi AI để sửa/thay câu chưa đạt, không tắt chức năng khởi tạo đề bằng AI. Hệ thống ưu tiên phục dựng từ dữ kiện có sẵn, rồi tìm câu cùng ngữ cảnh trong kho; nếu vẫn cần và đã bật tùy chọn, tối đa 2 lượt AI sửa cho cả đề. Câu thay được ghi nguồn và kiểm tra lại.")
 
 
 
@@ -13241,7 +13241,7 @@ if selected_station == station_labels[2]:
                             btn1_label,
                             type=btn1_type,
                             width="stretch",
-                            help=f"LUỒNG 2: Trích xuất câu hỏi thật từ kho 600+ đề thi chính thức/thi thử toàn quốc ({portal_name_ui}) bám sát yêu cầu tùy biến. Lọc sạch 100% câu hỏi lạc đề qua Bộ lọc 5 lớp và hiển thị Bảng đối chứng vân tay nguồn gốc!"
+                            help=f"Khởi tạo từ bản ghi trong kho ({portal_name_ui}) theo cấu hình đang chọn. Câu chưa đạt được đưa qua bước phục hồi/thay thế và kiểm tra lại; nhãn nguồn cần đối chiếu với tài liệu gốc."
                         )
 
                     with c_btn2:
@@ -13249,14 +13249,15 @@ if selected_station == station_labels[2]:
                             btn2_label,
                             type="primary",
                             width="stretch",
-                            help=f"LUỒNG 1: AI Gemini biên soạn 100% ngữ liệu độc bản mới tinh, không lấy bất kỳ câu nào trong ngân hàng, tự động chạy Bộ Lọc Giải Ngầm (Deep Solver Guard) để xác minh nghiệm và số liệu chuẩn xác tuyệt đối!"
+                            help=f"AI biên soạn bản nháp đề theo cấu hình đang chọn. Sau kiểm tra, câu chưa đạt có thể được phục dựng, thay bằng câu cùng ngữ cảnh từ kho hoặc gọi AI sửa nếu được cho phép. Câu thay có dấu vết nguồn; chưa phải đề được thẩm định toàn bộ."
                         )
 
                     st.markdown(textwrap.dedent("""
                     <div style="background: rgba(15, 23, 42, 0.7); border: 1.5px solid #38bdf8; border-radius: 10px; padding: 10px 14px; margin-top: 8px; font-size: 12.5px; line-height: 1.6; color: #cbd5e1;">
-                        <div style="font-weight: bold; color: #38bdf8; margin-bottom: 4px; font-size: 13px;">⚖️ CƠ CHẾ 2 LUỒNG ĐỘC LẬP TÁCH BẠCH & BỘ LỌC 5 LỚP TOÀN DIỆN:</div>
-                        • 🤖 <b style="color: #f59e0b;">LUỒNG 1 - AI TẠO ĐỀ NGUYÊN BẢN (ƯU TIÊN SỐ 1):</b> AI biên soạn theo môn/lớp/chủ đề; cần giáo viên duyệt kiến thức, đáp án và nguồn trích dẫn.<br>
-                        • 📚 <b style="color: #38bdf8;">LUỒNG 2 - TRÍCH XUẤT TỪ KHO 600+ ĐỀ THI THẬT:</b> Lọc bản ghi trong kho theo môn/lớp/chủ đề. Mã và nhãn nguồn là dữ liệu cần đối chiếu, chưa tự chứng minh tài liệu gốc hoặc mọi đáp án đúng.
+                        <div style="font-weight: bold; color: #38bdf8; margin-bottom: 4px; font-size: 13px;">⚖️ HAI NGUỒN KHỞI TẠO ĐỀ & QUY TRÌNH KIỂM TRA, PHỤC HỒI:</div>
+                        • 🤖 <b style="color: #f59e0b;">NGUỒN 1 - AI BIÊN SOẠN BẢN NHÁP:</b> AI biên soạn theo môn/lớp/chủ đề; cần giáo viên duyệt kiến thức, đáp án và nguồn trích dẫn.<br>
+                        • 📚 <b style="color: #38bdf8;">NGUỒN 2 - BẢN GHI TRONG KHO ĐỀ:</b> Lọc bản ghi trong kho theo môn/lớp/chủ đề. Mã và nhãn nguồn cần đối chiếu với tài liệu gốc.<br>
+                        • 🔧 <b>SAU KHI KHỞI TẠO:</b> Câu chưa đạt được phục dựng hoặc thay nguyên câu theo cùng ngữ cảnh, rồi kiểm tra lại. Hai nguồn có thể cùng tham gia bước phục hồi; câu thay được ghi dấu vết. Tùy chọn bên trái chỉ điều khiển lượt AI sửa bổ sung.
                     </div>
                     """).strip(), unsafe_allow_html=True)
 
