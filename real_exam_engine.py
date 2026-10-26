@@ -1580,7 +1580,7 @@ def ensure_full_exam_matrix(exam: dict, subject: str = "Toán học", grade = 12
         cand = clean_p1.pop(0)
         if cand.get("q") not in [q.get("q") for q in p1]:
             cand_cp = dict(cand)
-            cand_cp["is_real_bank_question"] = True
+            cand_cp["is_real_bank_question"] = not (cand_cp.get("is_ai_generated") or cand_cp.get("is_ai_harvested") or cand_cp.get("is_synthetic_template"))
             cand_cp["is_ai_generated"] = False
             if not cand_cp.get("source"):
                 cand_cp["source"] = f"{title} (Chuẩn Ma trận QĐ 764)"
@@ -1591,7 +1591,7 @@ def ensure_full_exam_matrix(exam: dict, subject: str = "Toán học", grade = 12
         cand = clean_p2.pop(0)
         if cand.get("q") not in [q.get("q") for q in p2]:
             cand_cp = dict(cand)
-            cand_cp["is_real_bank_question"] = True
+            cand_cp["is_real_bank_question"] = not (cand_cp.get("is_ai_generated") or cand_cp.get("is_ai_harvested") or cand_cp.get("is_synthetic_template"))
             cand_cp["is_ai_generated"] = False
             if not cand_cp.get("source"):
                 cand_cp["source"] = f"{title} (Chuẩn Ma trận QĐ 764)"
@@ -1602,7 +1602,7 @@ def ensure_full_exam_matrix(exam: dict, subject: str = "Toán học", grade = 12
         cand = clean_p3.pop(0)
         if cand.get("q") not in [q.get("q") for q in p3]:
             cand_cp = dict(cand)
-            cand_cp["is_real_bank_question"] = True
+            cand_cp["is_real_bank_question"] = not (cand_cp.get("is_ai_generated") or cand_cp.get("is_ai_harvested") or cand_cp.get("is_synthetic_template"))
             cand_cp["is_ai_generated"] = False
             if not cand_cp.get("source"):
                 cand_cp["source"] = f"{title} (Chuẩn Ma trận QĐ 764)"
@@ -2281,7 +2281,8 @@ def get_baseline_full_exams(subject: str, grade, enrich_visuals: bool = False):
                         if isinstance(ex_ai, dict) and ex_ai.get("code") not in existing_codes:
                             ex_ai["school"] = ex_ai.get("school") or "Hệ Thống Gia Sư AI (Độc Bản Tự Sinh)"
                             ex_ai["portal"] = ex_ai.get("portal") or "GSAI Autonomous Bank 2026"
-                            ex_ai["is_ai_harvested"] = True
+                            ex_ai = dict(ex_ai)
+                            ex_ai.update(is_ai_harvested=True, is_ai_generated=True, is_real_exam=False, is_real_bank_question=False)
                             results.append(ex_ai)
                             existing_codes.add(ex_ai.get("code"))
     except Exception as exc:
@@ -2303,13 +2304,15 @@ def ingest_ai_generated_exam_to_bank(exam_data: dict, subject: str, grade):
     norm_subj = normalize_subject_name(subject)
     exam_copy = dict(exam_data)
     exam_code = str(exam_copy.get("code", random.randint(1011, 9999)))
-    school_name = exam_copy.get("school") or "Hệ Thống Gia Sư AI (Độc Bản Tự Sinh)"
+    school_name = "Hệ Thống Gia Sư AI (Ngữ liệu tự sinh)"
     portal_name = "GSAI Autonomous Bank 2026"
 
     exam_copy["code"] = exam_code
     exam_copy["school"] = school_name
     exam_copy["portal"] = portal_name
-    exam_copy["is_real_bank_question"] = True
+    exam_copy["is_real_bank_question"] = False
+    exam_copy["is_ai_generated"] = True
+    exam_copy["is_real_exam"] = False
     exam_copy["is_ai_harvested"] = True
 
     # Gắn siêu dữ liệu vân tay cho từng phần
@@ -2319,6 +2322,7 @@ def ingest_ai_generated_exam_to_bank(exam_data: dict, subject: str, grade):
         for q_idx, q in enumerate(exam_copy.get(p_key, [])):
             if not isinstance(q, dict): continue
             q_c = dict(q)
+            q_c.update(is_ai_generated=True, is_ai_harvested=True, is_real_bank_question=False)
             q_c["school"] = school_name
             q_c["portal"] = portal_name
             q_c["orig_pos"] = f"{p_name} - Câu {q_idx + 1}"
@@ -2440,8 +2444,13 @@ def get_baseline_questions_pool(subject: str, grade):
 
                 q_copy["subject"] = canonical_subject(ex.get("subject", subject))
                 q_copy["grade"] = normalize_grade(ex.get("grade", grade))
-                q_copy["is_real_bank_question"] = True
-                q_copy["is_ai_generated"] = False
+                ai_origin = bool(ex.get("is_ai_harvested") or ex.get("is_ai_generated") or q.get("is_ai_generated") or q.get("is_ai_harvested"))
+                synthetic_origin = bool(ex.get("is_synthetic_template") or q.get("is_synthetic_template"))
+                q_copy["is_real_bank_question"] = not (ai_origin or synthetic_origin)
+                q_copy["is_ai_generated"] = ai_origin
+                q_copy["is_ai_harvested"] = ai_origin
+                if synthetic_origin:
+                    q_copy["is_synthetic_template"] = True
                 q_copy["school"] = school
                 q_copy["portal"] = portal
                 q_copy["year"] = year
@@ -2451,6 +2460,11 @@ def get_baseline_questions_pool(subject: str, grade):
                 q_copy["orig_pos"] = orig_q_label
                 q_copy["audit_id"] = audit_id
                 q_copy["source"] = f"{school} • {exam_session} ({year}) • [Đề gốc: Mã {exam_code} - {orig_q_label}] • Nguồn: {portal}"
+                if ai_origin:
+                    q_copy.update(school="Hệ Thống Gia Sư AI", portal="GSAI Autonomous Bank",
+                                  source="Ngữ liệu do AI sinh, lưu trong kho; cần giáo viên duyệt.")
+                elif synthetic_origin:
+                    q_copy["source"] = "Câu mẫu biên soạn trong ứng dụng; chưa đối chiếu đề nguồn."
                 pool[p_key].append(q_copy)
 
     _QUESTIONS_POOL_CACHE[pool_key] = pool
@@ -2584,7 +2598,7 @@ _RECENT_EXAM_COOLDOWN = set()
 _MAX_COOLDOWN_CAPACITY = 200
 
 
-def build_specialized_custom_question(archetype: str, subject="Toán học", grade=12) -> dict:
+def _build_specialized_math12_template(archetype: str) -> dict:
     """Tạo hoặc nạp câu hỏi đặc thù đáp ứng chính xác 100% yêu cầu ma trận tùy biến của người dùng."""
     if archetype == "p2_f_prime_graph":
         return {
@@ -2596,10 +2610,10 @@ def build_specialized_custom_question(archetype: str, subject="Toán học", gra
             "year": "2025 - 2026",
             "f": {"type": "func_3", "a": 1.0, "b": -4.0, "c": -1.0, "d": 4.0},
             "stmts": [
-                {"t": "Hàm số $y = f(x)$ đồng biến trên khoảng $(1; 4)$.", "a": True},
+                {"t": "Hàm số $y = f(x)$ đồng biến trên khoảng $(1; 4)$.", "a": False},
                 {"t": "Hàm số $y = f(x)$ có đúng 3 điểm cực trị trên $\\mathbb{R}$.", "a": True},
-                {"t": "Điểm cực đại của hàm số $y = f(x)$ là $x = 1$.", "a": False},
-                {"t": "Giá trị nhỏ nhất của hàm số $f(x)$ trên đoạn $[-1; 4]$ đạt tại $x = 1$.", "a": True}
+                {"t": "Hàm số $y = f(x)$ có điểm cực đại với hoành độ $x = 1$.", "a": True},
+                {"t": "Giá trị nhỏ nhất của hàm số $f(x)$ trên đoạn $[-1; 4]$ đạt tại $x = 1$.", "a": False}
             ],
             "explain": "Dựa vào đồ thị f'(x): f'(x) > 0 trên (-1; 1) và (4; +inf); f'(x) < 0 trên (-inf; -1) và (1; 4). Do đó f(x) đồng biến trên (-1; 1) và (4; +inf); nghịch biến trên (-inf; -1) và (1; 4). Điểm x = -1 là điểm cực tiểu. Điểm x = 1 là điểm cực đại."
         }
@@ -2640,7 +2654,7 @@ def build_specialized_custom_question(archetype: str, subject="Toán học", gra
             ],
             "ans": "A",
             "f": {"type": "func_2_1", "a": 1.0, "b": -3.0, "c": 6.0, "d": 1.0, "e": -1.0},
-            "explain": "Đồ thị hàm số có tiệm cận đứng x = 1 và tiệm cận xiên y = x - 2. Nhánh bên phải x > 1 có điểm cực tiểu (2; 4). Do đó hàm số là y = (x^2 - 3x + 6)/(x - 1)."
+            "explain": "Đồ thị hàm số có tiệm cận đứng x = 1 và tiệm cận xiên y = x - 2. Nhánh bên phải x > 1 có điểm cực tiểu (3; 3). Do đó hàm số là y = (x^2 - 3x + 6)/(x - 1)."
         }
     elif archetype == "p1_mslgn_hologram":
         return {
@@ -2709,6 +2723,23 @@ def build_specialized_custom_question(archetype: str, subject="Toán học", gra
             "explain": "Vì lim(x->+inf) y = 2 và lim(x->-inf) y = 2 nên y = 2 là tiệm cận ngang duy nhất. Vì lim(x->1+) y = -inf và lim(x->1-) y = +inf nên x = 1 là tiệm cận đứng duy nhất. Tổng số đường tiệm cận là 2."
         }
     return None
+
+def build_specialized_custom_question(archetype: str, subject="Toán học", grade=12) -> dict:
+    """Authored Math-12 examples, never evidence of an original school exam."""
+    if canonical_subject(subject) != "Toán học" or normalize_grade(grade) != 12:
+        return None
+    question = _build_specialized_math12_template(archetype)
+    if question is None:
+        return None
+    for field in ("school", "year", "portal", "source_url", "orig_exam_code", "orig_pos", "audit_id"):
+        question.pop(field, None)
+    question.update(subject="Toán học", grade=12, is_synthetic_template=True,
+                    is_real_bank_question=False, is_ai_generated=False,
+                    source="Câu mẫu biên soạn trong ứng dụng; chưa đối chiếu đề nguồn.")
+    if isinstance(question.get("bbt"), str):
+        question["bbt"] = re.sub(r"\\n(?=y(?:[' ]|\|))", "\n", question["bbt"])
+    return question
+
 
 def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, counts = None, custom_prompt: str = "", exclude_fingerprints: set = None):
     """
@@ -3150,7 +3181,7 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
                 "part": p_name,
                 "level": q.get("level", ""),
                 "topic": q.get("topic", "Chuyên đề khảo thí"),
-                "school": q.get("school", "THPT Chuyên"),
+                "school": q.get("school") or ("Câu mẫu trong ứng dụng" if q.get("is_synthetic_template") else "Chưa xác minh trường nguồn"),
                 "session": q.get("exam_session", "Kỳ thi Cuối Học Kỳ 1 (Chính thức)"),
                 "year": q.get("year", "2025 - 2026"),
                 "orig_pos": q.get("orig_pos", f"{p_name} - Câu {idx+1}"),
@@ -3178,6 +3209,12 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
         "p2": selected_p2,
         "p3": selected_p3
     }
+    has_authored = any(q.get("is_ai_generated") or q.get("is_ai_harvested") or q.get("is_synthetic_template")
+                       for q in selected_p1 + selected_p2 + selected_p3)
+    if has_authored:
+        blended_exam.update(is_real_exam=False, is_blended_real=False, exam_source_type="mixed_bank",
+                            school="Kho Gia Sư AI (có ngữ liệu tự sinh)",
+                            source="Đề luyện tập từ kho có ngữ liệu AI/câu mẫu; cần giáo viên duyệt.")
     return blended_exam
 
 def is_placeholder_question(q):

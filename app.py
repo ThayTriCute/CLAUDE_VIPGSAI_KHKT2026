@@ -12707,6 +12707,7 @@ if selected_station == station_labels[2]:
                 # --- KHU VỰC KHỞI ĐỘNG BÀI THI CHO THÍ SINH (ACTION CENTER - BUỒNG LÁI COCKPIT) ---
 
                 real_exams_list = ree.get_baseline_full_exams(subject, grade_num) if ree else []
+                real_exams_list = [exam for exam in real_exams_list if not (exam.get("is_ai_generated") or exam.get("is_ai_harvested") or exam.get("is_synthetic_template"))]
 
 
 
