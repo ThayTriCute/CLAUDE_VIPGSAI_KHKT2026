@@ -14639,11 +14639,9 @@ if selected_station == station_labels[2]:
 
                 pct = (p1_correct / len(p1_items) * 100) if p1_items else 0
 
-                c_sc2.metric("Tỉ Lệ Chính Xác", f"{pct:.1f}%", f"{p1_correct*0.25:.2f} điểm chuẩn")
+                c_sc2.metric("Tỉ Lệ Chính Xác", f"{pct:.1f}%", f"{p1_correct}/{len(p1_items)} câu đúng")
 
-                cefr_level = "B2 (Vận dụng cao)" if total_score >= 8.0 else ("B1 (Đạt chuẩn THPT)" if total_score >= 6.0 else "A2 (Cần củng cố)")
-
-                c_sc3.metric("Khung Năng Lực CEFR", cefr_level, "Bậc 6 Việt Nam")
+                c_sc3.metric("Phạm vi đánh giá", "Bài luyện tập", "Chưa quy đổi sang CEFR")
 
             elif is_social_or_tech_subject(subject):
 

@@ -247,11 +247,12 @@ def generate_checked_text(prompt, generator, validator):
     """At most one repair attempt, then retain a clear failure instead of publishing."""
     from services.lesson_contract import LessonContractError
     from services.academic_scope import AcademicScopeError
+    from services.curriculum_policy import AcademicPolicyError
     text = generator(prompt)
     try:
         return validator(text)
-    except (MathPublicationError, LessonContractError, AcademicScopeError) as error:
-        if isinstance(error, (LessonContractError, AcademicScopeError)):
+    except (MathPublicationError, LessonContractError, AcademicScopeError, AcademicPolicyError) as error:
+        if isinstance(error, (LessonContractError, AcademicScopeError, AcademicPolicyError)):
             instruction = ("Sửa đầy đủ cấu trúc và tất cả câu hỏi/hướng dẫn chưa hợp lệ trong bản nháp. "
                            "Giữ nguyên môn, lớp, chủ đề, tùy biến và các phần đúng. "
                            "Với câu thiếu hình/dữ kiện không thể phục dựng: được biên soạn lại TOÀN BỘ câu đó cùng bốn phương án và khóa chấm, "

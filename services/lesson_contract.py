@@ -74,7 +74,8 @@ def validate_lesson_contract(text, subject, grade):
         options = re.findall(r"(?im)^\s*\*{0,2}([A-D])[.:)]\s*\*{0,2}\s*([^\n]+)", block)
         if [letter.upper() for letter, _ in options] != list("ABCD"):
             raise LessonContractError("Mỗi câu trắc nghiệm cần đúng bốn phương án A, B, C, D trên bốn dòng.")
-        if len({value.strip().casefold() for _, value in options}) != 4:
+        # CO/Co, A/a and case-sensitive code are different scientific content.
+        if len({value.strip() for _, value in options}) != 4:
             raise LessonContractError("Các phương án trong một câu trắc nghiệm không được trùng nhau.")
         question = re.split(r"(?im)^\s*\*{0,2}A[.:)]", block, maxsplit=1)[0]
         question = without_metadata(re.sub(r"(?i)\[Mức độ:[^\]]*\]", "", question))

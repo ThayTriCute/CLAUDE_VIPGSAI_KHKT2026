@@ -314,6 +314,28 @@ class TestStationUI(unittest.TestCase):
         at.run()
         self.assertEqual(len([e for e in at.session_state["analytics_logs"] if e.get("event_id") == "qa-ui-decimal"]), 1)
 
+    def test_english_custom_practice_score_does_not_claim_cefr_level(self):
+        at = self.app()
+        next(s for s in at.selectbox if s.label == '🎯 Chọn khối lớp:').select('Lớp 6').run()
+        next(s for s in at.selectbox if s.label == '📚 Môn học cần hỗ trợ:').select('Tiếng Anh').run()
+        at.session_state['selected_station'] = '📝 Trạm 3: Luyện Tập & Khảo Thí'
+        at.session_state['exam_state'] = 'testing'
+        at.session_state['exam_data'] = {'subject': 'Tiếng Anh', 'grade': 6, 'code': 'QA-EN',
+            'p1': [{'q': 'Choose the second QA label.', 'opt': ['A. first', 'B. second', 'C. third', 'D. fourth'], 'ans': 'B'}],
+            'p2': [], 'p3': []}
+        at.session_state['exam_context'] = {'name': 'QA', 'grade': 'Lớp 6', 'subject': 'Tiếng Anh', 'student_id': 'qa-en'}
+        at.session_state['attempt_id'] = 'qa-en-no-cefr'
+        at.session_state['exam_deadline'] = time.time()+300
+        at.run()
+        next(r for r in at.radio if r.key == 't3_p1_0').set_value('B. second').run()
+        next(b for b in at.button if b.label == '🏁 Nộp bài & Chấm điểm tức thì').click().run()
+        self.assertEqual([e.message for e in at.exception], [])
+        metrics = {m.label: (m.value, m.delta) for m in at.metric}
+        self.assertEqual(metrics['Tổng Điểm Khảo Thí'][0], '10.00 / 10.0 đ')
+        self.assertEqual(metrics['Tỉ Lệ Chính Xác'][1], '1/1 câu đúng')
+        self.assertEqual(metrics['Phạm vi đánh giá'][1], 'Chưa quy đổi sang CEFR')
+        self.assertNotIn('Khung Năng Lực CEFR', metrics)
+
     def test_station3_accepts_complete_json_without_closing_markdown_fence(self):
         import real_exam_engine as engine
         at = self.app()

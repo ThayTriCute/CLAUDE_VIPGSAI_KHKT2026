@@ -15,6 +15,17 @@ POLICY_DATE = "2026-10-24"
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
+class AcademicPolicyError(ValueError):
+    """A rejected draft can use the existing bounded content-repair attempt."""
+
+
+def validate_textbook_declaration(value):
+    """Check an explicit series field, never a quoted comparison in prose."""
+    declared = folded(value)
+    if "canh dieu" in declared or "chan troi sang tao" in declared:
+        raise AcademicPolicyError("Ngữ liệu khai báo bộ sách khác KNTT; cần đối chiếu và chọn lại nguồn.")
+
+
 def legal_references(on_date=None, include_upcoming=False):
     # Source audit date is provenance, not the date used to apply a law.
     today = date.fromisoformat(on_date) if on_date else datetime.now(ZoneInfo('Asia/Ho_Chi_Minh')).date()
@@ -81,7 +92,7 @@ def check_current_facts(text):
         current = any(x in value for x in ("hien nay", "hien tai", "nuoc ta co", "viet nam co"))
         historical = any(x in value for x in ("truoc nam 2025", "truoc sap nhap", "truoc sap xep", "nam 2024", "nam 2023", "nam 2022"))
         if old_count and current and not historical:
-            raise ValueError("Số tỉnh/thành đang được mô tả là hiện hành nhưng dùng dữ liệu cũ; cần đối chiếu nguồn và mốc thời gian.")
+            raise AcademicPolicyError("Số tỉnh/thành đang được mô tả là hiện hành nhưng dùng dữ liệu cũ; cần đối chiếu nguồn và mốc thời gian.")
 
 
 def validate_lesson_policy(text, subject, grade):
@@ -90,11 +101,14 @@ def validate_lesson_policy(text, subject, grade):
         clean = line.strip().lstrip("#* ")
         declared_subject = re.match(r"Môn(?: học)?\s*:\s*([^|;·]+)", clean, re.I)
         if declared_subject and canonical_subject(declared_subject[1].strip().rstrip("*")) != subject:
-            raise ValueError("Bài học tự khai báo khác môn đang chọn; cần sinh lại hoặc sửa nguồn.")
+            raise AcademicPolicyError("Bài học tự khai báo khác môn đang chọn; cần sinh lại hoặc sửa nguồn.")
         declared_grade = re.search(r"(?:lớp|khối)\s*:?\s*(\d{1,2})\b", clean, re.I)
-        if declared_grade and (line.lstrip().startswith("#") or re.match(r"(?:khối lớp|lớp|khối)\s*:", clean, re.I)):
-            if normalize_grade(declared_grade[1]) != grade:
-                raise ValueError("Tiêu đề bài học khai báo khác lớp đang chọn.")
+        if declared_grade and (line.lstrip().startswith("#") or declared_subject or re.match(r"(?:khối lớp|lớp|khối)\s*:", clean, re.I)):
+            if int(declared_grade[1]) != grade:
+                raise AcademicPolicyError("Tiêu đề bài học khai báo khác lớp đang chọn.")
+        declared_book = re.match(r"(?:bộ sách|sách giáo khoa|sgk)\s*:\s*(.+)", clean, re.I)
+        if declared_book:
+            validate_textbook_declaration(declared_book[1])
     check_current_facts(text)
     from services.math_publication import validate_math_text
     validate_math_text(text)
@@ -117,9 +131,10 @@ def prepare_exam_for_delivery(exam, subject, grade, duration=45, topics=(), cust
     validate_exam_structure(result, subject)
     from services.math_publication import validate_exam_math
     validate_exam_math(result)
-    declared_book = folded(result.get("textbook") or result.get("textbook_series") or "")
-    if "canh dieu" in declared_book or "chan troi sang tao" in declared_book:
-        raise ValueError("Đề khai báo bộ sách khác KNTT; cần đối chiếu và chọn lại nguồn.")
+    validate_textbook_declaration(result.get("textbook") or result.get("textbook_series") or "")
+    reading = result.get("part_doc_hieu")
+    if isinstance(reading, dict):
+        validate_textbook_declaration(reading.get("textbook") or reading.get("textbook_series") or "")
     result.update(subject=subject, grade=grade)
     result.setdefault("duration", duration)
     texts = [result.get("title", "")]
@@ -128,6 +143,7 @@ def prepare_exam_for_delivery(exam, subject, grade, duration=45, topics=(), cust
             if not isinstance(question, dict):
                 raise ValueError("Câu hỏi không đúng cấu trúc; cần sửa dữ liệu nguồn.")
             validate_exam_context({"p1": [question]}, subject, grade)
+            validate_textbook_declaration(question.get("textbook") or question.get("textbook_series") or "")
             from services.academic_scope import check_exam_question_scope
             check_exam_question_scope(question, subject, grade, topics, custom)
             texts.extend(str(question.get(k, "")) for k in ("q", "explain"))
@@ -146,9 +162,15 @@ def validate_exam_structure(exam, subject, counts=None):
     """Reject missing keys instead of inventing A, True, zero or a statement."""
     if not isinstance(exam, dict):
         raise ValueError("Đề thi phải là JSON object.")
+    subject = canonical_subject(subject)
+    for part in ("p1", "p2", "p3", "part_viet"):
+        if part in exam and not isinstance(exam[part], list):
+            raise ValueError(f"Phần {part} phải là danh sách câu hỏi; không được bỏ qua phần sai cấu trúc.")
     if subject == "Ngữ văn":
         reading = exam.get("part_doc_hieu") or {}
-        if not isinstance(reading, dict) or not reading.get("text") or not reading.get("questions") or not exam.get("part_viet"):
+        if (not isinstance(reading, dict) or not isinstance(reading.get("text"), str)
+                or not reading["text"].strip() or not isinstance(reading.get("questions"), list)
+                or not reading["questions"] or not exam.get("part_viet")):
             raise ValueError("Đề Ngữ văn thiếu ngữ liệu, câu hỏi đọc hiểu hoặc đề viết.")
     elif not any(exam.get(p) for p in ("p1", "p2", "p3")):
         raise ValueError("Đề thi không có câu hỏi.")
@@ -163,8 +185,13 @@ def validate_exam_structure(exam, subject, counts=None):
             if part == "p1":
                 opts = q.get("opt")
                 answer = str(q.get("ans", "")).strip()
-                if not isinstance(opts, list) or len(opts) != 4 or not all(str(o).strip() for o in opts):
+                if not isinstance(opts, list) or len(opts) != 4 or not all(isinstance(o, str) and o.strip() for o in opts):
                     raise ValueError("Câu trắc nghiệm phải có đúng 4 phương án có nội dung.")
+                option_bodies = [re.sub(r"^[A-D][.:)]\s*", "", o.strip(), flags=re.I).strip() for o in opts]
+                # Case and internal whitespace carry meaning in chemical symbols,
+                # mathematical variables, English and quoted program strings.
+                if not all(option_bodies) or len(set(option_bodies)) != 4:
+                    raise ValueError("Bốn phương án phải có nội dung khác nhau; không dùng nhãn rỗng hoặc lặp nội dung.")
                 if not answer or (answer.upper() not in {"A", "B", "C", "D"} and answer not in opts):
                     raise ValueError("Thiếu đáp án trắc nghiệm hợp lệ; không tự gán A.")
             elif part == "p2":
@@ -172,7 +199,7 @@ def validate_exam_structure(exam, subject, counts=None):
                 if not isinstance(stmts, list) or len(stmts) != 4:
                     raise ValueError("Câu Đúng/Sai phải có đúng 4 mệnh đề.")
                 for stmt in stmts:
-                    if not isinstance(stmt, dict) or not str(stmt.get("t", "")).strip() or normalize_bool(stmt.get("a", stmt.get("ans"))) is None:
+                    if not isinstance(stmt, dict) or not isinstance(stmt.get("t"), str) or not stmt["t"].strip() or normalize_bool(stmt.get("a", stmt.get("ans"))) is None:
                         raise ValueError("Mệnh đề thiếu nội dung/đáp án xác định; không tự gán Đúng.")
             elif part == "p3" and (q.get("ans") is None or not str(q.get("ans", "")).strip()):
                 raise ValueError("Thiếu đáp số trả lời ngắn; không tự gán 0.")
@@ -207,6 +234,7 @@ def lesson_prompt(subject, grade, topic):
     return policy_prompt(subject, grade, 1, topic) + LEVEL_GUIDANCE + r"""
 Soạn bài học với ba tiêu đề chính: '### PHẦN 1: BÀI HỌC', '### PHẦN 2: TRẮC NGHIỆM KHÁCH QUAN SOCRATIC', '### PHẦN 3: BÀI TẬP TỰ LUẬN'.
 Phần 1: khởi động, hình thành kiến thức, ví dụ có lời giải phù hợp lớp, luyện tập và vận dụng; đặc trưng thể loại/môn học phải được giữ.
+Với bài toán thực tế, phải khai báo miền biến (rời rạc/nguyên hay liên tục), điều kiện, đơn vị và giả thiết mô hình. Nếu số lượng sản phẩm được mô hình hóa liên tục, ghi rõ giả thiết đó; không dùng điều kiện đạo hàm bằng 0 thay cho kiểm tra biên hoặc so sánh các giá trị nguyên khi đề yêu cầu số nguyên. Với mọi môn, chỉ dùng thuật ngữ/mô hình phù hợp lớp đang chọn; kiến thức ví dụ không tự chứng minh đã đối chiếu SGK.
 Phần 2: sinh CHÍNH XÁC 3 câu trắc nghiệm, đánh số Câu 1., Câu 2., Câu 3.; mỗi câu có đúng 4 phương án A./B./C./D. trên 4 dòng riêng. Ghi một dòng khóa chấm riêng 'ĐÁP ÁN: A/B/C/D' (chọn đúng một chữ), không đặt đáp án trong câu hỏi hay phương án. Sau khóa chấm, bắt buộc dòng 'GỢI MỞ SOCRATIC: ...?' là MỘT câu hỏi tiếng Việt, bám dữ kiện/khái niệm cụ thể của chính câu đó, gợi để học sinh tự làm bước tiếp theo. Không dùng một câu nhắc chung cho cả ba câu; không nhắc chữ cái phương án, không nêu kết quả, không tính toán thay học sinh. Nếu có 'GIẢI THÍCH:', đây là trường nội bộ riêng, tuyệt đối không dùng nó làm gợi mở cho học sinh.
 Phần 3: sinh CHÍNH XÁC 2 bài tập tự làm, đánh số Câu 1. và Câu 2.; viết đầy đủ đề bài trước. Sau mỗi đề, bắt buộc đủ bốn tiêu đề trên các dòng riêng 'Bước 1: Tìm hiểu đề', 'Bước 2: Lập kế hoạch', 'Bước 3: Thực hiện kế hoạch', 'Bước 4: Kiểm tra và nhìn lại'. Dòng dưới mỗi bước chỉ đặt MỘT câu hỏi gợi mở BẰNG TIẾNG VIỆT, gắn với đúng đối tượng/đại lượng/chi tiết trong đề, để học sinh tự tư duy. Tuyệt đối không giải chi tiết, không biến đổi/tính toán thay học sinh, không viết đáp án hoặc đáp số. Quy tắc tiếng Việt áp dụng cả khi dạy môn Tiếng Anh: ngữ liệu/đề bài có thể bằng tiếng Anh, nhưng tiêu đề và câu hỏi hướng dẫn bốn bước phải bằng tiếng Việt.
 Phân biệt rõ: Phần 1 được có ví dụ minh họa có lời giải để hình thành kiến thức; Phần 2 và Phần 3 là bài tập học sinh tự làm, không dùng lại lời giải ví dụ để giải hộ. Các trường OUTCOME/COGNITIVE_REASON/COGNITIVE_STEPS chỉ phục vụ đối soát nội bộ, viết trên dòng riêng, không đưa lời giải vào hướng dẫn cho học sinh.

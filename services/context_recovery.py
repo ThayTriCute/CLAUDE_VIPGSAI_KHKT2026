@@ -7,7 +7,7 @@ import re
 from itertools import islice
 
 from services.academic_context import academic_context, canonical_subject, folded, normalize_grade, topic_matches, validate_exam_context
-from services.curriculum_policy import policy_prompt, question_groups, validate_exam_structure
+from services.curriculum_policy import policy_prompt, question_groups, validate_exam_structure, validate_textbook_declaration
 from services.cognitive_levels import LEVEL_GUIDANCE, normalize_level
 from services.math_publication import validate_exam_math, MathPublicationError
 
@@ -192,6 +192,10 @@ def _question_issue(question, part, subject, grade, scope_validator=None):
         validate_exam_structure({part: [question]}, subject)
     except (ValueError, TypeError):
         return "missing_or_invalid_question_data"
+    try:
+        validate_textbook_declaration(question.get("textbook") or question.get("textbook_series") or "")
+    except ValueError:
+        return "conflicting_textbook_declaration"
     try:
         validate_exam_math({part: [question]})
     except MathPublicationError:
