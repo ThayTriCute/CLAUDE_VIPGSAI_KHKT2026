@@ -1,8 +1,21 @@
 # Yêu cầu đã thống nhất và checklist nghiệm thu
 
-Cập nhật ngày 26/10/2026. Đây là bản ghi yêu cầu để đối chiếu khi sửa, không phải tuyên bố hệ thống đã hoàn tất. Báo cáo kết quả chi tiết: `BAO_CAO_TONG_HOP_TRAM_1_TRAM_3_20261026.md`; số đo mới: `PATCH_REPORT_LATENCY_AND_TOPIC_CONFLICT_20261026.md`.
+Cập nhật ngày 27/10/2026. Đây là bản ghi yêu cầu để đối chiếu khi sửa, không phải tuyên bố hệ thống đã hoàn tất. Báo cáo kết quả chi tiết: `BAO_CAO_TONG_HOP_TRAM_1_TRAM_3_20261026.md`; số đo mới: `PATCH_REPORT_LATENCY_AND_TOPIC_CONFLICT_20261026.md`.
 
-**Ưu tiên số một hiện tại theo người dùng: Trạm 3 tạo được đề thật hợp lệ, đúng tùy chọn, hoạt động mượt.** Sau PR24 vẫn có lượt AI bị giữ vì TikZ không phù hợp web và câu trắc nghiệm hai khoảng cùng đúng. Chưa nghiệm thu luồng tạo đề thật; theo dõi sửa tại `PATCH_REPORT_STATION3_WEB_GENERATION.md`. Không lấy 65 ca UI giả lập hoặc CI xanh để ghi rằng mọi lượt sinh đề đã ổn.
+**Ưu tiên: xử lý báo lỗi nội dung Trạm 1 ngày 27/10, đồng thời hoàn thiện Trạm 3 theo bằng chứng; không mở rộng sửa giao diện/giọng đọc trong bản vá nội dung.**
+
+## Trạng thái đối chiếu mới nhất
+
+| Mục | Bằng chứng đã có | Phần còn thiếu |
+|---|---|---|
+| T1: giữ cấu trúc học tập | Lượt thật Toán 12 có 3 radio, Socratic từng câu, 2 tự luận × 4 bước Việt, phiếu chữ viết tay và link video; hai lượt UI giả lập 65/65 tổ hợp | Chưa kiểm nội dung AI thật đủ mọi môn/lớp; giọng đọc chưa nghiệm thu |
+| T3: sinh đề thật và BBT | Các ca Toán 12 mã 1411, 8551, 9931 mở được sau PR25; PR27 dùng bộ vẽ BBT cũ, ca 9931 chỉ 1 bảng, 8/8/8 ô, 3 mũi tên | Còn lượt nhiều câu bị giữ sau phục hồi trong phiên người dùng; chưa nghiệm thu chấm/xuất mọi phần và mọi môn |
+| BBT tương phản | Nhánh cục bộ `codex/bbt-readable-cells`, commit `53d994d`; tái hiện màu trắng trên nền trắng, sửa màu từng ô, kiểm DOM tại máy | Chưa push/triển khai nhánh này; giữ tách khỏi nội dung T1 |
+| Nhãn nguồn T3 | PR28 đã merge/push main `9026d969320e40c8db86d57e5916381aee84b7d5`; CI PR Python 3.10/3.11 qua | Chưa nghiệm thu giao diện Cloud sau cập nhật; danh mục trùng và cache mất qua reboot chưa giải quyết |
+| T1: khảo sát ba dạng | Đã giữ snapshot phiên Toán 12; có ba tên dạng nhưng chỉ 1 ví dụ ở lý thuyết. Đã mở nguồn NXBGD Bài 4 trang 26–28 và đọc CT môn Toán trang 106 | Bản vá đang kiểm tại máy chỉ cho yêu cầu rõ cả ba dạng; kiểm sự hiện diện ví dụ không thay xác minh tất cả bước giải hoặc toàn bộ SGK |
+| Nguồn CT2018/KNTT mọi môn | Có registry pháp quy và kiểm một số mâu thuẫn xác định | Chưa có bản đồ đầy đủ từng yêu cầu cần đạt/trang/phiên bản SGK–SGV. Không đánh dấu hoàn tất hoặc bỏ khung vàng toàn hệ thống |
+
+Không lấy CI hay 65 ca UI giả lập làm bằng chứng thẩm định học thuật; không lấy vài ca Toán 12 làm bằng chứng mọi đề Trạm 3 đã ổn.
 
 ## Nguyên tắc làm việc bắt buộc
 

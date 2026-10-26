@@ -30,6 +30,80 @@ def academic_scope_instruction(subject, grade, topic=''):
             'Nguồn văn bản: ' + MATH12_SURVEY_SOURCE['url'] + '. Không tự nhận đã đối chiếu từng trang KNTT.')
 
 
+def three_basic_survey_instruction(subject, grade, topic):
+    """Lesson-only coverage guidance; never inject lesson layout into exams."""
+    coverage = ''
+    if three_basic_survey_requested(subject, grade, topic):
+        coverage = (
+            '\nYêu cầu người dùng là CẢ BA DẠNG: phần lý thuyết phải có ba mục phân biệt, '
+            'mỗi mục có dạng tổng quát, điều kiện hệ số và một ví dụ số cụ thể được khảo sát; '
+            'không chỉ liệt kê tên hoặc dồn các dạng còn thiếu xuống bài tập tự làm. '
+            'Ba dạng là bậc ba (hệ số bậc ba khác 0), phân thức 1/1 '
+            '(mẫu có bậc 1, định thức khác 0), phân thức 2/1 '
+            '(tử bậc 2, mẫu bậc 1, tử không chia hết cho mẫu). '
+            'Mỗi ví dụ cần tập xác định, đạo hàm/xét dấu, đơn điệu/cực trị, '
+            'giới hạn/tiệm cận nếu có, BBT và dữ kiện vẽ đồ thị nhất quán. '
+            'Ví dụ có lời giải chỉ ở Phần 1; giữ đúng ba MCQ và hai tự luận gợi mở ở Phần 2–3. '
+            'Nguồn đã mở: Toán 12 tập một KNTT, Bài 4, trang 26–28 trên cổng NXBGD '
+            'https://truonghocsoquocgia.nxbgd.vn/book/393beba7-0dc1-45a9-ac53-3254cffa1344/read '
+            '(đối chiếu ngày 27/10/2026; không suy ngày tạo trang thành năm tái bản). '
+            'Đây là tóm tắt phạm vi đã đối chiếu, không phải toàn văn SGK/SGV hoặc chứng nhận mọi ví dụ.')
+    return coverage
+
+
+def three_basic_survey_requested(subject, grade, topic):
+    """Only an explicit all-three request activates the coverage check."""
+    subject, grade = academic_context(subject, grade)
+    context = folded(topic)
+    return subject == 'Toán học' and grade == 12 and 'khao sat' in context and bool(
+        re.search(r'\b(?:ba|3)\s+(?:dang\s+)?ham(?:\s+so)?\s+co\s+ban\b', context)
+        or re.search(r'\b(?:ca\s+)?(?:ba|3)\s+dang\s+ham\b', context))
+
+
+def check_three_basic_survey_coverage(theory, subject, grade, topic):
+    """Check numeric example presence, not the truth of every worked step.
+
+    Existing bounded parser is reused. Restrict candidate size/alphabet before
+    symbolic parsing; never solve or repair coefficients here.
+    """
+    if not three_basic_survey_requested(subject, grade, topic):
+        return theory
+    from services.math_publication import segments
+    from services.neuro_symbolic_verifier import clean_latex_math_to_sympy_expr, x
+    import sympy as sp
+    found = set()
+    for _, _, formula, _ in segments(str(theory)):
+        formula = re.sub(r"\by\s*=\s*f\s*\(\s*x\s*\)\s*=", 'y=', formula)
+        for match in re.finditer(r"(?<![\w'])\b(?:y|f\s*\(\s*x\s*\))\s*=\s*([^=;\n]+)", formula):
+            candidate = re.split(r'\\(?:quad|qquad|text)\b', match[1])[0].strip().rstrip('.,')
+            candidate = candidate.translate(str.maketrans({'²': '^2', '³': '^3', '−': '-'}))
+            candidate = re.sub(r'\\(?:left|right)\b', '', candidate).replace(r'\tfrac', r'\frac')
+            if len(candidate) > 120 or re.search(r'\d{7,}', candidate):
+                continue
+            numeric = re.sub(r'\\(?:dfrac|frac|tfrac|left|right)', '', candidate)
+            if not re.fullmatch(r'[0-9x.\s+*/^(){}\-]+', numeric):
+                continue
+            powers = re.findall(r'\^\s*\{?(\d+)', candidate)
+            if any(int(power) > 3 for power in powers):
+                continue
+            expr = clean_latex_math_to_sympy_expr(candidate)
+            if expr is None or expr.free_symbols - {x} or not expr.is_rational_function(x):
+                continue
+            numerator, denominator = sp.fraction(sp.cancel(expr))
+            degrees = (sp.degree(numerator, x), sp.degree(denominator, x))
+            if degrees == (3, 0):
+                found.add('bậc ba')
+            elif degrees == (1, 1):
+                found.add('phân thức 1/1')
+            elif degrees == (2, 1):
+                found.add('phân thức 2/1')
+    missing = sorted({'bậc ba', 'phân thức 1/1', 'phân thức 2/1'} - found)
+    if missing:
+        raise AcademicScopeError('Yêu cầu khảo sát cả ba dạng nhưng PHẦN 1 thiếu ví dụ số tường minh: '
+                                 + ', '.join(missing) + '. Bổ sung đúng mục lý thuyết; không thay các bài tập tự làm.')
+    return theory
+
+
 def _numeric_polynomial_degree(expression):
     expression = re.sub(r'\s+', '', expression).replace('{', '').replace('}', '')
     if not re.fullmatch(r'[0-9x.+\-^]+', expression):
@@ -84,6 +158,7 @@ def check_lesson_scope(text, subject, grade, topic):
     from services.lesson_contract import lesson_sections, question_blocks, without_metadata, essay_stems, LessonContractError
     try:
         theory, quiz, _ = lesson_sections(text)
+        check_three_basic_survey_coverage(theory, subject, grade, topic)
         stems = [without_metadata(re.split(r'(?im)^\s*\*{0,2}A[.:)]', block, maxsplit=1)[0])
                  for _, block in question_blocks(quiz)]
         parts = [theory, *stems, *essay_stems(text)]
