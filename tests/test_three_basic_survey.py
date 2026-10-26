@@ -22,6 +22,18 @@ class ThreeBasicSurveyTests(unittest.TestCase):
     def test_three_explicit_examples_pass_without_changing_text(self):
         self.assertEqual(check_three_basic_survey_coverage(self.examples, 'Toán học', 12, self.topic), self.examples)
 
+    def test_actual_cloud_method_and_delegated_bbt_return_to_repair(self):
+        for suffix in (r' Tâm đối xứng là nghiệm $y\prime\prime=0$.',
+                       r" Tâm đối xứng là nghiệm $y''=0$.",
+                       ' Bảng biến thiên: (Học sinh tự lập dựa trên các khoảng đơn điệu).'):
+            with self.subTest(suffix=suffix), self.assertRaises(AcademicScopeError):
+                check_lesson_scope(complete_lesson(self.examples + suffix), 'Toán', 12, self.topic)
+
+    def test_basic_method_check_does_not_restrict_other_requested_lessons(self):
+        theory = self.examples + r" Tham khảo đạo hàm cấp hai: $y''=6x$."
+        self.assertEqual(check_lesson_scope(complete_lesson(theory), 'Toán', 12,
+                                          'Đạo hàm cấp hai mở rộng'), complete_lesson(theory))
+
     def test_equivalent_function_notation_is_not_rejected(self):
         for theory in (self.examples.replace('y=', 'y=f(x)='),
                        self.examples.replace('y=', 'f(x)='),
