@@ -3459,11 +3459,11 @@ def question_visual_html(question):
     pieces = []
     raw_bbt = str(question.get("bbt") or "").strip()
     if raw_bbt and raw_bbt.lower() not in {"null", "none", "{}"}:
-        from services.bbt_display import render_compact_bbt
-        compact_bbt = render_compact_bbt(raw_bbt)
+        from services.bbt_validation import validated_compact_bbt_rows
+        compact_rows = validated_compact_bbt_rows(raw_bbt)
         table_rows = [line.strip().strip("|").split("|") for line in raw_bbt.splitlines() if "|" in line]
-        if compact_bbt:
-            pieces.append(compact_bbt)
+        if compact_rows:
+            pieces.append('<div data-gsai-bbt-renderer="existing">' + _build_svg_bbt_from_rows(*compact_rows) + '</div>')
         elif table_rows:
             cells = "".join("<tr>" + "".join("<td style='border:1px solid #64748b;padding:6px'>" + html.escape(cell.strip()) + "</td>" for cell in row) + "</tr>" for row in table_rows)
             pieces.append("<div style='overflow-x:auto'><table>" + cells + "</table></div>")
