@@ -70,6 +70,19 @@ class TestLessonPublicationRegression(unittest.TestCase):
         with self.assertRaises(LessonContractError):
             validate_socratic_question('Em đã tính được $x=77$ chưa?', 'Tìm nghiệm của phương trình.')
 
+    def test_rejected_hint_reports_location_without_repeating_answer(self):
+        text = complete_lesson().replace('Em nhớ cách biểu diễn một nửa của một số như thế nào?',
+                                          'Em đã tính được $x=77$ chưa?')
+        with self.assertRaises(LessonContractError) as caught:
+            validate_lesson_contract(text, 'Toán', 6)
+        self.assertEqual(caught.exception.location, 'Trắc nghiệm câu 1: gợi mở Socratic')
+        self.assertNotIn('77', str(caught.exception))
+        text = complete_lesson().replace('Em cần tự xem xét thông tin nào ở bước này?',
+                                          'Em đã tính được $x=77$ chưa?')
+        with self.assertRaises(LessonContractError) as caught:
+            validate_lesson_contract(text, 'Toán', 6)
+        self.assertEqual(caught.exception.location, 'Tự luận bài 1, bước 1')
+
     def test_repeated_given_numeric_data_does_not_include_prose_in_equation_match(self):
         hint = 'Em sẽ dùng giả thiết $a = 2$ để đối chiếu điều kiện nào?'
         self.assertEqual(validate_socratic_question(hint, 'Cho tham số $a=2$.'), hint)

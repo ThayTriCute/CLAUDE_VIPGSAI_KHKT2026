@@ -48,6 +48,9 @@ class TestStationUI(unittest.TestCase):
         subjects = next(s for s in at.selectbox if s.label == "📚 Môn học cần hỗ trợ:").options
         self.assertIn("Khoa học tự nhiên", subjects)
         self.assertNotIn("Vật lý", subjects)
+        lesson_field = next(t for t in at.text_input if 'Bài học cần chiếm lĩnh' in t.label)
+        self.assertIn('lớp 6', lesson_field.proto.placeholder)
+        self.assertNotIn('Khảo sát hàm số bậc ba', lesson_field.proto.placeholder)
 
     def test_station2_empty_session_has_no_fake_mastery(self):
         at = self.app()
@@ -129,6 +132,41 @@ class TestStationUI(unittest.TestCase):
             next(b for b in at.button if b.label == "🚀 Soạn bài học").click().run()
             self.assertEqual(generate.call_count, 2)
         self.assertFalse(at.session_state.get("current_lesson", ""))
+        self.assertEqual([e.message for e in at.exception], [])
+
+    def test_failed_lesson_draft_is_redacted_private_and_cleared_on_new_attempt(self):
+        at = self.app()
+        at.secrets['GEMINI_API_KEY'] = 'test-only-key'
+        next(s for s in at.selectbox if s.label == '🎯 Chọn khối lớp:').select('Lớp 6').run()
+        next(t for t in at.text_input if 'Bài học cần chiếm lĩnh' in t.label).set_value('Phân số')
+        broken = complete_lesson('PRIVATE_DRAFT test-only-key').replace(
+            'Em nhớ cách biểu diễn một nửa của một số như thế nào?', 'Em đã tính được $x=77$ chưa?')
+        with patch('google.genai.Client') as client:
+            generate = client.return_value.__enter__.return_value.models.generate_content
+            generate.return_value = SimpleNamespace(text=broken, candidates=[])
+            next(b for b in at.button if b.label == '🚀 Soạn bài học').click().run()
+            self.assertEqual(generate.call_count, 2)
+        self.assertEqual([e.message for e in at.exception], [])
+        diagnostic = at.session_state['_last_lesson_validation_failure']
+        self.assertNotIn('test-only-key', json.dumps(diagnostic))
+        self.assertIn('[API_KEY]', diagnostic['raw'])
+        self.assertEqual(diagnostic['location'], 'Trắc nghiệm câu 1: gợi mở Socratic')
+        self.assertEqual(diagnostic['validation_attempts'], 2)
+        self.assertFalse(any('PRIVATE_DRAFT' in str(m.value) for m in at.markdown))
+        self.assertFalse(any(b.key == 'download_failed_lesson' for b in at.get('download_button')))
+        at.session_state['selected_station'] = '📊 Trạm 4: Dữ Liệu & Nghiên Cứu'
+        at.run()
+        self.assertFalse(any(b.key == 'download_failed_lesson' for b in at.get('download_button')))
+        next(t for t in at.text_input if t.label == 'Mật khẩu quản trị:').set_value('qa-private-password')
+        next(b for b in at.button if b.label == '🔓 Mở khóa').click().run()
+        self.assertTrue(any(b.key == 'download_failed_lesson' for b in at.get('download_button')))
+        at.session_state['selected_station'] = '📖 Trạm 1: Học Tập & Phòng Lab'
+        at.run()
+        next(t for t in at.text_input if 'Bài học cần chiếm lĩnh' in t.label).set_value('Phân số')
+        with patch('google.genai.Client') as client:
+            client.return_value.__enter__.return_value.models.generate_content.return_value = SimpleNamespace(text=complete_lesson(), candidates=[])
+            next(b for b in at.button if b.label == '🚀 Soạn bài học').click().run()
+        self.assertNotIn('_last_lesson_validation_failure', at.session_state)
         self.assertEqual([e.message for e in at.exception], [])
 
     def test_lesson_suggestion_updates_form_input_without_calling_ai(self):

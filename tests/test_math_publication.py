@@ -109,6 +109,7 @@ class TestMathPublication(unittest.TestCase):
             return r'$\badmath$' if len(calls) == 1 else '$x+1$'
         self.assertEqual(generate_checked_text('Bài gốc', generate, validate_math_text), '$x+1$')
         self.assertEqual(len(calls), 2)
+
         self.assertIn('giữ nguyên', calls[1])
         calls.clear()
         def always_bad(prompt):
@@ -117,3 +118,11 @@ class TestMathPublication(unittest.TestCase):
         with self.assertRaises(MathPublicationError):
             generate_checked_text('Bài gốc', always_bad, validate_math_text)
         self.assertEqual(len(calls), 2)
+
+    def test_failed_repair_retains_private_draft_without_leaking_it_in_message(self):
+        marker = r'$\badmath$ PRIVATE_DRAFT'
+        with self.assertRaises(MathPublicationError) as caught:
+            generate_checked_text('QA', lambda _: marker, validate_math_text)
+        self.assertEqual(caught.exception.rejected_draft, marker)
+        self.assertEqual(caught.exception.validation_attempts, 2)
+        self.assertNotIn('PRIVATE_DRAFT', str(caught.exception))

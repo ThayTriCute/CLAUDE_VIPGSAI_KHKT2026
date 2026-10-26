@@ -10091,7 +10091,9 @@ if selected_station == station_labels[0]:
         "Công nghệ": "Ví dụ: Bản vẽ kỹ thuật, Trồng trọt công nghệ cao, Mạch điện tử điều khiển, Cơ khí chế tạo..."
     }
 
-    curr_ph = subject_placeholders.get(subject, f"Ví dụ: Bài học trọng tâm môn {subject} Lớp {grade_num}...")
+    from services.curriculum_policy import lesson_topic_placeholder
+    curr_ph = lesson_topic_placeholder(subject, grade_num,
+        BIGDATA_CURRICULUM.get(subject, {}).get(grade_num, []))
 
     # Quick topics gợi ý chọn nhanh cho từng môn
     quick_topics_dict = {
@@ -10290,6 +10292,7 @@ if selected_station == station_labels[0]:
     if btn_submit_lesson and topic_input.strip() and not conflict_grade:
 
         st.session_state.tram1_count += 1
+        st.session_state.pop("_last_lesson_validation_failure", None)
 
         with st.spinner("Đang biên soạn chuẩn ngữ liệu SGK KNTT và cấu trúc Socratic..."):
 
@@ -10316,6 +10319,19 @@ if selected_station == station_labels[0]:
                         del st.session_state[stale_quiz_key]
 
             except Exception as e:
+                rejected_draft = getattr(e, "rejected_draft", "")
+                if rejected_draft:
+                    def redact_lesson_diagnostic(value):
+                        for secret_key in active_keys_pool:
+                            if secret_key:
+                                value = value.replace(secret_key, "[API_KEY]")
+                        return value
+                    st.session_state["_last_lesson_validation_failure"] = {
+                        "subject": subject, "grade": grade_num, "topic": redact_lesson_diagnostic(topic_input.strip()),
+                        "error_type": type(e).__name__, "error": redact_lesson_diagnostic(str(e)[:500]),
+                        "location": getattr(e, "location", ""),
+                        "validation_attempts": getattr(e, "validation_attempts", 0),
+                        "raw": redact_lesson_diagnostic(rejected_draft), "academic_verified": False}
                 st.error(f"Lỗi: {e}")
 
     if st.session_state.get("current_lesson") and st.session_state.get("current_lesson_context") != (subject, grade_num):
@@ -15006,6 +15022,13 @@ if selected_station == station_labels[3]:
             st.caption("Chỉ dành cho quản trị đã đăng nhập. Bản nháp chưa hợp lệ có thể chứa khóa chấm; không dùng làm đề cho học sinh. Dữ liệu chỉ giữ trong phiên, không gửi dịch vụ khác.")
             st.download_button("Tải bản nháp lỗi để kiểm tra tại máy", json.dumps(failed_json, ensure_ascii=False, indent=2),
                                "chan_doan_json_de_ai.json", "application/json", key="download_failed_exam_json")
+
+    failed_lesson = st.session_state.get("_last_lesson_validation_failure")
+    if failed_lesson:
+        with st.expander("Chẩn đoán bản nháp bài học lỗi trong phiên này", expanded=False):
+            st.caption("Chỉ quản trị đã đăng nhập. Bản nháp có thể chứa khóa chấm; không hiển thị cho học sinh, không gửi sang dịch vụ khác. Dữ liệu chỉ giữ trong phiên.")
+            st.download_button("Tải bản nháp bài học lỗi để đối chiếu", json.dumps(failed_lesson, ensure_ascii=False, indent=2),
+                               "chan_doan_bai_hoc_ai.json", "application/json", key="download_failed_lesson")
 
     db_logs = db_manager.get_all_logs() if db_manager else []
 

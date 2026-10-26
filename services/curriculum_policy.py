@@ -229,6 +229,14 @@ def matrix_html(subject, grade):
             "<p>Yêu cầu cần đạt và tỷ lệ mức độ nhận thức phải được giáo viên duyệt theo nội dung đã dạy.</p></div>")
 
 
+def lesson_topic_placeholder(subject, grade, editorial_topics):
+    """UI examples follow the selected context, not a grade-12-only fallback."""
+    subject, grade = academic_context(subject, grade)
+    examples = [str(topic).split(':', 1)[-1].strip() for topic in editorial_topics[:2]]
+    return (f"Ví dụ theo lớp {grade}: " + '; '.join(examples) if examples else
+            f"Nhập bài học môn {subject} lớp {grade} theo nội dung đang học.")
+
+
 def lesson_prompt(subject, grade, topic):
     from services.cognitive_levels import LEVEL_GUIDANCE
     return policy_prompt(subject, grade, 1, topic) + LEVEL_GUIDANCE + r"""

@@ -267,4 +267,12 @@ def generate_checked_text(prompt, generator, validator):
         repair = (prompt + "\nBản nháp chưa đạt kiểm tra công thức/cấu trúc bài học: " + str(error)[:240]
                   + "\n" + instruction + "\nBản nháp cần sửa:\n"
                   + str(text)[:250000])
-        return validator(generator(repair))
+        repaired_text = generator(repair)
+        try:
+            return validator(repaired_text)
+        except (MathPublicationError, LessonContractError, AcademicScopeError, AcademicPolicyError) as final_error:
+            # Keep the same exception type/message. Only the authenticated app
+            # diagnostic path may use this draft; never interpolate it into UI.
+            final_error.rejected_draft = str(repaired_text)[:250000]
+            final_error.validation_attempts = 2
+            raise
