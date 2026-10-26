@@ -43,6 +43,9 @@ def three_basic_survey_instruction(subject, grade, topic):
             '(tử bậc 2, mẫu bậc 1, tử không chia hết cho mẫu). '
             'Mỗi ví dụ cần tập xác định, đạo hàm/xét dấu, đơn điệu/cực trị, '
             'giới hạn/tiệm cận nếu có, BBT và dữ kiện vẽ đồ thị nhất quán. '
+            'Ở ví dụ minh họa đã giải, phải trình bày BBT chứ không ghi học sinh tự lập. '
+            'Giữ phương pháp cơ bản của bài: không dùng đạo hàm cấp hai/điểm uốn làm bước bắt buộc; '
+            'tâm đối xứng có thể kiểm bằng biến đổi đại số hoặc giao điểm hai tiệm cận với phân thức. '
             'Ví dụ có lời giải chỉ ở Phần 1; giữ đúng ba MCQ và hai tự luận gợi mở ở Phần 2–3. '
             'Nguồn đã mở: Toán 12 tập một KNTT, Bài 4, trang 26–28 trên cổng NXBGD '
             'https://truonghocsoquocgia.nxbgd.vn/book/393beba7-0dc1-45a9-ac53-3254cffa1344/read '
@@ -71,8 +74,16 @@ def check_three_basic_survey_coverage(theory, subject, grade, topic):
     from services.math_publication import segments
     from services.neuro_symbolic_verifier import clean_latex_math_to_sympy_expr, x
     import sympy as sp
+    formulas = segments(str(theory))
+    if any(re.search(r"\b(?:y|f)\s*(?:''|′′|(?:\^\{)?\\prime\s*\\prime)", formula)
+           for _, _, formula, _ in formulas):
+        raise AcademicScopeError('Bài khảo sát ba dạng cơ bản đang dùng đạo hàm cấp hai. '
+                                 'Biên soạn lại phương pháp phù hợp bài KNTT; không chỉ xóa ký hiệu hoặc đổi nhãn.')
+    if re.search(r'bang bien thien[^.\n]{0,130}(?:hoc sinh|em)[^.\n]{0,30}tu lap', folded(theory)):
+        raise AcademicScopeError('Ví dụ minh họa ở PHẦN 1 đang giao học sinh tự lập BBT. '
+                                 'Hoàn thiện bước khảo sát của ví dụ; giữ các bài tự làm ở PHẦN 2–3.')
     found = set()
-    for _, _, formula, _ in segments(str(theory)):
+    for _, _, formula, _ in formulas:
         formula = re.sub(r"\by\s*=\s*f\s*\(\s*x\s*\)\s*=", 'y=', formula)
         for match in re.finditer(r"(?<![\w'])\b(?:y|f\s*\(\s*x\s*\))\s*=\s*([^=;\n]+)", formula):
             candidate = re.split(r'\\(?:quad|qquad|text)\b', match[1])[0].strip().rstrip('.,')
