@@ -2,6 +2,8 @@
 
 Cập nhật ngày 26/10/2026. Đây là bản ghi yêu cầu để đối chiếu khi sửa, không phải tuyên bố hệ thống đã hoàn tất. Báo cáo kết quả chi tiết: `BAO_CAO_TONG_HOP_TRAM_1_TRAM_3_20261026.md`; số đo mới: `PATCH_REPORT_LATENCY_AND_TOPIC_CONFLICT_20261026.md`.
 
+**Ưu tiên số một hiện tại theo người dùng: Trạm 3 tạo được đề thật hợp lệ, đúng tùy chọn, hoạt động mượt.** Sau PR24 vẫn có lượt AI bị giữ vì TikZ không phù hợp web và câu trắc nghiệm hai khoảng cùng đúng. Chưa nghiệm thu luồng tạo đề thật; theo dõi sửa tại `PATCH_REPORT_STATION3_WEB_GENERATION.md`. Không lấy 65 ca UI giả lập hoặc CI xanh để ghi rằng mọi lượt sinh đề đã ổn.
+
 ## Nguyên tắc làm việc bắt buộc
 
 - Sửa trong thư mục dự án tại máy; đọc diff, chạy thử phù hợp, rồi mới push GitHub. Kiểm CI và kiểm bản Cloud sau triển khai, bao gồm restart tiến trình khi cập nhật module/config. Không coi push thành công là nghiệm thu Cloud.

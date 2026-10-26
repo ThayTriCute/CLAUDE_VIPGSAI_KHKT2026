@@ -207,6 +207,10 @@ def audit_ai_generated_question_sympy(q_dict: Dict[str, Any]) -> Dict[str, Any]:
     Tầng kiểm chứng Neuro-Symbolic cho câu hỏi AI sinh ra:
     Tự động phát hiện nếu câu hỏi chứa hàm số giải tích và kiểm tra đáp án của AI.
     """
+    from services.monotonicity_check import audit_monotonic_options
+    monotonic = audit_monotonic_options(q_dict)
+    if monotonic.get('verified') or monotonic.get('hallucination_detected'):
+        return monotonic
     q_text = q_dict.get("q", "")
     ans = q_dict.get("ans", "")
     opt = q_dict.get("opt", [])
