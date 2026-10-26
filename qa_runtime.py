@@ -8,6 +8,26 @@ import re
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 
+def exam_catalog_label(exam):
+    """Describe declared origin without turning storage membership into verification."""
+    origin = exam.get("exam_source_type")
+    if exam.get("is_ai_generated") or exam.get("is_ai_harvested") or origin == "ai_generated":
+        kind = "Đề AI tích lũy"
+    elif origin == "mixed_bank":
+        kind = "Đề phối hợp nguồn"
+    elif exam.get("is_uploaded_teacher_exam"):
+        kind = "Đề giáo viên tải lên"
+    else:
+        kind = "Đề lưu trong kho"
+    title = str(exam.get("title") or "").strip()
+    return f"[{kind}] {title}".strip()
+
+
+def exam_display_title(exam):
+    """Keep supplied titles; never invent a school or standardization claim."""
+    return str(exam.get("title") or "").strip() or "Đề luyện tập"
+
+
 def split_api_keys(value):
     return list(dict.fromkeys(k for k in re.split(r"[,;\s]+", str(value or "").strip()) if k))
 

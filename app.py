@@ -13,7 +13,7 @@ from services.lesson_contract import validate_lesson_contract, student_polya, va
 from services.academic_scope import check_lesson_scope, check_exam_question_scope
 from services.math_publication import native_radio_label
 from qa_runtime import (split_api_keys, admin_password_matches, normalize_bool, display_frame,
-    exam_response_metadata, observed_item_matrix, mcq_answer_matches)
+    exam_response_metadata, observed_item_matrix, mcq_answer_matches, exam_catalog_label, exam_display_title)
 # VIP 76.0 - HỆ THỐNG GIA SƯ AI THPT 2026 (CHUẨN GDPT 2018 - EDTECH & PSYCHOMETRICS SOTA QUỐC TẾ)
 # -*- coding: utf-8 -*-
 
@@ -7521,7 +7521,7 @@ def get_cached_exams(subject_name, grade_level):
 
     results = []
 
-    # 1. Nạp các đề thi thật đã kiểm định từ kho nền 2025-2026 (0.1s tức thì)
+    # 1. Liệt kê kho nền; vị trí lưu không chứng minh nguồn hoặc kiểm định.
 
     try:
 
@@ -7533,13 +7533,13 @@ def get_cached_exams(subject_name, grade_level):
 
                 results.append({
 
-                    "saved_at": bex.get("year", "2025-2026"),
+                    "saved_at": bex.get("year") or "Chưa ghi thời điểm",
 
                     "subject": subject_name,
 
                     "grade": grade_level,
 
-                    "topic": f"🔥 [Đề thật] {bex.get('title', 'Đề thi thật toàn quốc')}",
+                    "topic": exam_catalog_label(bex),
 
                     "code": bex.get("code", "2501"),
 
@@ -14055,7 +14055,7 @@ if selected_station == station_labels[2]:
 
         ex_code = str(exam.get('code', st.session_state.get('exam_code', '1011')))
 
-        disp_title = exam.get("title") or f"Đề thi chuẩn hóa - {exam.get('school', 'Trường điểm toàn quốc')}"
+        disp_title = exam_display_title(exam)
 
 
 
