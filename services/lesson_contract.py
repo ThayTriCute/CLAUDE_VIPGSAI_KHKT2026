@@ -118,14 +118,22 @@ def validate_socratic_question(hint, question="", correct_text=""):
         raise LessonContractError("Gợi mở Socratic phải là một câu hỏi dẫn dắt, không phải lời giải.")
     if not re.search(r"[ăâđêôơưàáảãạèéẻẽẹìíỉĩịòóỏõọùúủũụỳýỷỹỵ]", hint, re.I):
         raise LessonContractError("Câu hỏi hướng dẫn phải bằng tiếng Việt.")
-    if re.search(r"(?i)(?:đáp án|đáp số|kết quả là|nghiệm là|(?:chọn|phương án)\s+[A-D]\b|the answer|therefore|solution)", hint):
+    if re.search(r"(?i)(?:(?:đáp án|đáp số)(?:\s+đúng)?\s*(?:là\b|[:=]|[A-D]\b)|kết quả là|nghiệm là|(?:chọn|phương án)\s+[A-D]\b|the answer)", hint):
         raise LessonContractError("Gợi mở đang chứa chỉ dẫn đáp án hoặc lời giải.")
+    # A word quoted from the English source is context, not itself a solution.
+    for word in ('therefore', 'solution'):
+        pattern = r'\b' + word + r'\b'
+        if re.search(pattern, hint, re.I) and not re.search(pattern, str(question), re.I):
+            raise LessonContractError("Gợi mở đang chứa chỉ dẫn đáp án hoặc lời giải.")
     # Match an equation's left hand side, not an arbitrary prose prefix such
     # as 'Em sẽ ...'. Asking how to solve f'(x)=0 is a method question, not a
     # computed root. A new numeric root x=77 remains disallowed.
     compact = lambda value: re.sub(r"[\s${}]", "", value)
-    equations = re.finditer(r"(?<![\w])([A-Za-z](?:_{?[A-Za-z0-9]+}?)?['′]?(?:\s*\(\s*x\s*\))?)\s*=\s*([-+]?\d+(?:[.,]\d+)?)", hint)
+    # Require the whole numeric token: y=2x+b is not the scalar result y=2.
+    equations = re.finditer(r"(?<![\w])([A-Za-z](?:_{?[A-Za-z0-9]+}?)?['′]?(?:\s*\(\s*x\s*\))?)\s*=\s*([-+]?\d+(?:[.,]\d+)?(?:/[+-]?\d+(?:[.,]\d+)?)?)(?=$|[\s$;?!:)}]|[.,](?!\d))", hint)
     for match in equations:
+        if re.match(r'\s+[A-Za-z](?=\s*(?:[\^+*/$)}\-]|$))', hint[match.end():]):
+            continue  # Whitespace-separated multiplication, e.g. y=2 x+b.
         expression, lhs, number = match[0], compact(match[1]), match[2]
         method_condition = number == "0" and ("(x)" in lhs or lhs.endswith(("'", "′")))
         if not method_condition and compact(expression) not in compact(question):
