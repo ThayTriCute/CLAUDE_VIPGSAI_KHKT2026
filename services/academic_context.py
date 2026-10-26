@@ -76,8 +76,10 @@ def validate_exam_context(exam, subject, grade):
         if isinstance(questions, list):
             items.extend(q for q in questions if isinstance(q, dict))
     reading = exam.get("part_doc_hieu")
-    if isinstance(reading, dict) and isinstance(reading.get("questions"), list):
-        items.extend(q for q in reading["questions"] if isinstance(q, dict))
+    if isinstance(reading, dict):
+        items.append(reading)
+        if isinstance(reading.get("questions"), list):
+            items.extend(q for q in reading["questions"] if isinstance(q, dict))
     title_grade = re.search(r"(?:lớp|khối)\s*(\d{1,2})\b", str(exam.get("title", "")), re.I)
     if title_grade and normalize_grade(title_grade[1]) != grade:
         raise ValueError("Tiêu đề đề thi khai báo khác lớp đang chọn.")
