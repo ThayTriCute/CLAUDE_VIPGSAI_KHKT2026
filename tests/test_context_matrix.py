@@ -14,6 +14,32 @@ CONTEXTS = [(subject, grade) for grade in range(6, 13) for subject in subjects_f
 
 
 class TestContextMatrix(unittest.TestCase):
+    def test_shared_practice_source_selection_for_all_65_contexts(self):
+        from copy import deepcopy
+        from services.curriculum_policy import practice_initial_source
+        for subject, grade in CONTEXTS:
+            with self.subTest(subject=subject, grade=grade):
+                bank = {'subject': subject, 'grade': grade, 'p1': [
+                    {'q': 'Ngữ liệu chỉ kiểm thử phần mềm.', 'opt': ['A. một', 'B. hai', 'C. ba', 'D. bốn'], 'ans': 'B'}]}
+                if subject == 'Ngữ văn':
+                    bank = {'subject': subject, 'grade': grade,
+                            'part_doc_hieu': {'text': 'Ngữ liệu mô phỏng.', 'questions': [{'q': 'Câu đọc hiểu mô phỏng.'}]},
+                            'part_viet': [{'q': 'Đề viết mô phỏng.'}]}
+                before = deepcopy(bank)
+                self.assertEqual(practice_initial_source(bank, subject, grade, (1, 0, 0), False), 'bank')
+                self.assertEqual(practice_initial_source(bank, subject, grade, (1, 0, 0), True), 'bank')
+                self.assertEqual(bank, before)
+                self.assertEqual(practice_initial_source(None, subject, grade, (1, 0, 0), False), 'unavailable')
+                self.assertEqual(practice_initial_source(None, subject, grade, (1, 0, 0), True), 'ai')
+                wrong = dict(bank, grade=11 if grade == 12 else grade+1)
+                self.assertEqual(practice_initial_source(wrong, subject, grade, (1, 0, 0), False), 'unavailable')
+                self.assertEqual(practice_initial_source(wrong, subject, grade, (1, 0, 0), True), 'ai')
+                if subject != 'Ngữ văn':
+                    self.assertEqual(practice_initial_source(bank, subject, grade, (2, 0, 0), False), 'unavailable')
+                else:
+                    incomplete = dict(bank, part_doc_hieu={})
+                    self.assertEqual(practice_initial_source(incomplete, subject, grade, (0, 0, 0), False), 'unavailable')
+
     def test_supported_matrix_has_65_distinct_contexts(self):
         self.assertEqual(len(CONTEXTS), 65)
         self.assertEqual(len(set(CONTEXTS)), 65)

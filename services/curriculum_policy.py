@@ -179,6 +179,20 @@ def validate_exam_structure(exam, subject, counts=None):
     return exam
 
 
+def practice_initial_source(bank_exam, subject, grade, counts, allow_ai):
+    """Choose an initial source, not certify its academic content or publish it."""
+    subject, grade = academic_context(subject, grade)
+    if isinstance(bank_exam, dict) and bank_exam:
+        try:
+            validate_exam_context(bank_exam, subject, grade)
+            validate_exam_structure(bank_exam, subject, None if subject == "Ngữ văn" else counts)
+        except (ValueError, TypeError):
+            pass
+        else:
+            return "bank"
+    return "ai" if allow_ai else "unavailable"
+
+
 def matrix_html(subject, grade):
     profile = assessment_profile(subject, grade)
     counts = profile["counts"]
