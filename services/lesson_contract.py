@@ -88,7 +88,11 @@ def validate_lesson_contract(text, subject, grade):
         hints = re.findall(r"(?im)^\s*(?:GỢI MỞ SOCRATIC|SOCRATIC|GỢI MỞ)\s*:\s*(.+)$", block)
         if len(hints) != 1:
             raise LessonContractError("Mỗi câu trắc nghiệm cần một gợi mở Socratic riêng theo ngữ cảnh.")
-        validate_socratic_question(hints[0], question, dict(options)[keys[0].upper()])
+        try:
+            validate_socratic_question(hints[0], question, dict(options)[keys[0].upper()])
+        except LessonContractError as error:
+            error.location = f"Trắc nghiệm câu {len(stems)}: gợi mở Socratic"
+            raise
         # Use the reconstruction tool in the publication gate, not only while
         # drawing the page. If reconstruction is impossible, the one bounded
         # whole-lesson repair must supply a coherent complete question.
@@ -137,7 +141,7 @@ def essay_guidance(text):
     stems = essay_stems(text)
     blocks = question_blocks(lesson_sections(text)[2])
     result = []
-    for stem, (_, block) in zip(stems, blocks):
+    for essay_index, (stem, (_, block)) in enumerate(zip(stems, blocks), 1):
         steps = list(re.finditer(r"(?im)^\s*(?:#{1,6}\s*)?(?:\*\*)?Bước\s*([1-4])\b", block))
         hints = []
         for index, step in enumerate(steps):
@@ -151,7 +155,11 @@ def essay_guidance(text):
                 body = inline + "\n" + body
             labels = '|'.join(re.escape(label) for label in POLYA_LABELS)
             body = re.sub(r'^\s*\*{0,2}(?:Bước\s*[1-4]\s*[:.]\s*)?(?:' + labels + r')\*{0,2}\s*[:.–-]?\s*', '', body, flags=re.I)
-            hints.append(validate_socratic_question(body, stem))
+            try:
+                hints.append(validate_socratic_question(body, stem))
+            except LessonContractError as error:
+                error.location = f"Tự luận bài {essay_index}, bước {index+1}"
+                raise
         result.append((stem, hints))
     return result
 

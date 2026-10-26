@@ -39,6 +39,19 @@ def sample_exam(subject, grade):
 
 
 class TestAllContextPublication(unittest.TestCase):
+    def test_lesson_input_examples_follow_each_grade_instead_of_grade12_fallback(self):
+        from data.curriculum_data import BIGDATA_CURRICULUM
+        from services.curriculum_policy import lesson_topic_placeholder
+        for subject, grade in CONTEXTS:
+            with self.subTest(subject=subject, grade=grade):
+                topics = BIGDATA_CURRICULUM.get(subject, {}).get(grade, [])
+                value = lesson_topic_placeholder(subject, grade, topics)
+                self.assertIn(f'lớp {grade}', value)
+                if topics:
+                    self.assertIn(topics[0].split(':', 1)[-1].strip(), value)
+                self.assertIn(subject, lesson_topic_placeholder(subject, grade, []))
+        self.assertNotIn('Life stories', lesson_topic_placeholder('Anh', 6, BIGDATA_CURRICULUM['Tiếng Anh'][6]))
+
     def test_station1_policy_conflicts_receive_one_repair_in_every_context(self):
         for subject, grade in CONTEXTS:
             with self.subTest(subject=subject, grade=grade):
