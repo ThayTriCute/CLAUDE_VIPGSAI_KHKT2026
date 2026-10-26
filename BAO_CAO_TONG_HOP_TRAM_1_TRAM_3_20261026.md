@@ -88,6 +88,8 @@ Chi tiết: [độ trễ](PATCH_REPORT_NAVIGATION_LATENCY_20261025.md), [giọng
 
 ## 7. Đánh giá kỹ thuật và bài học làm việc
 
+Đợt đo bổ sung ngày 26/10: hai lượt UI đều 65/65 tổ hợp ở Trạm 1/3, trước và sau tắt Streamlit magic không dùng. Bộ hồi quy sau sửa có 285 ca qua. Phát hiện từ Cloud thêm câu thống kê bị gắn nhãn khảo sát hàm số trong kho; đã bổ sung kiểm tra mâu thuẫn xác định ở bước chọn kho và cửa phạm vi cuối, dùng lại bộ phục hồi nguyên câu. Số đo và giới hạn ở `PATCH_REPORT_LATENCY_AND_TOPIC_CONFLICT_20261026.md`; không dùng kết quả này để bỏ cảnh báo chưa thẩm định đồng loạt.
+
 Các điểm có bằng chứng: hợp đồng đầu ra, parser thật, bảo toàn nguồn và khóa, kiểm thử âm/dương, lượt sửa hữu hạn, cache có giới hạn, nhật ký lỗi riêng tư và CI trước phát hành. Những điều này là thực hành kỹ thuật có ích, không phải chứng nhận “đẳng cấp BigTech”.
 
 Các lần thay cấu trúc quá rộng trước đây đã gây hồi quy thực tế; nguyên nhân có cả prompt bị rút gọn, thay giao diện khi sửa công thức, và bộ test chưa giữ đầy đủ hợp đồng sản phẩm. Cách ngăn lặp lại: sửa theo lỗi tái lập; ghi rõ phần sẽ đổi; thêm ca bảo vệ giao diện và dữ liệu; kiểm module/CI/Cloud; không báo “xong hết” chỉ từ test xanh; để mục chưa có nguồn đúng trạng thái chưa nghiệm thu.

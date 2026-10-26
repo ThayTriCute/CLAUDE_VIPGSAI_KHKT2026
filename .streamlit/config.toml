@@ -4,3 +4,8 @@
 [server]
 fileWatcherType = "none"
 runOnSave = false
+
+# app.py renders explicitly through st.* and component calls. Avoid the extra
+# AST traversal for notebook-style implicit rendering on this large script.
+[runner]
+magicEnabled = false

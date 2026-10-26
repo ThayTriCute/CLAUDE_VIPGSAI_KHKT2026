@@ -2928,12 +2928,17 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
                 topic_keywords.append(clean_ct)
 
     def filter_by_topic(items):
+        from services.academic_scope import AcademicScopeError, check_topic_content_consistency
         clean_items = [it for it in items if not is_placeholder_question(it)]
         random.shuffle(clean_items)
         
         valid_items = []
         for it in clean_items:
             if chosen_topics and not any(topic_matches(ct, it.get("topic", "")) for ct in chosen_topics):
+                continue
+            try:
+                check_topic_content_consistency(it, subject)
+            except AcademicScopeError:
                 continue
             it_text = (str(it.get("topic", "")) + " " + str(it.get("q", "")) + " " + str(it.get("explain", "")) + " " + str(it.get("source", ""))).lower()
             if any(fb in it_text for fb in forbidden_topic_terms):
