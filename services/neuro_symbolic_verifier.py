@@ -234,18 +234,22 @@ def audit_ai_generated_question_sympy(q_dict: Dict[str, Any]) -> Dict[str, Any]:
     # Nếu câu hỏi hỏi về số điểm cực trị
     if any(kw in q_text.lower() for kw in ["số điểm cực trị", "số cực trị", "bao nhiêu cực trị"]):
         real_crit_count = len(analysis["critical_points"])
-        # Kiểm tra xem đáp án có khớp với real_crit_count không
-        ans_str = str(ans).strip().upper()
-        # Tìm xem phương án tương ứng có chứa số real_crit_count không
-        is_consistent = False
-        if opt and len(opt) >= 4:
-            for idx, o in enumerate(opt):
-                letter = chr(65 + idx)
-                option = re.sub(r"^[A-D][.)]\s*", "", str(o).strip(), flags=re.I).replace("$", "").strip()
-                if letter == ans_str and re.fullmatch(rf"{real_crit_count}(?:\s+(?:điểm\s+)?cực trị)?[.]?", option):
-                    is_consistent = True
-                    break
-        if not is_consistent:
+        # Compare only a recognized answer value. Short answers have no options.
+        answer_text = str(ans).strip()
+        if opt:
+            if len(opt) != 4:
+                return audit_report
+            letter = answer_text.upper()
+            if letter in {"A", "B", "C", "D"}:
+                answer_text = str(opt[ord(letter) - ord("A")])
+            elif answer_text not in [str(value).strip() for value in opt]:
+                return audit_report
+        answer_text = re.sub(r"^[A-D][.)]\s*", "", answer_text, flags=re.I).replace("$", "").strip()
+        count_match = re.fullmatch(r"(\d+)(?:\s+(?:điểm\s+)?cực trị)?[.]?", answer_text, flags=re.I)
+        if not count_match:
+            audit_report["note"] = "Chưa nhận diện được đáp án số để đối chiếu; không kết luận sai."
+            return audit_report
+        if int(count_match[1]) != real_crit_count:
             audit_report["hallucination_detected"] = True
             audit_report["note"] = f"AI gán đáp án {ans} nhưng SymPy giải ra chính xác {real_crit_count} điểm cực trị."
         else:
