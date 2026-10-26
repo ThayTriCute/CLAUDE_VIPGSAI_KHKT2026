@@ -7236,13 +7236,17 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
 
 
+    from services.english_speaking import speaking_units_for_grade
+    curriculum_english_units = speaking_units_for_grade(current_grade, curriculum_english_units)
+    st.caption(f"Ngữ liệu luyện nói lớp {current_grade} do ứng dụng biên soạn; không phải trích nguyên văn hoặc mục lục SGK đã đối chiếu.")
+
     sel_unit = st.selectbox(
 
-        "📚 Chọn Chủ Đề Bài Học SGK Kết Nối Tri Thức:",
+        "📚 Chọn chủ đề luyện nói theo lớp:",
 
         list(curriculum_english_units.keys()),
 
-        key=f"unit_eng_sel_{stage_id}"
+        key=f"unit_eng_sel_{stage_id}_{current_grade}"
 
     )
 
@@ -7256,7 +7260,7 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
     with col_left_data:
 
-        st.markdown("##### 📖 1. Từ Vựng Trọng Tâm SGK (New Words):")
+        st.markdown("##### 📖 1. Từ vựng luyện nói (New Words):")
 
 
 
@@ -7292,7 +7296,7 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
 
 
-        st.markdown("##### 📝 2. Đoạn Văn Luyện Đọc Chuẩn (Reading Passage):")
+        st.markdown("##### 📝 2. Đoạn đọc tham khảo (Reading Passage):")
 
         escaped_passage = json.dumps(unit_info['passage'])
 
@@ -7354,7 +7358,7 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
             "Ghi âm bài nói của em (en-US):",
 
-            key=f"audio_mic_eng_{stage_id}",
+            key=f"audio_mic_eng_{stage_id}_{current_grade}",
 
             label_visibility="collapsed"
 
@@ -7366,7 +7370,7 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
             "Nội dung bài nói của em (tùy chọn gõ bổ sung / ghi chú thêm):",
 
-            key=f"eng_speech_input_{stage_id}",
+            key=f"eng_speech_input_{stage_id}_{current_grade}",
 
             placeholder="Nếu em không dùng Micro hoặc muốn bổ sung bài nói, hãy gõ/dán văn bản tiếng Anh vào đây...",
 
@@ -7376,7 +7380,7 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
 
 
-        btn_score_ielts = st.button("📊 Chấm Điểm 4 Tiêu Chí IELTS & Nâng Cấp Band 8.0", key=f"btn_eval_ielts_{stage_id}", type="primary", width="stretch")
+        btn_score_ielts = st.button("📊 Góp ý bài nói theo lớp", key=f"btn_eval_ielts_{stage_id}_{current_grade}", type="primary", width="stretch")
 
 
 
@@ -7394,45 +7398,13 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
             else:
 
-                with st.spinner("AI Giám khảo IELTS & Giáo viên THPT đang nghe và phân tích âm vị, ngữ pháp, độ trôi chảy..."):
+                with st.spinner("Đang xem xét bài luyện nói theo dữ liệu đã gửi..."):
 
                     try:
 
-                        rubric_prompt = f"""Bạn là Giám khảo Khảo thí IELTS Quốc tế kiêm Giáo viên Tiếng Anh THPT theo CT GDPT 2018.
-
-Chủ đề bài học SGK: {sel_unit}
-
-Câu hỏi bối cảnh của Thầy AI: '{unit_info['q_reflex']}'
-
-Đoạn văn đọc mẫu SGK: '{unit_info['passage']}'
-
-
-
-YÊU CẦU ĐÁNH GIÁ CHI TIẾT & CHUẨN SƯ PHẠM:
-
-1. BẢN GHI LỜI NÓI (TRANSCRIPT): {"Nghe kỹ file ghi âm của học sinh và chép lại đầy đủ 100% bằng tiếng Anh những gì học sinh đã phát âm." if has_audio else "Trích dẫn văn bản học sinh đã nhập."}
-
-2. OVERALL BAND SCORE (Thang điểm 0 - 9.0)
-
-3. BẢNG ĐIỂM 4 TIÊU CHÍ CHUẨN QUỐC TẾ IELTS:
-
-   - 🗣️ Fluency & Coherence (0-9đ): Độ mạch lạc, tốc độ phản xạ.
-
-   - 📚 Lexical Resource (0-9đ): Mức độ sử dụng từ vựng bài học.
-
-   - ✍️ Grammatical Accuracy (0-9đ): Độ chuẩn thì, cấu trúc câu.
-
-   - 🔊 Pronunciation & Intonation (0-9đ): Trọng âm, âm đuôi (/s/, /ed/), ngữ điệu.
-
-4. SOI LỖI CỤ THỂ VÀ BẢN NÂNG CẤP (UPGRADED VERSION):
-
-   - Chỉ ra 2 từ/câu cần sửa ngay (kèm lỗi phát âm âm vị nếu có audio).
-
-   - Đưa ra phiên bản mẫu nâng cấp Band 8.0 để học sinh ghi nhớ.
-
-5. LƯỢT HỎI PHẢN XẠ TIẾP THEO (FOLLOW-UP QUESTION):
-
-   - Đặt 1 câu hỏi phản xạ nối tiếp bằng tiếng Anh để học sinh tiếp tục nói."""
+                        from services.english_speaking import speaking_feedback_prompt
+                        rubric_prompt = speaking_feedback_prompt(current_grade, sel_unit,
+                            unit_info['passage'], unit_info['q_reflex'], has_audio)
 
 
 
@@ -7456,7 +7428,7 @@ YÊU CẦU ĐÁNH GIÁ CHI TIẾT & CHUẨN SƯ PHẠM:
 
                         eval_ielts_res = call_gemini_with_fallback(contents if len(contents) > 1 else contents[0])
 
-                        st.success("🏆 BẢNG ĐÁNH GIÁ NĂNG LỰC NÓI TIẾNG ANH CHUẨN QUỐC TẾ:")
+                        st.success("Góp ý luyện nói tham khảo; cần giáo viên đối chiếu.")
 
                         st.markdown(eval_ielts_res)
 
