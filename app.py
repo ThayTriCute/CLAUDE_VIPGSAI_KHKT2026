@@ -1,7 +1,7 @@
 from services.context_recovery import repair_exam_context, recover_visual
 from services.cognitive_levels import annotate_question, level_caption
 from services.math_publication import math_for_web, validate_exam_math, MathPublicationError, generate_checked_text, normalize_real_aliases, escape_source_html
-from services.curriculum_policy import (assessment_profile, legal_references, matrix_html, prepare_exam_for_delivery, validate_exam_structure, validate_lesson_policy, lesson_prompt as build_curriculum_lesson_prompt, exam_prompt as build_curriculum_exam_prompt)
+from services.curriculum_policy import (practice_initial_source, assessment_profile, legal_references, matrix_html, prepare_exam_for_delivery, validate_exam_structure, validate_lesson_policy, lesson_prompt as build_curriculum_lesson_prompt, exam_prompt as build_curriculum_exam_prompt)
 from copy import deepcopy
 import hashlib
 from services.academic_context import canonical_subject, academic_context, validate_exam_context
@@ -3566,7 +3566,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
                        quote_author="THẦY PHAN MINH TRÍ",
                        show_support_qr=True):
     import datetime
-    # CHỐT CHẶN CUỐI CÙNG: Thẩm định ngữ nghĩa, khử đa đáp án và chuẩn hóa Socratic trước khi xuất bản
+    # Kiểm tra ngữ cảnh/cấu trúc/công thức trước xuất; không tự chứng nhận mọi đáp án hoặc sửa nội dung nguồn.
     exam = audit_and_heal_exam_semantics(exam, subject_name=subject_name, grade_name=grade_name)
     current_year = datetime.datetime.now().year
     school_year = f"{current_year} - {current_year+1}"
@@ -12612,8 +12612,8 @@ if selected_station == station_labels[2]:
 
                 st.caption(f"📌 **Đã chọn ({len(chosen_topics)} chuyên đề):** {', '.join(chosen_topics[:2])}{'...' if len(chosen_topics) > 2 else ''}")
                 st.session_state.policy_selected_topics = list(chosen_topics)
-                st.checkbox("Cho phép AI sinh nguyên câu thay thế khi thiếu dữ liệu", value=True, key="enable_ai_context_recovery")
-                st.caption("Ưu tiên dữ liệu gốc và câu cùng môn/lớp/chủ đề; tối đa 2 lần gọi AI bổ sung mỗi lượt tạo đề. Câu thay mới được ghi dấu vết, không giả là câu nguồn.")
+                st.checkbox("Cho phép AI bổ sung khi kho chưa đủ ngữ liệu hoặc câu chưa đạt", value=True, key="enable_ai_context_recovery")
+                st.caption("Đề luyện tập ưu tiên dữ liệu trong kho theo môn/lớp/chủ đề. Khi bật, AI được sinh bản nháp nếu kho chưa đủ và sửa câu chưa đạt; tối đa 2 lượt AI sửa cho mỗi bản nháp. Câu được thay phải kiểm tra lại và ghi dấu vết nguồn.")
 
 
 
@@ -12707,6 +12707,7 @@ if selected_station == station_labels[2]:
                 # --- KHU VỰC KHỞI ĐỘNG BÀI THI CHO THÍ SINH (ACTION CENTER - BUỒNG LÁI COCKPIT) ---
 
                 real_exams_list = ree.get_baseline_full_exams(subject, grade_num) if ree else []
+                real_exams_list = [exam for exam in real_exams_list if not (exam.get("is_ai_generated") or exam.get("is_ai_harvested") or exam.get("is_synthetic_template"))]
 
 
 
@@ -12790,121 +12791,124 @@ if selected_station == station_labels[2]:
 
 
 
-                if "Làm Nguyên Đề Thi Thật" in selected_exam_mode and real_exams_list:
+                if "Làm Nguyên Đề Thi Thật" in selected_exam_mode:
+                    if not real_exams_list:
+                        st.info("Chưa có đề gốc phù hợp cho môn/lớp này trong kho. Chọn chế độ luyện tập nếu muốn tạo đề có AI hỗ trợ.")
+                    else:
 
-                    filter_opts = ["Tất cả"]
+                        filter_opts = ["Tất cả"]
 
-                    if gk1_count > 0: filter_opts.append(f"🌟 Giữa HK1 ({gk1_count} đề)")
+                        if gk1_count > 0: filter_opts.append(f"🌟 Giữa HK1 ({gk1_count} đề)")
 
-                    if ck1_count > 0: filter_opts.append(f"🎯 Cuối HK1 ({ck1_count} đề)")
+                        if ck1_count > 0: filter_opts.append(f"🎯 Cuối HK1 ({ck1_count} đề)")
 
-                    if gk2_count > 0: filter_opts.append(f"🌟 Giữa HK2 ({gk2_count} đề)")
+                        if gk2_count > 0: filter_opts.append(f"🌟 Giữa HK2 ({gk2_count} đề)")
 
-                    if ck2_count > 0: filter_opts.append(f"🎯 Cuối HK2 ({ck2_count} đề)")
+                        if ck2_count > 0: filter_opts.append(f"🎯 Cuối HK2 ({ck2_count} đề)")
 
-                    if thithu_count > 0: filter_opts.append(f"🏛️ Thi thử ({thithu_count} đề)")
-
-
-
-                    col_f1, col_f2 = st.columns([1.2, 2.8])
-
-                    with col_f1:
-
-                        filter_ex_type = st.selectbox("Kỳ thi:", filter_opts, key="sel_filter_real_type")
-
-                    with col_f2:
-
-                        filtered_exams = real_exams_list
-
-                        if "Giữa HK1" in filter_ex_type: filtered_exams = gk1_exams or real_exams_list
-
-                        elif "Cuối HK1" in filter_ex_type: filtered_exams = ck1_exams or real_exams_list
-
-                        elif "Giữa HK2" in filter_ex_type: filtered_exams = gk2_exams or real_exams_list
-
-                        elif "Cuối HK2" in filter_ex_type: filtered_exams = ck2_exams or real_exams_list
-
-                        elif "Thi thử" in filter_ex_type: filtered_exams = thithu_exams or real_exams_list
+                        if thithu_count > 0: filter_opts.append(f"🏛️ Thi thử ({thithu_count} đề)")
 
 
 
-                        r_opts = [
+                        col_f1, col_f2 = st.columns([1.2, 2.8])
 
-                            f"[{detect_exam_type(item)}] {item.get('title', 'Đề')} - {item.get('school', '')}"
+                        with col_f1:
 
-                            for item in filtered_exams
+                            filter_ex_type = st.selectbox("Kỳ thi:", filter_opts, key="sel_filter_real_type")
 
-                        ]
+                        with col_f2:
 
-                        if "sel_real_exam_t3" in st.session_state and (not r_opts or st.session_state.sel_real_exam_t3 >= len(r_opts)):
-                            st.session_state.sel_real_exam_t3 = 0
+                            filtered_exams = real_exams_list
 
-                        chosen_real_idx = st.selectbox(f"Chọn đề ({len(filtered_exams)} đề):", range(len(r_opts)), format_func=lambda i: r_opts[i], key="sel_real_exam_t3")
+                            if "Giữa HK1" in filter_ex_type: filtered_exams = gk1_exams or real_exams_list
+
+                            elif "Cuối HK1" in filter_ex_type: filtered_exams = ck1_exams or real_exams_list
+
+                            elif "Giữa HK2" in filter_ex_type: filtered_exams = gk2_exams or real_exams_list
+
+                            elif "Cuối HK2" in filter_ex_type: filtered_exams = ck2_exams or real_exams_list
+
+                            elif "Thi thử" in filter_ex_type: filtered_exams = thithu_exams or real_exams_list
 
 
 
-                    col_b1, col_b2 = st.columns([1.1, 1.3])
+                            r_opts = [
 
-                    with col_b1:
+                                f"[{detect_exam_type(item)}] {item.get('title', 'Đề')} - {item.get('school', '')}"
 
-                        btn_load_chosen = st.button("🚀 Nạp Đề Đang Chọn Này (0.1s)", type="secondary", width="stretch", key="btn_load_real_exam")
+                                for item in filtered_exams
 
-                    with col_b2:
+                            ]
 
-                        btn_load_random = st.button(f"🎲 Bốc Ngẫu Nhiên 1 Đề Toàn Quốc ({len(filtered_exams)} Đề)", type="primary", width="stretch", key="btn_random_real_exam")
+                            if "sel_real_exam_t3" in st.session_state and (not r_opts or st.session_state.sel_real_exam_t3 >= len(r_opts)):
+                                st.session_state.sel_real_exam_t3 = 0
 
-                    if btn_load_chosen or btn_load_random:
+                            chosen_real_idx = st.selectbox(f"Chọn đề ({len(filtered_exams)} đề):", range(len(r_opts)), format_func=lambda i: r_opts[i], key="sel_real_exam_t3")
 
-                        if btn_load_random:
-                            random.seed(time.time_ns())
-                            if "seen_whole_exam_codes" not in st.session_state:
-                                st.session_state.seen_whole_exam_codes = set()
 
-                            fresh_exams = [e for e in filtered_exams if str(e.get("code", e.get("title", ""))) not in st.session_state.seen_whole_exam_codes]
-                            if not fresh_exams:
-                                st.session_state.seen_whole_exam_codes.clear()
-                                fresh_exams = filtered_exams
 
-                            sel_real_item = random.choice(fresh_exams)
-                            st.session_state.seen_whole_exam_codes.add(str(sel_real_item.get("code", sel_real_item.get("title", ""))))
-                            st.toast(f"🎲 Đã bốc ngẫu nhiên đề mới: Mã {sel_real_item.get('code', 'Chính thức')} — {sel_real_item.get('title', 'Đề thi')[:35]}...", icon="🎯")
-                        else:
-                            sel_real_item = filtered_exams[chosen_real_idx]
-                            if "seen_whole_exam_codes" not in st.session_state:
-                                st.session_state.seen_whole_exam_codes = set()
-                            st.session_state.seen_whole_exam_codes.add(str(sel_real_item.get("code", sel_real_item.get("title", ""))))
+                        col_b1, col_b2 = st.columns([1.1, 1.3])
 
-                        st.session_state.exam_data = enrich_exam_data(sel_real_item)
+                        with col_b1:
 
-                        st.session_state.exam_code = str(sel_real_item.get("code", random.randint(1011, 9999)))
+                            btn_load_chosen = st.button("🚀 Nạp Đề Đang Chọn Này (0.1s)", type="secondary", width="stretch", key="btn_load_real_exam")
 
-                        st.session_state.attempt_id = str(uuid.uuid4())
+                        with col_b2:
 
-                        st.session_state.exam_start_timestamp = time.time()
+                            btn_load_random = st.button(f"🎲 Bốc Ngẫu Nhiên 1 Đề Toàn Quốc ({len(filtered_exams)} Đề)", type="primary", width="stretch", key="btn_random_real_exam")
 
-                        st.session_state.exam_deadline = time.time() + exam_time_mins * 60
+                        if btn_load_chosen or btn_load_random:
 
-                        st.session_state.exam_context = {"name": student_name, "grade": grade, "subject": subject, "phase": measure_phase, "student_id": measure_student_id}
+                            if btn_load_random:
+                                random.seed(time.time_ns())
+                                if "seen_whole_exam_codes" not in st.session_state:
+                                    st.session_state.seen_whole_exam_codes = set()
 
-                        st.session_state.pop("literature_grade", None)
+                                fresh_exams = [e for e in filtered_exams if str(e.get("code", e.get("title", ""))) not in st.session_state.seen_whole_exam_codes]
+                                if not fresh_exams:
+                                    st.session_state.seen_whole_exam_codes.clear()
+                                    fresh_exams = filtered_exams
 
-                        st.session_state.pop("exam_submitted_at", None)
+                                sel_real_item = random.choice(fresh_exams)
+                                st.session_state.seen_whole_exam_codes.add(str(sel_real_item.get("code", sel_real_item.get("title", ""))))
+                                st.toast(f"🎲 Đã bốc ngẫu nhiên đề mới: Mã {sel_real_item.get('code', 'Chính thức')} — {sel_real_item.get('title', 'Đề thi')[:35]}...", icon="🎯")
+                            else:
+                                sel_real_item = filtered_exams[chosen_real_idx]
+                                if "seen_whole_exam_codes" not in st.session_state:
+                                    st.session_state.seen_whole_exam_codes = set()
+                                st.session_state.seen_whole_exam_codes.add(str(sel_real_item.get("code", sel_real_item.get("title", ""))))
 
-                        for widget_key in list(st.session_state):
+                            st.session_state.exam_data = enrich_exam_data(sel_real_item)
 
-                            if widget_key.startswith(("t3_p1_", "t3_p2_", "t3_p3_", "nv_dh_", "nv_v_")):
+                            st.session_state.exam_code = str(sel_real_item.get("code", random.randint(1011, 9999)))
 
-                                del st.session_state[widget_key]
+                            st.session_state.attempt_id = str(uuid.uuid4())
 
-                        st.session_state.exam_state = "testing"
+                            st.session_state.exam_start_timestamp = time.time()
 
-                        st.session_state.exam_answers = {}
+                            st.session_state.exam_deadline = time.time() + exam_time_mins * 60
 
-                        st.session_state.tram3_chat_messages = []
+                            st.session_state.exam_context = {"name": student_name, "grade": grade, "subject": subject, "phase": measure_phase, "student_id": measure_student_id}
 
-                        st.toast(f"⚡ Đã nạp thành công đề thi thật từ {sel_real_item.get('school', '')} trong 0.1 giây!", icon="✨")
+                            st.session_state.pop("literature_grade", None)
 
-                        st.rerun()
+                            st.session_state.pop("exam_submitted_at", None)
+
+                            for widget_key in list(st.session_state):
+
+                                if widget_key.startswith(("t3_p1_", "t3_p2_", "t3_p3_", "nv_dh_", "nv_v_")):
+
+                                    del st.session_state[widget_key]
+
+                            st.session_state.exam_state = "testing"
+
+                            st.session_state.exam_answers = {}
+
+                            st.session_state.tram3_chat_messages = []
+
+                            st.toast(f"⚡ Đã nạp thành công đề thi thật từ {sel_real_item.get('school', '')} trong 0.1 giây!", icon="✨")
+
+                            st.rerun()
 
 
 
@@ -13229,40 +13233,18 @@ if selected_station == station_labels[2]:
 
                 else:
 
-                    c_btn1, c_btn2 = st.columns([1.1, 1.1])
-
                     has_custom_prompt = bool(custom_matrix_prompt and custom_matrix_prompt.strip())
-                    btn1_label = f"📚 Trích Xuất Đề Tùy Biến (Kho 600+ Đề Thật & Vân Tay)" if has_custom_prompt else f"🎲 Trộn Siêu Đề Mới (Kho Ngân Hàng)"
-                    btn2_label = f"🤖 AI Tạo Đề Theo Tùy Biến (Ưu Tiên Số 1 - Mới Tinh 100%)" if has_custom_prompt else "🚀 Khởi Tạo Đề Mới (AI Sáng Tạo 2026)"
-                    btn1_type = "primary" if has_custom_prompt else "secondary"
-
-                    with c_btn1:
-                        btn_blend_direct = st.button(
-                            btn1_label,
-                            type=btn1_type,
-                            width="stretch",
-                            help=f"LUỒNG 2: Trích xuất câu hỏi thật từ kho 600+ đề thi chính thức/thi thử toàn quốc ({portal_name_ui}) bám sát yêu cầu tùy biến. Lọc sạch 100% câu hỏi lạc đề qua Bộ lọc 5 lớp và hiển thị Bảng đối chứng vân tay nguồn gốc!"
-                        )
-
-                    with c_btn2:
-                        btn_ai_gen = st.button(
-                            btn2_label,
-                            type="primary",
-                            width="stretch",
-                            help=f"LUỒNG 1: AI Gemini biên soạn 100% ngữ liệu độc bản mới tinh, không lấy bất kỳ câu nào trong ngân hàng, tự động chạy Bộ Lọc Giải Ngầm (Deep Solver Guard) để xác minh nghiệm và số liệu chuẩn xác tuyệt đối!"
-                        )
-
-                    st.markdown(textwrap.dedent("""
-                    <div style="background: rgba(15, 23, 42, 0.7); border: 1.5px solid #38bdf8; border-radius: 10px; padding: 10px 14px; margin-top: 8px; font-size: 12.5px; line-height: 1.6; color: #cbd5e1;">
-                        <div style="font-weight: bold; color: #38bdf8; margin-bottom: 4px; font-size: 13px;">⚖️ CƠ CHẾ 2 LUỒNG ĐỘC LẬP TÁCH BẠCH & BỘ LỌC 5 LỚP TOÀN DIỆN:</div>
-                        • 🤖 <b style="color: #f59e0b;">LUỒNG 1 - AI TẠO ĐỀ NGUYÊN BẢN (ƯU TIÊN SỐ 1):</b> AI biên soạn theo môn/lớp/chủ đề; cần giáo viên duyệt kiến thức, đáp án và nguồn trích dẫn.<br>
-                        • 📚 <b style="color: #38bdf8;">LUỒNG 2 - TRÍCH XUẤT TỪ KHO 600+ ĐỀ THI THẬT:</b> Lọc bản ghi trong kho theo môn/lớp/chủ đề. Mã và nhãn nguồn là dữ liệu cần đối chiếu, chưa tự chứng minh tài liệu gốc hoặc mọi đáp án đúng.
-                    </div>
-                    """).strip(), unsafe_allow_html=True)
-
-
+                    btn_blend_direct = st.button(
+                        "🚀 Tạo đề luyện tập",
+                        key="t3_create_practice_exam", type="primary", width="stretch",
+                        help="Ưu tiên kho theo môn/lớp/chủ đề và tùy biến đã chọn. Nếu kho chưa đủ và đã cho phép AI, hệ thống sinh bản nháp rồi kiểm tra trước khi mở bài làm."
+                    )
 
                     if btn_blend_direct:
+
+                        st.session_state.custom_request_text = custom_matrix_prompt.strip()
+                        st.session_state.pop("_last_exam_json_failure", None)
+                        st.session_state.pop("last_context_recovery", None)
 
                         if measure_phase != "practice" and not measure_student_id:
 
@@ -13292,9 +13274,17 @@ if selected_station == station_labels[2]:
                                 exclude_fingerprints=st.session_state.seen_question_fps
                             )
 
-                            if blended and (blended.get("p1") or blended.get("p2") or blended.get("p3")):
+                            if practice_initial_source(blended, subject, grade_num, (num_p1, num_p2, num_p3), False) != "bank":
+                                blended = None
 
-                                st.session_state.exam_data = enrich_exam_data(blended)
+                            if blended and (blended.get("p1") or blended.get("p2") or blended.get("p3") or blended.get("part_doc_hieu")):
+                                try:
+                                    prepared_bank_exam = enrich_exam_data(blended)
+                                except ValueError as error:
+                                    st.error(f"Bản nháp từ kho chưa đạt kiểm tra: {error}")
+                                    st.stop()
+
+                                st.session_state.exam_data = prepared_bank_exam
                                 for p_key in ("p1", "p2", "p3"):
                                     for q_new in blended.get(p_key, []):
                                         q_txt = str(q_new.get("q", "")).strip().lower()
@@ -13334,17 +13324,23 @@ if selected_station == station_labels[2]:
                                     st.session_state.show_audit_badges_per_question = True
                                     st.toast("📚 ĐÃ TRÍCH XUẤT ĐỀ TÙY BIẾN TỪ KHO 600+ ĐỀ THẬT: Có đầy đủ chỉ dấu vân tay & Bảng đối chứng!", icon="✅")
                                 else:
-                                    st.toast("🔥 Đã trộn siêu đề thi mới lạ (Dynamic Seed) thành công trong 0.1 giây!", icon="✨")
+                                    st.toast("Đã tạo đề luyện tập từ kho và hoàn tất kiểm tra đầu ra.", icon="✨")
 
                                 st.rerun()
 
                             else:
 
-                                st.warning("Chưa đủ câu hỏi có sẵn trong kho môn này để trộn 100% tự động, vui lòng dùng nút 'Khởi Tạo Đề Mới (AI 2026)' bên cạnh!")
+                                if st.session_state.get("enable_ai_context_recovery", True):
+                                    btn_ai_gen = True
+                                else:
+                                    st.warning("Kho chưa đủ ngữ liệu phù hợp với cấu hình. Bật cho phép AI bổ sung nếu muốn hệ thống tiếp tục tạo bản nháp.")
 
                         else:
 
-                            st.error("Module real_exam_engine chưa được nạp.")
+                            if st.session_state.get("enable_ai_context_recovery", True):
+                                btn_ai_gen = True
+                            else:
+                                st.warning("Chưa có dữ liệu kho phù hợp. Bật cho phép AI bổ sung để tiếp tục tạo bản nháp.")
 
 
 

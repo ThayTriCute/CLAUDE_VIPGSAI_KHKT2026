@@ -201,6 +201,74 @@ class TestStationUI(unittest.TestCase):
         self.assertEqual(at.session_state["current_lesson"], "")
         self.assertEqual([e.message for e in at.exception], [])
 
+    def test_single_practice_button_uses_matching_bank_before_ai(self):
+        at = self.app()
+        at.session_state['selected_station'] = '📝 Trạm 3: Luyện Tập & Khảo Thí'
+        at.run()
+        for label, value in (("Số câu TN P.I:", 1), ("Số câu Đ/S P.II:", 0), ("Số câu TLN P.III:", 0)):
+            next(n for n in at.number_input if n.label == label).set_value(value)
+        current_custom = 'Chỉ dùng câu tự đủ dữ kiện.'
+        next(t for t in at.text_area if 'Yêu cầu ma trận' in t.label).set_value(current_custom)
+        at.session_state['custom_request_text'] = 'old request'
+        bank_exam = {'subject': 'Toán học', 'grade': 12, 'p1': [
+            {'q': 'Tính 2+1.', 'opt': ['A. 1', 'B. 2', 'C. 3', 'D. 4'], 'ans': 'C'}], 'p2': [], 'p3': []}
+        with patch('real_exam_engine.generate_blended_real_exam', return_value=bank_exam) as bank, patch('google.genai.Client') as ai:
+            next(b for b in at.button if b.key == 't3_create_practice_exam').click().run()
+            ai.assert_not_called()
+            self.assertEqual(bank.call_args.kwargs['custom_prompt'], current_custom)
+        self.assertEqual([e.message for e in at.exception], [])
+        self.assertEqual(at.session_state['exam_state'], 'testing')
+        self.assertEqual(at.session_state['exam_data']['p1'][0]['ans'], 'C')
+        self.assertEqual(at.session_state['custom_request_text'], current_custom)
+        self.assertGreater(at.session_state['exam_deadline'], at.session_state['exam_start_timestamp'])
+
+    def test_single_practice_button_does_not_use_ai_when_disabled_or_publish_short_bank(self):
+        at = self.app()
+        at.session_state['selected_station'] = '📝 Trạm 3: Luyện Tập & Khảo Thí'
+        at.run()
+        self.assertEqual(sum(b.key == 't3_create_practice_exam' for b in at.button), 1)
+        self.assertFalse(any('CƠ CHẾ 2 LUỒNG' in m.value for m in at.markdown))
+        next(c for c in at.checkbox if c.key == 'enable_ai_context_recovery').uncheck().run()
+        short_exam = {'subject': 'Toán học', 'grade': 12, 'p1': [
+            {'q': 'Tính 2+1.', 'opt': ['A. 1', 'B. 2', 'C. 3', 'D. 4'], 'ans': 'C'}], 'p2': [], 'p3': []}
+        with patch('real_exam_engine.generate_blended_real_exam', side_effect=[None, short_exam]), patch('google.genai.Client') as ai:
+            for _ in range(2):
+                next(b for b in at.button if b.key == 't3_create_practice_exam').click().run()
+                self.assertEqual(at.session_state['exam_state'], 'config')
+                self.assertTrue(any('Kho chưa đủ' in w.value for w in at.warning))
+            ai.assert_not_called()
+        self.assertEqual([e.message for e in at.exception], [])
+
+    def test_other_exam_modes_keep_their_original_controls(self):
+        at = self.app()
+        at.session_state['selected_station'] = '📝 Trạm 3: Luyện Tập & Khảo Thí'
+        at.run()
+        options = next(r for r in at.radio if r.key == 'radio_exam_mode_choice').options
+        with patch('google.genai.Client') as ai:
+            for label_part, expected_key in (('Làm Nguyên Đề Thi Thật', 'btn_load_real_exam'),
+                                              ('Nạp & Trộn Đề Word', None),
+                                              ('Quét Đề Link', 'btn_scan_and_load_t3')):
+                radio = next(r for r in at.radio if r.key == 'radio_exam_mode_choice')
+                radio.set_value(next(o for o in options if label_part in o)).run()
+                self.assertEqual([e.message for e in at.exception], [])
+                self.assertFalse(any(b.key == 't3_create_practice_exam' for b in at.button))
+                if expected_key:
+                    self.assertTrue(any(b.key == expected_key for b in at.button))
+                else:
+                    self.assertTrue(at.get('file_uploader'))
+            ai.assert_not_called()
+
+    def test_empty_original_exam_mode_never_falls_into_practice_ai_creation(self):
+        at = self.app()
+        at.session_state['selected_station'] = '📝 Trạm 3: Luyện Tập & Khảo Thí'
+        with patch('real_exam_engine.get_baseline_full_exams', return_value=[]), patch('google.genai.Client') as ai:
+            at.run()
+            radio = next(r for r in at.radio if r.key == 'radio_exam_mode_choice')
+            radio.set_value(next(o for o in radio.options if 'Làm Nguyên Đề Thi Thật' in o)).run()
+            self.assertEqual([e.message for e in at.exception], [])
+            self.assertFalse(any(b.key == 't3_create_practice_exam' for b in at.button))
+            ai.assert_not_called()
+
     def test_station3_generation_replaces_a_whole_missing_visual_question(self):
         import real_exam_engine as engine
         at = self.app()
@@ -211,12 +279,12 @@ class TestStationUI(unittest.TestCase):
             next(n for n in at.number_input if n.label == label).set_value(value)
         initial = {"subject": "Toán học", "grade": 12, "p1": [{"q": "Quan sát hình vẽ bên để chọn hàm số", "topic": "Hàm số", "opt": ["A. 1", "B. 2", "C. 3", "D. 4"], "ans": "B"}], "p2": [], "p3": []}
         replacement = {"subject": "Toán học", "grade": 12, "topic": "Hàm số", "q": "Đồ thị như hình bên của $y=x^3+2$. Tung độ giao Oy bằng bao nhiêu?", "opt": ["A. 1", "B. 2", "C. 3", "D. 4"], "ans": "B"}
-        with patch("google.genai.Client") as client, patch.object(engine, "get_baseline_questions_pool", return_value={"p1": [], "p2": [], "p3": []}):
+        with patch("google.genai.Client") as client, patch("real_exam_engine.generate_blended_real_exam", return_value=None), patch.object(engine, "get_baseline_questions_pool", return_value={"p1": [], "p2": [], "p3": []}):
             response = client.return_value.__enter__.return_value.models.generate_content
             response.side_effect = [SimpleNamespace(text=json.dumps(initial), candidates=[]),
                                     SimpleNamespace(text=json.dumps({"replacement_question": dict(replacement, q=initial["p1"][0]["q"])}), candidates=[]),
                                     SimpleNamespace(text=json.dumps({"replacement_question": replacement}), candidates=[])]
-            next(b for b in at.button if b.label == "🚀 Khởi Tạo Đề Mới (AI Sáng Tạo 2026)").click().run()
+            next(b for b in at.button if b.label == "🚀 Tạo đề luyện tập").click().run()
         self.assertEqual([e.message for e in at.exception], [])
         self.assertEqual(at.session_state["exam_state"], "testing")
         self.assertEqual(at.session_state["exam_data"]["p1"][0]["q"], replacement["q"])
@@ -257,10 +325,10 @@ class TestStationUI(unittest.TestCase):
         question = {"q": "Cho $y=x^3-3x+1$. Giá trị $y'(0)$ bằng bao nhiêu?",
                     "opt": ["A. -3", "B. 0", "C. 1", "D. 3"], "ans": "A"}
         exam = {"subject": "Toán học", "grade": 12, "p1": [question], "p2": [], "p3": []}
-        with patch("google.genai.Client") as client, patch.object(engine, "ingest_ai_generated_exam_to_bank", return_value=None):
+        with patch("google.genai.Client") as client, patch("real_exam_engine.generate_blended_real_exam", return_value=None), patch.object(engine, "ingest_ai_generated_exam_to_bank", return_value=None):
             generate = client.return_value.__enter__.return_value.models.generate_content
             generate.return_value = SimpleNamespace(text='```json\n' + json.dumps(exam, ensure_ascii=False), candidates=[])
-            next(b for b in at.button if b.label == "🚀 Khởi Tạo Đề Mới (AI Sáng Tạo 2026)").click().run()
+            next(b for b in at.button if b.label == "🚀 Tạo đề luyện tập").click().run()
             self.assertEqual(generate.call_count, 1)
         self.assertEqual([e.message for e in at.exception], [])
         self.assertEqual(at.session_state["exam_state"], "testing")
@@ -293,10 +361,10 @@ class TestStationUI(unittest.TestCase):
         at.session_state["selected_station"] = "📝 Trạm 3: Luyện Tập & Khảo Thí"
         at.run()
         raw = '{"p1":[{"q":"Bản nháp lỗi test-only-key", "ans":'
-        with patch("google.genai.Client") as client:
+        with patch("google.genai.Client") as client, patch("real_exam_engine.generate_blended_real_exam", return_value=None):
             generate = client.return_value.__enter__.return_value.models.generate_content
             generate.return_value = SimpleNamespace(text=raw, candidates=[])
-            next(b for b in at.button if b.label == "🚀 Khởi Tạo Đề Mới (AI Sáng Tạo 2026)").click().run()
+            next(b for b in at.button if b.label == "🚀 Tạo đề luyện tập").click().run()
             self.assertEqual(generate.call_count, 1)
         self.assertIn('_last_exam_json_failure', at.session_state)
         self.assertNotIn('test-only-key', at.session_state['_last_exam_json_failure']['raw'])
@@ -313,10 +381,10 @@ class TestStationUI(unittest.TestCase):
         at.session_state['last_context_recovery'] = {'events': ['stale prior attempt']}
         at.run()
         raw_valid = json.dumps({'subject': 'Toán học', 'grade': 12, 'p1': [], 'p2': [], 'p3': []}, ensure_ascii=False)
-        with patch('google.genai.Client') as client:
+        with patch('google.genai.Client') as client, patch('real_exam_engine.generate_blended_real_exam', return_value=None):
             generate = client.return_value.__enter__.return_value.models.generate_content
             generate.return_value = SimpleNamespace(text=raw_valid, candidates=[])
-            next(b for b in at.button if b.label == '🚀 Khởi Tạo Đề Mới (AI Sáng Tạo 2026)').click().run()
+            next(b for b in at.button if b.label == '🚀 Tạo đề luyện tập').click().run()
             self.assertEqual(generate.call_count, 1)
         diagnostic = at.session_state['_last_exam_json_failure']
         self.assertEqual(diagnostic['raw'], raw_valid)

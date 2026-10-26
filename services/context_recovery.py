@@ -293,12 +293,18 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                     "academic_scope": ("For the requested basic function-survey task, use cubic, linear/linear or quadratic/linear functions; do not substitute a quartic survey question. Preserve the requested topic." if issue == "outside_requested_academic_scope" and subject == "Toán học" else None),
                     "output": {"replacement_question": "object"},
                     "original": original_for_prompt}, ensure_ascii=False)
+                stage = "provider"
                 try:
                     response = ai_generator(prompt)
+                    stage = "decode"
                     if isinstance(response, str):
                         from data.socratic_anchors import safe_json_loads
                         response = safe_json_loads(response)
-                    item = recover_visual(response.get("replacement_question", {}), subject, grade)
+                    if not isinstance(response, dict) or not isinstance(response.get("replacement_question"), dict):
+                        raise ValueError("Replacement response must contain a question object.")
+                    stage = "recover"
+                    item = recover_visual(response["replacement_question"], subject, grade)
+                    stage = "validate"
                     if _candidate_ok(item, part, subject, grade, requested, needs_visual(original), required_level, scope_validator):
                         replacement, origin = item, "ai_replacement"
                         attempts.append({"part": part, "index": index, "attempt": ai_calls, "result": "accepted"})
@@ -308,10 +314,11 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                 except ValueError:
                     feedback = "invalid_replacement_json_or_data"
                     attempts.append({"part": part, "index": index, "attempt": ai_calls, "result": "rejected", "reason": feedback})
-                except Exception:
+                except Exception as error:
                     # Provider already performs its bounded fallback. Do not loop
                     # again after network/provider failure or expose its secrets.
-                    attempts.append({"part": part, "index": index, "attempt": ai_calls, "result": "unavailable"})
+                    attempts.append({"part": part, "index": index, "attempt": ai_calls, "result": "unavailable",
+                                     "stage": stage, "exception_type": type(error).__name__})
                     break
             if replacement is not None:
                 replacement = deepcopy(replacement)

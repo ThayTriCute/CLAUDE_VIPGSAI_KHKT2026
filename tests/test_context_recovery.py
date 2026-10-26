@@ -93,6 +93,26 @@ class TestContextRecovery(unittest.TestCase):
 
 
 class TestRecoveryRetry(unittest.TestCase):
+    def test_malformed_response_shape_retries_instead_of_looking_like_provider_outage(self):
+        helper = TestContextRecovery()
+        for invalid in ([], {'replacement_question': 'not an object'}):
+            with self.subTest(invalid=invalid):
+                responses = iter([invalid, {'replacement_question': helper.replacement()}])
+                result = repair_exam_context({'p1': [helper.missing()]}, 'Toán', 12, ai_generator=lambda _: next(responses))
+                self.assertEqual(result['context_recovery']['unresolved'], 0)
+                self.assertEqual(result['context_recovery']['ai_calls'], 2)
+                self.assertEqual(result['context_recovery']['attempts'][0]['result'], 'rejected')
+
+    def test_provider_failure_records_safe_stage_without_exception_text(self):
+        helper = TestContextRecovery()
+        def unavailable(_):
+            raise RuntimeError('private-key-must-not-be-recorded')
+        result = repair_exam_context({'p1': [helper.missing()]}, 'Toán', 12, ai_generator=unavailable)
+        attempt = result['context_recovery']['attempts'][0]
+        self.assertEqual((attempt['stage'], attempt['exception_type']), ('provider', 'RuntimeError'))
+        self.assertNotIn('private-key', str(result['context_recovery']))
+        self.assertEqual(result['context_recovery']['ai_calls'], 1)
+
     def test_cloud_missing_cubic_visual_is_retried_then_rechecked(self):
         # Reduced from the captured Cloud failure; no student data or answer key.
         broken = {"q": "Cho hàm số bậc ba có đồ thị như hình vẽ, cực đại tại x=-1, cực tiểu tại x=1 và đi qua gốc tọa độ.",
