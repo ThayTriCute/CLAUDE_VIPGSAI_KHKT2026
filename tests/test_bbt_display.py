@@ -45,6 +45,14 @@ class TestBBTDisplay(unittest.TestCase):
     def test_noncalculus_table_is_left_to_existing_renderer(self):
         self.assertIsNone(validated_compact_bbt_rows('Năm | 2025 | 2026\nSản lượng | 30 | 40'))
 
+    def test_white_table_cells_have_explicit_ink_but_keep_sign_colors(self):
+        rendered = self.app_renderer()({'bbt': self.raw})
+        cells = re.findall(r'<td style="([^"]*)"', rendered)
+        self.assertEqual(len(cells), 24)
+        self.assertTrue(all('color:#0f172a;' in style for style in cells))
+        self.assertTrue(any('color:#16a34a;' in style for style in cells))
+        self.assertTrue(any('color:#dc2626;' in style for style in cells))
+
     def app_renderer(self):
         source=Path(__file__).resolve().parents[1].joinpath('app.py')
         names={'question_visual_html', '_render_math_html_token', '_normalize_moet_bbt_grid', '_build_svg_bbt_from_rows'}
