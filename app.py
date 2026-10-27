@@ -12726,20 +12726,20 @@ if selected_station == station_labels[2]:
 
 
 
-    def enrich_exam_data(exam):
+    def enrich_exam_data(exam, custom_request=""):
         validate_exam_context(exam, subject, grade_num)
         use_ai_recovery = st.session_state.get("enable_ai_context_recovery", True)
         generator = (lambda prompt: call_gemini_with_fallback(prompt, json_mode=True)) if use_ai_recovery else None
         draft = repair_exam_context(exam, subject, grade_num,
             topics=st.session_state.get("policy_selected_topics", []),
             bank_provider=ree.get_baseline_questions_pool if ree else None,
-            ai_generator=generator, max_ai_questions=2)
+            ai_generator=generator, max_ai_questions=2, custom_request=custom_request)
         st.session_state.last_context_recovery = draft.get("context_recovery", {})
         if draft.get("context_recovery", {}).get("unresolved"):
             from services.recovery_diagnostics import log_recovery_failure
             log_recovery_failure(subject, grade_num, draft.get("context_recovery", {}))
-            raise ValueError("Còn câu chưa đủ dữ liệu hoặc đáp án sau khi quét nguồn, tìm câu cùng chủ đề và thử sinh thay thế. Hãy bổ sung nguồn gốc hoặc kiểm tra lại bản nháp; chưa mở lượt làm bài này.")
-        result = prepare_exam_for_delivery(draft, subject, grade_num, st.session_state.get("exam_time_mins", 45))
+            raise ValueError("Còn câu chưa đủ dữ liệu/đáp án hoặc chưa khớp yêu cầu đã chọn sau khi quét nguồn, tìm câu cùng chủ đề và thử sinh thay thế. Hãy bổ sung nguồn gốc hoặc kiểm tra lại bản nháp; chưa mở lượt làm bài này.")
+        result = prepare_exam_for_delivery(draft, subject, grade_num, st.session_state.get("exam_time_mins", 45), custom_request=custom_request)
         st.session_state.exam_mix_count = st.session_state.get("exam_mix_count", 0) + 1
         result["exam_count"] = st.session_state.exam_mix_count
         return result
@@ -13881,7 +13881,7 @@ if selected_station == station_labels[2]:
 
                             if blended and (blended.get("p1") or blended.get("p2") or blended.get("p3")):
 
-                                st.session_state.exam_data = enrich_exam_data(blended)
+                                st.session_state.exam_data = enrich_exam_data(blended, custom_request=custom_matrix_prompt)
                                 for p_key in ("p1", "p2", "p3"):
                                     for q_new in blended.get(p_key, []):
                                         q_txt = str(q_new.get("q", "")).strip().lower()
@@ -13975,7 +13975,7 @@ if selected_station == station_labels[2]:
                             if ree and enable_blend_cfg and not has_custom_prompt:
                                 parsed_exam = ree.blend_real_exam_with_ai(parsed_exam, subject, grade_num, chosen_topics)
 
-                            st.session_state.exam_data = enrich_exam_data(parsed_exam)
+                            st.session_state.exam_data = enrich_exam_data(parsed_exam, custom_request=custom_matrix_prompt)
                             if "seen_question_fps" not in st.session_state:
                                 st.session_state.seen_question_fps = set()
                             for p_key in ("p1", "p2", "p3"):
