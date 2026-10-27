@@ -14545,8 +14545,11 @@ if selected_station == station_labels[2]:
 
                     c_opts = [f"Mã đề {item['code']} - {item.get('topic', 'Chuyên đề ôn tập')} ({item.get('saved_at', '')[:10]})" for item in cached_list]
 
-                    if "sel_cached_exam_t3" in st.session_state and (not c_opts or st.session_state.sel_cached_exam_t3 >= len(c_opts)):
-                        st.session_state.sel_cached_exam_t3 = 0
+                    from services.widget_state import valid_option_index
+                    cached_index = st.session_state.get("sel_cached_exam_t3", 0)
+                    safe_index = valid_option_index(cached_index, len(c_opts))
+                    if type(cached_index) is not int or cached_index != safe_index:
+                        st.session_state.sel_cached_exam_t3 = safe_index
 
                     chosen_cache_idx = st.selectbox("Chọn đề từ ngân hàng:", range(len(c_opts)), format_func=lambda i: c_opts[i], key="sel_cached_exam_t3")
 
