@@ -188,7 +188,15 @@ def sanitize_socratic_hint(hint_text, correct_answer="", q_text="", options=None
       2. Cung cấp ĐIỂM TỰA KIẾN THỨC CỐT LÕI (Định lý, Công thức tổng quát SGK Kết Nối Tri Thức).
       3. Đưa ra CÂU HỎI ĐỊNH HƯỚNG TƯ DUY SOCRATIC để học sinh tự suy nghĩ và tự đặt bút tính toán.
     """
-    subj_key = str(subject or "Toán học").strip()
+    from services.academic_context import canonical_subject
+    subj_key = canonical_subject(subject or "Toán học")
+    if subj_key != "Toán học":
+        from services.socratic_context import subject_socratic_hint
+        return subject_socratic_hint(hint_text, subj_key, options, correct_answer)
+    from services.socratic_context import guiding_question
+    question_hint = guiding_question(hint_text, options, correct_answer)
+    if question_hint:
+        return question_hint
     q_str = str(q_text or "").strip()
     q_lower = q_str.lower()
     corr_ans = str(correct_answer or "").strip()
@@ -468,166 +476,6 @@ def pre_escape_json_latex(json_str: str) -> str:
 
 
 def safe_json_loads(raw):
-    if not isinstance(raw, str) or not raw.strip():
-        raise ValueError("AI không trả nội dung JSON.")
-    value = raw.strip()
-
-    # BƯỚC 1: Bóc tách markdown codeblock
-    if value.startswith("```"):
-        value = re.sub(r"^```(?:json)?\s*", "", value, flags=re.IGNORECASE)
-        value = re.sub(r"\s*```$", "", value)
-
-    # BƯỚC 2: Trích xuất chính xác khối JSON nằm giữa { đầu tiên và } cuối cùng
-    first_brace = value.find('{')
-    last_brace = value.rfind('}')
-    if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
-        value = value[first_brace:last_brace+1]
-
-    # BƯỚC 3: Tiền xử lý thoát backslash LaTeX và khử ký tự ngoại lai
-    value = pre_escape_json_latex(value)
-
-    # LẦN THỬ 1: Parse an toàn với chuỗi đã bảo vệ escape
-    try:
-        data = json.loads(value, strict=False)
-        return fix_broken_latex_escapes(data)
-    except Exception:
-        pass
-
-
-
-    # LẦN THỬ 2: Tự động sửa dấu nháy kép nội suy bên trong nội dung câu hỏi
-
-    try:
-
-        res_chars = []
-
-        in_str = False
-
-        esc = False
-
-        for i, ch in enumerate(value):
-
-            if ch == '\\' and not esc:
-
-                esc = True; res_chars.append(ch); continue
-
-            if ch == '"' and not esc:
-
-                before = value[:i].rstrip()
-
-                after = value[i+1:].lstrip()
-
-                is_start = before.endswith(('{', '[', ',', ':', '"')) or before == ''
-
-                is_end = after.startswith(('}', ']', ',', ':')) or after == ''
-
-                if in_str:
-
-                    if is_end: in_str = False; res_chars.append('"')
-
-                    else: res_chars.append('\\"')
-
-                else:
-
-                    in_str = True; res_chars.append('"')
-
-            else:
-
-                res_chars.append(ch)
-
-            esc = False
-
-        data = json.loads("".join(res_chars), strict=False)
-
-        return fix_broken_latex_escapes(data)
-
-    except Exception:
-
-        pass
-
-
-
-    # LẦN THỬ 3: Khắc phục backslash chưa thoát và dấu phẩy thừa (Chuẩn hóa công thức toán LaTeX)
-
-    v_clean = re.sub(r',\s*([\}\]])', r'\1', value)
-
-    # Xử lý các lệnh LaTeX bắt đầu bằng ký tự escape của JSON (\f, \t, \b, \n, \r)
-
-    v_escaped = re.sub(r'(?<!\\)\\(frac|dfrac|to|times|theta|tau|tan|text|beta|bar|binom|begin|bf)\b', lambda m: r'\\' + m.group(1), v_clean)
-
-    # Thoát tất cả các backslash cô lập không thuộc escape sequence hợp lệ của JSON
-
-    v_escaped = re.sub(r'(?<!\\)\\(?!["\\/bfnrtu]|u[0-9a-fA-F]{4})', r'\\\\', v_escaped)
-
-    try:
-
-        data = json.loads(v_escaped, strict=False)
-
-        return fix_broken_latex_escapes(data)
-
-    except Exception:
-
-        pass
-
-
-
-    # LẦN THỬ 4: Cân bằng ngoặc đóng LIFO (Stack-based) nếu bị cắt ngắn do cạn Token
-
-    stack = []
-
-    in_str = False
-
-    esc = False
-
-    for ch in v_escaped:
-
-        if ch == '\\' and in_str:
-
-            esc = not esc
-
-            continue
-
-        if ch == '"' and not esc:
-
-            in_str = not in_str
-
-            continue
-
-        esc = False
-
-        if not in_str:
-
-            if ch == '{':
-
-                stack.append('}')
-
-            elif ch == '[':
-
-                stack.append(']')
-
-            elif ch in ('}', ']'):
-
-                if stack and stack[-1] == ch:
-
-                    stack.pop()
-
-
-
-    closing = '"' if in_str else ''
-
-    while stack:
-
-        closing += stack.pop()
-
-    balanced = re.sub(r',\s*$', '', v_escaped.rstrip()) + closing
-
-    balanced = re.sub(r',\s*([\}\]])', r'\1', balanced)
-
-    try:
-
-        data = json.loads(balanced, strict=False)
-
-        return fix_broken_latex_escapes(data)
-
-    except json.JSONDecodeError as final_err:
-        raise ValueError(f"JSON của AI chưa hợp lệ tại dòng {final_err.lineno}, cột {final_err.colno}. Hãy thử lại hoặc bấm khởi tạo lại đề.")
+    """Recover syntax only; retain formulas and reject incomplete content."""
+    from services.ai_json import parse_ai_json
+    return fix_broken_latex_escapes(parse_ai_json(raw, prepare=pre_escape_json_latex))

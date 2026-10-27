@@ -318,6 +318,7 @@ if "current_topic" not in st.session_state: st.session_state.current_topic = ""
 if "lab_data" not in st.session_state: st.session_state.lab_data = None
 
 if "quiz_states" not in st.session_state: st.session_state.quiz_states = {}
+if "quiz_selections" not in st.session_state: st.session_state.quiz_selections = {}
 
 if "global_stats_loaded" not in st.session_state: st.session_state.global_stats_loaded = False
 
@@ -743,17 +744,8 @@ def _legacy_sanitize_katex_latex(text: str) -> str:
 
 
 def sanitize_katex_latex(text: str) -> str:
-    if not text:
-        return ""
-    protected = []
-    def save_code(match):
-        protected.append(match.group(0))
-        return f"GSAICODESLOT{len(protected)-1}END"
-    value = re.sub(r"```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`", save_code, str(text))
-    value = _legacy_sanitize_katex_latex(value)
-    for index, original in enumerate(protected):
-        value = value.replace(f"GSAICODESLOT{index}END", original)
-    return value
+    from services.text_boundaries import preserve_math_and_code
+    return preserve_math_and_code(text, _legacy_sanitize_katex_latex)
 
 
 def clean_vietnamese_math(text):
@@ -792,7 +784,7 @@ def clean_vietnamese_math(text):
 
 
 
-def format_pedagogical_math(text):
+def _legacy_format_pedagogical_math(text):
     """Chuẩn hóa công thức Toán / STEM chuẩn KaTeX: Cân bằng dấu $, xử lý khoảng trắng, bọc biểu thức trần trụi an toàn bằng Token-Masking."""
     if not text: return ""
     s = str(text)
@@ -890,6 +882,11 @@ def format_pedagogical_math(text):
 
     s = re.sub(r'[ \t]+', ' ', s)
     return s.strip()
+
+def format_pedagogical_math(text):
+    from services.text_boundaries import preserve_math_and_code
+    return preserve_math_and_code(text, _legacy_format_pedagogical_math)
+
 
 def auto_extract_mslgn(q_obj):
 
@@ -1420,6 +1417,7 @@ if previous_context_key is not None and previous_context_key != current_context_
     st.session_state.parsed_quiz = []
 
     st.session_state.quiz_states = {}
+    st.session_state.quiz_selections = {}
 
     st.session_state.lab_data = None
 
@@ -6842,6 +6840,7 @@ def parse_quiz_questions(text):
         if not lines: continue
         q_header = lines[0]
         level, options, correct, explain = "", [], "A", "Gợi ý tự suy luận!"
+        hint = ""
         cognitive_evidence = {}
 
         match = re.search(r'(?i)\[Mức độ:\s*(.*?)\]', q_header)
@@ -6875,6 +6874,8 @@ def parse_quiz_questions(text):
             elif re.search(r'(?i)^(CORRECT|ĐÁP ÁN|Đáp án đúng)\s*:', line):
                 ext = re.sub(r'[^A-D]', '', line.split(":")[-1].upper())
                 if ext: correct = ext[0]
+            elif re.search(r'(?i)^(HINT|SOCRATIC_HINT)\s*:', line):
+                hint = line.split(":", 1)[-1].strip()
             elif re.search(r'(?i)^(EXPLAIN|GIẢI THÍCH|Gợi ý)\s*:', line):
                 explain = line.split(":", 1)[-1].strip()
             else:
@@ -6941,7 +6942,8 @@ def parse_quiz_questions(text):
                 "level": level,
                 "options": cleaned_options,
                 "correct": new_correct,
-                "explain": cleaned_explain
+                "explain": cleaned_explain,
+                "hint": sanitize_katex_latex(hint)
             }
             if extracted_bbt:
                 q_item["bbt"] = extracted_bbt
@@ -6983,17 +6985,20 @@ elif st.session_state.sb_station_radio_selector != st.session_state.selected_sta
 
 st.markdown('<div style="font-size: 13px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.8px; margin-top: -12px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">🧭 KHÔNG GIAN HỌC TẬP & KHẢO THÍ SƯ PHẠM (CHỌN TRẠM HOẠT ĐỘNG):</div>', unsafe_allow_html=True)
 
+def navigate_to_station(label):
+    if label in station_labels:
+        st.session_state.selected_station = label
+        st.session_state.sb_station_radio_selector = label
+
+
 nav_t1, nav_t2, nav_t3, nav_t4 = st.columns(4)
 for idx_st, (col_st, label_st) in enumerate(zip([nav_t1, nav_t2, nav_t3, nav_t4], station_labels)):
     with col_st:
         is_cur_active = (st.session_state.selected_station == label_st)
         btn_type = "primary" if is_cur_active else "secondary"
         btn_title = f"⭐ {label_st}" if is_cur_active else label_st
-        if st.button(btn_title, key=f"top_nav_station_{idx_st}", type=btn_type, use_container_width=True):
-            if st.session_state.selected_station != label_st:
-                st.session_state.selected_station = label_st
-                st.session_state.sb_station_radio_selector = label_st
-                st.rerun()
+        st.button(btn_title, key=f"top_nav_station_{idx_st}", type=btn_type, use_container_width=True,
+                  on_click=navigate_to_station, args=(label_st,))
 
 st.markdown('<div style="border-bottom: 1px solid rgba(51, 65, 85, 0.45); margin-top: 6px; margin-bottom: 18px;"></div>', unsafe_allow_html=True)
 
@@ -10929,6 +10934,10 @@ if selected_station == station_labels[0]:
                 st.session_state.current_topic = topic_input.strip()
                 st.session_state.parsed_quiz = parse_quiz_questions(res_text)
                 st.session_state.quiz_states = {}
+                st.session_state.quiz_selections = {}
+                for stale_key in list(st.session_state):
+                    if str(stale_key).startswith("q_"):
+                        del st.session_state[stale_key]
 
             except Exception as e:
                 st.error(f"Lỗi: {e}")
@@ -11155,7 +11164,13 @@ if selected_station == station_labels[0]:
                 except Exception as _e_vis:
                     pass
 
-                user_choice = st.radio(f"Chọn đáp án câu {idx+1}:", q['options'], key=f"q_{idx}", label_visibility="collapsed", index=None)
+                widget_key = f"q_{idx}"
+                previous_choice = st.session_state.quiz_selections.get(idx)
+                if widget_key not in st.session_state and previous_choice in q['options']:
+                    st.session_state[widget_key] = previous_choice
+                user_choice = st.radio(f"Chọn đáp án câu {idx+1}:", q['options'], key=widget_key, label_visibility="collapsed", index=None)
+                if user_choice is not None:
+                    st.session_state.quiz_selections[idx] = user_choice
 
                 if st.button(f"🔍 Kiểm tra câu {idx+1}", key=f"btn_{idx}"):
 
@@ -11169,7 +11184,10 @@ if selected_station == station_labels[0]:
 
                         else:
 
-                            st.session_state.quiz_states[idx] = ("incorrect", f"💡 **Gợi ý Socratic:** {q['explain']}")
+                            hint = sanitize_socratic_hint(q.get("hint", ""), q.get("correct", ""),
+                                q.get("question", ""), q.get("options", []), q.get("level", ""),
+                                subject=subject, grade_num=grade_num)
+                            st.session_state.quiz_states[idx] = ("incorrect", f"💡 **Gợi ý Socratic:** {hint}")
 
                     else:
 
@@ -11201,7 +11219,8 @@ if selected_station == station_labels[0]:
 
             st.markdown("### ✍️ Phần 3: Bài tập tự luận & Hướng dẫn tư duy")
             st.caption("Mức độ tự luận là đề xuất của AI; cần đối chiếu yêu cầu cần đạt, lời giải và rubric theo đúng môn/lớp. Bài dài hoặc nhiều bước không tự động là VDC.")
-            p3_vis = render_pedagogical_lesson_visuals(part3_split[-1].strip(), subject=subject, grade=grade_num)
+            from services.text_boundaries import student_essay_text
+            p3_vis = render_pedagogical_lesson_visuals(student_essay_text(part3_split[-1]), subject=subject, grade=grade_num)
             st.markdown(p3_vis, unsafe_allow_html=True)
 
 
@@ -13963,9 +13982,6 @@ if selected_station == station_labels[2]:
 
                             raw_json_ex = raw_json_ex.strip()
 
-                            if raw_json_ex.startswith("```json"): raw_json_ex = raw_json_ex[7:-3].strip()
-
-                            elif raw_json_ex.startswith("```"): raw_json_ex = raw_json_ex[3:-3].strip()
 
                             parsed_exam = validate_exam_data(safe_json_loads(raw_json_ex), subject, None if subject == "Ngữ văn" else (num_p1, num_p2, num_p3))
                             parsed_exam["is_ai_generated"] = True
@@ -14765,13 +14781,17 @@ if selected_station == station_labels[2]:
 
                 st.markdown(f"**{q.get('q')}**")
 
+                answer_key = f"nv_dh_{idx}"
+                previous = st.session_state.exam_answers.get(answer_key)
+                if answer_key not in st.session_state and previous is not None:
+                    st.session_state[answer_key] = str(previous)
                 st.session_state.exam_answers[f"nv_dh_{idx}"] = st.text_area(f"Trả lời câu {idx+1}:", key=f"nv_dh_{idx}", height=70)
 
 
 
                 # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
 
-                expl_dh = q.get('explain', '') or q.get('ans', '')
+                expl_dh = q.get('hint', '') or q.get('socratic_hint', '')
 
                 if not expl_dh: expl_dh = "Bám sát thể loại, ngữ cảnh tác phẩm và các phương thức biểu đạt trong SGK Kết Nối Tri Thức để phân tích."
 
@@ -14793,13 +14813,17 @@ if selected_station == station_labels[2]:
 
                 st.markdown(f"**{v.get('q')}**")
 
+                answer_key = f"nv_v_{idx}"
+                previous = st.session_state.exam_answers.get(answer_key)
+                if answer_key not in st.session_state and previous is not None:
+                    st.session_state[answer_key] = str(previous)
                 st.session_state.exam_answers[f"nv_v_{idx}"] = st.text_area(f"Bài làm viết câu {idx+1}:", key=f"nv_v_{idx}", height=140)
 
 
 
                 # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
 
-                expl_v = v.get('explain', '') or v.get('ans', '')
+                expl_v = v.get('hint', '') or v.get('socratic_hint', '')
 
                 if not expl_v: expl_v = "Xác định rõ vấn đề nghị luận, các luận điểm chính, dẫn chứng xác thực và rút ra bài học sâu sắc."
 
@@ -14831,7 +14855,11 @@ if selected_station == station_labels[2]:
 
                     render_fast_visual(q, f"test_p1_{idx}")
 
-                    user_ans = st.radio(f"Lựa chọn câu {idx+1}:", q.get("opt", []), key=f"t3_p1_{idx}", label_visibility="collapsed", index=None)
+                    choice_key = f"t3_p1_{idx}"
+                    previous = st.session_state.exam_answers.get(f"p1_{idx}")
+                    if choice_key not in st.session_state and previous in q.get("opt", []):
+                        st.session_state[choice_key] = previous
+                    user_ans = st.radio(f"Lựa chọn câu {idx+1}:", q.get("opt", []), key=choice_key, label_visibility="collapsed", index=None)
 
                     st.session_state.exam_answers[f"p1_{idx}"] = user_ans
 
@@ -14839,7 +14867,7 @@ if selected_station == station_labels[2]:
 
                     # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
 
-                    expl = q.get('explain', '')
+                    expl = q.get('hint', '') or q.get('socratic_hint', '')
 
                     if not expl or len(expl) < 15:
 
@@ -14876,7 +14904,11 @@ if selected_station == station_labels[2]:
                         clean_stmt = clean_question_bbt_text(clean_stmt)
 
                         st.markdown(f"**Ý {chr(97+s_idx)})** {clean_stmt}")
-                        c_ans = st.radio(f"Chọn Đúng/Sai cho câu {idx+1}, ý {chr(97+s_idx)}", ["Chưa chọn", "Đúng", "Sai"], horizontal=True, key=f"t3_p2_{idx}_{s_idx}", label_visibility="collapsed")
+                        choice_key = f"t3_p2_{idx}_{s_idx}"
+                        previous = st.session_state.exam_answers.get(f"p2_{idx}_{s_idx}")
+                        if choice_key not in st.session_state and previous in ("Chưa chọn", "Đúng", "Sai"):
+                            st.session_state[choice_key] = previous
+                        c_ans = st.radio(f"Chọn Đúng/Sai cho câu {idx+1}, ý {chr(97+s_idx)}", ["Chưa chọn", "Đúng", "Sai"], horizontal=True, key=choice_key, label_visibility="collapsed")
 
                         st.session_state.exam_answers[f"p2_{idx}_{s_idx}"] = c_ans
 
@@ -14884,7 +14916,7 @@ if selected_station == station_labels[2]:
 
                     # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
 
-                    expl2 = q.get('explain', 'Xét từng mệnh đề theo định lý và điều kiện cần - đủ trong SGK Kết Nối Tri Thức.')
+                    expl2 = q.get('hint', '') or q.get('socratic_hint', '')
 
                     with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý)", expanded=False):
 
@@ -14908,6 +14940,10 @@ if selected_station == station_labels[2]:
 
                     render_fast_visual(q, f"test_p3_{idx}")
 
+                    short_key = f"t3_p3_{idx}"
+                    previous = st.session_state.exam_answers.get(f"p3_{idx}")
+                    if short_key not in st.session_state and previous is not None:
+                        st.session_state[short_key] = str(previous)
                     short_ans = st.text_input(
 
                         f"Nhập đáp số câu {idx+1}:",
@@ -14928,7 +14964,7 @@ if selected_station == station_labels[2]:
 
                     # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
 
-                    expl3 = q.get('explain', 'Tính toán theo công thức vi phân, tọa độ hoặc mô hình thực tiễn chuẩn CT GDPT 2018.')
+                    expl3 = q.get('hint', '') or q.get('socratic_hint', '')
 
                     with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý)", expanded=False):
 

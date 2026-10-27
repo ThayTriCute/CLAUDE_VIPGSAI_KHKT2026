@@ -182,7 +182,8 @@ def lesson_prompt(subject, grade, topic):
     return policy_prompt(subject, grade, 1, topic) + LEVEL_GUIDANCE + r"""
 Soạn bài học với ba tiêu đề chính: '### PHẦN 1: BÀI HỌC', '### PHẦN 2: TRẮC NGHIỆM KHÁCH QUAN SOCRATIC', '### PHẦN 3: BÀI TẬP TỰ LUẬN'.
 Phần 1: khởi động, hình thành kiến thức, ví dụ có lời giải phù hợp lớp, luyện tập và vận dụng; đặc trưng thể loại/môn học phải được giữ.
-Phần 2: câu hỏi trắc nghiệm có 4 phương án A/B/C/D, ghi đáp án và gợi ý riêng; Phần 3: bài tập tự luận và gợi ý.
+Phần 2: đúng 3 câu trắc nghiệm, mỗi câu có 4 phương án A/B/C/D và duy nhất một đáp án. Ghi CORRECT: cho đáp án nội bộ, EXPLAIN: cho giải thích nội bộ, HINT: cho gợi mở Socratic theo riêng ngữ cảnh câu hỏi. HINT chỉ dẫn dắt học sinh tự nghĩ; không giải hộ hoặc tiết lộ đáp án. Không dùng EXPLAIN thay HINT.
+Phần 3: đúng 2 câu tự luận, mỗi câu hướng dẫn đủ bốn bước Pólya bằng tiếng Việt: Bước 1: Tìm hiểu đề; Bước 2: Lập kế hoạch; Bước 3: Thực hiện kế hoạch; Bước 4: Kiểm tra và nhìn lại. Chỉ đặt câu hỏi hoặc hướng dẫn để học sinh tự thực hiện, không giải hộ, không đưa đáp án. Phần 1 vẫn được giải thích lý thuyết và có ví dụ minh họa; không áp quy tắc giấu lời giải của Socratic sang Phần 1.
 Mỗi câu Phần 2 và Phần 3 mở đầu 'Câu n. [Mức độ: NB/TH/VD/VDC]' (chọn một nhãn, hoặc để rỗng nếu chưa đủ căn cứ). Tiếp theo là nội dung câu, các dòng OUTCOME: yêu cầu cần đạt; COGNITIVE_REASON: căn cứ phân loại; COGNITIVE_STEPS: ["thao tác tư duy 1", "thao tác tư duy 2"]. Đây là đề xuất cần giáo viên duyệt, không mặc định tất cả câu là vận dụng.
 Công thức đặt trong $...$ hoặc $$...$$; hóa học dùng \ce{...}, đơn vị và chỉ số đúng bản chất. Không bọc công thức bằng backtick, không tự thay omega thành vô cực.
 Chỉ tạo hình/bảng khi có đủ dữ kiện của bài, không chèn bảng mẫu hoặc số liệu không có căn cứ. Nội dung ngắn gọn, đầy đủ, không tự gắn nhãn đã được Bộ kiểm duyệt.
@@ -204,7 +205,8 @@ def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
                   "p2": [{"q": "Ngữ liệu", "stmts": [{"t": "Mệnh đề", "a": True}], "topic": "Chủ đề", "explain": "Gợi ý"}],
                   "p3": [{"q": "Câu trả lời ngắn", "ans": "2.5", "topic": "Chủ đề", "explain": "Gợi ý"}]}
         structure = f"Sinh đúng số câu p1/p2/p3 = {tuple(counts)}. Phần có 0 câu phải là []. Mỗi câu p2 có đúng 4 mệnh đề boolean. p3 có đáp số, đơn vị và quy tắc làm tròn rõ ràng. Tiếng Anh: câu hỏi, đoạn đọc và phương án bằng tiếng Anh; giải thích có thể bằng tiếng Việt."
-    evidence_schema = {"level": "", "learning_outcome": "", "cognitive_rationale": "", "solution_steps": []}
+    evidence_schema = {"level": "", "learning_outcome": "", "cognitive_rationale": "", "solution_steps": [],
+                       "hint": "Câu hỏi gợi mở theo riêng ngữ cảnh câu này; không giải hộ hoặc đưa đáp án"}
     for key in ("p1", "p2", "p3", "part_viet"):
         for question in schema.get(key, []):
             question.update(evidence_schema)
@@ -213,6 +215,7 @@ def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
     for question in schema.get("part_doc_hieu", {}).get("questions", []):
         question.update(evidence_schema)
     return (policy_prompt(subject, grade, 3, "; ".join(topics), pathway) + LEVEL_GUIDANCE + "\n"
+            + "\nTrường hint là gợi mở Socratic độc lập; explain và ans dành cho giải thích/chấm bài, không dùng thay hint. Không tiết lộ đáp án hoặc giải hộ trong hint."
             + structure + "\nYêu cầu tùy biến trong phạm vi môn/lớp đã chọn: " + str(custom)
             + "\nTự giải và đối chiếu đáp án với giả thiết; thiếu hình thì không đặt câu yêu cầu đọc hình đó. Không sao chép nguồn thiếu bằng chứng hoặc tự nhận là đề thật."
             + "\nChỉ xuất JSON hợp lệ theo schema sau (mở rộng số câu theo cấu hình):\n" + json.dumps(schema, ensure_ascii=False))
