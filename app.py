@@ -12736,6 +12736,8 @@ if selected_station == station_labels[2]:
             ai_generator=generator, max_ai_questions=2)
         st.session_state.last_context_recovery = draft.get("context_recovery", {})
         if draft.get("context_recovery", {}).get("unresolved"):
+            from services.recovery_diagnostics import log_recovery_failure
+            log_recovery_failure(subject, grade_num, draft.get("context_recovery", {}))
             raise ValueError("Còn câu chưa đủ dữ liệu hoặc đáp án sau khi quét nguồn, tìm câu cùng chủ đề và thử sinh thay thế. Hãy bổ sung nguồn gốc hoặc kiểm tra lại bản nháp; chưa mở lượt làm bài này.")
         result = prepare_exam_for_delivery(draft, subject, grade_num, st.session_state.get("exam_time_mins", 45))
         st.session_state.exam_mix_count = st.session_state.get("exam_mix_count", 0) + 1
