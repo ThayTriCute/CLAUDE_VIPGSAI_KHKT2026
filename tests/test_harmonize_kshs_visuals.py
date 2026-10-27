@@ -1,16 +1,6 @@
 import unittest
 import precision_visual_engine as pve
-# Extract the pure function without executing the Streamlit page in bare mode.
-# Importing app here leaves form layout state on Streamlit's global DeltaGenerator
-# and contaminates subsequent AppTest sessions.
-import ast
-import re
-from pathlib import Path
-_tree = ast.parse(Path(__file__).resolve().parents[1].joinpath("app.py").read_text(encoding="utf-8"))
-_function = next(n for n in _tree.body if isinstance(n, ast.FunctionDef) and n.name == "format_pedagogical_bbt_html")
-_namespace = {"re": re}
-exec(compile(ast.Module(body=[_function], type_ignores=[]), "bbt-null-test", "exec"), _namespace)
-format_pedagogical_bbt_html = _namespace["format_pedagogical_bbt_html"]
+from app import format_pedagogical_bbt_html
 
 class TestHarmonizeKshsVisuals(unittest.TestCase):
     def test_heal_bbt_null_sanitization(self):

@@ -188,7 +188,15 @@ def sanitize_socratic_hint(hint_text, correct_answer="", q_text="", options=None
       2. Cung cấp ĐIỂM TỰA KIẾN THỨC CỐT LÕI (Định lý, Công thức tổng quát SGK Kết Nối Tri Thức).
       3. Đưa ra CÂU HỎI ĐỊNH HƯỚNG TƯ DUY SOCRATIC để học sinh tự suy nghĩ và tự đặt bút tính toán.
     """
-    subj_key = str(subject or "Toán học").strip()
+    from services.academic_context import canonical_subject
+    subj_key = canonical_subject(subject or "Toán học")
+    if subj_key != "Toán học":
+        from services.socratic_context import subject_socratic_hint
+        return subject_socratic_hint(hint_text, subj_key, options, correct_answer)
+    from services.socratic_context import guiding_question
+    question_hint = guiding_question(hint_text, options, correct_answer)
+    if question_hint:
+        return question_hint
     q_str = str(q_text or "").strip()
     q_lower = q_str.lower()
     corr_ans = str(correct_answer or "").strip()

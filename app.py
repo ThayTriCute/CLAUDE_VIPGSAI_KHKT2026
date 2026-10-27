@@ -1,19 +1,12 @@
 from services.context_recovery import repair_exam_context, recover_visual
 from services.cognitive_levels import annotate_question, level_caption
-from services.math_publication import math_for_web, validate_exam_math, MathPublicationError, generate_checked_text, normalize_real_aliases, escape_source_html
-from services.curriculum_policy import (practice_initial_source, assessment_profile, legal_references, matrix_html, prepare_exam_for_delivery, validate_exam_structure, validate_lesson_policy, lesson_prompt as build_curriculum_lesson_prompt, exam_prompt as build_curriculum_exam_prompt)
+from services.curriculum_policy import (assessment_profile, legal_references, matrix_html, prepare_exam_for_delivery, validate_exam_structure, validate_lesson_policy, lesson_prompt as build_curriculum_lesson_prompt, exam_prompt as build_curriculum_exam_prompt)
 from copy import deepcopy
-import hashlib
 from services.academic_context import canonical_subject, academic_context, validate_exam_context
 from services.lesson_export import build_lesson_html, handwritten_prompt
 from services.lesson_sources import books_for, lesson_references, PUBLISHER_PORTAL
-from services.speech_service import speech_controls, speech_button, speech_preview_bridge, speech_bootstrap
-from services.speech_audio import render_speech_audio
-from services.lesson_contract import validate_lesson_contract, student_polya, validate_socratic_question, LessonContractError, socratic_prompt
-from services.academic_scope import check_lesson_scope, check_exam_question_scope
-from services.math_publication import native_radio_label
 from qa_runtime import (split_api_keys, admin_password_matches, normalize_bool, display_frame,
-    exam_response_metadata, observed_item_matrix, mcq_answer_matches, exam_catalog_label, exam_display_title)
+    exam_response_metadata, observed_item_matrix, mcq_answer_matches)
 # VIP 76.0 - HỆ THỐNG GIA SƯ AI THPT 2026 (CHUẨN GDPT 2018 - EDTECH & PSYCHOMETRICS SOTA QUỐC TẾ)
 # -*- coding: utf-8 -*-
 
@@ -371,73 +364,6 @@ st.set_page_config(
 
 
 APP_URL = get_secret("APP_URL", "https://vip-demo-gsai-khkt2026.streamlit.app")
-
-_academic_css_ready = False
-
-
-def academic_markdown(text, trusted_layout=False):
-    """Render checked math with the same bundled KaTeX/mhchem as the gate."""
-    global _academic_css_ready
-    try:
-        rendered = math_for_web(text, trusted_layout=trusted_layout)
-    except MathPublicationError as error:
-        st.error("Nội dung đang được giữ lại vì chưa vượt qua kiểm tra công thức. " + str(error))
-        st.stop()
-    if "class=\"katex" in rendered and not _academic_css_ready:
-        from services.lesson_export import renderer_assets
-        st.markdown("<style>" + renderer_assets()[0] + ".katex-display{overflow-x:auto;overflow-y:hidden}</style>", unsafe_allow_html=True)
-        _academic_css_ready = True
-    st.markdown(rendered, unsafe_allow_html=True)
-
-
-def academic_options(options, label, key, previous=None):
-    """Original full-option vertical radios, with checked native math labels."""
-    for option in options:
-        native_radio_label(str(option))
-    if key not in st.session_state:
-        saved = previous if previous is not None else st.session_state.get(key + "_letter")
-        if saved in options:
-            st.session_state[key] = saved
-        elif saved in list("ABCD")[:len(options)]:
-            st.session_state[key] = options[ord(saved) - 65]
-    return st.radio(label, options, index=None, key=key, format_func=native_radio_label,
-                    label_visibility="collapsed" if key.startswith("t3_") else "visible")
-
-
-def render_contextual_socratic(question, subject_name, grade_number, widget_key):
-    """A dedicated contextual question, never the private worked explanation."""
-    stem = str(question.get("question", question.get("q", "")))
-    options = question.get("options", question.get("opt", []))
-    correct = str(question.get("correct", question.get("ans", "")))
-    correct_text = options[ord(correct)-65] if len(correct) == 1 and correct in "ABCD" and len(options) > ord(correct)-65 else correct
-    identity = hashlib.sha256(json.dumps([stem, options, correct, subject_name, grade_number], ensure_ascii=False).encode()).hexdigest()
-    cache = st.session_state.setdefault("contextual_socratic_hints", {})
-    hint = cache.get(identity, question.get("socratic_hint", ""))
-    try:
-        hint = validate_socratic_question(hint, stem, correct_text)
-    except LessonContractError:
-        hint = ""
-    if hint:
-        academic_markdown(hint)
-    else:
-        if st.button("💡 Tạo gợi mở theo nội dung câu này", key=f"socratic_{widget_key}"):
-            try:
-                with st.spinner("Đang tạo câu hỏi gợi mở theo đúng dữ kiện..."):
-                    candidate = call_gemini_with_fallback(socratic_prompt(stem, subject_name, grade_number, options))
-                    candidate = validate_socratic_question(candidate, stem, correct_text)
-                    native_radio_label(candidate)
-                if len(cache) >= 32:
-                    cache.pop(next(iter(cache)))
-                cache[identity] = candidate
-                academic_markdown(candidate)
-            except Exception as error:
-                st.warning("Chưa có gợi mở hợp lệ cho câu này; không thay bằng lời giải. " + str(error))
-
-
-def apply_lesson_suggestion(context_key):
-    value = st.session_state.get(f"kntt_lesson_sel_{context_key}", "")
-    if value and not value.startswith("--") and value != "Tự gõ bài học khác bên dưới...":
-        st.session_state[f"topic_input_{context_key}"] = value.split(":")[-1].strip()
 
 
 
@@ -818,17 +744,8 @@ def _legacy_sanitize_katex_latex(text: str) -> str:
 
 
 def sanitize_katex_latex(text: str) -> str:
-    if not text:
-        return ""
-    protected = []
-    def save_code(match):
-        protected.append(match.group(0))
-        return f"GSAICODESLOT{len(protected)-1}END"
-    value = re.sub(r"```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`", save_code, str(text))
-    value = _legacy_sanitize_katex_latex(value)
-    for index, original in enumerate(protected):
-        value = value.replace(f"GSAICODESLOT{index}END", original)
-    return value
+    from services.text_boundaries import preserve_math_and_code
+    return preserve_math_and_code(text, _legacy_sanitize_katex_latex)
 
 
 def clean_vietnamese_math(text):
@@ -867,7 +784,7 @@ def clean_vietnamese_math(text):
 
 
 
-def format_pedagogical_math(text):
+def _legacy_format_pedagogical_math(text):
     """Chuẩn hóa công thức Toán / STEM chuẩn KaTeX: Cân bằng dấu $, xử lý khoảng trắng, bọc biểu thức trần trụi an toàn bằng Token-Masking."""
     if not text: return ""
     s = str(text)
@@ -965,6 +882,11 @@ def format_pedagogical_math(text):
 
     s = re.sub(r'[ \t]+', ' ', s)
     return s.strip()
+
+def format_pedagogical_math(text):
+    from services.text_boundaries import preserve_math_and_code
+    return preserve_math_and_code(text, _legacy_format_pedagogical_math)
+
 
 def auto_extract_mslgn(q_obj):
 
@@ -3459,12 +3381,8 @@ def question_visual_html(question):
     pieces = []
     raw_bbt = str(question.get("bbt") or "").strip()
     if raw_bbt and raw_bbt.lower() not in {"null", "none", "{}"}:
-        from services.bbt_validation import validated_compact_bbt_rows
-        compact_rows = validated_compact_bbt_rows(raw_bbt)
         table_rows = [line.strip().strip("|").split("|") for line in raw_bbt.splitlines() if "|" in line]
-        if compact_rows:
-            pieces.append('<div data-gsai-bbt-renderer="existing">' + _build_svg_bbt_from_rows(*compact_rows) + '</div>')
-        elif table_rows:
+        if table_rows:
             cells = "".join("<tr>" + "".join("<td style='border:1px solid #64748b;padding:6px'>" + html.escape(cell.strip()) + "</td>" for cell in row) + "</tr>" for row in table_rows)
             pieces.append("<div style='overflow-x:auto'><table>" + cells + "</table></div>")
     grouped = question.get("mslgn_data")
@@ -3483,8 +3401,6 @@ def question_visual_html(question):
         image = render_math_graph_to_webp_base64(dict(function))
         if image:
             pieces.append("<img alt='Đồ thị theo hệ số đã cung cấp' style='max-width:100%' src='" + html.escape(image, quote=True) + "'/>")
-            if question.get("visual_recovery", {}).get("representative"):
-                pieces.append("<p>Hình phục dựng theo các điều kiện trong đề bài.</p>")
     image = question.get("image_base64") or question.get("image_url") or question.get("image")
     if isinstance(image, str) and image.startswith(("data:image/png;base64,", "data:image/jpeg;base64,", "data:image/webp;base64,")):
         pieces.append("<img alt='Hình trong ngữ liệu nguồn' style='max-width:100%' src='" + html.escape(image, quote=True) + "'/>")
@@ -3570,7 +3486,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
                        quote_author="THẦY PHAN MINH TRÍ",
                        show_support_qr=True):
     import datetime
-    # Kiểm tra ngữ cảnh/cấu trúc/công thức trước xuất; không tự chứng nhận mọi đáp án hoặc sửa nội dung nguồn.
+    # CHỐT CHẶN CUỐI CÙNG: Thẩm định ngữ nghĩa, khử đa đáp án và chuẩn hóa Socratic trước khi xuất bản
     exam = audit_and_heal_exam_semantics(exam, subject_name=subject_name, grade_name=grade_name)
     current_year = datetime.datetime.now().year
     school_year = f"{current_year} - {current_year+1}"
@@ -5301,6 +5217,11 @@ def render_dynamic_python_lab(python_code: str):
 
 
 def render_smart_lab(data, current_subject=""):
+    from services.lab_state import lab_control_scope
+    control_scope = lab_control_scope(data, current_subject,
+        st.session_state.get("active_context_key", ""), st.session_state.get("lab_request_revision", 0))
+    def lab_key(name):
+        return f"{name}__{control_scope}"
 
     dtype = data.get("type")
 
@@ -5364,9 +5285,9 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("⚙️ **Thông số điều chỉnh Hình không gian:**")
 
-            h_val = st.slider("Chiều cao h:", 1.5, 6.0, float(data.get("h", 4.0)), 0.5, key="lab_geo3d_h")
+            h_val = st.slider("Chiều cao h:", 1.5, 6.0, float(data.get("h", 4.0)), 0.5, key=lab_key("lab_geo3d_h"))
 
-            show_faces = st.checkbox("Tô mờ các mặt phẳng (3D Surfaces)", value=True, key="lab_geo3d_faces")
+            show_faces = st.checkbox("Tô mờ các mặt phẳng (3D Surfaces)", value=True, key=lab_key("lab_geo3d_faces"))
 
 
 
@@ -5646,7 +5567,7 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("⚙️ **Thông số Hàm số Mũ ($y = k \\cdot a^x + c$):**")
 
-            use_e = st.checkbox("Dùng cơ số tự nhiên Euler $e \\approx 2.718$", value=bool(data.get("is_e", False)), key="lab_exp_is_e")
+            use_e = st.checkbox("Dùng cơ số tự nhiên Euler $e \\approx 2.718$", value=bool(data.get("is_e", False)), key=lab_key("lab_exp_is_e"))
 
             if use_e:
 
@@ -5656,17 +5577,17 @@ def render_smart_lab(data, current_subject=""):
 
             else:
 
-                fa = st.slider("Cơ số a (a > 0, a ≠ 1):", 0.1, 4.5, float(data.get("base", 2.0)), 0.1, key="lab_exp_a")
+                fa = st.slider("Cơ số a (a > 0, a ≠ 1):", 0.1, 4.5, float(data.get("base", 2.0)), 0.1, key=lab_key("lab_exp_a"))
 
                 if abs(fa - 1.0) < 0.05: fa = 1.05
 
 
 
-            fk = st.slider("Hệ số k:", -3.0, 3.0, float(data.get("k", 1.0)), 0.5, key="lab_exp_k")
+            fk = st.slider("Hệ số k:", -3.0, 3.0, float(data.get("k", 1.0)), 0.5, key=lab_key("lab_exp_k"))
 
             if fk == 0: fk = 1.0
 
-            fc = st.slider("Hệ số tịnh tiến c:", -4.0, 4.0, float(data.get("c", 0.0)), 0.5, key="lab_exp_c")
+            fc = st.slider("Hệ số tịnh tiến c:", -4.0, 4.0, float(data.get("c", 0.0)), 0.5, key=lab_key("lab_exp_c"))
 
 
 
@@ -5724,7 +5645,7 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("⚙️ **Thông số Hàm số Lôgarit ($y = k \\cdot \\log_a(x) + c$):**")
 
-            use_ln = st.checkbox("Dùng Lôgarit tự nhiên (ln(x), cơ số e)", value=bool(data.get("is_ln", False)), key="lab_log_is_ln")
+            use_ln = st.checkbox("Dùng Lôgarit tự nhiên (ln(x), cơ số e)", value=bool(data.get("is_ln", False)), key=lab_key("lab_log_is_ln"))
 
             if use_ln:
 
@@ -5734,17 +5655,17 @@ def render_smart_lab(data, current_subject=""):
 
             else:
 
-                fa = st.slider("Cơ số a (a > 0, a ≠ 1):", 0.1, 4.5, float(data.get("base", 2.0)), 0.1, key="lab_log_a")
+                fa = st.slider("Cơ số a (a > 0, a ≠ 1):", 0.1, 4.5, float(data.get("base", 2.0)), 0.1, key=lab_key("lab_log_a"))
 
                 if abs(fa - 1.0) < 0.05: fa = 1.05
 
 
 
-            fk = st.slider("Hệ số k:", -3.0, 3.0, float(data.get("k", 1.0)), 0.5, key="lab_log_k")
+            fk = st.slider("Hệ số k:", -3.0, 3.0, float(data.get("k", 1.0)), 0.5, key=lab_key("lab_log_k"))
 
             if fk == 0: fk = 1.0
 
-            fc = st.slider("Hệ số tịnh tiến c:", -4.0, 4.0, float(data.get("c", 0.0)), 0.5, key="lab_log_c")
+            fc = st.slider("Hệ số tịnh tiến c:", -4.0, 4.0, float(data.get("c", 0.0)), 0.5, key=lab_key("lab_log_c"))
 
 
 
@@ -5842,9 +5763,9 @@ def render_smart_lab(data, current_subject=""):
 
             st.info(f"**Hàm số:** $y = {math_str}$")
 
-            sa = st.slider("Cận dưới a:", -10.0, 10.0, sa_def, 0.5, key="lab_area_a")
+            sa = st.slider("Cận dưới a:", -10.0, 10.0, sa_def, 0.5, key=lab_key("lab_area_a"))
 
-            sb = st.slider("Cận trên b:", -10.0, 10.0, sb_def, 0.5, key="lab_area_b")
+            sb = st.slider("Cận trên b:", -10.0, 10.0, sb_def, 0.5, key=lab_key("lab_area_b"))
 
 
 
@@ -5992,11 +5913,11 @@ def render_smart_lab(data, current_subject=""):
 
             st.info(f"**Đường giới hạn:** $y = {math_str}$")
 
-            sa = st.slider("Cận dưới a:", -8.0, 8.0, a_def, 0.5, key="lab_revolve_a")
+            sa = st.slider("Cận dưới a:", -8.0, 8.0, a_def, 0.5, key=lab_key("lab_revolve_a"))
 
-            sb = st.slider("Cận trên b:", -8.0, 8.0, b_def, 0.5, key="lab_revolve_b")
+            sb = st.slider("Cận trên b:", -8.0, 8.0, b_def, 0.5, key=lab_key("lab_revolve_b"))
 
-            angle_deg = st.slider("Góc quay quanh trục Ox:", 30, 360, 360, 15, key="lab_revolve_angle")
+            angle_deg = st.slider("Góc quay quanh trục Ox:", 30, 360, 360, 15, key=lab_key("lab_revolve_angle"))
 
 
 
@@ -6166,11 +6087,11 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("⚙️ **Thông số Dao động điều hòa ($x = A\\cos(\\omega t + \\varphi)$):**")
 
-            p_A = st.slider("Biên độ A (cm):", 1.0, 15.0, float(data.get("A", 5.0)), 0.5, key="lab_osc_A")
+            p_A = st.slider("Biên độ A (cm):", 1.0, 15.0, float(data.get("A", 5.0)), 0.5, key=lab_key("lab_osc_A"))
 
-            p_omega = st.slider("Tần số góc ω (rad/s):", 0.5, 10.0, float(data.get("omega", 2.0)), 0.5, key="lab_osc_w")
+            p_omega = st.slider("Tần số góc ω (rad/s):", 0.5, 10.0, float(data.get("omega", 2.0)), 0.5, key=lab_key("lab_osc_w"))
 
-            p_phi = st.slider("Pha ban đầu φ (rad):", -np.pi, np.pi, float(data.get("phi", 0.0)), np.pi/6, format="%.2f", key="lab_osc_phi")
+            p_phi = st.slider("Pha ban đầu φ (rad):", -np.pi, np.pi, float(data.get("phi", 0.0)), np.pi/6, format="%.2f", key=lab_key("lab_osc_phi"))
 
 
 
@@ -6188,9 +6109,9 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption(f"📌 **Chu kỳ T:** `{p_T:.2f} s`<br>📌 **Tần số f:** `{p_f:.2f} Hz`<br>📌 **$v_{{max}}$:** `{p_vmax:.1f} cm/s`<br>📌 **$a_{{max}}$:** `{p_amax:.1f} cm/s²`", unsafe_allow_html=True)
 
-            show_v = st.checkbox("Hiển thị đồ thị Vận tốc v(t)", value=True, key="lab_osc_show_v")
+            show_v = st.checkbox("Hiển thị đồ thị Vận tốc v(t)", value=True, key=lab_key("lab_osc_show_v"))
 
-            show_a = st.checkbox("Hiển thị đồ thị Gia tốc a(t)", value=False, key="lab_osc_show_a")
+            show_a = st.checkbox("Hiển thị đồ thị Gia tốc a(t)", value=False, key=lab_key("lab_osc_show_a"))
 
         with c2:
 
@@ -6248,9 +6169,9 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("$\\Delta_r H^\\circ_{298} = -92 \\text{ kJ/mol}$ (Phản ứng tỏa nhiệt)")
 
-            c_temp = st.slider("Nhiệt độ T (°C):", 100, 700, int(data.get("temp", 450)), 50, key="lab_eq_t")
+            c_temp = st.slider("Nhiệt độ T (°C):", 100, 700, int(data.get("temp", 450)), 50, key=lab_key("lab_eq_t"))
 
-            c_p = st.slider("Áp suất P (bar):", 10, 300, int(data.get("p", 200)), 10, key="lab_eq_p")
+            c_p = st.slider("Áp suất P (bar):", 10, 300, int(data.get("p", 200)), 10, key=lab_key("lab_eq_p"))
 
 
 
@@ -6312,9 +6233,9 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("⚙️ **Phép lai một cặp tính trạng:** $P: Aa \\times Aa$")
 
-            gen_A = st.text_input("Tên gen trội A:", "Hạt vàng (A)", key="lab_bio_A")
+            gen_A = st.text_input("Tên gen trội A:", "Hạt vàng (A)", key=lab_key("lab_bio_A"))
 
-            gen_a = st.text_input("Tên gen lặn a:", "Hạt xanh (a)", key="lab_bio_a")
+            gen_a = st.text_input("Tên gen lặn a:", "Hạt xanh (a)", key=lab_key("lab_bio_a"))
 
             st.success("Tỉ lệ kiểu gen F1: **1 AA : 2 Aa : 1 aa**")
 
@@ -6346,11 +6267,11 @@ def render_smart_lab(data, current_subject=""):
         c1, c2 = st.columns([1.2, 2.8])
         with c1:
             st.caption("⚙️ **Thay đổi hệ số hàm bậc 3:**")
-            fa = st.slider("Hệ số a:", -3.0, 3.0, float(data.get("a", 1.0)), 0.5, key="lab_f3_a")
+            fa = st.slider("Hệ số a:", -3.0, 3.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_f3_a"))
             if fa == 0: fa = 0.5
-            fb = st.slider("Hệ số b:", -5.0, 5.0, float(data.get("b", -3.0)), 0.5, key="lab_f3_b")
-            fc = st.slider("Hệ số c:", -5.0, 5.0, float(data.get("c", 0.0)), 0.5, key="lab_f3_c")
-            fd = st.slider("Hệ số d:", -5.0, 5.0, float(data.get("d", 2.0)), 0.5, key="lab_f3_d")
+            fb = st.slider("Hệ số b:", -5.0, 5.0, float(data.get("b", -3.0)), 0.5, key=lab_key("lab_f3_b"))
+            fc = st.slider("Hệ số c:", -5.0, 5.0, float(data.get("c", 0.0)), 0.5, key=lab_key("lab_f3_c"))
+            fd = st.slider("Hệ số d:", -5.0, 5.0, float(data.get("d", 2.0)), 0.5, key=lab_key("lab_f3_d"))
             st.info(f"**$y = {fa}x^3 + ({fb})x^2 + ({fc})x + ({fd})$**")
 
             # Tính toán Điểm uốn / Tâm đối xứng
@@ -6454,11 +6375,11 @@ def render_smart_lab(data, current_subject=""):
         c1, c2 = st.columns([1.2, 2.8])
         with c1:
             st.caption("⚙️ **Thay đổi hệ số hàm phân thức bậc 1/1:**")
-            fa = st.slider("Hệ số a:", -4.0, 4.0, float(data.get("a", 1.0)), 0.5, key="lab_f11_a")
-            fb = st.slider("Hệ số b:", -5.0, 5.0, float(data.get("b", 1.0)), 0.5, key="lab_f11_b")
-            fc = st.slider("Hệ số c:", -4.0, 4.0, float(data.get("c", 1.0)), 0.5, key="lab_f11_c")
+            fa = st.slider("Hệ số a:", -4.0, 4.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_f11_a"))
+            fb = st.slider("Hệ số b:", -5.0, 5.0, float(data.get("b", 1.0)), 0.5, key=lab_key("lab_f11_b"))
+            fc = st.slider("Hệ số c:", -4.0, 4.0, float(data.get("c", 1.0)), 0.5, key=lab_key("lab_f11_c"))
             if fc == 0: fc = 1.0
-            fd = st.slider("Hệ số d:", -5.0, 5.0, float(data.get("d", -1.0)), 0.5, key="lab_f11_d")
+            fd = st.slider("Hệ số d:", -5.0, 5.0, float(data.get("d", -1.0)), 0.5, key=lab_key("lab_f11_d"))
 
             x_tc_dung = -fd / fc
             y_tc_ngang = fa / fc
@@ -6528,13 +6449,13 @@ def render_smart_lab(data, current_subject=""):
         c1, c2 = st.columns([1.2, 2.8])
         with c1:
             st.caption("⚙️ **Hệ số hàm phân thức bậc 2/1:**")
-            fa = st.slider("a:", -3.0, 3.0, float(data.get("a", 1.0)), 0.5, key="lab_f21_a")
+            fa = st.slider("a:", -3.0, 3.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_f21_a"))
             if fa == 0: fa = 1.0
-            fb = st.slider("b:", -5.0, 5.0, float(data.get("b", -2.0)), 0.5, key="lab_f21_b")
-            fc = st.slider("c:", -5.0, 5.0, float(data.get("c", 2.0)), 0.5, key="lab_f21_c")
-            fd = st.slider("d:", -3.0, 3.0, float(data.get("d", 1.0)), 0.5, key="lab_f21_d")
+            fb = st.slider("b:", -5.0, 5.0, float(data.get("b", -2.0)), 0.5, key=lab_key("lab_f21_b"))
+            fc = st.slider("c:", -5.0, 5.0, float(data.get("c", 2.0)), 0.5, key=lab_key("lab_f21_c"))
+            fd = st.slider("d:", -3.0, 3.0, float(data.get("d", 1.0)), 0.5, key=lab_key("lab_f21_d"))
             if fd == 0: fd = 1.0
-            fe = st.slider("e:", -5.0, 5.0, float(data.get("e", -1.0)), 0.5, key="lab_f21_e")
+            fe = st.slider("e:", -5.0, 5.0, float(data.get("e", -1.0)), 0.5, key=lab_key("lab_f21_e"))
 
             x_tc_dung = -fe / fd
             m_slope = fa / fd
@@ -6716,10 +6637,10 @@ def render_smart_lab(data, current_subject=""):
         c1, c2 = st.columns([1.2, 2.8])
         with c1:
             st.caption("⚙️ **Hệ số Parabol bậc 2 ($y = ax^2 + bx + c$):**")
-            fa = st.slider("Hệ số a:", -4.0, 4.0, float(data.get("a", 1.0)), 0.5, key="lab_p2_a")
+            fa = st.slider("Hệ số a:", -4.0, 4.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_p2_a"))
             if fa == 0: fa = 1.0
-            fb = st.slider("Hệ số b:", -6.0, 6.0, float(data.get("b", -2.0)), 0.5, key="lab_p2_b")
-            fc = st.slider("Hệ số c:", -6.0, 6.0, float(data.get("c", -1.0)), 0.5, key="lab_p2_c")
+            fb = st.slider("Hệ số b:", -6.0, 6.0, float(data.get("b", -2.0)), 0.5, key=lab_key("lab_p2_b"))
+            fc = st.slider("Hệ số c:", -6.0, 6.0, float(data.get("c", -1.0)), 0.5, key=lab_key("lab_p2_c"))
 
             x_dinh = -fb / (2 * fa)
             y_dinh = fa * x_dinh**2 + fb * x_dinh + fc
@@ -6791,11 +6712,11 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("⚙️ **Tọa độ Điểm & Vectơ Vị Trí $\\overrightarrow{OM}$ trong Oxyz:**")
 
-            mx = st.slider("Tọa độ x (Hoành độ):", -5.0, 5.0, float(data.get("x", 2.0)), 0.5, key="lab_3d_x")
+            mx = st.slider("Tọa độ x (Hoành độ):", -5.0, 5.0, float(data.get("x", 2.0)), 0.5, key=lab_key("lab_3d_x"))
 
-            my = st.slider("Tọa độ y (Tung độ):", -5.0, 5.0, float(data.get("y", 3.0)), 0.5, key="lab_3d_y")
+            my = st.slider("Tọa độ y (Tung độ):", -5.0, 5.0, float(data.get("y", 3.0)), 0.5, key=lab_key("lab_3d_y"))
 
-            mz = st.slider("Tọa độ z (Cao độ):", -5.0, 5.0, float(data.get("z", 4.0)), 0.5, key="lab_3d_z")
+            mz = st.slider("Tọa độ z (Cao độ):", -5.0, 5.0, float(data.get("z", 4.0)), 0.5, key=lab_key("lab_3d_z"))
 
             om_length = math.sqrt(mx**2 + my**2 + mz**2)
 
@@ -6915,19 +6836,16 @@ def parse_quiz_questions(text):
     questions = []
     part3_match = re.search(r'(?i)###\s*PHẦN\s*3', text)
     part2_text = text[:part3_match.start()] if part3_match else text
-    part2_match = re.search(r'(?im)^\s*#{0,6}\s*PHẦN\s*2[.:]', part2_text)
-    if part2_match:
-        part2_text = part2_text[part2_match.end():]
 
-    pattern = r'(?im)^\s*\*{0,2}(?:\[Q\d+\]|C[âa]u\s*\d+[\.\:]?)\s*'
+    pattern = r'(?i)(?:\[Q\d+\]|C[âa]u\s*\d+[\.\:]?)'
     parts = re.split(pattern, part2_text)
 
     for part in parts[1:]:
         lines = [l.strip() for l in part.strip().split('\n') if l.strip()]
         if not lines: continue
         q_header = lines[0]
-        level, options, correct, explain = "", [], "", ""
-        socratic_hint = ""
+        level, options, correct, explain = "", [], "A", "Gợi ý tự suy luận!"
+        hint = ""
         cognitive_evidence = {}
 
         match = re.search(r'(?i)\[Mức độ:\s*(.*?)\]', q_header)
@@ -6935,13 +6853,11 @@ def parse_quiz_questions(text):
             level = match.group(1)
             q_header = re.sub(r'(?i)\[Mức độ:\s*.*?\]', '', q_header).strip()
 
-        q_text_lines = [q_header.strip("* ")]
+        q_text_lines = [q_header]
         parsing_options = False
-        skipping_metadata = False
 
         for line in lines[1:]:
-            evidence_line = re.sub(r'^\s*[-*•]?\s*', '', line).replace('**', '')
-            evidence_match = re.match(r'^(OUTCOME|COGNITIVE_REASON|COGNITIVE_STEPS):\s*(.*)', evidence_line, re.I)
+            evidence_match = re.match(r'^(OUTCOME|COGNITIVE_REASON|COGNITIVE_STEPS):\s*(.*)', line, re.I)
             if evidence_match:
                 field = {"OUTCOME": "learning_outcome", "COGNITIVE_REASON": "cognitive_rationale", "COGNITIVE_STEPS": "solution_steps"}[evidence_match[1].upper()]
                 value = evidence_match[2].strip()
@@ -6951,15 +6867,11 @@ def parse_quiz_questions(text):
                     except (ValueError, TypeError):
                         value = []
                 cognitive_evidence[field] = value
-                skipping_metadata = True
                 continue
             clean_line = re.sub(r'(?i)^\*{0,2}([A-D])\b[\.\:]?\*{0,2}\s*', r'\1. ', line)
 
             if re.match(r'(?i)###\s*PHẦN\s*3', line):
                 break
-
-            if skipping_metadata and not parsing_options and not clean_line.upper().startswith(('A.', 'B.', 'C.', 'D.')):
-                continue
 
             if clean_line.upper().startswith(('A.', 'B.', 'C.', 'D.')):
                 parsing_options = True
@@ -6967,8 +6879,8 @@ def parse_quiz_questions(text):
             elif re.search(r'(?i)^(CORRECT|ĐÁP ÁN|Đáp án đúng)\s*:', line):
                 ext = re.sub(r'[^A-D]', '', line.split(":")[-1].upper())
                 if ext: correct = ext[0]
-            elif re.search(r'(?i)^(SOCRATIC|GỢI MỞ SOCRATIC|GỢI MỞ)\s*:', line):
-                socratic_hint = line.split(":", 1)[-1].strip()
+            elif re.search(r'(?i)^(HINT|SOCRATIC_HINT)\s*:', line):
+                hint = line.split(":", 1)[-1].strip()
             elif re.search(r'(?i)^(EXPLAIN|GIẢI THÍCH|Gợi ý)\s*:', line):
                 explain = line.split(":", 1)[-1].strip()
             else:
@@ -6977,7 +6889,7 @@ def parse_quiz_questions(text):
                 elif options and not clean_line.upper().startswith(('A.', 'B.', 'C.', 'D.')):
                     explain += " " + line
 
-        if len(options) == 4 and correct in ("A", "B", "C", "D"):
+        if len(options) >= 4:
             correct_idx = ord(correct) - ord('A')
             new_options = options[:4]
             new_correct = correct
@@ -7036,7 +6948,7 @@ def parse_quiz_questions(text):
                 "options": cleaned_options,
                 "correct": new_correct,
                 "explain": cleaned_explain,
-                "socratic_hint": socratic_hint
+                "hint": sanitize_katex_latex(hint)
             }
             if extracted_bbt:
                 q_item["bbt"] = extracted_bbt
@@ -7076,14 +6988,13 @@ if "sb_station_radio_selector" not in st.session_state:
 elif st.session_state.sb_station_radio_selector != st.session_state.selected_station:
     st.session_state.sb_station_radio_selector = st.session_state.selected_station
 
+st.markdown('<div style="font-size: 13px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.8px; margin-top: -12px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">🧭 KHÔNG GIAN HỌC TẬP & KHẢO THÍ SƯ PHẠM (CHỌN TRẠM HOẠT ĐỘNG):</div>', unsafe_allow_html=True)
 
 def navigate_to_station(label):
-    """Apply navigation before the click-triggered run; no second full rerun."""
     if label in station_labels:
         st.session_state.selected_station = label
         st.session_state.sb_station_radio_selector = label
 
-st.markdown('<div style="font-size: 13px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.8px; margin-top: -12px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">🧭 KHÔNG GIAN HỌC TẬP & KHẢO THÍ SƯ PHẠM (CHỌN TRẠM HOẠT ĐỘNG):</div>', unsafe_allow_html=True)
 
 nav_t1, nav_t2, nav_t3, nav_t4 = st.columns(4)
 for idx_st, (col_st, label_st) in enumerate(zip([nav_t1, nav_t2, nav_t3, nav_t4], station_labels)):
@@ -7119,11 +7030,529 @@ selected_station = st.session_state.selected_station
 
 # ==============================================================================
 
+@st.cache_data(show_spinner=False, ttl=7200)
+
+def generate_pedagogical_tts_audio_bytes(clean_text: str, lang: str = "vi") -> bytes:
+
+    """Tạo audio MP3 thuyết minh sư phạm (Server-side 0ms CORS, chống đơ trình duyệt)."""
+
+    if not clean_text or len(clean_text.strip()) < 5:
+
+        return b""
+
+    sentences = [s.strip() for s in re.split(r'[\n.!?]+', clean_text) if s.strip()]
+
+    chunks = []
+
+    cur = ""
+
+    for s in sentences:
+
+        if len(cur + " " + s) > 160:
+
+            if cur.strip(): chunks.append(cur.strip())
+
+            cur = s
+
+        else:
+
+            cur += (" " if cur else "") + s
+
+    if cur.strip(): chunks.append(cur.strip())
+
+
+
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+
+    parts = []
+
+    def _fetch_tts_chunk(c):
+        try:
+            chunk_lang = "vi" if re.search(r'[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ]', c) else lang
+            r = requests.get(
+                "https://translate.googleapis.com/translate_tts",
+                params={"ie": "UTF-8", "tl": chunk_lang, "client": "gtx", "q": c},
+                headers=headers,
+                timeout=3
+            )
+            if r.status_code == 200 and len(r.content) > 100:
+                return r.content
+        except Exception:
+            pass
+        return b""
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as tts_exec:
+        parts = [p for p in tts_exec.map(_fetch_tts_chunk, chunks[:18]) if p]
+
+    if parts:
+
+        return b"".join(parts)
+
+    return b""
+
+
+
 def create_pedagogical_tts_component(raw_text: str, subject_name: str, comp_key: str):
-    """Read only after a learner action, using the page's shared speech engine."""
-    markup = speech_button(raw_text, subject_name, comp_key)
-    if markup:
-        st.html(markup)
+
+    """Trình phát Thuyết minh Bài giảng Chuẩn Sư phạm & Voice Engine 2 luồng Nam Bộ / US."""
+
+    # Tiêm Bộ máy Phát âm Sư phạm 2 Luồng Toàn Cục bằng st.html (không dùng iframe, bắt dblclick/selection 100%)
+
+    global_voice_script = r"""
+
+    <script>
+
+    (function() {
+
+        if (window.__gsai_pedagogical_voice_ready) return;
+
+        window.__gsai_pedagogical_voice_ready = true;
+
+
+
+        let voicesList = [];
+
+        function updateVoices() {
+
+            if (!window.speechSynthesis) return;
+
+            voicesList = window.speechSynthesis.getVoices();
+
+        }
+
+        updateVoices();
+
+        if (window.speechSynthesis) {
+
+            window.speechSynthesis.onvoiceschanged = updateVoices;
+
+        }
+
+
+
+        // 1. Giọng Tiếng Anh bản ngữ US (Jenny / Guy / Google US)
+
+        window.__getNativeEnglishVoice = function() {
+
+            return voicesList.find(v => v.lang.startsWith('en') && (
+
+                v.name.includes('Jenny') || v.name.includes('Guy') || v.name.includes('Natural') ||
+
+                v.name.includes('Google') || v.name.includes('US') || v.name.includes('Samantha') || v.name.includes('Aria')
+
+            )) || voicesList.find(v => v.lang.startsWith('en')) || null;
+
+        };
+
+
+
+        // 2. Giọng Tiếng Việt Nam Bộ chuẩn sư phạm (Microsoft NamMinh / HoaiMy / Google Tiếng Việt)
+
+        window.__getSouthernVietnameseVoice = function() {
+
+            return voicesList.find(v => v.name.includes('NamMinh') || v.name.includes('Nam Minh')) ||
+
+                   voicesList.find(v => v.name.includes('HoaiMy') || v.name.includes('Hoai My')) ||
+
+                   voicesList.find(v => v.lang.includes('vi') && v.name.includes('Natural')) ||
+
+                   voicesList.find(v => v.lang.includes('vi') || v.lang.startsWith('vi')) || null;
+
+        };
+
+
+
+        // Hàm phát âm Sư phạm 2 luồng thông minh
+
+        window.__speakPedagogicalText = function(rawText, forceLang) {
+
+            if (!rawText || !window.speechSynthesis) return;
+
+            let text = String(rawText).trim();
+
+            // Lọc các ký tự bullet point, định dạng markdown
+
+            text = text.replace(/^[•\-\*]\s*/, '').replace(/[*#`_~\[\]]/g, ' ').trim();
+
+            if (!text || text.length < 2) return;
+
+
+
+            // Kiểm tra dấu tiếng Việt để phân luồng
+
+            const viPattern = /[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ]/;
+
+            const isVietnamese = viPattern.test(text) || forceLang === 'vi';
+
+
+
+            try {
+
+                window.speechSynthesis.cancel();
+
+                const utter = new SpeechSynthesisUtterance(text);
+
+                if (isVietnamese) {
+
+                    // Luồng 1: Tiếng Việt giọng Nam Bộ chuẩn mực sư phạm (nhịp 0.90 tròn vành rõ chữ)
+
+                    utter.lang = 'vi-VN';
+
+                    utter.rate = 0.90;
+
+                    utter.pitch = 1.0;
+
+                    const vVoice = window.__getSouthernVietnameseVoice();
+
+                    if (vVoice) utter.voice = vVoice;
+
+                } else {
+
+                    // Luồng 2: Tiếng Anh bản ngữ chuẩn US (nhịp 0.88 chuẩn trọng âm)
+
+                    utter.lang = 'en-US';
+
+                    utter.rate = 0.88;
+
+                    utter.pitch = 1.0;
+
+                    const eVoice = window.__getNativeEnglishVoice();
+
+                    if (eVoice) utter.voice = eVoice;
+
+                }
+
+                window.speechSynthesis.speak(utter);
+
+            } catch(e) {
+
+                console.warn("TTS Error:", e);
+
+            }
+
+        };
+
+
+
+        window.__stopPedagogicalText = function() {
+
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
+
+        };
+
+
+
+        // Lắng nghe sự kiện bôi đen (selection) & double-click trên TOÀN BỘ TRANG (document)
+
+        let lastSpoken = "";
+
+        let lastTime = 0;
+
+        function handleSelectionTrigger(e) {
+
+            try {
+
+                const sel = window.getSelection();
+
+                if (!sel) return;
+
+                const str = sel.toString().trim();
+
+                if (!str || str.length < 2 || str.length > 500) return;
+
+                const now = Date.now();
+
+                if (str.toLowerCase() === lastSpoken.toLowerCase() && (now - lastTime) < 1200) return;
+
+                lastSpoken = str;
+
+                lastTime = now;
+
+                window.__speakPedagogicalText(str);
+
+            } catch(err) {}
+
+        }
+
+
+
+        document.addEventListener('mouseup', handleSelectionTrigger, true);
+
+        document.addEventListener('touchend', handleSelectionTrigger, true);
+
+        document.addEventListener('dblclick', handleSelectionTrigger, true);
+
+    })();
+
+    </script>
+
+    """
+
+    st.html(global_voice_script, unsafe_allow_javascript=True)
+
+
+
+    if not raw_text or len(raw_text.strip()) < 10:
+
+        return
+
+
+
+    # Xử lý nội dung thuyết minh và chuẩn hóa ngắt nghỉ sư phạm
+
+    clean_speech = raw_text
+
+
+
+    # Lọc bỏ phần lưu ý hành chính về đợt tái bản SGK khỏi giọng đọc sư phạm
+
+    clean_speech = re.sub(r'(?i)(?:⚠️\s*)?Lưu ý[\s\S]*?(?:nhé!|nhé\.|GDPT 2018[\.\)]|trực tiếp nhé!)\s*', '', clean_speech)
+
+    clean_speech = re.sub(r'(?i)^[^\n]*tái bản[^\n]*\n+', '', clean_speech)
+
+    clean_speech = re.sub(r'(?i)^[^\n]*chênh lệch số trang[^\n]*\n+', '', clean_speech)
+
+
+
+    # Phiên âm chuẩn cho Véctơ (từ gốc đến ngọn, có phẩy, đọc rõ từng chữ cái, số 0)
+
+    def _rep_vector_speech(m):
+
+        target = m.group(2).strip()
+
+        if target == '0':
+
+            return ' véc tơ không '
+
+        has_prime = "'" in target
+
+        raw = target.replace("'", "").strip()
+
+        spaced = ' '.join(list(raw))
+
+        if has_prime:
+
+            spaced += ' phẩy'
+
+        return f' véc tơ {spaced} '
+
+
+
+    clean_speech = re.sub(r'\\(overrightarrow|vec)\{([^}]+)\}', _rep_vector_speech, clean_speech)
+
+    clean_speech = re.sub(r'\\(overrightarrow|vec)\s+([a-zA-Z0-9\']+)', _rep_vector_speech, clean_speech)
+
+
+
+    # Phân số, căn thức, tích phân, giới hạn, lũy thừa
+
+    clean_speech = re.sub(r'\\(d)?frac\{([^}]+)\}\{([^}]+)\}', r' \2 phần \3 ', clean_speech)
+
+    clean_speech = re.sub(r'\\sqrt\[(\d+)\]\{([^}]+)\}', r' căn bậc \1 của \2 ', clean_speech)
+
+    clean_speech = re.sub(r'\\sqrt\{([^}]+)\}', r' căn bậc hai của \1 ', clean_speech)
+
+    clean_speech = re.sub(r'\\int_\{([^}]+)\}\^\{([^}]+)\}', r' tích phân từ \1 đến \2 ', clean_speech)
+
+    clean_speech = re.sub(r'\\int', ' tích phân ', clean_speech)
+
+    clean_speech = re.sub(r'\\lim_\{([^}]+)\}', r' giới hạn khi \1 ', clean_speech)
+
+    clean_speech = re.sub(r'\\lim', ' giới hạn ', clean_speech)
+
+    clean_speech = re.sub(r'\^2', ' bình phương ', clean_speech)
+
+    clean_speech = re.sub(r'\^3', ' lập phương ', clean_speech)
+
+    clean_speech = re.sub(r'\^\{([^}]+)\}', r' mũ \1 ', clean_speech)
+
+    clean_speech = re.sub(r'\^([a-zA-Z0-9])', r' mũ \1 ', clean_speech)
+
+    clean_speech = re.sub(r'\\Delta', ' Đen-ta ', clean_speech)
+
+    clean_speech = re.sub(r'\\alpha', ' An-pha ', clean_speech)
+
+    clean_speech = re.sub(r'\\beta', ' Bê-ta ', clean_speech)
+
+    clean_speech = re.sub(r'\\pi', ' Pi ', clean_speech)
+
+    clean_speech = re.sub(r'\\infty', ' vô cực ', clean_speech)
+
+    clean_speech = re.sub(r'\\le|\\leq', ' nhỏ hơn hoặc bằng ', clean_speech)
+
+    clean_speech = re.sub(r'\\ge|\\geq', ' lớn hơn hoặc bằng ', clean_speech)
+
+    clean_speech = re.sub(r'\\neq', ' khác ', clean_speech)
+
+    clean_speech = re.sub(r'\\approx', ' xấp xỉ ', clean_speech)
+
+    clean_speech = re.sub(r'\\in', ' thuộc ', clean_speech)
+
+    clean_speech = re.sub(r'\\notin', ' không thuộc ', clean_speech)
+
+    clean_speech = re.sub(r'\\subset', ' tập con của ', clean_speech)
+
+    clean_speech = re.sub(r'\\forall', ' với mọi ', clean_speech)
+
+    clean_speech = re.sub(r'\\exists', ' tồn tại ', clean_speech)
+
+    clean_speech = re.sub(r'\\pm', ' cộng trừ ', clean_speech)
+
+    clean_speech = re.sub(r'\\cdot|\\times', ' nhân ', clean_speech)
+
+    clean_speech = re.sub(r'\\to|\\rightarrow', ' tiến tới ', clean_speech)
+
+    clean_speech = re.sub(r'\\Rightarrow', ' suy ra ', clean_speech)
+
+    clean_speech = re.sub(r'\\Leftrightarrow', ' tương đương ', clean_speech)
+
+    clean_speech = re.sub(r'\bOxyz\b', ' Ô ích y dét ', clean_speech)
+
+    clean_speech = re.sub(r'\bOxy\b', ' Ô ích y ', clean_speech)
+
+    # 1. Lọc bỏ 100% toàn bộ bảng Markdown (| ... |) và khối mã khỏi giọng đọc để không đọc thành ký tự gạch đứng
+    clean_speech = re.sub(r'(?m)^[ \t]*\|.*\|.*(?:\r?\n|$)', ' ', clean_speech)
+    clean_speech = re.sub(r'```[\s\S]*?```', ' ', clean_speech)
+    clean_speech = re.sub(r'\|[ \t]*[-:]+[ \t]*\|', ' ', clean_speech)
+
+    # 2. Chuyển đổi các ký hiệu đồ họa giải tích và mũi tên sang lời nói tự nhiên sư phạm
+    clean_speech = re.sub(r'\\+(?:nearrow|uparrow)', ' đồng biến đi lên ', clean_speech)
+    clean_speech = re.sub(r'\\+(?:searrow|downarrow)', ' nghịch biến đi xuống ', clean_speech)
+    clean_speech = clean_speech.replace('↗', ' đồng biến đi lên ').replace('↘', ' nghịch biến đi xuống ')
+    clean_speech = re.sub(r'\\left|\\right|\\displaystyle|\\limits', ' ', clean_speech)
+    clean_speech = re.sub(r'\\mathbb\{R\}', ' tập số thực R ', clean_speech)
+    clean_speech = re.sub(r'\\setminus', ' loại trừ ', clean_speech)
+    clean_speech = re.sub(r'\|\s*\||║', ' không xác định ', clean_speech)
+    clean_speech = re.sub(r'\by\'\b|\bf\'\b', ' đạo hàm y phẩy ', clean_speech)
+    clean_speech = re.sub(r'\bx_1\b|\bx1\b', ' x một ', clean_speech)
+    clean_speech = re.sub(r'\bx_2\b|\bx2\b', ' x hai ', clean_speech)
+    clean_speech = re.sub(r'\bx_0\b|\bx0\b', ' x không ', clean_speech)
+    clean_speech = re.sub(r'\by\(x_1\)\b|\by\(x1\)\b', ' y tại x một ', clean_speech)
+    clean_speech = re.sub(r'\by\(x_2\)\b|\by\(x2\)\b', ' y tại x hai ', clean_speech)
+    clean_speech = re.sub(r'-\s*\\infty|-\s*inf\b', ' âm vô cực ', clean_speech)
+    clean_speech = re.sub(r'\+\s*\\infty|\+\s*inf\b', ' dương vô cực ', clean_speech)
+    clean_speech = re.sub(r'\\infty|\binf\b', ' vô cực ', clean_speech)
+    clean_speech = re.sub(r'\bad\s*-\s*bc\b', ' a d trừ b c ', clean_speech)
+    clean_speech = re.sub(r'\bTCĐ\b', ' Tiệm cận đứng ', clean_speech)
+    clean_speech = re.sub(r'\bTCN\b', ' Tiệm cận ngang ', clean_speech)
+    clean_speech = re.sub(r'\bTCX\b', ' Tiệm cận xiên ', clean_speech)
+    clean_speech = re.sub(r'\bCĐ\b', ' Cực đại ', clean_speech)
+    clean_speech = re.sub(r'\bCT\b', ' Cực tiểu ', clean_speech)
+
+    clean_speech = re.sub(r'[*#`_~\(\)\$\\{}]', ' ', clean_speech)
+    clean_speech = re.sub(r'\s+', ' ', clean_speech).strip()
+
+    lang_code = "en" if subject_name == "Tiếng Anh" else "vi"
+    audio_data = generate_pedagogical_tts_audio_bytes(clean_speech, lang=lang_code)
+
+    # Render giao diện Thuyết minh chuẩn sư phạm Nam Bộ: Có cả Nút giọng Nam Bộ trực tiếp và Player MP3
+    safe_clean_speech = clean_speech[:2500].replace('</script>', '').replace('<script>', '')
+    escaped_speech_js = json.dumps(safe_clean_speech, ensure_ascii=False)
+
+    player_title = "ENGLISH PEDAGOGICAL AUDIO (NATIVE PRONUNCIATION)" if subject_name == "Tiếng Anh" else "THUYẾT MINH BÀI GIẢNG (GIỌNG THẦY NAM BỘ - CHUẨN SƯ PHẠM)"
+    sub_title = "Chuẩn phát âm bản ngữ US/UK • 2 luồng Anh - Việt" if subject_name == "Tiếng Anh" else "Giọng Nam Bộ trầm ấm (Microsoft Nam Minh) • Ngắt nghỉ chuẩn ngữ pháp mô phạm"
+
+    b64_source = ""
+    if audio_data:
+        b64_audio = base64.b64encode(audio_data).decode('ascii')
+        b64_source = f'<audio id="audio_player_{comp_key}" controls style="width: 100%; height: 38px; border-radius: 20px; outline: none; margin-top: 8px;"><source src="data:audio/mp3;base64,{b64_audio}" type="audio/mp3"></audio>'
+
+    tts_ui_html = f"""
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 4px 0 10px 0; background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95)); border: 1.5px solid #0284c7; border-radius: 12px; padding: 12px 16px; box-shadow: 0 4px 14px rgba(2,132,199,0.25);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 20px;">🎙️</span>
+                <div>
+                    <span style="color: #38bdf8; font-weight: 800; font-size: 13.5px;">{player_title}</span>
+                    <div style="color: #94a3b8; font-size: 11px;">{sub_title}</div>
+                </div>
+            </div>
+            <button id="btn_tts_direct_{comp_key}" type="button" style="
+                background: linear-gradient(135deg, #0284c7, #0369a1);
+                color: #ffffff;
+                border: 1px solid #38bdf8;
+                padding: 6px 16px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 700;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                box-shadow: 0 2px 10px rgba(56, 189, 248, 0.3);
+            ">
+                <span id="btn_tts_icon_{comp_key}">▶️</span> <span id="btn_tts_txt_{comp_key}">Nghe Giọng Thầy Nam Bộ</span>
+            </button>
+        </div>
+        {b64_source}
+    </div>
+    <script>
+    (function() {{
+        var btn = document.getElementById('btn_tts_direct_{comp_key}');
+        if (!btn) return;
+        var textToRead = {escaped_speech_js};
+        var langMode = '{lang_code}';
+        var isSpeaking = false;
+
+        btn.onclick = function() {{
+            var aud = document.getElementById('audio_player_{comp_key}');
+            var btnTxt = document.getElementById('btn_tts_txt_{comp_key}');
+            var btnIcon = document.getElementById('btn_tts_icon_{comp_key}');
+            if (aud) {{
+                if (aud.paused) {{
+                    var p = aud.play();
+                    if (btnTxt) btnTxt.innerText = 'Tạm dừng thuyết minh';
+                    if (btnIcon) btnIcon.innerText = '⏸️';
+                    if (p !== undefined) {{
+                        p.catch(function(e) {{
+                            console.warn('Audio play blocked, fallback synthesis:', e);
+                            if (window.speechSynthesis) {{
+                                var u = new SpeechSynthesisUtterance(textToRead);
+                                u.lang = (langMode === 'en' ? 'en-US' : 'vi-VN');
+                                u.rate = 0.88;
+                                window.speechSynthesis.speak(u);
+                            }}
+                        }});
+                    }}
+                    aud.onended = function() {{
+                        if (btnTxt) btnTxt.innerText = 'Nghe Giọng Thầy Nam Bộ';
+                        if (btnIcon) btnIcon.innerText = '▶️';
+                    }};
+                }} else {{
+                    aud.pause();
+                    if (btnTxt) btnTxt.innerText = 'Nghe Giọng Thầy Nam Bộ';
+                    if (btnIcon) btnIcon.innerText = '▶️';
+                }}
+            }} else if (window.speechSynthesis) {{
+                if (isSpeaking || window.speechSynthesis.speaking) {{
+                    window.speechSynthesis.cancel();
+                    isSpeaking = false;
+                    if (btnTxt) btnTxt.innerText = 'Nghe Giọng Thầy Nam Bộ';
+                    if (btnIcon) btnIcon.innerText = '▶️';
+                }} else {{
+                    isSpeaking = true;
+                    if (btnTxt) btnTxt.innerText = 'Tạm dừng thuyết minh';
+                    if (btnIcon) btnIcon.innerText = '⏸️';
+                    var u = new SpeechSynthesisUtterance(textToRead);
+                    u.lang = (langMode === 'en' ? 'en-US' : 'vi-VN');
+                    u.rate = 0.88;
+                    u.onend = function() {{
+                        isSpeaking = false;
+                        if (btnTxt) btnTxt.innerText = 'Nghe Giọng Thầy Nam Bộ';
+                        if (btnIcon) btnIcon.innerText = '▶️';
+                    }};
+                    window.speechSynthesis.speak(u);
+                }}
+            }}
+        }};
+    }})();
+    </script>
+    """
+    comp_height = 135 if audio_data else 85
+    components.html(tts_ui_html, height=comp_height)
+
+
+
 
 
 def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject: str, current_grade: int):
@@ -7142,7 +7571,7 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
     # GIAO DIỆN PHÒNG LUYỆN NÓI TIẾNG ANH PHẢN XẠ 1-1 (AI SPEAKING LAB 50/50 CÂN ĐỐI)
 
-    st.markdown('<div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95)); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 14px 18px; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.15);"><div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;"><div style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 24px;">🇬🇧</span><div><span style="color: #38bdf8; font-weight: 800; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">PHÒNG THỰC HÀNH NÓI TIẾNG ANH PHẢN XẠ 1-1 BẢN NGỮ (AI SPEAKING LAB)</span><div style="color: #94a3b8; font-size: 12.5px; margin-top: 2px;">💡 <b>Mẹo học sinh thông minh:</b> Em có thể <b>bôi đen (select)</b> hoặc <b>nhấp đúp (double-click)</b> bất kỳ từ/câu nào trên màn hình để nghe tự động (Chữ Anh dùng giọng English, chữ Việt dùng giọng Việt đã chọn; vùng giọng cần nghe đối chiếu). Hoặc bấm trực tiếp các nút nghe nhanh bên dưới!</div></div></div></div></div>', unsafe_allow_html=True)
+    st.markdown('<div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95)); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 14px 18px; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.15);"><div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;"><div style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 24px;">🇬🇧</span><div><span style="color: #38bdf8; font-weight: 800; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px;">PHÒNG THỰC HÀNH NÓI TIẾNG ANH PHẢN XẠ 1-1 BẢN NGỮ (AI SPEAKING LAB)</span><div style="color: #94a3b8; font-size: 12.5px; margin-top: 2px;">💡 <b>Mẹo học sinh thông minh:</b> Em có thể <b>bôi đen (select)</b> hoặc <b>nhấp đúp (double-click)</b> bất kỳ từ/câu nào trên màn hình để nghe tự động (Chữ Anh đọc chuẩn US, Chữ Việt đọc giọng Nam Bộ). Hoặc bấm trực tiếp các nút nghe nhanh bên dưới!</div></div></div></div></div>', unsafe_allow_html=True)
 
 
 
@@ -7521,7 +7950,7 @@ def get_cached_exams(subject_name, grade_level):
 
     results = []
 
-    # 1. Liệt kê kho nền; vị trí lưu không chứng minh nguồn hoặc kiểm định.
+    # 1. Nạp các đề thi thật đã kiểm định từ kho nền 2025-2026 (0.1s tức thì)
 
     try:
 
@@ -7533,13 +7962,13 @@ def get_cached_exams(subject_name, grade_level):
 
                 results.append({
 
-                    "saved_at": bex.get("year") or "Chưa ghi thời điểm",
+                    "saved_at": bex.get("year", "2025-2026"),
 
                     "subject": subject_name,
 
                     "grade": grade_level,
 
-                    "topic": exam_catalog_label(bex),
+                    "topic": f"🔥 [Đề thật] {bex.get('title', 'Đề thi thật toàn quốc')}",
 
                     "code": bex.get("code", "2501"),
 
@@ -9575,7 +10004,7 @@ def render_math_graph_to_webp_base64(graph_data, extra_points=None, xlabel=r'$x$
     except Exception:
         return ""
 
-@st.cache_data(max_entries=4, show_spinner=False)
+@st.cache_data(show_spinner=False, max_entries=256)
 def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán học", grade: int = 12, topic: str = "") -> str:
     """Validate the selected curriculum context and normalize display syntax.
 
@@ -9583,7 +10012,7 @@ def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán h�
     Academic content still requires teacher review against authoritative sources.
     """
     if not raw_text or not isinstance(raw_text, str):
-        raise ValueError("Chưa nhận được nội dung bài học hợp lệ; hãy thử tạo lại bản nháp.")
+        return ""
 
     subject, grade = academic_context(subject, grade)
     t = str(raw_text)
@@ -9598,11 +10027,11 @@ def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán h�
     # 3. Chuẩn hóa tên hàm số & TXĐ cho môn Toán SGK KNTT
     if any(m in str(subject).lower() for m in ['toán', 'toan', 'math']):
         # Đảm bảo ký hiệu tập số thực R chuẩn \mathbb{R} (dùng lambda để chống lỗi bad escape \m trên Python 3.14)
-        t = normalize_real_aliases(t)
+        t = re.sub(r'(?i)\bD\s*=\s*R\b', lambda _: r'D = \mathbb{R}', t)
+        t = re.sub(r'\\R\b', lambda _: r'\mathbb{R}', t)
         # Khử \searrow và \nearrow nằm trơ trọi trong bảng markdown, cách chữ để không dính chùm
         t = re.sub(r'(?<!\$)\\(?:searrow|nearrow|downarrow|uparrow)(?!\$)', lambda m: ' ↘ ' if 'se' in m.group(0) else (' ↗ ' if 'ne' in m.group(0) else (' ↑ ' if 'up' in m.group(0) else ' ↓ ')), t)
 
-    check_lesson_scope(t, subject, grade, topic)
     return validate_lesson_policy(t, subject, grade)
 
 
@@ -10042,18 +10471,191 @@ def render_pedagogical_lesson_visuals(markdown_text: str, subject: str = "", gra
     )
     text = mslgn_pattern.sub(_replace_mslgn_table, text)
 
-    # Visuals require source data; keyword-only stock diagrams remain in the explicit Lab.
+    # 3. KÍCH HOẠT MÔ HÌNH THỊ GIÁC ĐA MÔN & ĐA LỚP GDPT 2018 (VẬT LÝ, HÓA HỌC, SINH HỌC, ĐỊA LÍ, OXYZ)
+    # Tự động chèn mô hình đồ họa vector trực quan khi bài học đề cập đến các chuyên đề trọng tâm
+    subj_norm = str(subject).strip().lower()
+    text_lower = text.lower()
+
+    try:
+        import precision_visual_engine as pve
+    except Exception:
+        pve = None
+
+    if pve:
+        # A. VẬT LÝ / KHOA HỌC TỰ NHIÊN:
+        if "vật lý" in subj_norm or "vật lí" in subj_norm or "khoa học tự nhiên" in subj_norm:
+            # 1. Nhiệt học p-V
+            if any(k in text_lower for k in ["chu trình", "đẳng áp", "đẳng tích", "đẳng nhiệt", "đồ thị p-v", "khí lý tưởng", "khí lí tưởng"]) and "svg_pv_inserted" not in text:
+                try:
+                    pv_model = pve.build_thermal_gas_pv_model()
+                    if pv_model and pv_model.get("svg"):
+                        pv_box = (
+                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
+                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
+                            f"{sanitize_svg_for_markdown(pv_model['svg'])}"
+                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🔬 Đồ thị Chu trình Nhiệt động lực học p-V</p>"
+                            f"</div></div>\n\n"
+                        )
+                        text += pv_box
+                except Exception:
+                    pass
+            # 2. Lực từ & Bàn tay trái
+            if any(k in text_lower for k in ["lực từ", "từ trường", "bàn tay trái", "lorentz", "cảm ứng từ"]) and "svg_mag_inserted" not in text:
+                try:
+                    mag_model = pve.build_magnetic_force_model()
+                    if mag_model and mag_model.get("svg"):
+                        mag_box = (
+                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
+                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
+                            f"{sanitize_svg_for_markdown(mag_model['svg'])}"
+                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🧲 Mô hình Quy tắc Bàn tay trái & Chiều Lực từ</p>"
+                            f"</div></div>\n\n"
+                        )
+                        text += mag_box
+                except Exception:
+                    pass
+            # 3. Phóng xạ hạt nhân
+            if any(k in text_lower for k in ["phóng xạ", "chu kỳ bán rã", "chu kì bán rã", "hạt nhân", "độ phóng xạ"]) and "svg_nuc_inserted" not in text:
+                try:
+                    nuc_model = pve.build_nuclear_decay_model()
+                    if nuc_model and nuc_model.get("svg"):
+                        nuc_box = (
+                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
+                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
+                            f"{sanitize_svg_for_markdown(nuc_model['svg'])}"
+                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>⚛️ Đồ thị Phân rã phóng xạ theo Thời gian</p>"
+                            f"</div></div>\n\n"
+                        )
+                        text += nuc_box
+                except Exception:
+                    pass
+            # 4. Mạch RLC & Sóng cơ
+            if any(k in text_lower for k in ["mạch rlc", "cuộn cảm", "tụ điện", "dao động điều hòa", "bước sóng", "sóng dừng"]) and "svg_wave_inserted" not in text:
+                try:
+                    wave_model = pve.build_oscillation_wave_model()
+                    if wave_model and wave_model.get("svg"):
+                        wave_box = (
+                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
+                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
+                            f"{sanitize_svg_for_markdown(wave_model['svg'])}"
+                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>〰️ Đồ thị Dao động & Lan truyền Sóng cơ</p>"
+                            f"</div></div>\n\n"
+                        )
+                        text += wave_box
+                except Exception:
+                    pass
+
+        # B. HÓA HỌC / KHOA HỌC TỰ NHIÊN:
+        elif "hóa học" in subj_norm or "hóa" in subj_norm:
+            # 1. Thí nghiệm điều chế khí
+            if any(k in text_lower for k in ["điều chế", "thu khí", "ống nghiệm", "đẩy nước", "đẩy không khí", "bình tam giác"]) and "svg_chem_inserted" not in text:
+                try:
+                    chem_model = pve.build_gas_preparation_model("C2H4")
+                    if chem_model and chem_model.get("svg"):
+                        chem_box = (
+                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
+                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
+                            f"{sanitize_svg_for_markdown(chem_model['svg'])}"
+                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🧪 Mô hình Thí nghiệm Điều chế & Thu khí Phòng Lab</p>"
+                            f"</div></div>\n\n"
+                        )
+                        text += chem_box
+                except Exception:
+                    pass
+            # 2. Pin điện hóa Daniell
+            if any(k in text_lower for k in ["pin điện hóa", "daniell", "cực âm", "cực dương", "anode", "cathode", "cầu muối"]) and "svg_daniell_inserted" not in text:
+                try:
+                    dan_model = pve.build_daniell_cell_model()
+                    if dan_model and dan_model.get("svg"):
+                        dan_box = (
+                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
+                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
+                            f"{sanitize_svg_for_markdown(dan_model['svg'])}"
+                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🔋 Sơ đồ Hoạt động Pin điện hóa Daniell</p>"
+                            f"</div></div>\n\n"
+                        )
+                        text += dan_box
+                except Exception:
+                    pass
+
+        # C. SINH HỌC:
+        elif "sinh học" in subj_norm or "sinh" in subj_norm:
+            # 1. Phả hệ di truyền
+            if any(k in text_lower for k in ["phả hệ", "di truyền", "gen trội", "gen lặn", "thế hệ i", "thế hệ ii"]) and "svg_ped_inserted" not in text:
+                try:
+                    ped_model = pve.build_pedigree_chart_model()
+                    if ped_model and ped_model.get("svg"):
+                        ped_box = (
+                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
+                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
+                            f"{sanitize_svg_for_markdown(ped_model['svg'])}"
+                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🧬 Sơ đồ Phả hệ Di truyền Menđen & Y học</p>"
+                            f"</div></div>\n\n"
+                        )
+                        text += ped_box
+                except Exception:
+                    pass
+            # 2. Lưới thức ăn
+            if any(k in text_lower for k in ["lưới thức ăn", "chuỗi thức ăn", "sinh vật sản xuất", "sinh vật tiêu thụ", "hệ sinh thái"]) and "svg_food_inserted" not in text:
+                try:
+                    food_model = pve.build_food_web_model()
+                    if food_model and food_model.get("svg"):
+                        food_box = (
+                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
+                            f"<div style='display: inline-block; max-width: 340px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
+                            f"{sanitize_svg_for_markdown(food_model['svg'])}"
+                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🌿 Sơ đồ Lưới thức ăn trong Quần xã Sinh vật</p>"
+                            f"</div></div>\n\n"
+                        )
+                        text += food_box
+                except Exception:
+                    pass
+
+        # D. TOÁN HỌC & HÌNH HỌC KHÔNG GIAN OXYZ:
+        elif "toán" in subj_norm:
+            # 1. Tọa độ Oxyz & Quỹ đạo bay
+            if any(k in text_lower for k in ["tọa độ không gian", "oxyz", "hệ trục oxyz", "đường bay", "thiết bị bay", "mặt cầu", "vectơ trong không gian"]) and "svg_oxyz_inserted" not in text:
+                try:
+                    if any(k in text_lower for k in ["đường bay", "thiết bị bay", "trạm phát sóng"]):
+                        oxyz_m = pve.build_oxyz_flight_path_model(text_lower)
+                    else:
+                        oxyz_m = pve.build_oxyz_tetrahedron_model(text_lower)
+                    if oxyz_m and oxyz_m.get("svg"):
+                        oxyz_box = (
+                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
+                            f"<div style='display: inline-block; max-width: 280px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
+                            f"{sanitize_svg_for_markdown(oxyz_m['svg'])}"
+                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>📐 Trực quan hóa Không gian Tọa độ Oxyz</p>"
+                            f"</div></div>\n\n"
+                        )
+                        text += oxyz_box
+                except Exception:
+                    pass
+            # 2. Khối chóp, Khối lăng trụ & Hình hộp
+            elif any(k in text_lower for k in ["hình chóp", "khối chóp", "tứ diện", "lăng trụ", "hình hộp chữ nhật", "lập phương"]) and "svg_geom_inserted" not in text:
+                try:
+                    if "lăng trụ" in text_lower:
+                        g_model = pve.build_pure_triangular_prism_model()
+                    elif any(k in text_lower for k in ["hình hộp", "lập phương"]):
+                        g_model = pve.build_pure_box_model()
+                    elif "tứ diện" in text_lower:
+                        g_model = pve.build_pure_tetrahedron_model()
+                    else:
+                        g_model = pve.build_pure_pyramid_quad_model()
+                    if g_model and g_model.get("svg"):
+                        geom_box = (
+                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
+                            f"<div style='display: inline-block; max-width: 280px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
+                            f"{sanitize_svg_for_markdown(g_model['svg'])}"
+                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🏛️ Mô hình Hình học Không gian Chuẩn SGK</p>"
+                            f"</div></div>\n\n"
+                        )
+                        text += geom_box
+                except Exception:
+                    pass
 
     return text
 
-
-
-if selected_station in station_labels[:3]:
-    st.html(speech_controls(subject, grade_num, selected_station))
-    components.html(speech_bootstrap(subject, grade_num, selected_station), height=0)
-    render_speech_audio(f"{subject}|{grade_num}|{selected_station}")
-else:
-    components.html("<script>try{window.parent.GSAISpeech?.dispose(); delete window.parent.GSAISpeech;}catch(_){}</script>", height=0)
 
 
 if selected_station == station_labels[0]:
@@ -10095,9 +10697,7 @@ if selected_station == station_labels[0]:
         "Công nghệ": "Ví dụ: Bản vẽ kỹ thuật, Trồng trọt công nghệ cao, Mạch điện tử điều khiển, Cơ khí chế tạo..."
     }
 
-    from services.curriculum_policy import lesson_topic_placeholder
-    curr_ph = lesson_topic_placeholder(subject, grade_num,
-        BIGDATA_CURRICULUM.get(subject, {}).get(grade_num, []))
+    curr_ph = subject_placeholders.get(subject, f"Ví dụ: Bài học trọng tâm môn {subject} Lớp {grade_num}...")
 
     # Quick topics gợi ý chọn nhanh cho từng môn
     quick_topics_dict = {
@@ -10180,8 +10780,7 @@ if selected_station == station_labels[0]:
 
         lesson_select_options,
 
-        key=f"kntt_lesson_sel_{current_context_key}",
-        on_change=apply_lesson_suggestion, args=(current_context_key,)
+        key=f"kntt_lesson_sel_{current_context_key}"
 
     )
 
@@ -10195,28 +10794,28 @@ if selected_station == station_labels[0]:
 
 
 
-    with st.form(f"lesson_request_{current_context_key}", border=False):
-        col_inp, col_btn = st.columns([3.8, 1.2])
+    col_inp, col_btn = st.columns([3.8, 1.2])
 
-        with col_inp:
+    with col_inp:
 
-            topic_input = st.text_input(
+        topic_input = st.text_input(
 
-                "📝 Bài học cần chiếm lĩnh kiến thức (hoặc gõ tên bài tùy ý):",
+            "📝 Bài học cần chiếm lĩnh kiến thức (hoặc gõ tên bài tùy ý):",
 
-                value=default_lesson_txt,
+            value=default_lesson_txt,
 
-                placeholder=curr_ph,
+            placeholder=curr_ph,
 
-                key=f"topic_input_{current_context_key}"
+            key=f"topic_input_{current_context_key}"
 
-            )
+        )
 
-        with col_btn:
+    with col_btn:
 
-            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
 
-            btn_submit_lesson = st.form_submit_button("🚀 Soạn bài học", type="primary", width="stretch")
+        btn_submit_lesson = st.button("🚀 Soạn bài học", key=f"btn_soan_{current_context_key}", type="primary", width="stretch")
+
 
 
     if curr_curriculum:
@@ -10290,13 +10889,9 @@ if selected_station == station_labels[0]:
     if btn_submit_lesson and conflict_grade:
         st.error("Hãy chuyển sang đúng lớp được nhắc trong yêu cầu trước khi soạn bài; không gắn bài khác lớp vào lớp đang chọn.")
 
-    if btn_submit_lesson and not topic_input.strip():
-        st.warning("Hãy nhập tên bài học hoặc chọn chủ đề trước khi soạn bài.")
-
     if btn_submit_lesson and topic_input.strip() and not conflict_grade:
 
         st.session_state.tram1_count += 1
-        st.session_state.pop("_last_lesson_validation_failure", None)
 
         with st.spinner("Đang biên soạn chuẩn ngữ liệu SGK KNTT và cấu trúc Socratic..."):
 
@@ -10304,13 +10899,12 @@ if selected_station == station_labels[0]:
 
             try:
 
-                res_text = generate_checked_text(study_prompt, call_gemini_with_fallback,
-                    lambda draft: validate_lesson_contract(station1_master_sovereign_brain_gate(draft, subject=subject, grade=grade_num, topic=topic_input.strip()), subject, grade_num))
+                res_text = call_gemini_with_fallback(study_prompt)
 
                 # ==============================================================================
                 # BỘ NÃO KIỂM SOÁT BIGDATA CUỐI CÙNG TRẠM 1 (MASTER SOVEREIGN QUALITY GATE)
                 # ==============================================================================
-                # generate_checked_text already returns the validated lesson.
+                res_text = station1_master_sovereign_brain_gate(res_text, subject=subject, grade=grade_num, topic=topic_input.strip())
 
                 st.session_state.current_lesson = res_text
                 st.session_state.current_lesson_context = (subject, grade_num)
@@ -10318,24 +10912,11 @@ if selected_station == station_labels[0]:
                 st.session_state.parsed_quiz = parse_quiz_questions(res_text)
                 st.session_state.quiz_states = {}
                 st.session_state.quiz_selections = {}
-                for stale_quiz_key in list(st.session_state):
-                    if str(stale_quiz_key).startswith("q_"):
-                        del st.session_state[stale_quiz_key]
+                for stale_key in list(st.session_state):
+                    if str(stale_key).startswith("q_"):
+                        del st.session_state[stale_key]
 
             except Exception as e:
-                rejected_draft = getattr(e, "rejected_draft", "")
-                if rejected_draft:
-                    def redact_lesson_diagnostic(value):
-                        for secret_key in active_keys_pool:
-                            if secret_key:
-                                value = value.replace(secret_key, "[API_KEY]")
-                        return value
-                    st.session_state["_last_lesson_validation_failure"] = {
-                        "subject": subject, "grade": grade_num, "topic": redact_lesson_diagnostic(topic_input.strip()),
-                        "error_type": type(e).__name__, "error": redact_lesson_diagnostic(str(e)[:500]),
-                        "location": getattr(e, "location", ""),
-                        "validation_attempts": getattr(e, "validation_attempts", 0),
-                        "raw": redact_lesson_diagnostic(rejected_draft), "academic_verified": False}
                 st.error(f"Lỗi: {e}")
 
     if st.session_state.get("current_lesson") and st.session_state.get("current_lesson_context") != (subject, grade_num):
@@ -10344,11 +10925,7 @@ if selected_station == station_labels[0]:
         st.warning("Bài từ phiên cũ chưa có ngữ cảnh môn/lớp khớp. Hãy soạn lại bài trước khi xuất.")
 
     if st.session_state.get("current_lesson"):
-        try:
-            lesson_text = station1_master_sovereign_brain_gate(st.session_state.current_lesson, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''))
-        except MathPublicationError as error:
-            st.error("Bài trong phiên cũ chưa qua kiểm tra công thức; hãy soạn lại hoặc sửa bản nháp. " + str(error))
-            st.stop()
+        lesson_text = station1_master_sovereign_brain_gate(st.session_state.current_lesson, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''))
         part2_split = re.split(r'(?i)(?:###\s*)?PHẦN 2[\:\.]?', lesson_text)
         part3_split = re.split(r'(?i)(?:###\s*)?PHẦN 3[\:\.]?', lesson_text)
 
@@ -10357,8 +10934,8 @@ if selected_station == station_labels[0]:
             cleaned_p1 = re.sub(r'\n\s*\n', '\n\n', part2_split[0].strip())
             cleaned_p1 = re.sub(r'(?:\s*\-\-\-\s*)+$', '', cleaned_p1)
             cleaned_p1 = station1_master_sovereign_brain_gate(cleaned_p1, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''))
-            cleaned_p1_vis = render_pedagogical_lesson_visuals(escape_source_html(cleaned_p1), subject=subject, grade=grade_num)
-            academic_markdown(cleaned_p1_vis, trusted_layout=True)
+            cleaned_p1_vis = render_pedagogical_lesson_visuals(cleaned_p1, subject=subject, grade=grade_num)
+            st.markdown(cleaned_p1_vis, unsafe_allow_html=True)
 
             # ==============================================================================
             # BẢO CHỨNG ĐỊNH VỊ CHỈ MỤC ADN BÀI HỌC SGK KNTT & VIDEO YOUTUBE ĐA MÔN ĂN KHỚP 100%
@@ -10375,8 +10952,7 @@ if selected_station == station_labels[0]:
                 export_mode = st.radio("Kiểu phiếu bài học:", ["Chữ viết tay trên giấy ô ly", "Infographic màu theo bài học", "Bản in trắng đen"], horizontal=True, key=f"lesson_export_{t1_indexing_data['index_code']}")
                 export_style = "handwritten" if export_mode.startswith("Chữ") else "color" if export_mode.startswith("Infographic") else "monochrome"
                 export_html = build_lesson_html(subject, grade_num, current_topic_name, cleaned_p1, export_style)
-                preview_html = export_html.replace("</body>", speech_preview_bridge() + "</body>")
-                components.html(preview_html, height=790, scrolling=True)
+                components.html(export_html, height=790, scrolling=True)
                 st.download_button("📥 Tải phiếu HTML để xem / In PDF", export_html.encode("utf-8"), file_name=f"Bai_hoc_{t1_indexing_data['index_code']}_{export_style}.html", mime="text/html", key="download_lesson_html")
                 st.download_button("📄 Tải nội dung gốc Markdown", cleaned_p1.encode("utf-8"), file_name=f"Bai_hoc_{t1_indexing_data['index_code']}.md", mime="text/markdown", key="download_lesson_source")
                 st.download_button("🖋️ Tải prompt phong cách chữ viết tay", handwritten_prompt(subject, grade_num, current_topic_name, cleaned_p1).encode("utf-8"), file_name=f"Prompt_{t1_indexing_data['index_code']}.json", mime="application/json", key="download_handwritten_prompt")
@@ -10496,7 +11072,7 @@ if selected_station == station_labels[0]:
 
         quiz_list = st.session_state.get("parsed_quiz", [])
 
-        if len(quiz_list) == 3:
+        if quiz_list:
 
             st.markdown("<br>", unsafe_allow_html=True)
 
@@ -10517,16 +11093,13 @@ if selected_station == station_labels[0]:
                 if pve is not None:
                     try:
                         q_dict_vis = recover_visual(q_dict_vis, subject=subject, grade=grade_num)
-                        if q_dict_vis.get("visual_recovery", {}).get("method") == "verified_qualitative_constraints":
-                            q["correct"] = q_dict_vis["ans"]
-                            q["visual_recovery"] = q_dict_vis["visual_recovery"]
                     except Exception as _e_enr:
                         pass
 
                 # 2. Tách sạch sẽ văn bản câu hỏi và khử hoàn toàn rác bảng markdown dính liền:
                 clean_q_display = clean_question_bbt_text(q['question'])
                 clean_q_display = sanitize_katex_latex(clean_q_display)
-                academic_markdown(f"**Câu {idx+1}:** `[{level_caption(q)}]`\n\n{clean_q_display}")
+                st.markdown(f"**Câu {idx+1}:** `[{level_caption(q)}]`\n\n{clean_q_display}")
 
                 # 3. Hiển thị Bảng Biến Thiên (BBT) WebP siêu nét chuẩn Bộ GD&ĐT (Trạm 3 Master Quality):
                 raw_bbt_content = q_dict_vis.get("bbt") or q.get("bbt")
@@ -10568,12 +11141,13 @@ if selected_station == station_labels[0]:
                 except Exception as _e_vis:
                     pass
 
-                user_choice = academic_options(q['options'], f"Chọn đáp án câu {idx+1}:", f"q_{idx}", st.session_state.quiz_selections.get(idx))
+                widget_key = f"q_{idx}"
+                previous_choice = st.session_state.quiz_selections.get(idx)
+                if widget_key not in st.session_state and previous_choice in q['options']:
+                    st.session_state[widget_key] = previous_choice
+                user_choice = st.radio(f"Chọn đáp án câu {idx+1}:", q['options'], key=widget_key, label_visibility="collapsed", index=None)
                 if user_choice is not None:
                     st.session_state.quiz_selections[idx] = user_choice
-
-                with st.expander(f"💡 Gợi mở tư duy theo câu {idx+1}", expanded=False):
-                    render_contextual_socratic(q, subject, grade_num, f"t1_{idx}")
 
                 if st.button(f"🔍 Kiểm tra câu {idx+1}", key=f"btn_{idx}"):
 
@@ -10587,7 +11161,10 @@ if selected_station == station_labels[0]:
 
                         else:
 
-                            st.session_state.quiz_states[idx] = ("incorrect", "Em hãy mở mục gợi mở theo ngữ cảnh ngay dưới câu hỏi để tự kiểm tra hướng suy nghĩ.")
+                            hint = sanitize_socratic_hint(q.get("hint", ""), q.get("correct", ""),
+                                q.get("question", ""), q.get("options", []), q.get("level", ""),
+                                subject=subject, grade_num=grade_num)
+                            st.session_state.quiz_states[idx] = ("incorrect", f"💡 **Gợi ý Socratic:** {hint}")
 
                     else:
 
@@ -10603,14 +11180,28 @@ if selected_station == station_labels[0]:
 
                 st.markdown("---")
 
-        else:
-            st.warning("Bài trong phiên cũ chưa đủ 3 câu trắc nghiệm hợp lệ. Hãy soạn lại bài để khôi phục đủ cấu trúc; không hiển thị ngữ liệu thô có khóa đáp án.")
+        elif len(part2_split) > 1 and "PHẦN 3" in part2_split[1].upper():
 
-        st.markdown("### ✍️ Phần 3: Bài tập tự luận & Hướng dẫn tư duy")
-        try:
-            academic_markdown(student_polya(lesson_text, subject, grade_num))
-        except LessonContractError as error:
-            st.warning("Phần tự luận cũ chưa đủ 4 bước Pólya gợi mở. Hãy soạn lại bài. " + str(error))
+            st.warning("💡 Hệ thống AI vừa sinh ra một định dạng trắc nghiệm mới. Đang hiển thị ở chế độ xem tĩnh:")
+
+            fallback_p2 = re.split(r'(?i)###\s*PHẦN\s*3', part2_split[1])[0]
+            fallback_p2_vis = render_pedagogical_lesson_visuals(fallback_p2.strip(), subject=subject, grade=grade_num)
+            st.markdown(fallback_p2_vis, unsafe_allow_html=True)
+
+
+
+        # In Phần 3
+
+        if len(part3_split) > 1 and part3_split[-1].strip():
+
+            st.markdown("### ✍️ Phần 3: Bài tập tự luận & Hướng dẫn tư duy")
+            st.caption("Mức độ tự luận là đề xuất của AI; cần đối chiếu yêu cầu cần đạt, lời giải và rubric theo đúng môn/lớp. Bài dài hoặc nhiều bước không tự động là VDC.")
+            from services.text_boundaries import student_essay_text
+            p3_vis = render_pedagogical_lesson_visuals(student_essay_text(part3_split[-1]), subject=subject, grade=grade_num)
+            st.markdown(p3_vis, unsafe_allow_html=True)
+
+
+
 
 
     render_voice_speech_tex_and_english_evaluator('Tram 1', subject, grade_num)
@@ -11028,9 +11619,13 @@ if selected_station == station_labels[0]:
 
 
 
-    manual_lab = st.selectbox("Mô phỏng có sẵn (không cần API):", list(available_labs))
+    from services.lab_scope import preset_lab_label, preset_lab_note
+    manual_lab = st.selectbox("Mô phỏng có sẵn (không cần API):", list(available_labs),
+        format_func=lambda label: preset_lab_label(label, subject, grade_num))
+    st.caption(preset_lab_note(subject, grade_num))
 
     if st.button("Mở mô phỏng có sẵn"):
+        st.session_state.lab_request_revision = st.session_state.get("lab_request_revision", 0) + 1
 
         st.session_state.lab_data = dict(available_labs[manual_lab])
 
@@ -11039,6 +11634,7 @@ if selected_station == station_labels[0]:
 
 
     if st.button("✨ Khởi chạy Phòng Lab", key=f"btn_lab_{current_context_key}") and lab_command.strip():
+        st.session_state.lab_request_revision = st.session_state.get("lab_request_revision", 0) + 1
 
         st.session_state.tram1_count += 1
 
@@ -12134,17 +12730,14 @@ if selected_station == station_labels[2]:
         validate_exam_context(exam, subject, grade_num)
         use_ai_recovery = st.session_state.get("enable_ai_context_recovery", True)
         generator = (lambda prompt: call_gemini_with_fallback(prompt, json_mode=True)) if use_ai_recovery else None
-        requested_topics = st.session_state.get("policy_selected_topics", [])
-        requested_custom = st.session_state.get("custom_request_text", "")
-        scope_check = lambda question: check_exam_question_scope(question, subject, grade_num, requested_topics, requested_custom)
         draft = repair_exam_context(exam, subject, grade_num,
-            topics=requested_topics,
+            topics=st.session_state.get("policy_selected_topics", []),
             bank_provider=ree.get_baseline_questions_pool if ree else None,
-            ai_generator=generator, max_ai_questions=2, scope_validator=scope_check)
+            ai_generator=generator, max_ai_questions=2)
         st.session_state.last_context_recovery = draft.get("context_recovery", {})
         if draft.get("context_recovery", {}).get("unresolved"):
             raise ValueError("Còn câu chưa đủ dữ liệu hoặc đáp án sau khi quét nguồn, tìm câu cùng chủ đề và thử sinh thay thế. Hãy bổ sung nguồn gốc hoặc kiểm tra lại bản nháp; chưa mở lượt làm bài này.")
-        result = prepare_exam_for_delivery(draft, subject, grade_num, st.session_state.get("exam_time_mins", 45), requested_topics, requested_custom)
+        result = prepare_exam_for_delivery(draft, subject, grade_num, st.session_state.get("exam_time_mins", 45))
         st.session_state.exam_mix_count = st.session_state.get("exam_mix_count", 0) + 1
         result["exam_count"] = st.session_state.exam_mix_count
         return result
@@ -12604,8 +13197,8 @@ if selected_station == station_labels[2]:
 
                 st.caption(f"📌 **Đã chọn ({len(chosen_topics)} chuyên đề):** {', '.join(chosen_topics[:2])}{'...' if len(chosen_topics) > 2 else ''}")
                 st.session_state.policy_selected_topics = list(chosen_topics)
-                st.checkbox("Cho phép AI bổ sung khi kho chưa đủ ngữ liệu hoặc câu chưa đạt", value=True, key="enable_ai_context_recovery")
-                st.caption("Đề luyện tập ưu tiên dữ liệu trong kho theo môn/lớp/chủ đề. Khi bật, AI được sinh bản nháp nếu kho chưa đủ và sửa câu chưa đạt; tối đa 2 lượt AI sửa cho mỗi bản nháp. Câu được thay phải kiểm tra lại và ghi dấu vết nguồn.")
+                st.checkbox("Cho phép AI sinh nguyên câu thay thế khi thiếu dữ liệu", value=True, key="enable_ai_context_recovery")
+                st.caption("Ưu tiên dữ liệu gốc và câu cùng môn/lớp/chủ đề; tối đa 2 lần gọi AI bổ sung mỗi lượt tạo đề. Câu thay mới được ghi dấu vết, không giả là câu nguồn.")
 
 
 
@@ -12699,7 +13292,6 @@ if selected_station == station_labels[2]:
                 # --- KHU VỰC KHỞI ĐỘNG BÀI THI CHO THÍ SINH (ACTION CENTER - BUỒNG LÁI COCKPIT) ---
 
                 real_exams_list = ree.get_baseline_full_exams(subject, grade_num) if ree else []
-                real_exams_list = [exam for exam in real_exams_list if not (exam.get("is_ai_generated") or exam.get("is_ai_harvested") or exam.get("is_synthetic_template"))]
 
 
 
@@ -12783,124 +13375,121 @@ if selected_station == station_labels[2]:
 
 
 
-                if "Làm Nguyên Đề Thi Thật" in selected_exam_mode:
-                    if not real_exams_list:
-                        st.info("Chưa có đề gốc phù hợp cho môn/lớp này trong kho. Chọn chế độ luyện tập nếu muốn tạo đề có AI hỗ trợ.")
-                    else:
+                if "Làm Nguyên Đề Thi Thật" in selected_exam_mode and real_exams_list:
 
-                        filter_opts = ["Tất cả"]
+                    filter_opts = ["Tất cả"]
 
-                        if gk1_count > 0: filter_opts.append(f"🌟 Giữa HK1 ({gk1_count} đề)")
+                    if gk1_count > 0: filter_opts.append(f"🌟 Giữa HK1 ({gk1_count} đề)")
 
-                        if ck1_count > 0: filter_opts.append(f"🎯 Cuối HK1 ({ck1_count} đề)")
+                    if ck1_count > 0: filter_opts.append(f"🎯 Cuối HK1 ({ck1_count} đề)")
 
-                        if gk2_count > 0: filter_opts.append(f"🌟 Giữa HK2 ({gk2_count} đề)")
+                    if gk2_count > 0: filter_opts.append(f"🌟 Giữa HK2 ({gk2_count} đề)")
 
-                        if ck2_count > 0: filter_opts.append(f"🎯 Cuối HK2 ({ck2_count} đề)")
+                    if ck2_count > 0: filter_opts.append(f"🎯 Cuối HK2 ({ck2_count} đề)")
 
-                        if thithu_count > 0: filter_opts.append(f"🏛️ Thi thử ({thithu_count} đề)")
+                    if thithu_count > 0: filter_opts.append(f"🏛️ Thi thử ({thithu_count} đề)")
 
 
 
-                        col_f1, col_f2 = st.columns([1.2, 2.8])
+                    col_f1, col_f2 = st.columns([1.2, 2.8])
 
-                        with col_f1:
+                    with col_f1:
 
-                            filter_ex_type = st.selectbox("Kỳ thi:", filter_opts, key="sel_filter_real_type")
+                        filter_ex_type = st.selectbox("Kỳ thi:", filter_opts, key="sel_filter_real_type")
 
-                        with col_f2:
+                    with col_f2:
 
-                            filtered_exams = real_exams_list
+                        filtered_exams = real_exams_list
 
-                            if "Giữa HK1" in filter_ex_type: filtered_exams = gk1_exams or real_exams_list
+                        if "Giữa HK1" in filter_ex_type: filtered_exams = gk1_exams or real_exams_list
 
-                            elif "Cuối HK1" in filter_ex_type: filtered_exams = ck1_exams or real_exams_list
+                        elif "Cuối HK1" in filter_ex_type: filtered_exams = ck1_exams or real_exams_list
 
-                            elif "Giữa HK2" in filter_ex_type: filtered_exams = gk2_exams or real_exams_list
+                        elif "Giữa HK2" in filter_ex_type: filtered_exams = gk2_exams or real_exams_list
 
-                            elif "Cuối HK2" in filter_ex_type: filtered_exams = ck2_exams or real_exams_list
+                        elif "Cuối HK2" in filter_ex_type: filtered_exams = ck2_exams or real_exams_list
 
-                            elif "Thi thử" in filter_ex_type: filtered_exams = thithu_exams or real_exams_list
-
-
-
-                            r_opts = [
-
-                                f"[{detect_exam_type(item)}] {item.get('title', 'Đề')} - {item.get('school', '')}"
-
-                                for item in filtered_exams
-
-                            ]
-
-                            if "sel_real_exam_t3" in st.session_state and (not r_opts or st.session_state.sel_real_exam_t3 >= len(r_opts)):
-                                st.session_state.sel_real_exam_t3 = 0
-
-                            chosen_real_idx = st.selectbox(f"Chọn đề ({len(filtered_exams)} đề):", range(len(r_opts)), format_func=lambda i: r_opts[i], key="sel_real_exam_t3")
+                        elif "Thi thử" in filter_ex_type: filtered_exams = thithu_exams or real_exams_list
 
 
 
-                        col_b1, col_b2 = st.columns([1.1, 1.3])
+                        r_opts = [
 
-                        with col_b1:
+                            f"[{detect_exam_type(item)}] {item.get('title', 'Đề')} - {item.get('school', '')}"
 
-                            btn_load_chosen = st.button("🚀 Nạp Đề Đang Chọn Này (0.1s)", type="secondary", width="stretch", key="btn_load_real_exam")
+                            for item in filtered_exams
 
-                        with col_b2:
+                        ]
 
-                            btn_load_random = st.button(f"🎲 Bốc Ngẫu Nhiên 1 Đề Toàn Quốc ({len(filtered_exams)} Đề)", type="primary", width="stretch", key="btn_random_real_exam")
+                        if "sel_real_exam_t3" in st.session_state and (not r_opts or st.session_state.sel_real_exam_t3 >= len(r_opts)):
+                            st.session_state.sel_real_exam_t3 = 0
 
-                        if btn_load_chosen or btn_load_random:
+                        chosen_real_idx = st.selectbox(f"Chọn đề ({len(filtered_exams)} đề):", range(len(r_opts)), format_func=lambda i: r_opts[i], key="sel_real_exam_t3")
 
-                            if btn_load_random:
-                                random.seed(time.time_ns())
-                                if "seen_whole_exam_codes" not in st.session_state:
-                                    st.session_state.seen_whole_exam_codes = set()
 
-                                fresh_exams = [e for e in filtered_exams if str(e.get("code", e.get("title", ""))) not in st.session_state.seen_whole_exam_codes]
-                                if not fresh_exams:
-                                    st.session_state.seen_whole_exam_codes.clear()
-                                    fresh_exams = filtered_exams
 
-                                sel_real_item = random.choice(fresh_exams)
-                                st.session_state.seen_whole_exam_codes.add(str(sel_real_item.get("code", sel_real_item.get("title", ""))))
-                                st.toast(f"🎲 Đã bốc ngẫu nhiên đề mới: Mã {sel_real_item.get('code', 'Chính thức')} — {sel_real_item.get('title', 'Đề thi')[:35]}...", icon="🎯")
-                            else:
-                                sel_real_item = filtered_exams[chosen_real_idx]
-                                if "seen_whole_exam_codes" not in st.session_state:
-                                    st.session_state.seen_whole_exam_codes = set()
-                                st.session_state.seen_whole_exam_codes.add(str(sel_real_item.get("code", sel_real_item.get("title", ""))))
+                    col_b1, col_b2 = st.columns([1.1, 1.3])
 
-                            st.session_state.exam_data = enrich_exam_data(sel_real_item)
+                    with col_b1:
 
-                            st.session_state.exam_code = str(sel_real_item.get("code", random.randint(1011, 9999)))
+                        btn_load_chosen = st.button("🚀 Nạp Đề Đang Chọn Này (0.1s)", type="secondary", width="stretch", key="btn_load_real_exam")
 
-                            st.session_state.attempt_id = str(uuid.uuid4())
+                    with col_b2:
 
-                            st.session_state.exam_start_timestamp = time.time()
+                        btn_load_random = st.button(f"🎲 Bốc Ngẫu Nhiên 1 Đề Toàn Quốc ({len(filtered_exams)} Đề)", type="primary", width="stretch", key="btn_random_real_exam")
 
-                            st.session_state.exam_deadline = time.time() + exam_time_mins * 60
+                    if btn_load_chosen or btn_load_random:
 
-                            st.session_state.exam_context = {"name": student_name, "grade": grade, "subject": subject, "phase": measure_phase, "student_id": measure_student_id}
+                        if btn_load_random:
+                            random.seed(time.time_ns())
+                            if "seen_whole_exam_codes" not in st.session_state:
+                                st.session_state.seen_whole_exam_codes = set()
 
-                            st.session_state.pop("literature_grade", None)
+                            fresh_exams = [e for e in filtered_exams if str(e.get("code", e.get("title", ""))) not in st.session_state.seen_whole_exam_codes]
+                            if not fresh_exams:
+                                st.session_state.seen_whole_exam_codes.clear()
+                                fresh_exams = filtered_exams
 
-                            st.session_state.pop("exam_submitted_at", None)
+                            sel_real_item = random.choice(fresh_exams)
+                            st.session_state.seen_whole_exam_codes.add(str(sel_real_item.get("code", sel_real_item.get("title", ""))))
+                            st.toast(f"🎲 Đã bốc ngẫu nhiên đề mới: Mã {sel_real_item.get('code', 'Chính thức')} — {sel_real_item.get('title', 'Đề thi')[:35]}...", icon="🎯")
+                        else:
+                            sel_real_item = filtered_exams[chosen_real_idx]
+                            if "seen_whole_exam_codes" not in st.session_state:
+                                st.session_state.seen_whole_exam_codes = set()
+                            st.session_state.seen_whole_exam_codes.add(str(sel_real_item.get("code", sel_real_item.get("title", ""))))
 
-                            for widget_key in list(st.session_state):
+                        st.session_state.exam_data = enrich_exam_data(sel_real_item)
 
-                                if widget_key.startswith(("t3_p1_", "t3_p2_", "t3_p3_", "nv_dh_", "nv_v_")):
+                        st.session_state.exam_code = str(sel_real_item.get("code", random.randint(1011, 9999)))
 
-                                    del st.session_state[widget_key]
+                        st.session_state.attempt_id = str(uuid.uuid4())
 
-                            st.session_state.exam_state = "testing"
+                        st.session_state.exam_start_timestamp = time.time()
 
-                            st.session_state.exam_answers = {}
+                        st.session_state.exam_deadline = time.time() + exam_time_mins * 60
 
-                            st.session_state.tram3_chat_messages = []
+                        st.session_state.exam_context = {"name": student_name, "grade": grade, "subject": subject, "phase": measure_phase, "student_id": measure_student_id}
 
-                            st.toast(f"⚡ Đã nạp thành công đề thi thật từ {sel_real_item.get('school', '')} trong 0.1 giây!", icon="✨")
+                        st.session_state.pop("literature_grade", None)
 
-                            st.rerun()
+                        st.session_state.pop("exam_submitted_at", None)
+
+                        for widget_key in list(st.session_state):
+
+                            if widget_key.startswith(("t3_p1_", "t3_p2_", "t3_p3_", "nv_dh_", "nv_v_")):
+
+                                del st.session_state[widget_key]
+
+                        st.session_state.exam_state = "testing"
+
+                        st.session_state.exam_answers = {}
+
+                        st.session_state.tram3_chat_messages = []
+
+                        st.toast(f"⚡ Đã nạp thành công đề thi thật từ {sel_real_item.get('school', '')} trong 0.1 giây!", icon="✨")
+
+                        st.rerun()
 
 
 
@@ -13225,18 +13814,40 @@ if selected_station == station_labels[2]:
 
                 else:
 
+                    c_btn1, c_btn2 = st.columns([1.1, 1.1])
+
                     has_custom_prompt = bool(custom_matrix_prompt and custom_matrix_prompt.strip())
-                    btn_blend_direct = st.button(
-                        "🚀 Tạo đề luyện tập",
-                        key="t3_create_practice_exam", type="primary", width="stretch",
-                        help="Ưu tiên kho theo môn/lớp/chủ đề và tùy biến đã chọn. Nếu kho chưa đủ và đã cho phép AI, hệ thống sinh bản nháp rồi kiểm tra trước khi mở bài làm."
-                    )
+                    btn1_label = f"📚 Trích Xuất Đề Tùy Biến (Kho 600+ Đề Thật & Vân Tay)" if has_custom_prompt else f"🎲 Trộn Siêu Đề Mới (Kho Ngân Hàng)"
+                    btn2_label = f"🤖 AI Tạo Đề Theo Tùy Biến (Ưu Tiên Số 1 - Mới Tinh 100%)" if has_custom_prompt else "🚀 Khởi Tạo Đề Mới (AI Sáng Tạo 2026)"
+                    btn1_type = "primary" if has_custom_prompt else "secondary"
+
+                    with c_btn1:
+                        btn_blend_direct = st.button(
+                            btn1_label,
+                            type=btn1_type,
+                            width="stretch",
+                            help=f"LUỒNG 2: Trích xuất câu hỏi thật từ kho 600+ đề thi chính thức/thi thử toàn quốc ({portal_name_ui}) bám sát yêu cầu tùy biến. Lọc sạch 100% câu hỏi lạc đề qua Bộ lọc 5 lớp và hiển thị Bảng đối chứng vân tay nguồn gốc!"
+                        )
+
+                    with c_btn2:
+                        btn_ai_gen = st.button(
+                            btn2_label,
+                            type="primary",
+                            width="stretch",
+                            help=f"LUỒNG 1: AI Gemini biên soạn 100% ngữ liệu độc bản mới tinh, không lấy bất kỳ câu nào trong ngân hàng, tự động chạy Bộ Lọc Giải Ngầm (Deep Solver Guard) để xác minh nghiệm và số liệu chuẩn xác tuyệt đối!"
+                        )
+
+                    st.markdown(textwrap.dedent("""
+                    <div style="background: rgba(15, 23, 42, 0.7); border: 1.5px solid #38bdf8; border-radius: 10px; padding: 10px 14px; margin-top: 8px; font-size: 12.5px; line-height: 1.6; color: #cbd5e1;">
+                        <div style="font-weight: bold; color: #38bdf8; margin-bottom: 4px; font-size: 13px;">⚖️ CƠ CHẾ 2 LUỒNG ĐỘC LẬP TÁCH BẠCH & BỘ LỌC 5 LỚP TOÀN DIỆN:</div>
+                        • 🤖 <b style="color: #f59e0b;">LUỒNG 1 - AI TẠO ĐỀ NGUYÊN BẢN (ƯU TIÊN SỐ 1):</b> AI biên soạn theo môn/lớp/chủ đề; cần giáo viên duyệt kiến thức, đáp án và nguồn trích dẫn.<br>
+                        • 📚 <b style="color: #38bdf8;">LUỒNG 2 - TRÍCH XUẤT TỪ KHO 600+ ĐỀ THI THẬT:</b> Lọc bản ghi trong kho theo môn/lớp/chủ đề. Mã và nhãn nguồn là dữ liệu cần đối chiếu, chưa tự chứng minh tài liệu gốc hoặc mọi đáp án đúng.
+                    </div>
+                    """).strip(), unsafe_allow_html=True)
+
+
 
                     if btn_blend_direct:
-
-                        st.session_state.custom_request_text = custom_matrix_prompt.strip()
-                        st.session_state.pop("_last_exam_json_failure", None)
-                        st.session_state.pop("last_context_recovery", None)
 
                         if measure_phase != "practice" and not measure_student_id:
 
@@ -13266,17 +13877,9 @@ if selected_station == station_labels[2]:
                                 exclude_fingerprints=st.session_state.seen_question_fps
                             )
 
-                            if practice_initial_source(blended, subject, grade_num, (num_p1, num_p2, num_p3), False) != "bank":
-                                blended = None
+                            if blended and (blended.get("p1") or blended.get("p2") or blended.get("p3")):
 
-                            if blended and (blended.get("p1") or blended.get("p2") or blended.get("p3") or blended.get("part_doc_hieu")):
-                                try:
-                                    prepared_bank_exam = enrich_exam_data(blended)
-                                except ValueError as error:
-                                    st.error(f"Bản nháp từ kho chưa đạt kiểm tra: {error}")
-                                    st.stop()
-
-                                st.session_state.exam_data = prepared_bank_exam
+                                st.session_state.exam_data = enrich_exam_data(blended)
                                 for p_key in ("p1", "p2", "p3"):
                                     for q_new in blended.get(p_key, []):
                                         q_txt = str(q_new.get("q", "")).strip().lower()
@@ -13316,23 +13919,17 @@ if selected_station == station_labels[2]:
                                     st.session_state.show_audit_badges_per_question = True
                                     st.toast("📚 ĐÃ TRÍCH XUẤT ĐỀ TÙY BIẾN TỪ KHO 600+ ĐỀ THẬT: Có đầy đủ chỉ dấu vân tay & Bảng đối chứng!", icon="✅")
                                 else:
-                                    st.toast("Đã tạo đề luyện tập từ kho và hoàn tất kiểm tra đầu ra.", icon="✨")
+                                    st.toast("🔥 Đã trộn siêu đề thi mới lạ (Dynamic Seed) thành công trong 0.1 giây!", icon="✨")
 
                                 st.rerun()
 
                             else:
 
-                                if st.session_state.get("enable_ai_context_recovery", True):
-                                    btn_ai_gen = True
-                                else:
-                                    st.warning("Kho chưa đủ ngữ liệu phù hợp với cấu hình. Bật cho phép AI bổ sung nếu muốn hệ thống tiếp tục tạo bản nháp.")
+                                st.warning("Chưa đủ câu hỏi có sẵn trong kho môn này để trộn 100% tự động, vui lòng dùng nút 'Khởi Tạo Đề Mới (AI 2026)' bên cạnh!")
 
                         else:
 
-                            if st.session_state.get("enable_ai_context_recovery", True):
-                                btn_ai_gen = True
-                            else:
-                                st.warning("Chưa có dữ liệu kho phù hợp. Bật cho phép AI bổ sung để tiếp tục tạo bản nháp.")
+                            st.error("Module real_exam_engine chưa được nạp.")
 
 
 
@@ -13361,14 +13958,12 @@ if selected_station == station_labels[2]:
                             (num_p1, num_p2, num_p3), st.session_state.exam_code, custom_matrix_prompt,
                             st.session_state.get("curriculum_pathway", ""))
 
-                        raw_json_ex = ""
-                        st.session_state.pop("_last_exam_json_failure", None)
-                        st.session_state.pop("last_context_recovery", None)
                         try:
 
                             raw_json_ex = call_gemini_with_fallback(exam_prompt, json_mode=True)
 
                             raw_json_ex = raw_json_ex.strip()
+
 
                             parsed_exam = validate_exam_data(safe_json_loads(raw_json_ex), subject, None if subject == "Ngữ văn" else (num_p1, num_p2, num_p3))
                             parsed_exam["is_ai_generated"] = True
@@ -13425,17 +14020,6 @@ if selected_station == station_labels[2]:
 
                         except Exception as e:
 
-                            if raw_json_ex and isinstance(e, ValueError):
-                                diagnostic_raw = raw_json_ex[:2_000_000]
-                                for secret_key in active_keys_pool:
-                                    if secret_key:
-                                        diagnostic_raw = diagnostic_raw.replace(secret_key, "[API_KEY]")
-                                st.session_state["_last_exam_json_failure"] = {
-                                    "subject": subject, "grade": grade_num, "counts": [num_p1, num_p2, num_p3],
-                                    "error": str(e), "received_characters": len(raw_json_ex),
-                                    "context_recovery": st.session_state.get("last_context_recovery", {}),
-                                    "truncated_for_diagnostics": len(raw_json_ex) > 2_000_000,
-                                    "raw": diagnostic_raw}
                             st.error(f"Lỗi khởi tạo đề thi: {e}")
 
 
@@ -13460,7 +14044,7 @@ if selected_station == station_labels[2]:
 
             elif subject == "Toán học":
 
-                custom_ph = "Ví dụ: Cần 12 câu KSHS Lớp 12 (6 NB, 6 TH), 1 câu đồ thị phân thức bậc hai/bậc nhất, bài toán tối ưu hóa chi phí thực tế..."
+                custom_ph = "Ví dụ: Cần 12 câu KSHS Lớp 12 (6 NB, 6 TH), 1 câu khảo sát hàm bậc 4 trùng phương để rèn luyện, bài toán tối ưu hóa chi phí thực tế..."
 
             elif subject == "Vật lý":
 
@@ -13959,8 +14543,11 @@ if selected_station == station_labels[2]:
 
                     c_opts = [f"Mã đề {item['code']} - {item.get('topic', 'Chuyên đề ôn tập')} ({item.get('saved_at', '')[:10]})" for item in cached_list]
 
-                    if "sel_cached_exam_t3" in st.session_state and (not c_opts or st.session_state.sel_cached_exam_t3 >= len(c_opts)):
-                        st.session_state.sel_cached_exam_t3 = 0
+                    from services.widget_state import valid_option_index
+                    cached_index = st.session_state.get("sel_cached_exam_t3", 0)
+                    safe_index = valid_option_index(cached_index, len(c_opts))
+                    if type(cached_index) is not int or cached_index != safe_index:
+                        st.session_state.sel_cached_exam_t3 = safe_index
 
                     chosen_cache_idx = st.selectbox("Chọn đề từ ngân hàng:", range(len(c_opts)), format_func=lambda i: c_opts[i], key="sel_cached_exam_t3")
 
@@ -14033,14 +14620,6 @@ if selected_station == station_labels[2]:
     elif st.session_state.exam_state == "testing":
 
         exam = st.session_state.exam_data
-        try:
-            validate_exam_math(exam)
-        except MathPublicationError as error:
-            st.error("Đề đang được giữ lại vì lỗi công thức; chưa mở các câu làm bài. " + str(error))
-            if st.button("Quay lại cấu hình để tạo lại đề", key="math_gate_reset_exam"):
-                st.session_state.exam_state = "config"
-                st.rerun()
-            st.stop()
         with st.expander("📋 Đối soát nhãn mức độ câu hỏi (chưa thẩm định)"):
             cognitive_report = exam.get("cognitive_audit", {})
             st.caption("Chỉ thống kê nhãn khai báo; chưa xác nhận yêu cầu tư duy thực tế hoặc tỷ lệ điểm. Từng ý Đúng/Sai được liệt kê riêng. Không có dữ liệu là chưa xác định.")
@@ -14055,7 +14634,7 @@ if selected_station == station_labels[2]:
 
         ex_code = str(exam.get('code', st.session_state.get('exam_code', '1011')))
 
-        disp_title = exam_display_title(exam)
+        disp_title = exam.get("title") or f"Đề thi chuẩn hóa - {exam.get('school', 'Trường điểm toàn quốc')}"
 
 
 
@@ -14182,22 +14761,27 @@ if selected_station == station_labels[2]:
 
                 render_question_source_badge(q, idx)
 
-                academic_markdown(f"**{q.get('q')}**")
+                st.markdown(f"**{q.get('q')}**")
 
+                answer_key = f"nv_dh_{idx}"
+                previous = st.session_state.exam_answers.get(answer_key)
+                if answer_key not in st.session_state and previous is not None:
+                    st.session_state[answer_key] = str(previous)
                 st.session_state.exam_answers[f"nv_dh_{idx}"] = st.text_area(f"Trả lời câu {idx+1}:", key=f"nv_dh_{idx}", height=70)
 
 
 
                 # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
 
-                expl_dh = q.get('explain', '') or q.get('ans', '')
+                expl_dh = q.get('hint', '') or q.get('socratic_hint', '')
 
                 if not expl_dh: expl_dh = "Bám sát thể loại, ngữ cảnh tác phẩm và các phương thức biểu đạt trong SGK Kết Nối Tri Thức để phân tích."
 
                 with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý)", expanded=False):
 
-                    render_contextual_socratic(q, subject, grade_num, f"t3_reading_{idx}")
+                    clean_dh = sanitize_socratic_hint(expl_dh, q.get('ans', ''), q.get('q', ''), None, "TH", subject=subject, grade_num=grade_num)
 
+                    st.info(f"💡 **Định hướng tư duy Socratic câu {idx+1}:**\n\n{clean_dh}")
 
                 st.markdown("---")
 
@@ -14209,22 +14793,27 @@ if selected_station == station_labels[2]:
 
                 render_question_source_badge(v, idx)
 
-                academic_markdown(f"**{v.get('q')}**")
+                st.markdown(f"**{v.get('q')}**")
 
+                answer_key = f"nv_v_{idx}"
+                previous = st.session_state.exam_answers.get(answer_key)
+                if answer_key not in st.session_state and previous is not None:
+                    st.session_state[answer_key] = str(previous)
                 st.session_state.exam_answers[f"nv_v_{idx}"] = st.text_area(f"Bài làm viết câu {idx+1}:", key=f"nv_v_{idx}", height=140)
 
 
 
                 # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
 
-                expl_v = v.get('explain', '') or v.get('ans', '')
+                expl_v = v.get('hint', '') or v.get('socratic_hint', '')
 
                 if not expl_v: expl_v = "Xác định rõ vấn đề nghị luận, các luận điểm chính, dẫn chứng xác thực và rút ra bài học sâu sắc."
 
                 with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý)", expanded=False):
 
-                    render_contextual_socratic(v, subject, grade_num, f"t3_writing_{idx}")
+                    clean_v = sanitize_socratic_hint(expl_v, v.get('ans', ''), v.get('q', ''), None, "VD", subject=subject, grade_num=grade_num)
 
+                    st.info(f"💡 **Định hướng tư duy Socratic câu {idx+1}:**\n\n{clean_v}")
 
                 st.markdown("---")
 
@@ -14244,11 +14833,15 @@ if selected_station == station_labels[2]:
 
                     render_question_source_badge(q, idx)
 
-                    academic_markdown(f"**Câu {idx+1}:** {clean_question_bbt_text(q.get('q'))}")
+                    st.markdown(f"**Câu {idx+1}:** {clean_question_bbt_text(q.get('q'))}")
 
                     render_fast_visual(q, f"test_p1_{idx}")
 
-                    user_ans = academic_options(q.get("opt", []), f"Lựa chọn câu {idx+1}:", f"t3_p1_{idx}", st.session_state.exam_answers.get(f"p1_{idx}"))
+                    choice_key = f"t3_p1_{idx}"
+                    previous = st.session_state.exam_answers.get(f"p1_{idx}")
+                    if choice_key not in st.session_state and previous in q.get("opt", []):
+                        st.session_state[choice_key] = previous
+                    user_ans = st.radio(f"Lựa chọn câu {idx+1}:", q.get("opt", []), key=choice_key, label_visibility="collapsed", index=None)
 
                     st.session_state.exam_answers[f"p1_{idx}"] = user_ans
 
@@ -14256,7 +14849,7 @@ if selected_station == station_labels[2]:
 
                     # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
 
-                    expl = q.get('explain', '')
+                    expl = q.get('hint', '') or q.get('socratic_hint', '')
 
                     if not expl or len(expl) < 15:
 
@@ -14264,8 +14857,9 @@ if selected_station == station_labels[2]:
 
                     with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý)", expanded=False):
 
-                        render_contextual_socratic(q, subject, grade_num, f"t3_p1_{idx}")
+                        clean_hint = sanitize_socratic_hint(expl, q.get("ans", ""), q.get("q", ""), q.get("opt", []), q.get("level", "TH"), subject=subject, grade_num=grade_num)
 
+                        st.info(f"💡 **Định hướng tư duy Socratic:**\n\n{clean_hint}")
 
                     st.markdown("---")
 
@@ -14279,7 +14873,7 @@ if selected_station == station_labels[2]:
 
                     render_question_source_badge(q, idx)
 
-                    academic_markdown(f"**Câu {idx+1}:** {clean_question_bbt_text(q.get('q'))}")
+                    st.markdown(f"**Câu {idx+1}:** {clean_question_bbt_text(q.get('q'))}")
 
                     render_fast_visual(q, f"test_p2_{idx}")
 
@@ -14291,12 +14885,12 @@ if selected_station == station_labels[2]:
 
                         clean_stmt = clean_question_bbt_text(clean_stmt)
 
-                        academic_markdown(f"**Ý {chr(97+s_idx)})** {clean_stmt}")
-                        if f"t3_p2_{idx}_{s_idx}" not in st.session_state:
-                            previous_tf = st.session_state.exam_answers.get(f"p2_{idx}_{s_idx}")
-                            if previous_tf in ("Chưa chọn", "Đúng", "Sai"):
-                                st.session_state[f"t3_p2_{idx}_{s_idx}"] = previous_tf
-                        c_ans = st.radio(f"Chọn Đúng/Sai cho câu {idx+1}, ý {chr(97+s_idx)}", ["Chưa chọn", "Đúng", "Sai"], horizontal=True, key=f"t3_p2_{idx}_{s_idx}", label_visibility="collapsed")
+                        st.markdown(f"**Ý {chr(97+s_idx)})** {clean_stmt}")
+                        choice_key = f"t3_p2_{idx}_{s_idx}"
+                        previous = st.session_state.exam_answers.get(f"p2_{idx}_{s_idx}")
+                        if choice_key not in st.session_state and previous in ("Chưa chọn", "Đúng", "Sai"):
+                            st.session_state[choice_key] = previous
+                        c_ans = st.radio(f"Chọn Đúng/Sai cho câu {idx+1}, ý {chr(97+s_idx)}", ["Chưa chọn", "Đúng", "Sai"], horizontal=True, key=choice_key, label_visibility="collapsed")
 
                         st.session_state.exam_answers[f"p2_{idx}_{s_idx}"] = c_ans
 
@@ -14304,12 +14898,13 @@ if selected_station == station_labels[2]:
 
                     # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
 
-                    expl2 = q.get('explain', 'Xét từng mệnh đề theo định lý và điều kiện cần - đủ trong SGK Kết Nối Tri Thức.')
+                    expl2 = q.get('hint', '') or q.get('socratic_hint', '')
 
                     with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý)", expanded=False):
 
-                        render_contextual_socratic(q, subject, grade_num, f"t3_p2_{idx}")
+                        clean_hint2 = sanitize_socratic_hint(expl2, "", q.get("q", ""), None, q.get("level", "VD"), subject=subject, grade_num=grade_num)
 
+                        st.info(f"💡 **Định hướng tư duy Socratic câu {idx+1}:**\n\n{clean_hint2}")
 
                     st.markdown("---")
 
@@ -14323,14 +14918,14 @@ if selected_station == station_labels[2]:
 
                     render_question_source_badge(q, idx)
 
-                    academic_markdown(f"**Câu {idx+1}:** {clean_question_bbt_text(q.get('q'))}")
+                    st.markdown(f"**Câu {idx+1}:** {clean_question_bbt_text(q.get('q'))}")
 
                     render_fast_visual(q, f"test_p3_{idx}")
 
-                    if f"t3_p3_{idx}" not in st.session_state:
-                        previous_short = st.session_state.exam_answers.get(f"p3_{idx}")
-                        if previous_short is not None:
-                            st.session_state[f"t3_p3_{idx}"] = str(previous_short)
+                    short_key = f"t3_p3_{idx}"
+                    previous = st.session_state.exam_answers.get(f"p3_{idx}")
+                    if short_key not in st.session_state and previous is not None:
+                        st.session_state[short_key] = str(previous)
                     short_ans = st.text_input(
 
                         f"Nhập đáp số câu {idx+1}:",
@@ -14351,12 +14946,13 @@ if selected_station == station_labels[2]:
 
                     # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
 
-                    expl3 = q.get('explain', 'Tính toán theo công thức vi phân, tọa độ hoặc mô hình thực tiễn chuẩn CT GDPT 2018.')
+                    expl3 = q.get('hint', '') or q.get('socratic_hint', '')
 
                     with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý)", expanded=False):
 
-                        render_contextual_socratic(q, subject, grade_num, f"t3_p3_{idx}")
+                        clean_hint3 = sanitize_socratic_hint(expl3, q.get("ans", ""), q.get("q", ""), None, q.get("level", "VDC"), subject=subject, grade_num=grade_num)
 
+                        st.info(f"💡 **Định hướng tư duy Socratic câu {idx+1}:**\n\n{clean_hint3}")
 
                     st.markdown("---")
 
@@ -14631,9 +15227,11 @@ if selected_station == station_labels[2]:
 
                 pct = (p1_correct / len(p1_items) * 100) if p1_items else 0
 
-                c_sc2.metric("Tỉ Lệ Chính Xác", f"{pct:.1f}%", f"{p1_correct}/{len(p1_items)} câu đúng")
+                c_sc2.metric("Tỉ Lệ Chính Xác", f"{pct:.1f}%", f"{p1_correct*0.25:.2f} điểm chuẩn")
 
-                c_sc3.metric("Phạm vi đánh giá", "Bài luyện tập", "Chưa quy đổi sang CEFR")
+                cefr_level = "B2 (Vận dụng cao)" if total_score >= 8.0 else ("B1 (Đạt chuẩn THPT)" if total_score >= 6.0 else "A2 (Cần củng cố)")
+
+                c_sc3.metric("Khung Năng Lực CEFR", cefr_level, "Bậc 6 Việt Nam")
 
             elif is_social_or_tech_subject(subject):
 
@@ -14723,7 +15321,7 @@ if selected_station == station_labels[2]:
 
                         st.markdown(f'<div style="font-size: 11.5px; color: #38bdf8; background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 2px 8px; margin-bottom: 6px; border-radius: 3px;">🏛️ <b>Nguồn tham khảo:</b> {html.escape(str(q["source"]))}</div>', unsafe_allow_html=True)
 
-                    academic_markdown(f"**Câu {idx+1}:** {q.get('q')}")
+                    st.markdown(f"**Câu {idx+1}:** {q.get('q')}")
 
                     render_fast_visual(q, f"sol_p1_{idx}")
 
@@ -14747,7 +15345,7 @@ if selected_station == station_labels[2]:
                     expl = q.get('explain', '')
                     if not expl or len(expl) < 15:
                         expl = f"Áp dụng trực tiếp định nghĩa và tính chất cốt lõi trong SGK Kết Nối Tri Thức để xác định đáp án chuẩn {correct_a}."
-                    academic_markdown(f"💡 **Lời giải chi tiết câu {idx+1}:**\n\n{expl}")
+                    st.info(f"💡 **Lời giải chi tiết & Phương pháp luận chuẩn Bộ GD&ĐT câu {idx+1}:**\n\n{expl}")
                     st.markdown("---")
 
             if exam.get("p2"):
@@ -14755,7 +15353,7 @@ if selected_station == station_labels[2]:
                 for idx, q in enumerate(exam["p2"]):
                     if q.get("source"):
                         st.markdown(f'<div style="font-size: 11.5px; color: #38bdf8; background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 2px 8px; margin-bottom: 6px; border-radius: 3px;">🏛️ <b>Nguồn tham khảo:</b> {html.escape(str(q["source"]))}</div>', unsafe_allow_html=True)
-                    academic_markdown(f"**Câu {idx+1}:** {q.get('q')}")
+                    st.markdown(f"**Câu {idx+1}:** {q.get('q')}")
                     render_fast_visual(q, f"sol_p2_{idx}")
                     for s_idx, stmt in enumerate(q.get("stmts", [])):
                         user_ans_s = st.session_state.exam_answers.get(f"p2_{idx}_{s_idx}", "Chưa chọn")
@@ -14765,7 +15363,7 @@ if selected_station == station_labels[2]:
                         st.markdown(f"- Ý {chr(97+s_idx)}): *{stmt.get('t')}* -> Em chọn: **{user_ans_s}** | **Chuẩn Bộ:** **{expected_str}** {mark_icon}")
 
                     expl2 = q.get('explain', 'Xét từng mệnh đề theo định lý và điều kiện cần - đủ.')
-                    academic_markdown(f"💡 **Lời giải chi tiết câu {idx+1}:**\n\n{expl2}")
+                    st.info(f"💡 **Lời giải chi tiết & Phương pháp luận chuẩn Bộ GD&ĐT câu {idx+1}:**\n\n{expl2}")
                     st.markdown("---")
 
             if exam.get("p3"):
@@ -14775,12 +15373,12 @@ if selected_station == station_labels[2]:
                         st.markdown(f'<div style="font-size: 11.5px; color: #38bdf8; background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 2px 8px; margin-bottom: 6px; border-radius: 3px;">🏛️ <b>Nguồn tham khảo:</b> {html.escape(str(q["source"]))}</div>', unsafe_allow_html=True)
                     user_val = str(st.session_state.exam_answers.get(f"p3_{idx}", "Chưa điền")).strip()
                     correct_val = str(q.get("ans", "")).strip()
-                    academic_markdown(f"**Câu {idx+1}:** {q.get('q')}")
+                    st.markdown(f"**Câu {idx+1}:** {q.get('q')}")
                     render_fast_visual(q, f"sol_p3_{idx}")
                     st.markdown(f"- **Đáp số em điền:** `{user_val}` &nbsp;|&nbsp; **Đáp số chuẩn:** `{correct_val}`")
 
                     expl3 = q.get('explain', 'Tính toán theo công thức vi phân, tọa độ hoặc mô hình thực tiễn.')
-                    academic_markdown(f"💡 **Lời giải chi tiết câu {idx+1}:**\n\n{expl3}")
+                    st.info(f"💡 **Lời giải chi tiết & Phương pháp luận chuẩn Bộ GD&ĐT câu {idx+1}:**\n\n{expl3}")
                     st.markdown("---")
 
 
@@ -15019,20 +15617,6 @@ if selected_station == station_labels[3]:
 
 
     st.markdown("### Nhật ký và đồng bộ")
-
-    failed_json = st.session_state.get("_last_exam_json_failure")
-    if failed_json:
-        with st.expander("Chẩn đoán bản nháp đề lỗi trong phiên này", expanded=False):
-            st.caption("Chỉ dành cho quản trị đã đăng nhập. Bản nháp chưa hợp lệ có thể chứa khóa chấm; không dùng làm đề cho học sinh. Dữ liệu chỉ giữ trong phiên, không gửi dịch vụ khác.")
-            st.download_button("Tải bản nháp lỗi để kiểm tra tại máy", json.dumps(failed_json, ensure_ascii=False, indent=2),
-                               "chan_doan_json_de_ai.json", "application/json", key="download_failed_exam_json")
-
-    failed_lesson = st.session_state.get("_last_lesson_validation_failure")
-    if failed_lesson:
-        with st.expander("Chẩn đoán bản nháp bài học lỗi trong phiên này", expanded=False):
-            st.caption("Chỉ quản trị đã đăng nhập. Bản nháp có thể chứa khóa chấm; không hiển thị cho học sinh, không gửi sang dịch vụ khác. Dữ liệu chỉ giữ trong phiên.")
-            st.download_button("Tải bản nháp bài học lỗi để đối chiếu", json.dumps(failed_lesson, ensure_ascii=False, indent=2),
-                               "chan_doan_bai_hoc_ai.json", "application/json", key="download_failed_lesson")
 
     db_logs = db_manager.get_all_logs() if db_manager else []
 

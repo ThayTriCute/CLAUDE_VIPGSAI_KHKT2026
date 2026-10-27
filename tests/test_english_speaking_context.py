@@ -54,6 +54,8 @@ class TestEnglishSpeakingContext(unittest.TestCase):
                 self.assertIn(f'Tiếng Anh lớp {grade}', prompt)
                 self.assertIn('không quy đổi điểm thành IELTS/CEFR', prompt)
                 self.assertIn('Có tệp âm thanh' if audio else 'không chấm phát âm', prompt)
+                self.assertIn('bốn nhóm nhận xét', prompt)
+                self.assertIn('mẫu diễn đạt tham khảo ngắn', prompt)
 
     def test_real_speaking_ui_switches_all_grades_and_keeps_recording_and_text(self):
         script = '''import streamlit as st

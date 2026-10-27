@@ -56,6 +56,8 @@ def speaking_feedback_prompt(grade, topic, example, question, has_audio):
     return (f'Bạn là gia sư Tiếng Anh lớp {grade}. Chủ đề luyện nói do ứng dụng biên soạn: {topic}. '
             f'Câu hỏi: {question}\nVí dụ tham khảo, không phải trích SGK: {example}\n'
             + evidence + '\nGóp ý ngắn bằng tiếng Việt, phù hợp lớp: nội dung, từ vựng, ngữ pháp; '
-            'nêu tối đa hai điểm cần sửa có dẫn chứng từ bài học sinh; đề nghị học sinh tự sửa trước. '
+            'Giữ bốn nhóm nhận xét: nội dung và mạch lạc; từ vựng; ngữ pháp; phát âm và ngắt nghỉ (nhóm cuối chỉ khi đủ âm thanh). '
+            'Nêu tối đa hai điểm cần sửa có dẫn chứng từ bài học sinh; đề nghị học sinh tự sửa trước. '
+            'Giữ mục gợi ý cải thiện và mẫu diễn đạt tham khảo ngắn, phù hợp lớp; không thay thành bài làm hoàn chỉnh của học sinh. '
             'Đặt một câu hỏi nối tiếp bằng tiếng Anh vừa sức. Không tự nhận là giám khảo chính thức; '
             'không quy đổi điểm thành IELTS/CEFR, không hứa Band 8.0. Nếu thiếu dữ liệu, nói rõ phần chưa đánh giá được.')

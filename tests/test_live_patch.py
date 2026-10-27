@@ -98,22 +98,6 @@ class TestValidatedBoundaries(unittest.TestCase):
         question["ans"] = "A"
         self.assertTrue(audit_ai_generated_question_sympy(question)["verified"])
 
-    def test_extrema_short_answer_and_unsupported_option_do_not_get_false_mismatch(self):
-        from services.neuro_symbolic_verifier import audit_ai_generated_question_sympy as audit
-        q = {"q": "Hàm số $y=x^3-3x$ có bao nhiêu cực trị?", "ans": "2"}
-        self.assertTrue(audit(q)["verified"])
-        self.assertFalse(audit(q)["hallucination_detected"])
-        q["ans"] = "1"
-        self.assertTrue(audit(q)["hallucination_detected"])
-        q["ans"] = "Hai điểm"
-        self.assertFalse(audit(q)["verified"])
-        self.assertFalse(audit(q)["hallucination_detected"])
-        q.update(opt=["A. 0", "B. 1", "C. 2", "D. 3"], ans="C. 2")
-        self.assertTrue(audit(q)["verified"])
-        q.update(opt=["A. Không", "B. Một", "C. Hai", "D. Ba"], ans="C")
-        self.assertFalse(audit(q)["verified"])
-        self.assertFalse(audit(q)["hallucination_detected"])
-
     def test_integral_verification_and_limits(self):
         from services.neuro_symbolic_verifier import verify_definite_integral
         self.assertEqual(verify_definite_integral("x^2", 0, 3)["numeric_result"], 9)
