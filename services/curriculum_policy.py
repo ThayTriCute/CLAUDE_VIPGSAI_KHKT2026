@@ -103,9 +103,11 @@ def question_groups(exam):
         yield "part_doc_hieu", reading["questions"]
 
 
-def prepare_exam_for_delivery(exam, subject, grade, duration=45):
+def prepare_exam_for_delivery(exam, subject, grade, duration=45, custom_request=""):
     """Preserve academic payload; do not call heuristic answer/diagram healers."""
     subject, grade = validate_exam_context(exam, subject, grade)
+    from services.request_scope import explicit_request_scope, question_scope_issue
+    request_scope = explicit_request_scope(subject, custom_request)
     result = deepcopy(exam)
     validate_exam_structure(result, subject)
     declared_book = folded(result.get("textbook") or result.get("textbook_series") or "")
@@ -119,6 +121,8 @@ def prepare_exam_for_delivery(exam, subject, grade, duration=45):
             if not isinstance(question, dict):
                 raise ValueError("Câu hỏi không đúng cấu trúc; cần sửa dữ liệu nguồn.")
             validate_exam_context({"p1": [question]}, subject, grade)
+            if question_scope_issue(question, request_scope):
+                raise ValueError("Câu hỏi chưa khớp yêu cầu chỉ hàm bậc ba; cần thay đúng phạm vi trước khi xuất đề.")
             texts.extend(str(question.get(k, "")) for k in ("q", "explain"))
     check_current_facts("\n".join(texts))
     payload = {k: result[k] for k in ("p1", "p2", "p3", "part_doc_hieu", "part_viet") if k in result}
@@ -214,7 +218,8 @@ def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
                 stmt.update(evidence_schema)
     for question in schema.get("part_doc_hieu", {}).get("questions", []):
         question.update(evidence_schema)
-    return (policy_prompt(subject, grade, 3, "; ".join(topics), pathway) + LEVEL_GUIDANCE + "\n"
+    from services.request_scope import explicit_request_scope, request_scope_prompt
+    return (policy_prompt(subject, grade, 3, "; ".join(topics), pathway) + LEVEL_GUIDANCE + request_scope_prompt(explicit_request_scope(subject, custom)) + "\n"
             + "\nTrường hint là gợi mở Socratic độc lập; explain và ans dành cho giải thích/chấm bài, không dùng thay hint. Không tiết lộ đáp án hoặc giải hộ trong hint."
             + structure + "\nYêu cầu tùy biến trong phạm vi môn/lớp đã chọn: " + str(custom)
             + "\nTự giải và đối chiếu đáp án với giả thiết; thiếu hình thì không đặt câu yêu cầu đọc hình đó. Không sao chép nguồn thiếu bằng chứng hoặc tự nhận là đề thật."
