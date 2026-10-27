@@ -211,7 +211,8 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                 try:
                     response = ai_generator(prompt)
                     if isinstance(response, str):
-                        response = json.loads(response.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip())
+                        from data.socratic_anchors import safe_json_loads
+                        response = safe_json_loads(response)
                     item = recover_visual(response.get("replacement_question", {}), subject, grade)
                     if _candidate_ok(item, part, subject, grade, requested, needs_visual(original), required_level):
                         replacement, origin = item, "ai_replacement"
