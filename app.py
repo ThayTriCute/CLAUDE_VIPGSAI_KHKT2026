@@ -12609,10 +12609,14 @@ if selected_station == station_labels[2]:
 
 
 
-                def handle_custom_prompt_commit():
-                    val = str(st.session_state.get("area_custom_prompt_main", "")).strip()
+                def handle_custom_prompt_commit(source_key="area_custom_prompt_main", notify=True):
+                    val = str(st.session_state.get(source_key, "")).strip()
                     st.session_state["custom_matrix_prompt"] = val
-                    if val:
+                    # Callbacks run before widgets: synchronize the inactive tab too.
+                    for other_key in ("area_custom_prompt_main", "area_custom_prompt_gv"):
+                        if other_key != source_key:
+                            st.session_state[other_key] = val
+                    if val and notify:
                         st.toast(f"🎯 ĐÃ GHI NHẬN & KHÓA YÊU CẦU TÙY BIẾN!", icon="✅")
 
                 custom_matrix_prompt = st.text_area(
@@ -12629,10 +12633,8 @@ if selected_station == station_labels[2]:
 
                 c_cp1, c_cp2 = st.columns([1.5, 1])
                 with c_cp1:
-                    btn_confirm_cp = st.button("🔒 Khóa & Xác Nhận Ma Trận Tùy Biến", key="btn_confirm_cp_explicit")
-                    if btn_confirm_cp:
-                        handle_custom_prompt_commit()
-                        st.rerun()
+                    btn_confirm_cp = st.button("🔒 Khóa & Xác Nhận Ma Trận Tùy Biến", key="btn_confirm_cp_explicit",
+                                               on_click=handle_custom_prompt_commit)
 
                 if custom_matrix_prompt.strip():
                     st.markdown(textwrap.dedent(f"""
@@ -13491,6 +13493,8 @@ if selected_station == station_labels[2]:
                 height=90,
 
                 key="area_custom_prompt_gv",
+                on_change=handle_custom_prompt_commit,
+                args=("area_custom_prompt_gv", False),
 
                 help="Thầy/Cô có thể chỉ định tác phẩm văn học cụ thể, dạng bài đặc thù hoặc chủ đề trọng tâm để rèn luyện học sinh."
 

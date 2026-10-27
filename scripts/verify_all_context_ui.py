@@ -78,6 +78,20 @@ def verify(output):
                         assert any('infographic chữ viết tay' in e.label for e in at.expander)
                         assert 'youtube.com/results?' in displayed
                         row['station1'] = True
+                        first_radio = next(r for r in at.radio if r.label.startswith('Chọn đáp án câu '))
+                        answer = first_radio.options[0]
+                        stage_start = time.monotonic()
+                        first_radio.set_value(answer).run()
+                        row['station1_answer_seconds'] = round(time.monotonic()-stage_start, 3)
+                        row['navigation_cycle_seconds'] = []
+                        for station_index in (1, 2, 3, 0):
+                            stage_start = time.monotonic()
+                            next(b for b in at.button if b.key == f'top_nav_station_{station_index}').click().run()
+                            row['navigation_cycle_seconds'].append(round(time.monotonic()-stage_start, 3))
+                            assert not at.exception, [e.message for e in at.exception]
+                        assert at.session_state['current_lesson_context'] == (subject, grade)
+                        assert next(r for r in at.radio if r.label.startswith('Chọn đáp án câu ')).value == answer
+
 
                         row['stage'] = 'station3_open'
                         stage_start = time.monotonic()
@@ -85,6 +99,17 @@ def verify(output):
                         row['station3_open_seconds'] = round(time.monotonic() - stage_start, 3)
                         assert not at.exception, [e.message for e in at.exception]
                         assert sum(b.key == 't3_create_practice_exam' for b in at.button) == 1
+                        main_request = 'Kiểm thử ma trận tại máy'
+                        next(t for t in at.text_area if t.key == 'area_custom_prompt_main').set_value(main_request).run()
+                        stage_start = time.monotonic()
+                        next(b for b in at.button if b.key == 'btn_confirm_cp_explicit').click().run()
+                        row['station3_confirm_seconds'] = round(time.monotonic()-stage_start, 3)
+                        assert at.session_state['custom_matrix_prompt'] == main_request
+                        assert next(t for t in at.text_area if t.key == 'area_custom_prompt_gv').value == main_request
+                        next(t for t in at.text_area if t.key == 'area_custom_prompt_gv').set_value('').run()
+                        assert at.session_state['custom_matrix_prompt'] == ''
+                        assert next(t for t in at.text_area if t.key == 'area_custom_prompt_main').value == ''
+                        row['matrix_both_directions_preserved'] = True
                         if subject != 'Ngữ văn':
                             for label, count in (('Số câu TN P.I:', 1), ('Số câu Đ/S P.II:', 0), ('Số câu TLN P.III:', 0)):
                                 next(n for n in at.number_input if n.label == label).set_value(count)
