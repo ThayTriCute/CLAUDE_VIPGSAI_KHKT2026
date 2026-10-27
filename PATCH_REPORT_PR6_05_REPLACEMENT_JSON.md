@@ -26,7 +26,6 @@ Bản này không giải quyết ràng buộc kế thừa hình từ câu gốc,
 
 Bảy test mới kiểm đường phục dựng thật với generator giả lập: sửa dấu phẩy/fence; giữ dữ liệu hợp lệ; bảo toàn LaTeX phân thức; từ chối JSON bị cắt/khóa trùng; giữ chặn sai môn; kiểm58cặp môn/lớp không phải Ngữvăn; kiểm7lớpNgữvăn giữ nguyên hợp đồng ngữ liệu–câu hỏi–rubric và không bị đưa vào đường thay câu đơn.
 
-Các ca58+7 là kiểm đường dữ liệu kỹ thuật, không phải65caCloudAIthật và không chứng nhận kiến thức/chương trình/KNTT. Bộ toàn dự án đang chạy; kết quả chốt sẽ được bổ sung trước commit.
+Các ca 58+7 kiểm đường dữ liệu kỹ thuật, không phải 65 ca Cloud AI thật và không chứng nhận kiến thức/chương trình/KNTT.
 
 Kết quả chốt local: 191/191 kiểm thử đạt, 91.931 giây. Log: PR6_PATCH05_JSON_FULL_TESTS_20261027.log trong thư mục QA ngoài repo. Bảy test mới và các ca58+7 nêu trên đều đạt; không có lượt API thật trong bộ kiểm thử.
-
