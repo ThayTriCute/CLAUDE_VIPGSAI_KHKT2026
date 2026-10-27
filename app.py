@@ -5217,6 +5217,11 @@ def render_dynamic_python_lab(python_code: str):
 
 
 def render_smart_lab(data, current_subject=""):
+    from services.lab_state import lab_control_scope
+    control_scope = lab_control_scope(data, current_subject,
+        st.session_state.get("active_context_key", ""), st.session_state.get("lab_request_revision", 0))
+    def lab_key(name):
+        return f"{name}__{control_scope}"
 
     dtype = data.get("type")
 
@@ -5280,9 +5285,9 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("⚙️ **Thông số điều chỉnh Hình không gian:**")
 
-            h_val = st.slider("Chiều cao h:", 1.5, 6.0, float(data.get("h", 4.0)), 0.5, key="lab_geo3d_h")
+            h_val = st.slider("Chiều cao h:", 1.5, 6.0, float(data.get("h", 4.0)), 0.5, key=lab_key("lab_geo3d_h"))
 
-            show_faces = st.checkbox("Tô mờ các mặt phẳng (3D Surfaces)", value=True, key="lab_geo3d_faces")
+            show_faces = st.checkbox("Tô mờ các mặt phẳng (3D Surfaces)", value=True, key=lab_key("lab_geo3d_faces"))
 
 
 
@@ -5562,7 +5567,7 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("⚙️ **Thông số Hàm số Mũ ($y = k \\cdot a^x + c$):**")
 
-            use_e = st.checkbox("Dùng cơ số tự nhiên Euler $e \\approx 2.718$", value=bool(data.get("is_e", False)), key="lab_exp_is_e")
+            use_e = st.checkbox("Dùng cơ số tự nhiên Euler $e \\approx 2.718$", value=bool(data.get("is_e", False)), key=lab_key("lab_exp_is_e"))
 
             if use_e:
 
@@ -5572,17 +5577,17 @@ def render_smart_lab(data, current_subject=""):
 
             else:
 
-                fa = st.slider("Cơ số a (a > 0, a ≠ 1):", 0.1, 4.5, float(data.get("base", 2.0)), 0.1, key="lab_exp_a")
+                fa = st.slider("Cơ số a (a > 0, a ≠ 1):", 0.1, 4.5, float(data.get("base", 2.0)), 0.1, key=lab_key("lab_exp_a"))
 
                 if abs(fa - 1.0) < 0.05: fa = 1.05
 
 
 
-            fk = st.slider("Hệ số k:", -3.0, 3.0, float(data.get("k", 1.0)), 0.5, key="lab_exp_k")
+            fk = st.slider("Hệ số k:", -3.0, 3.0, float(data.get("k", 1.0)), 0.5, key=lab_key("lab_exp_k"))
 
             if fk == 0: fk = 1.0
 
-            fc = st.slider("Hệ số tịnh tiến c:", -4.0, 4.0, float(data.get("c", 0.0)), 0.5, key="lab_exp_c")
+            fc = st.slider("Hệ số tịnh tiến c:", -4.0, 4.0, float(data.get("c", 0.0)), 0.5, key=lab_key("lab_exp_c"))
 
 
 
@@ -5640,7 +5645,7 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("⚙️ **Thông số Hàm số Lôgarit ($y = k \\cdot \\log_a(x) + c$):**")
 
-            use_ln = st.checkbox("Dùng Lôgarit tự nhiên (ln(x), cơ số e)", value=bool(data.get("is_ln", False)), key="lab_log_is_ln")
+            use_ln = st.checkbox("Dùng Lôgarit tự nhiên (ln(x), cơ số e)", value=bool(data.get("is_ln", False)), key=lab_key("lab_log_is_ln"))
 
             if use_ln:
 
@@ -5650,17 +5655,17 @@ def render_smart_lab(data, current_subject=""):
 
             else:
 
-                fa = st.slider("Cơ số a (a > 0, a ≠ 1):", 0.1, 4.5, float(data.get("base", 2.0)), 0.1, key="lab_log_a")
+                fa = st.slider("Cơ số a (a > 0, a ≠ 1):", 0.1, 4.5, float(data.get("base", 2.0)), 0.1, key=lab_key("lab_log_a"))
 
                 if abs(fa - 1.0) < 0.05: fa = 1.05
 
 
 
-            fk = st.slider("Hệ số k:", -3.0, 3.0, float(data.get("k", 1.0)), 0.5, key="lab_log_k")
+            fk = st.slider("Hệ số k:", -3.0, 3.0, float(data.get("k", 1.0)), 0.5, key=lab_key("lab_log_k"))
 
             if fk == 0: fk = 1.0
 
-            fc = st.slider("Hệ số tịnh tiến c:", -4.0, 4.0, float(data.get("c", 0.0)), 0.5, key="lab_log_c")
+            fc = st.slider("Hệ số tịnh tiến c:", -4.0, 4.0, float(data.get("c", 0.0)), 0.5, key=lab_key("lab_log_c"))
 
 
 
@@ -5758,9 +5763,9 @@ def render_smart_lab(data, current_subject=""):
 
             st.info(f"**Hàm số:** $y = {math_str}$")
 
-            sa = st.slider("Cận dưới a:", -10.0, 10.0, sa_def, 0.5, key="lab_area_a")
+            sa = st.slider("Cận dưới a:", -10.0, 10.0, sa_def, 0.5, key=lab_key("lab_area_a"))
 
-            sb = st.slider("Cận trên b:", -10.0, 10.0, sb_def, 0.5, key="lab_area_b")
+            sb = st.slider("Cận trên b:", -10.0, 10.0, sb_def, 0.5, key=lab_key("lab_area_b"))
 
 
 
@@ -5908,11 +5913,11 @@ def render_smart_lab(data, current_subject=""):
 
             st.info(f"**Đường giới hạn:** $y = {math_str}$")
 
-            sa = st.slider("Cận dưới a:", -8.0, 8.0, a_def, 0.5, key="lab_revolve_a")
+            sa = st.slider("Cận dưới a:", -8.0, 8.0, a_def, 0.5, key=lab_key("lab_revolve_a"))
 
-            sb = st.slider("Cận trên b:", -8.0, 8.0, b_def, 0.5, key="lab_revolve_b")
+            sb = st.slider("Cận trên b:", -8.0, 8.0, b_def, 0.5, key=lab_key("lab_revolve_b"))
 
-            angle_deg = st.slider("Góc quay quanh trục Ox:", 30, 360, 360, 15, key="lab_revolve_angle")
+            angle_deg = st.slider("Góc quay quanh trục Ox:", 30, 360, 360, 15, key=lab_key("lab_revolve_angle"))
 
 
 
@@ -6082,11 +6087,11 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("⚙️ **Thông số Dao động điều hòa ($x = A\\cos(\\omega t + \\varphi)$):**")
 
-            p_A = st.slider("Biên độ A (cm):", 1.0, 15.0, float(data.get("A", 5.0)), 0.5, key="lab_osc_A")
+            p_A = st.slider("Biên độ A (cm):", 1.0, 15.0, float(data.get("A", 5.0)), 0.5, key=lab_key("lab_osc_A"))
 
-            p_omega = st.slider("Tần số góc ω (rad/s):", 0.5, 10.0, float(data.get("omega", 2.0)), 0.5, key="lab_osc_w")
+            p_omega = st.slider("Tần số góc ω (rad/s):", 0.5, 10.0, float(data.get("omega", 2.0)), 0.5, key=lab_key("lab_osc_w"))
 
-            p_phi = st.slider("Pha ban đầu φ (rad):", -np.pi, np.pi, float(data.get("phi", 0.0)), np.pi/6, format="%.2f", key="lab_osc_phi")
+            p_phi = st.slider("Pha ban đầu φ (rad):", -np.pi, np.pi, float(data.get("phi", 0.0)), np.pi/6, format="%.2f", key=lab_key("lab_osc_phi"))
 
 
 
@@ -6104,9 +6109,9 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption(f"📌 **Chu kỳ T:** `{p_T:.2f} s`<br>📌 **Tần số f:** `{p_f:.2f} Hz`<br>📌 **$v_{{max}}$:** `{p_vmax:.1f} cm/s`<br>📌 **$a_{{max}}$:** `{p_amax:.1f} cm/s²`", unsafe_allow_html=True)
 
-            show_v = st.checkbox("Hiển thị đồ thị Vận tốc v(t)", value=True, key="lab_osc_show_v")
+            show_v = st.checkbox("Hiển thị đồ thị Vận tốc v(t)", value=True, key=lab_key("lab_osc_show_v"))
 
-            show_a = st.checkbox("Hiển thị đồ thị Gia tốc a(t)", value=False, key="lab_osc_show_a")
+            show_a = st.checkbox("Hiển thị đồ thị Gia tốc a(t)", value=False, key=lab_key("lab_osc_show_a"))
 
         with c2:
 
@@ -6164,9 +6169,9 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("$\\Delta_r H^\\circ_{298} = -92 \\text{ kJ/mol}$ (Phản ứng tỏa nhiệt)")
 
-            c_temp = st.slider("Nhiệt độ T (°C):", 100, 700, int(data.get("temp", 450)), 50, key="lab_eq_t")
+            c_temp = st.slider("Nhiệt độ T (°C):", 100, 700, int(data.get("temp", 450)), 50, key=lab_key("lab_eq_t"))
 
-            c_p = st.slider("Áp suất P (bar):", 10, 300, int(data.get("p", 200)), 10, key="lab_eq_p")
+            c_p = st.slider("Áp suất P (bar):", 10, 300, int(data.get("p", 200)), 10, key=lab_key("lab_eq_p"))
 
 
 
@@ -6228,9 +6233,9 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("⚙️ **Phép lai một cặp tính trạng:** $P: Aa \\times Aa$")
 
-            gen_A = st.text_input("Tên gen trội A:", "Hạt vàng (A)", key="lab_bio_A")
+            gen_A = st.text_input("Tên gen trội A:", "Hạt vàng (A)", key=lab_key("lab_bio_A"))
 
-            gen_a = st.text_input("Tên gen lặn a:", "Hạt xanh (a)", key="lab_bio_a")
+            gen_a = st.text_input("Tên gen lặn a:", "Hạt xanh (a)", key=lab_key("lab_bio_a"))
 
             st.success("Tỉ lệ kiểu gen F1: **1 AA : 2 Aa : 1 aa**")
 
@@ -6262,11 +6267,11 @@ def render_smart_lab(data, current_subject=""):
         c1, c2 = st.columns([1.2, 2.8])
         with c1:
             st.caption("⚙️ **Thay đổi hệ số hàm bậc 3:**")
-            fa = st.slider("Hệ số a:", -3.0, 3.0, float(data.get("a", 1.0)), 0.5, key="lab_f3_a")
+            fa = st.slider("Hệ số a:", -3.0, 3.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_f3_a"))
             if fa == 0: fa = 0.5
-            fb = st.slider("Hệ số b:", -5.0, 5.0, float(data.get("b", -3.0)), 0.5, key="lab_f3_b")
-            fc = st.slider("Hệ số c:", -5.0, 5.0, float(data.get("c", 0.0)), 0.5, key="lab_f3_c")
-            fd = st.slider("Hệ số d:", -5.0, 5.0, float(data.get("d", 2.0)), 0.5, key="lab_f3_d")
+            fb = st.slider("Hệ số b:", -5.0, 5.0, float(data.get("b", -3.0)), 0.5, key=lab_key("lab_f3_b"))
+            fc = st.slider("Hệ số c:", -5.0, 5.0, float(data.get("c", 0.0)), 0.5, key=lab_key("lab_f3_c"))
+            fd = st.slider("Hệ số d:", -5.0, 5.0, float(data.get("d", 2.0)), 0.5, key=lab_key("lab_f3_d"))
             st.info(f"**$y = {fa}x^3 + ({fb})x^2 + ({fc})x + ({fd})$**")
 
             # Tính toán Điểm uốn / Tâm đối xứng
@@ -6370,11 +6375,11 @@ def render_smart_lab(data, current_subject=""):
         c1, c2 = st.columns([1.2, 2.8])
         with c1:
             st.caption("⚙️ **Thay đổi hệ số hàm phân thức bậc 1/1:**")
-            fa = st.slider("Hệ số a:", -4.0, 4.0, float(data.get("a", 1.0)), 0.5, key="lab_f11_a")
-            fb = st.slider("Hệ số b:", -5.0, 5.0, float(data.get("b", 1.0)), 0.5, key="lab_f11_b")
-            fc = st.slider("Hệ số c:", -4.0, 4.0, float(data.get("c", 1.0)), 0.5, key="lab_f11_c")
+            fa = st.slider("Hệ số a:", -4.0, 4.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_f11_a"))
+            fb = st.slider("Hệ số b:", -5.0, 5.0, float(data.get("b", 1.0)), 0.5, key=lab_key("lab_f11_b"))
+            fc = st.slider("Hệ số c:", -4.0, 4.0, float(data.get("c", 1.0)), 0.5, key=lab_key("lab_f11_c"))
             if fc == 0: fc = 1.0
-            fd = st.slider("Hệ số d:", -5.0, 5.0, float(data.get("d", -1.0)), 0.5, key="lab_f11_d")
+            fd = st.slider("Hệ số d:", -5.0, 5.0, float(data.get("d", -1.0)), 0.5, key=lab_key("lab_f11_d"))
 
             x_tc_dung = -fd / fc
             y_tc_ngang = fa / fc
@@ -6444,13 +6449,13 @@ def render_smart_lab(data, current_subject=""):
         c1, c2 = st.columns([1.2, 2.8])
         with c1:
             st.caption("⚙️ **Hệ số hàm phân thức bậc 2/1:**")
-            fa = st.slider("a:", -3.0, 3.0, float(data.get("a", 1.0)), 0.5, key="lab_f21_a")
+            fa = st.slider("a:", -3.0, 3.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_f21_a"))
             if fa == 0: fa = 1.0
-            fb = st.slider("b:", -5.0, 5.0, float(data.get("b", -2.0)), 0.5, key="lab_f21_b")
-            fc = st.slider("c:", -5.0, 5.0, float(data.get("c", 2.0)), 0.5, key="lab_f21_c")
-            fd = st.slider("d:", -3.0, 3.0, float(data.get("d", 1.0)), 0.5, key="lab_f21_d")
+            fb = st.slider("b:", -5.0, 5.0, float(data.get("b", -2.0)), 0.5, key=lab_key("lab_f21_b"))
+            fc = st.slider("c:", -5.0, 5.0, float(data.get("c", 2.0)), 0.5, key=lab_key("lab_f21_c"))
+            fd = st.slider("d:", -3.0, 3.0, float(data.get("d", 1.0)), 0.5, key=lab_key("lab_f21_d"))
             if fd == 0: fd = 1.0
-            fe = st.slider("e:", -5.0, 5.0, float(data.get("e", -1.0)), 0.5, key="lab_f21_e")
+            fe = st.slider("e:", -5.0, 5.0, float(data.get("e", -1.0)), 0.5, key=lab_key("lab_f21_e"))
 
             x_tc_dung = -fe / fd
             m_slope = fa / fd
@@ -6632,10 +6637,10 @@ def render_smart_lab(data, current_subject=""):
         c1, c2 = st.columns([1.2, 2.8])
         with c1:
             st.caption("⚙️ **Hệ số Parabol bậc 2 ($y = ax^2 + bx + c$):**")
-            fa = st.slider("Hệ số a:", -4.0, 4.0, float(data.get("a", 1.0)), 0.5, key="lab_p2_a")
+            fa = st.slider("Hệ số a:", -4.0, 4.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_p2_a"))
             if fa == 0: fa = 1.0
-            fb = st.slider("Hệ số b:", -6.0, 6.0, float(data.get("b", -2.0)), 0.5, key="lab_p2_b")
-            fc = st.slider("Hệ số c:", -6.0, 6.0, float(data.get("c", -1.0)), 0.5, key="lab_p2_c")
+            fb = st.slider("Hệ số b:", -6.0, 6.0, float(data.get("b", -2.0)), 0.5, key=lab_key("lab_p2_b"))
+            fc = st.slider("Hệ số c:", -6.0, 6.0, float(data.get("c", -1.0)), 0.5, key=lab_key("lab_p2_c"))
 
             x_dinh = -fb / (2 * fa)
             y_dinh = fa * x_dinh**2 + fb * x_dinh + fc
@@ -6707,11 +6712,11 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("⚙️ **Tọa độ Điểm & Vectơ Vị Trí $\\overrightarrow{OM}$ trong Oxyz:**")
 
-            mx = st.slider("Tọa độ x (Hoành độ):", -5.0, 5.0, float(data.get("x", 2.0)), 0.5, key="lab_3d_x")
+            mx = st.slider("Tọa độ x (Hoành độ):", -5.0, 5.0, float(data.get("x", 2.0)), 0.5, key=lab_key("lab_3d_x"))
 
-            my = st.slider("Tọa độ y (Tung độ):", -5.0, 5.0, float(data.get("y", 3.0)), 0.5, key="lab_3d_y")
+            my = st.slider("Tọa độ y (Tung độ):", -5.0, 5.0, float(data.get("y", 3.0)), 0.5, key=lab_key("lab_3d_y"))
 
-            mz = st.slider("Tọa độ z (Cao độ):", -5.0, 5.0, float(data.get("z", 4.0)), 0.5, key="lab_3d_z")
+            mz = st.slider("Tọa độ z (Cao độ):", -5.0, 5.0, float(data.get("z", 4.0)), 0.5, key=lab_key("lab_3d_z"))
 
             om_length = math.sqrt(mx**2 + my**2 + mz**2)
 
@@ -7664,13 +7669,17 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
 
 
+    from services.english_speaking import speaking_units_for_grade
+    curriculum_english_units = speaking_units_for_grade(current_grade, curriculum_english_units)
+    st.caption(f"Ngữ liệu luyện nói lớp {current_grade} do ứng dụng biên soạn; không phải trích nguyên văn hoặc mục lục SGK đã đối chiếu.")
+
     sel_unit = st.selectbox(
 
-        "📚 Chọn Chủ Đề Bài Học SGK Kết Nối Tri Thức:",
+        "📚 Chọn chủ đề luyện nói theo lớp:",
 
         list(curriculum_english_units.keys()),
 
-        key=f"unit_eng_sel_{stage_id}"
+        key=f"unit_eng_sel_{stage_id}_{current_grade}"
 
     )
 
@@ -7684,7 +7693,7 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
     with col_left_data:
 
-        st.markdown("##### 📖 1. Từ Vựng Trọng Tâm SGK (New Words):")
+        st.markdown("##### 📖 1. Từ vựng luyện nói (New Words):")
 
 
 
@@ -7720,7 +7729,7 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
 
 
-        st.markdown("##### 📝 2. Đoạn Văn Luyện Đọc Chuẩn (Reading Passage):")
+        st.markdown("##### 📝 2. Đoạn đọc tham khảo (Reading Passage):")
 
         escaped_passage = json.dumps(unit_info['passage'])
 
@@ -7782,7 +7791,7 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
             "Ghi âm bài nói của em (en-US):",
 
-            key=f"audio_mic_eng_{stage_id}",
+            key=f"audio_mic_eng_{stage_id}_{current_grade}",
 
             label_visibility="collapsed"
 
@@ -7794,7 +7803,7 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
             "Nội dung bài nói của em (tùy chọn gõ bổ sung / ghi chú thêm):",
 
-            key=f"eng_speech_input_{stage_id}",
+            key=f"eng_speech_input_{stage_id}_{current_grade}",
 
             placeholder="Nếu em không dùng Micro hoặc muốn bổ sung bài nói, hãy gõ/dán văn bản tiếng Anh vào đây...",
 
@@ -7804,7 +7813,7 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
 
 
-        btn_score_ielts = st.button("📊 Chấm Điểm 4 Tiêu Chí IELTS & Nâng Cấp Band 8.0", key=f"btn_eval_ielts_{stage_id}", type="primary", width="stretch")
+        btn_score_ielts = st.button("📊 Góp ý bài nói theo lớp", key=f"btn_eval_ielts_{stage_id}_{current_grade}", type="primary", width="stretch")
 
 
 
@@ -7822,45 +7831,13 @@ def render_voice_speech_tex_and_english_evaluator(stage_id: str, current_subject
 
             else:
 
-                with st.spinner("AI Giám khảo IELTS & Giáo viên THPT đang nghe và phân tích âm vị, ngữ pháp, độ trôi chảy..."):
+                with st.spinner("Đang xem xét bài luyện nói theo dữ liệu đã gửi..."):
 
                     try:
 
-                        rubric_prompt = f"""Bạn là Giám khảo Khảo thí IELTS Quốc tế kiêm Giáo viên Tiếng Anh THPT theo CT GDPT 2018.
-
-Chủ đề bài học SGK: {sel_unit}
-
-Câu hỏi bối cảnh của Thầy AI: '{unit_info['q_reflex']}'
-
-Đoạn văn đọc mẫu SGK: '{unit_info['passage']}'
-
-
-
-YÊU CẦU ĐÁNH GIÁ CHI TIẾT & CHUẨN SƯ PHẠM:
-
-1. BẢN GHI LỜI NÓI (TRANSCRIPT): {"Nghe kỹ file ghi âm của học sinh và chép lại đầy đủ 100% bằng tiếng Anh những gì học sinh đã phát âm." if has_audio else "Trích dẫn văn bản học sinh đã nhập."}
-
-2. OVERALL BAND SCORE (Thang điểm 0 - 9.0)
-
-3. BẢNG ĐIỂM 4 TIÊU CHÍ CHUẨN QUỐC TẾ IELTS:
-
-   - 🗣️ Fluency & Coherence (0-9đ): Độ mạch lạc, tốc độ phản xạ.
-
-   - 📚 Lexical Resource (0-9đ): Mức độ sử dụng từ vựng bài học.
-
-   - ✍️ Grammatical Accuracy (0-9đ): Độ chuẩn thì, cấu trúc câu.
-
-   - 🔊 Pronunciation & Intonation (0-9đ): Trọng âm, âm đuôi (/s/, /ed/), ngữ điệu.
-
-4. SOI LỖI CỤ THỂ VÀ BẢN NÂNG CẤP (UPGRADED VERSION):
-
-   - Chỉ ra 2 từ/câu cần sửa ngay (kèm lỗi phát âm âm vị nếu có audio).
-
-   - Đưa ra phiên bản mẫu nâng cấp Band 8.0 để học sinh ghi nhớ.
-
-5. LƯỢT HỎI PHẢN XẠ TIẾP THEO (FOLLOW-UP QUESTION):
-
-   - Đặt 1 câu hỏi phản xạ nối tiếp bằng tiếng Anh để học sinh tiếp tục nói."""
+                        from services.english_speaking import speaking_feedback_prompt
+                        rubric_prompt = speaking_feedback_prompt(current_grade, sel_unit,
+                            unit_info['passage'], unit_info['q_reflex'], has_audio)
 
 
 
@@ -7884,7 +7861,7 @@ YÊU CẦU ĐÁNH GIÁ CHI TIẾT & CHUẨN SƯ PHẠM:
 
                         eval_ielts_res = call_gemini_with_fallback(contents if len(contents) > 1 else contents[0])
 
-                        st.success("🏆 BẢNG ĐÁNH GIÁ NĂNG LỰC NÓI TIẾNG ANH CHUẨN QUỐC TẾ:")
+                        st.success("Góp ý luyện nói tham khảo; cần giáo viên đối chiếu.")
 
                         st.markdown(eval_ielts_res)
 
@@ -11642,9 +11619,13 @@ if selected_station == station_labels[0]:
 
 
 
-    manual_lab = st.selectbox("Mô phỏng có sẵn (không cần API):", list(available_labs))
+    from services.lab_scope import preset_lab_label, preset_lab_note
+    manual_lab = st.selectbox("Mô phỏng có sẵn (không cần API):", list(available_labs),
+        format_func=lambda label: preset_lab_label(label, subject, grade_num))
+    st.caption(preset_lab_note(subject, grade_num))
 
     if st.button("Mở mô phỏng có sẵn"):
+        st.session_state.lab_request_revision = st.session_state.get("lab_request_revision", 0) + 1
 
         st.session_state.lab_data = dict(available_labs[manual_lab])
 
@@ -11653,6 +11634,7 @@ if selected_station == station_labels[0]:
 
 
     if st.button("✨ Khởi chạy Phòng Lab", key=f"btn_lab_{current_context_key}") and lab_command.strip():
+        st.session_state.lab_request_revision = st.session_state.get("lab_request_revision", 0) + 1
 
         st.session_state.tram1_count += 1
 
