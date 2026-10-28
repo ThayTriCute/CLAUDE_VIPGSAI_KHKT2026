@@ -1,7 +1,21 @@
 """Subject-aware fallback questions, without certifying generated hint content."""
 import re
 
-from services.academic_context import canonical_subject
+from services.academic_context import canonical_subject, folded
+
+
+def math_context_question(question):
+    """Small context-specific fallback library; no calculation or answer content."""
+    text = folded(question)
+    if 'truc tung' in text and any(term in text for term in ('cat truc tung', 'giao diem', 'tung do')):
+        return ('Một điểm nằm trên trục tung thì hoành độ có đặc điểm gì? '
+                'Từ đó, em sẽ dùng hàm số đã cho để xác định tung độ như thế nào?')
+    for kind in ('tieu', 'dai'):
+        if 'toa do diem cuc ' + kind in text:
+            label = 'cực tiểu' if kind == 'tieu' else 'cực đại'
+            return (f'Em cần nhận ra sự đổi dấu nào của đạo hàm để tìm hoành độ điểm {label}? '
+                    'Sau đó, em sẽ dùng hàm số ban đầu như thế nào để xác định đủ hai tọa độ?')
+    return None
 
 
 _QUESTIONS = {
