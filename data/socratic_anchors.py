@@ -197,6 +197,10 @@ def sanitize_socratic_hint(hint_text, correct_answer="", q_text="", options=None
     question_hint = guiding_question(hint_text, options, correct_answer)
     if question_hint:
         return question_hint
+    from services.socratic_context import math_context_question
+    contextual_fallback = math_context_question(q_text)
+    if contextual_fallback:
+        return contextual_fallback
     q_str = str(q_text or "").strip()
     q_lower = q_str.lower()
     corr_ans = str(correct_answer or "").strip()
