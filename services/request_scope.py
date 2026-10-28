@@ -91,6 +91,31 @@ def question_scope_issue(question, scope):
     """Report demonstrated contradictions only; unknown is not a certification."""
     if scope.get("function_family") != "cubic_only" or not isinstance(question, dict):
         return ""
+    if _standalone_grouped_statistics(question):
+        return "outside_explicit_request"
     families = [_model_family(question.get("f"))]
     families.extend(_expression_family(value) for value in _primary_expressions(str(question.get("q", ""))))
     return "outside_explicit_request" if "noncubic" in families else ""
+
+
+def _standalone_grouped_statistics(question):
+    """Positive content evidence; never classify from the generic word 'khảo sát'."""
+    text = folded(question.get("q", ""))
+    grouped = any(term in text for term in ("mau so lieu ghep nhom", "bang so lieu ghep nhom", "bang mau so lieu ghep nhom"))
+    # A question explicitly modelling observations with a function is not this case.
+    function_context = any(term in text for term in ("ham so", "ham bac", "dao ham"))
+    return grouped and not function_context
+
+
+def question_topic_issue(question, subject, topics):
+    """Detect this demonstrated metadata/content conflict, not general topic proof."""
+    if canonical_subject(subject) != "Toán học" or not isinstance(question, dict):
+        return ""
+    selected = [folded(topic) for topic in topics]
+    if not selected:
+        return ""
+    function_only = all(any(term in topic for term in ("ham so", "dao ham", "ham bac")) for topic in selected)
+    statistics_allowed = any(any(term in topic for term in ("thong ke", "ghep nhom", "phan tan", "so lieu")) for topic in selected)
+    if function_only and not statistics_allowed and _standalone_grouped_statistics(question):
+        return "outside_selected_topic"
+    return ""

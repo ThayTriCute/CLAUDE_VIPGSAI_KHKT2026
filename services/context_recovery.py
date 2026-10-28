@@ -9,7 +9,7 @@ from itertools import islice
 from services.academic_context import academic_context, canonical_subject, normalize_grade, topic_matches, validate_exam_context
 from services.curriculum_policy import policy_prompt, question_groups, validate_exam_structure
 from services.cognitive_levels import LEVEL_GUIDANCE, normalize_level
-from services.request_scope import explicit_request_scope, question_scope_issue, request_scope_prompt
+from services.request_scope import explicit_request_scope, question_scope_issue, question_topic_issue, request_scope_prompt
 
 
 def _digest(question):
@@ -149,6 +149,8 @@ def _candidate_ok(candidate, part, subject, grade, topics, require_visual=False,
         return False
     if question_scope_issue(candidate, request_scope or {}):
         return False
+    if question_topic_issue(candidate, subject, topics):
+        return False
     if _question_issue(candidate, part, subject, grade):
         return False
     if require_visual and not has_visual(candidate):
@@ -180,13 +182,15 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                 events.append({"part": part, "index": index, "action": "needs_review", "reason": "invalid_question_structure"})
                 continue
             recovered = recover_visual(original, subject, grade)
-            issue = question_scope_issue(recovered, request_scope) or _question_issue(recovered, part, subject, grade)
+            issue = (question_scope_issue(recovered, request_scope)
+                     or question_topic_issue(recovered, subject, topics)
+                     or _question_issue(recovered, part, subject, grade))
             if not issue:
                 questions[index] = recovered
                 if recovered != original:
                     events.append({"part": part, "index": index, "action": "recovered_from_formula", "before_sha256": _digest(original)})
                 continue
-            requested = (list(topics) if issue == "outside_explicit_request" and topics
+            requested = (list(topics) if issue in {"outside_explicit_request", "outside_selected_topic"} and topics
                          else [original["topic"]] if original.get("topic") else list(topics))
             required_level = normalize_level(original.get("level"))
             replacement = None

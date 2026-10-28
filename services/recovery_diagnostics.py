@@ -14,7 +14,7 @@ _ACTIONS = {"needs_review", "recovered_from_formula", "bank_replacement", "ai_re
 _REASONS = {
     "invalid_question_structure", "missing_or_invalid_question_data",
     "missing_source_visual", "independently_detected_answer_mismatch",
-    "outside_explicit_request",
+    "outside_explicit_request", "outside_selected_topic",
 }
 
 
