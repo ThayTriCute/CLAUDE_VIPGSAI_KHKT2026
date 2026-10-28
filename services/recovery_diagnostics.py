@@ -16,6 +16,11 @@ _REASONS = {
     "missing_source_visual", "independently_detected_answer_mismatch",
     "outside_explicit_request", "outside_selected_topic",
 }
+_REPLACEMENT_REASONS = _REASONS | {
+    "replacement_subject_mismatch", "replacement_grade_mismatch",
+    "replacement_topic_mismatch", "replacement_visual_task_not_preserved",
+    "replacement_level_mismatch", "replacement_response_error",
+}
 
 
 def _count(value):
@@ -38,6 +43,9 @@ def recovery_failure_summary(subject, grade, recovery):
             "action": event.get("action") if event.get("action") in _ACTIONS else "unknown",
             "reason": event.get("reason") if event.get("reason") in _REASONS else "unknown",
         })
+        if "replacement_rejection" in event:
+            value = event["replacement_rejection"]
+            safe[-1]["replacement_rejection"] = value if isinstance(value, str) and value in _REPLACEMENT_REASONS else "unknown"
     return {
         "subject": subject if isinstance(subject, str) and subject in _SUBJECTS else "unknown",
         "grade": grade if type(grade) is int and 6 <= grade <= 12 else None,
