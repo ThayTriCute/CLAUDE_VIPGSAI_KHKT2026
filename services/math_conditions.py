@@ -16,6 +16,10 @@ def math_condition_conflict(question):
     if len(raw) > 10000:
         return ""
     text = folded(raw)
+    from services.polynomial_choice_contract import polynomial_choice_conflict
+    choice_issue = polynomial_choice_conflict(question)
+    if choice_issue:
+        return choice_issue
     from services.parameter_interval_contract import interval_code_conflict
     interval_issue = interval_code_conflict(question)
     if interval_issue:
