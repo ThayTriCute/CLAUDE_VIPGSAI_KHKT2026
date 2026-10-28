@@ -1,0 +1,6 @@
+# Production uses process restarts for releases. Do not unload Python modules
+# while other student sessions may still be importing or using them.
+# Local development can explicitly override this with --server.fileWatcherType=auto.
+[server]
+fileWatcherType = "none"
+runOnSave = false
