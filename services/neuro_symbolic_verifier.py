@@ -210,6 +210,11 @@ def audit_ai_generated_question_sympy(q_dict: Dict[str, Any]) -> Dict[str, Any]:
     q_text = q_dict.get("q", "")
     ans = q_dict.get("ans", "")
     opt = q_dict.get("opt", [])
+    from services.math_conditions import math_condition_conflict
+    conflict = math_condition_conflict(q_dict)
+    if conflict:
+        return {"audited": True, "verified": False, "hallucination_detected": True,
+                "condition_conflict": conflict, "healed_answer": None}
 
     # Trích xuất biểu thức hàm số dạng y = ... hoặc f(x) = ...
     match_func = re.search(r'(y|f\(x\))\s*=\s*([^,.\n$;]+)', q_text)
