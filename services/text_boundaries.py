@@ -30,6 +30,19 @@ def preserve_math_and_code(text, normalize_prose):
     return result
 
 
+def option_markdown_label(option):
+    """Display naked numeric intervals containing infinity as Markdown math.
+
+    Existing math/code and the stored answer option remain untouched.
+    This intentionally does not guess arbitrary prose or scientific notation.
+    """
+    endpoint = r'(?:[+-]?\d+(?:[.,]\d+)?|[+-]?\\infty)'
+    interval = re.compile(r'[\[(]\s*' + endpoint + r'\s*[;,]\s*' + endpoint + r'\s*[\])]')
+    def normalize_prose(text):
+        return interval.sub(lambda m: '$' + m[0] + '$' if r'\infty' in m[0] else m[0], text)
+    return preserve_math_and_code(option, normalize_prose)
+
+
 def student_essay_text(text):
     """Hide reserved author metadata, retaining the question and Polya prompts.
 

@@ -5,6 +5,7 @@ from copy import deepcopy
 from services.academic_context import canonical_subject, academic_context, validate_exam_context
 from services.lesson_export import build_lesson_html, handwritten_prompt
 from services.lesson_sources import books_for, lesson_references, PUBLISHER_PORTAL
+from services.text_boundaries import option_markdown_label
 from qa_runtime import (split_api_keys, admin_password_matches, normalize_bool, display_frame,
     exam_response_metadata, observed_item_matrix, mcq_answer_matches)
 # VIP 76.0 - HỆ THỐNG GIA SƯ AI THPT 2026 (CHUẨN GDPT 2018 - EDTECH & PSYCHOMETRICS SOTA QUỐC TẾ)
@@ -11145,7 +11146,7 @@ if selected_station == station_labels[0]:
                 previous_choice = st.session_state.quiz_selections.get(idx)
                 if widget_key not in st.session_state and previous_choice in q['options']:
                     st.session_state[widget_key] = previous_choice
-                user_choice = st.radio(f"Chọn đáp án câu {idx+1}:", q['options'], key=widget_key, label_visibility="collapsed", index=None)
+                user_choice = st.radio(f"Chọn đáp án câu {idx+1}:", q['options'], key=widget_key, label_visibility="collapsed", index=None, format_func=option_markdown_label)
                 if user_choice is not None:
                     st.session_state.quiz_selections[idx] = user_choice
 
@@ -14843,7 +14844,7 @@ if selected_station == station_labels[2]:
                     previous = st.session_state.exam_answers.get(f"p1_{idx}")
                     if choice_key not in st.session_state and previous in q.get("opt", []):
                         st.session_state[choice_key] = previous
-                    user_ans = st.radio(f"Lựa chọn câu {idx+1}:", q.get("opt", []), key=choice_key, label_visibility="collapsed", index=None)
+                    user_ans = st.radio(f"Lựa chọn câu {idx+1}:", q.get("opt", []), key=choice_key, label_visibility="collapsed", index=None, format_func=option_markdown_label)
 
                     st.session_state.exam_answers[f"p1_{idx}"] = user_ans
 

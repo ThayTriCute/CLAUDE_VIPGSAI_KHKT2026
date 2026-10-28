@@ -16,6 +16,10 @@ def math_condition_conflict(question):
     if len(raw) > 10000:
         return ""
     text = folded(raw)
+    from services.parameter_interval_contract import interval_code_conflict
+    interval_issue = interval_code_conflict(question)
+    if interval_issue:
+        return interval_issue
     # Read four asserted curve points, not unrelated points later in the question.
     four_points = re.search(r'đi\s+qua\s+(?:bốn|4)\s+điểm', raw, re.I)
     if re.search(r'\bcho ham so bac (?:ba|3)\b', text) and four_points and 'khong di qua' not in text:
