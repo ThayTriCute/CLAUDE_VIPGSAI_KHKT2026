@@ -48,6 +48,23 @@ class TestStationUI(unittest.TestCase):
         self.assertIn("Khoa học tự nhiên", subjects)
         self.assertNotIn("Vật lý", subjects)
 
+    def test_station3_custom_request_does_not_cross_grade_and_restores_own_draft(self):
+        at = self.app()
+        at.session_state["selected_station"] = "📝 Trạm 3: Luyện Tập & Khảo Thí"
+        request = "Chỉ khảo sát hàm số bậc ba lớp 12"
+        at.session_state["custom_matrix_prompt"] = request
+        at.session_state["area_custom_prompt_main"] = request
+        at.session_state["custom_request_text"] = request
+        at.run()
+        next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select("Lớp 7").run()
+        self.assertEqual([e.message for e in at.exception], [])
+        self.assertEqual(at.session_state.get("custom_matrix_prompt", ""), "")
+        self.assertFalse(any("ĐÃ XÁC NHẬN YÊU CẦU TÙY BIẾN" in m.value for m in at.markdown))
+        self.assertNotIn("custom_request_text", at.session_state)
+        next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select("Lớp 12").run()
+        self.assertEqual([e.message for e in at.exception], [])
+        self.assertEqual(at.session_state["custom_matrix_prompt"], request)
+
     def test_station2_empty_session_has_no_fake_mastery(self):
         at = self.app()
         at.session_state["selected_station"] = "✍️ Trạm 2: Gia Sư Socratic & Nộp Bài"

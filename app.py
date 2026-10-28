@@ -1395,6 +1395,9 @@ previous_context_key = st.session_state.get("active_context_key")
 
 if previous_context_key is not None and previous_context_key != current_context_key:
 
+    from services.widget_state import switch_exam_request_context
+    switch_exam_request_context(st.session_state, previous_context_key, current_context_key)
+
     if st.session_state.get("exam_state") == "testing":
 
         st.session_state.setdefault("abandoned_attempts", []).append({"attempt_id": st.session_state.get("attempt_id"), "exam": st.session_state.get("exam_data"), "answers": dict(st.session_state.get("exam_answers", {})), "context": st.session_state.get("exam_context", {}), "saved_at": get_vn_time()})
