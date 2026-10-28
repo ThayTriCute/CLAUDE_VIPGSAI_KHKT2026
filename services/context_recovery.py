@@ -202,6 +202,8 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
             replacement = None
             origin = ""
             ai_candidate_issue = ""
+            failure_stage = ""
+            failure_type = ""
             if bank_provider is not None:
                 if pool is None:
                     pool = bank_provider(subject, grade)
@@ -225,17 +227,31 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                     "required_claimed_level": required_level,
                     "output": replacement_schema(part, subject, grade, requested, required_level),
                     "original": {k: original[k] for k in ("q", "opt", "ans", "stmts", "topic") if k in original}}, ensure_ascii=False)
+                stage = "provider"
                 try:
                     response = ai_generator(prompt)
+                    stage = "decode"
                     if isinstance(response, str):
                         from data.socratic_anchors import safe_json_loads
                         response = safe_json_loads(response)
-                    item = recover_visual(response.get("replacement_question", {}), subject, grade)
+                    if not isinstance(response, dict) or not isinstance(response.get("replacement_question"), dict):
+                        raise ValueError("Replacement response must contain a question object.")
+                    stage = "recover"
+                    item = recover_visual(response["replacement_question"], subject, grade)
+                    stage = "validate"
                     ai_candidate_issue = _candidate_issue(item, part, subject, grade, requested, needs_visual(original), required_level, request_scope)
                     if not ai_candidate_issue:
                         replacement, origin = item, "ai_replacement"
-                except Exception:
+                except Exception as error:
                     ai_candidate_issue = "replacement_response_error"
+                    failure_stage = stage
+                    # Preserve the stage mechanism from 28db430, but log only
+                    # fixed categories, never arbitrary class names or text.
+                    failure_type = next((name for cls, name in (
+                        (ValueError, "ValueError"), (TypeError, "TypeError"),
+                        (KeyError, "KeyError"), (AttributeError, "AttributeError"),
+                        (ImportError, "ImportError"), (TimeoutError, "TimeoutError"),
+                        (RuntimeError, "RuntimeError")) if isinstance(error, cls)), "OtherError")
             if replacement is not None:
                 replacement = deepcopy(replacement)
                 if origin == "ai_replacement":
@@ -252,5 +268,7 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                 events.append({"part": part, "index": index, "action": "needs_review", "reason": issue, "before_sha256": _digest(original)})
                 if ai_candidate_issue:
                     events[-1]["replacement_rejection"] = ai_candidate_issue
+                if failure_stage:
+                    events[-1].update(replacement_stage=failure_stage, replacement_error_type=failure_type)
     result["context_recovery"] = {"events": events, "ai_calls": ai_calls, "unresolved": sum(e["action"] == "needs_review" for e in events)}
     return result
