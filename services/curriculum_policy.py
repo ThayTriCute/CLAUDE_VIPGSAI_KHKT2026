@@ -195,6 +195,7 @@ Chỉ tạo hình/bảng khi có đủ dữ kiện của bài, không chèn bả
 
 
 def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
+    from services.web_question_contract import WEB_QUESTION_INSTRUCTION
     from services.cognitive_levels import LEVEL_GUIDANCE
     subject, grade = academic_context(subject, grade)
     if subject == "Ngữ văn":
@@ -221,6 +222,6 @@ def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
     from services.request_scope import explicit_request_scope, request_scope_prompt
     return (policy_prompt(subject, grade, 3, "; ".join(topics), pathway) + LEVEL_GUIDANCE + request_scope_prompt(explicit_request_scope(subject, custom)) + "\n"
             + "\nTrường hint là gợi mở Socratic độc lập; explain và ans dành cho giải thích/chấm bài, không dùng thay hint. Không tiết lộ đáp án hoặc giải hộ trong hint."
-            + structure + "\nYêu cầu tùy biến trong phạm vi môn/lớp đã chọn: " + str(custom)
+            + structure + WEB_QUESTION_INSTRUCTION + "\nYêu cầu tùy biến trong phạm vi môn/lớp đã chọn: " + str(custom)
             + "\nTự giải và đối chiếu đáp án với giả thiết; thiếu hình thì không đặt câu yêu cầu đọc hình đó. Không sao chép nguồn thiếu bằng chứng hoặc tự nhận là đề thật."
             + "\nChỉ xuất JSON hợp lệ theo schema sau (mở rộng số câu theo cấu hình):\n" + json.dumps(schema, ensure_ascii=False))
