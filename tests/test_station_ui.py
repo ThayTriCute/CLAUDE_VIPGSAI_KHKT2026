@@ -158,6 +158,35 @@ class TestStationUI(unittest.TestCase):
         self.assertFalse(at.session_state["exam_data"]["cognitive_audit"]["verified"])
         self.assertTrue(any("Đối soát nhãn mức độ" in expander.label for expander in at.expander))
 
+    def test_english_practice_duration_and_score_do_not_certify_cefr(self):
+        at = self.app()
+        next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select("Lớp 7").run()
+        next(s for s in at.selectbox if s.label == "📚 Môn học cần hỗ trợ:").select("Tiếng Anh").run()
+        at.session_state["selected_station"] = "📝 Trạm 3: Luyện Tập & Khảo Thí"
+        at.session_state["exam_state"] = "testing"
+        at.session_state["exam_data"] = {"code": "QA18", "p1": [{
+            "q": "My brother enjoys ___ models.",
+            "opt": ["A. make", "B. making", "C. makes", "D. to making"],
+            "ans": "B", "hint": "Sau enjoy, em cần dạng động từ nào?",
+            "explain": "Enjoy is followed by a gerund."}], "p2": [], "p3": []}
+        at.session_state["exam_context"] = {"name": "QA UI", "grade": "Lớp 7", "subject": "Tiếng Anh", "student_id": "qa-ui"}
+        at.session_state["exam_time_mins"] = 45
+        at.session_state["exam_start_timestamp"] = time.time()
+        at.session_state["exam_deadline"] = time.time() + 45 * 60
+        at.session_state["attempt_id"] = "qa-english-practice-cefr"
+        at.run()
+        self.assertEqual([e.message for e in at.exception], [])
+        heading = next(m.value for m in at.markdown if "CÂU HỎI TRẮC NGHIỆM TIẾNG ANH" in m.value)
+        self.assertIn("45 phút", heading)
+        self.assertNotIn("50 phút", heading)
+        next(r for r in at.radio if r.label == "Lựa chọn câu 1:").set_value("B. making").run()
+        next(b for b in at.button if b.label == "🏁 Nộp bài & Chấm điểm tức thì").click().run()
+        self.assertEqual([e.message for e in at.exception], [])
+        self.assertEqual(next(m for m in at.metric if m.label == "Tổng Điểm Khảo Thí").value, "10.00 / 10.0 đ")
+        self.assertEqual(next(m for m in at.metric if m.label == "Tỉ Lệ Chính Xác").value, "100.0%")
+        self.assertEqual(next(m for m in at.metric if m.label == "Khung Năng Lực CEFR").value, "Chưa đánh giá")
+        self.assertFalse(any("Bậc 6" in str(m.delta) or "điểm chuẩn" in str(m.delta) for m in at.metric))
+
     def test_station3_wrong_decimal_gets_zero_and_saves_one_event(self):
         at = self.app()
         at.session_state["selected_station"] = "📝 Trạm 3: Luyện Tập & Khảo Thí"
