@@ -57,9 +57,31 @@ def guiding_question(hint, options=None, correct_answer=''):
     return None
 
 
-def subject_socratic_hint(hint, subject, options=None, correct_answer=''):
+def english_reading_question(question):
+    """Guide evidence selection from the final reading task, never quote its answer."""
+    text = str(question or '')
+    if not re.search(r'(?i)\b(?:read\b.{0,50}\b(?:passage|text)|according to (?:the )?(?:passage|text))\b', text):
+        return None
+    tasks = re.findall(r'(?i)\b(what|where|when|who|why|how)\b[^?]{0,300}\?', text)
+    if not tasks:
+        return None
+    kind = tasks[-1].lower()
+    targets = {'what': 'hoạt động, sự việc hoặc thông tin được hỏi',
+               'where': 'địa điểm được hỏi', 'when': 'thời điểm được hỏi',
+               'who': 'nhân vật được hỏi', 'why': 'nguyên nhân được hỏi',
+               'how': 'cách thức hoặc mức độ được hỏi'}
+    return (f'Câu hỏi cuối đoạn đọc yêu cầu em xác định {targets[kind]}. '
+            'Em sẽ tìm chi tiết nào trong đoạn và kiểm tra đúng chủ thể, hoàn cảnh '
+            'trước khi đối chiếu các phương án?')
+
+
+def subject_socratic_hint(hint, subject, options=None, correct_answer='', question_text=''):
     subject = canonical_subject(subject)
     question = guiding_question(hint, options, correct_answer)
     if question:
         return question
+    if subject == 'Tiếng Anh':
+        contextual = english_reading_question(question_text)
+        if contextual:
+            return contextual
     return _QUESTIONS.get(subject, 'Em cần xác định dữ kiện và yêu cầu nào trước khi tự đối chiếu các phương án?')

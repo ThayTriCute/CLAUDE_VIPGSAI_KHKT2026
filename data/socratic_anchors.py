@@ -192,7 +192,7 @@ def sanitize_socratic_hint(hint_text, correct_answer="", q_text="", options=None
     subj_key = canonical_subject(subject or "Toán học")
     if subj_key != "Toán học":
         from services.socratic_context import subject_socratic_hint
-        return subject_socratic_hint(hint_text, subj_key, options, correct_answer)
+        return subject_socratic_hint(hint_text, subj_key, options, correct_answer, question_text=q_text)
     from services.socratic_context import guiding_question
     question_hint = guiding_question(hint_text, options, correct_answer)
     if question_hint:

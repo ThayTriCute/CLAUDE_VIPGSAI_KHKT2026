@@ -47,6 +47,23 @@ class TestContextualSocraticFallback(unittest.TestCase):
         existing = sanitize_socratic_hint('', 'A', 'Hàm số có bao nhiêu điểm cực trị?', ['A. 0','B. 1','C. 2','D. 3'])
         self.assertIn('cực trị', existing)
 
+    def test_english_reading_fallback_uses_final_task_without_answer(self):
+        question = ('Read the following passage and choose the best answer: '
+                    'I catch fish with my grandfather. What does the writer do with their grandfather?')
+        for grade in range(6, 13):
+            result = sanitize_socratic_hint('Đáp án C là catch fish, đúng không?', 'C', question,
+                ['A. Dry rice', 'B. Collect eggs', 'C. Catch fish', 'D. Farm work'],
+                subject='Anh', grade_num=grade)
+            self.assertIn('hoạt động', result)
+            self.assertIn('đúng chủ thể', result)
+            self.assertTrue(result.endswith('?'))
+            self.assertNotIn('catch fish', result.lower())
+            self.assertNotIn('grandfather', result.lower())
+        supplied = 'Em cần tìm chi tiết nào gắn với người được hỏi trong đoạn đọc?'
+        self.assertEqual(sanitize_socratic_hint(supplied, q_text=question, subject='Tiếng Anh'), supplied)
+        grammar = sanitize_socratic_hint('', q_text='What do you enjoy ___?', subject='Tiếng Anh')
+        self.assertNotIn('đoạn đọc', grammar)
+
     def test_all_supported_contexts_keep_valid_hint_and_other_subject_routes(self):
         supplied = 'Em cần đối chiếu dữ kiện nào trong câu hỏi trước khi lập luận?'
         checked = 0
