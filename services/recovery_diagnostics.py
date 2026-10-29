@@ -47,7 +47,7 @@ def recovery_failure_summary(subject, grade, recovery):
             value = event["replacement_rejection"]
             safe[-1]["replacement_rejection"] = value if isinstance(value, str) and value in _REPLACEMENT_REASONS else "unknown"
         for key, allowed in (
-            ("replacement_stage", {"provider", "decode", "recover", "validate"}),
+            ("replacement_stage", {"provider", "decode", "envelope", "recover", "validate"}),
             ("replacement_error_type", {"ValueError", "TypeError", "KeyError", "AttributeError", "ImportError", "TimeoutError", "RuntimeError", "OtherError"}),
         ):
             if key in event:

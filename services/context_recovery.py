@@ -241,6 +241,7 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                     if isinstance(response, str):
                         from data.socratic_anchors import safe_json_loads
                         response = safe_json_loads(response)
+                    stage = "envelope"
                     if not isinstance(response, dict) or not isinstance(response.get("replacement_question"), dict):
                         raise ValueError("Replacement response must contain a question object.")
                     stage = "recover"
