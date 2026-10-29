@@ -75,9 +75,31 @@ def english_reading_question(question):
             'trước khi đối chiếu các phương án?')
 
 
+def computing_context_question(question):
+    """Small task-specific prompts; no numerical result or answer alternative."""
+    text = folded(question)
+    if 'cpu' in text:
+        return ('Em sẽ phân biệt vai trò của CPU với bộ nhớ và thiết bị vào, ra '
+                'theo tiêu chí nào trước khi đối chiếu từng phát biểu?')
+    if 'dung luong' in text and any(term in text for term in ('the nho', 'tep', 'buc anh')):
+        return ('Dung lượng lưu trữ và dung lượng mỗi tệp đã cùng đơn vị chưa? '
+                'Em sẽ dùng quan hệ nào để tìm số tệp chứa được và xử lý phần dư?')
+    if 'thiet bi so' in text and any(term in text for term in ('ket noi', 'cong')):
+        return ('Với từng nhận định, em có thể đối chiếu thiết bị và cổng kết nối thực tế nào? '
+                'Các từ khẳng định tuyệt đối có đúng trong mọi trường hợp không?')
+    return None
+
+
 def subject_socratic_hint(hint, subject, options=None, correct_answer='', question_text=''):
     subject = canonical_subject(subject)
     question = guiding_question(hint, options, correct_answer)
+    if subject == 'Tin học':
+        contextual = computing_context_question(question_text)
+        # Live CPU hint repeated the identifying metaphor from the correct option.
+        # Replace only that observed cue, not every valid supplied computing hint.
+        cpu_metaphor = 'cpu' in folded(question_text) and 'bo nao' in folded(hint)
+        if contextual and (not question or cpu_metaphor):
+            return contextual
     if question:
         return question
     if subject == 'Tiếng Anh':
