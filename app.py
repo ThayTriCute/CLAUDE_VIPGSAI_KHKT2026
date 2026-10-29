@@ -14881,7 +14881,7 @@ if selected_station == station_labels[2]:
 
             if exam.get("p2"):
 
-                st.markdown("### PHẦN II. Trắc nghiệm Đúng/Sai (Tính điểm bậc 0.1 - 0.25 - 0.5 - 1.0 theo Bộ GD&ĐT)")
+                st.markdown("### PHẦN II. Trắc nghiệm Đúng/Sai (Thang điểm luyện tập: 0.1 - 0.25 - 0.5 - 1.0)")
 
                 for idx, q in enumerate(exam["p2"]):
 
@@ -14926,7 +14926,7 @@ if selected_station == station_labels[2]:
 
             if exam.get("p3"):
 
-                st.markdown("### PHẦN III. Trả lời ngắn (Tối đa 4 ký tự theo quy chế phiếu thi Bộ GD&ĐT)")
+                st.markdown("### PHẦN III. Trả lời ngắn (Nhập đáp số theo yêu cầu từng câu)")
 
                 for idx, q in enumerate(exam["p3"]):
 
@@ -14950,7 +14950,7 @@ if selected_station == station_labels[2]:
 
                         placeholder="Ví dụ: 2.5, -3, 12, -0.75, 12.5...",
 
-                        help="Quy chế thi tốt nghiệp THPT của Bộ GD&ĐT: Điền số nguyên hoặc số thập phân (chấp nhận dấu trừ '-' và dấu thập phân '.' hoặc ',')."
+                        help="Điền số nguyên hoặc số thập phân theo yêu cầu câu hỏi (chấp nhận dấu trừ '-' và dấu thập phân '.' hoặc ',')."
 
                     )
 
@@ -15361,7 +15361,7 @@ if selected_station == station_labels[2]:
                     st.markdown("---")
 
             if exam.get("p2"):
-                st.markdown("##### 🔹 Phần II: Trắc nghiệm Đúng/Sai (Chuẩn thang điểm bậc 0.1 - 0.25 - 0.5 - 1.0 của Bộ)")
+                st.markdown("##### 🔹 Phần II: Trắc nghiệm Đúng/Sai (Thang điểm luyện tập: 0.1 - 0.25 - 0.5 - 1.0)")
                 for idx, q in enumerate(exam["p2"]):
                     if q.get("source"):
                         st.markdown(f'<div style="font-size: 11.5px; color: #38bdf8; background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 2px 8px; margin-bottom: 6px; border-radius: 3px;">🏛️ <b>Nguồn tham khảo:</b> {html.escape(str(q["source"]))}</div>', unsafe_allow_html=True)

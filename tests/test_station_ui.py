@@ -116,6 +116,28 @@ class TestStationUI(unittest.TestCase):
         self.assertEqual(next(s for s in at.selectbox if s.label == "⏱️ Thời lượng bài thi (Phút):").value, 45)
         self.assertTrue(any("Luyện tập theo lớp" in c.value for c in at.caption))
 
+    def test_grade8_practice_sections_keep_controls_without_graduation_claims(self):
+        at = self.app()
+        next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select("Lớp 8").run()
+        at.session_state["selected_station"] = "📝 Trạm 3: Luyện Tập & Khảo Thí"
+        at.session_state["exam_state"] = "testing"
+        at.session_state["exam_data"] = {"code": "QALABEL", "p1": [],
+            "p2": [{"q": "Kiểm tra các mệnh đề số học", "stmts": [
+                {"t": str(i) + " là số dương", "a": True} for i in range(1, 5)]}],
+            "p3": [{"q": "Tính 2 + 2", "ans": "4"}]}
+        at.session_state["exam_context"] = {"name": "QA", "grade": "Lớp 8", "subject": "Toán học", "student_id": "qa-label"}
+        at.session_state["exam_deadline"] = time.time() + 300
+        at.session_state["attempt_id"] = "qa-label"
+        at.run()
+        self.assertEqual([e.message for e in at.exception], [])
+        sections = [m.value for m in at.markdown if m.value.startswith("### PHẦN")]
+        self.assertTrue(any("Thang điểm luyện tập" in v for v in sections))
+        self.assertFalse(any("theo Bộ" in v or "4 ký tự" in v for v in sections))
+        fields = [t for t in at.text_input if t.label == "Nhập đáp số câu 1:"]
+        self.assertEqual(len(fields), 1)
+        self.assertNotIn("Quy chế thi tốt nghiệp", fields[0].help or "")
+        self.assertEqual(len([r for r in at.radio if r.label.startswith("Chọn Đúng/Sai")]), 4)
+
     def test_station3_geography_has_six_short_answers(self):
         at = self.app()
         next(s for s in at.selectbox if s.label == "📚 Môn học cần hỗ trợ:").select("Địa lý").run()
