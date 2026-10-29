@@ -40,6 +40,19 @@ class TestComputingContextHints(unittest.TestCase):
                     subject=subject, grade_num=grade), hint)
         self.assertNotIn('CPU', sanitize_socratic_hint('', q_text='CPU', subject='Ngữ văn'))
 
+    def test_live_card_count_does_not_ask_for_file_count_or_assume_file_splitting(self):
+        question = ('Một tệp video có dung lượng là 4 GB. Lưu tệp vào các thẻ nhớ '
+                    'có dung lượng mỗi thẻ là 1024 MB thì cần ít nhất bao nhiêu thẻ nhớ?')
+        for grade in range(6, 13):
+            result = sanitize_socratic_hint('', '4', question, subject='Tin học', grade_num=grade)
+            self.assertIn('số thiết bị', result)
+            self.assertIn('điều kiện chia tệp', result)
+            self.assertNotIn('số tệp', result)
+            self.assertNotIn('4', result)
+            self.assertNotIn('1024', result)
+        supplied = 'Em cần kiểm tra giả thiết nào trước khi xác định số thẻ cần dùng?'
+        self.assertEqual(sanitize_socratic_hint(supplied, q_text=question, subject='Tin học'), supplied)
+
 
 if __name__ == '__main__':
     unittest.main()

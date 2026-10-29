@@ -82,6 +82,10 @@ def computing_context_question(question):
         return ('Em sẽ phân biệt vai trò của CPU với bộ nhớ và thiết bị vào, ra '
                 'theo tiêu chí nào trước khi đối chiếu từng phát biểu?')
     if 'dung luong' in text and any(term in text for term in ('the nho', 'tep', 'buc anh')):
+        if re.search(r'bao nhieu\s+(?:the nho|thiet bi|o dia)', text):
+            return ('Tổng dung lượng cần lưu và dung lượng mỗi thiết bị đã cùng đơn vị chưa? '
+                    'Đề đã nêu điều kiện chia tệp giữa các thiết bị chưa? '
+                    'Em sẽ xác định số thiết bị cần dùng và xử lý phần dư như thế nào?')
         return ('Dung lượng lưu trữ và dung lượng mỗi tệp đã cùng đơn vị chưa? '
                 'Em sẽ dùng quan hệ nào để tìm số tệp chứa được và xử lý phần dư?')
     if 'thiet bi so' in text and any(term in text for term in ('ket noi', 'cong')):
