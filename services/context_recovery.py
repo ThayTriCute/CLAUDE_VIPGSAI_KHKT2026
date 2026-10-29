@@ -133,6 +133,13 @@ def _question_issue(question, part, subject, grade):
         validate_exam_structure({part: [question]}, subject)
     except (ValueError, TypeError):
         return "missing_or_invalid_question_data"
+    # Proven identity error from Cloud2344. Inspect the stem only: an incorrect
+    # option or true/false statement can be an intentional distractor.
+    if subject in {"Khoa học tự nhiên", "Hóa học"}:
+        stem = str(question.get("q", "")).casefold()
+        if (re.search(r"\b(?:calcium|canxi)\s*\(\s*vôi sống\s*\)", stem)
+                and not any(t in stem for t in ("không phải", "đúng hay sai", "phát biểu nào sai", "nhận định sai"))):
+            return "chemical_identity_mismatch"
     if needs_visual(question) and not has_visual(question):
         return "missing_source_visual"
     if subject == "Toán học":
