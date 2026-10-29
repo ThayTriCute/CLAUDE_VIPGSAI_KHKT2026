@@ -52,18 +52,27 @@ class TestStationUI(unittest.TestCase):
         at = self.app()
         at.session_state["selected_station"] = "📝 Trạm 3: Luyện Tập & Khảo Thí"
         request = "Chỉ khảo sát hàm số bậc ba lớp 12"
-        at.session_state["custom_matrix_prompt"] = request
-        at.session_state["area_custom_prompt_main"] = request
+        at.run()
+        next(t for t in at.text_area if "Yêu cầu ma trận" in t.label).set_value(request).run()
+        original_key = next(t for t in at.text_area if "Yêu cầu ma trận" in t.label).key
+        self.assertEqual(at.session_state["custom_matrix_prompt"], request)
+        self.assertEqual(next(t for t in at.text_area if "Nhập yêu cầu cấu hình" in t.label).value, request)
+        request = "Khảo sát hàm bậc ba lớp12 — chỉnh từ khu giáo viên"
+        next(t for t in at.text_area if "Nhập yêu cầu cấu hình" in t.label).set_value(request).run()
+        self.assertEqual(next(t for t in at.text_area if "Yêu cầu ma trận" in t.label).value, request)
         at.session_state["custom_request_text"] = request
         at.run()
         next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select("Lớp 7").run()
         self.assertEqual([e.message for e in at.exception], [])
         self.assertEqual(at.session_state.get("custom_matrix_prompt", ""), "")
+        self.assertEqual(next(t for t in at.text_area if "Yêu cầu ma trận" in t.label).value, "")
+        self.assertNotEqual(next(t for t in at.text_area if "Yêu cầu ma trận" in t.label).key, original_key)
         self.assertFalse(any("ĐÃ XÁC NHẬN YÊU CẦU TÙY BIẾN" in m.value for m in at.markdown))
         self.assertNotIn("custom_request_text", at.session_state)
         next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select("Lớp 12").run()
         self.assertEqual([e.message for e in at.exception], [])
         self.assertEqual(at.session_state["custom_matrix_prompt"], request)
+        self.assertEqual(next(t for t in at.text_area if "Yêu cầu ma trận" in t.label).value, request)
 
     def test_station2_empty_session_has_no_fake_mastery(self):
         at = self.app()

@@ -13208,9 +13208,11 @@ if selected_station == station_labels[2]:
 
 
 
+                request_widget_key = f"area_custom_prompt_main_{current_context_key}"
                 def handle_custom_prompt_commit():
-                    val = str(st.session_state.get("area_custom_prompt_main", "")).strip()
+                    val = str(st.session_state.get(request_widget_key, "")).strip()
                     st.session_state["custom_matrix_prompt"] = val
+                    st.session_state[f"area_custom_prompt_gv_{current_context_key}"] = val
                     if val:
                         st.toast(f"🎯 ĐÃ GHI NHẬN & KHÓA YÊU CẦU TÙY BIẾN!", icon="✅")
 
@@ -13219,7 +13221,7 @@ if selected_station == station_labels[2]:
                     value=st.session_state.get("custom_matrix_prompt", ""),
                     placeholder="Ví dụ: Chỉ lấy Bài 1, 2, 3 không lấy Oxyz; Cho 5 câu đồ thị phân thức 2/1; Không ra câu trùng phương...",
                     height=75,
-                    key="area_custom_prompt_main",
+                    key=request_widget_key,
                     on_change=handle_custom_prompt_commit,
                     help="Điều chỉnh trong phạm vi môn/lớp và yêu cầu cần đạt; không ghi đè kiểm tra chương trình."
                 )
@@ -14070,6 +14072,11 @@ if selected_station == station_labels[2]:
 
 
 
+            def handle_teacher_request_commit():
+                val = str(st.session_state.get(f"area_custom_prompt_gv_{current_context_key}", "")).strip()
+                st.session_state["custom_matrix_prompt"] = val
+                st.session_state[f"area_custom_prompt_main_{current_context_key}"] = val
+
             custom_matrix_prompt = st.text_area(
 
                 "💬 Nhập yêu cầu cấu hình ma trận / Ngữ liệu tùy biến:",
@@ -14080,7 +14087,8 @@ if selected_station == station_labels[2]:
 
                 height=90,
 
-                key="area_custom_prompt_gv",
+                key=f"area_custom_prompt_gv_{current_context_key}",
+                on_change=handle_teacher_request_commit,
 
                 help="Thầy/Cô có thể chỉ định tác phẩm văn học cụ thể, dạng bài đặc thù hoặc chủ đề trọng tâm để rèn luyện học sinh."
 
