@@ -41,11 +41,28 @@ class TestRecoveryErrorStage(unittest.TestCase):
                 self.assertNotIn('PRIVATE', json.dumps(summary))
                 self.assertNotEqual(summary['events'][0]['replacement_error_type'], 'unknown')
 
-    def test_wrong_root_shapes_are_decode_failures_not_silent_empty_questions(self):
+    def test_wrong_root_shapes_are_envelope_failures_not_json_syntax_failures(self):
         for payload in ([], None, {'replacement_question': []}, {'p1': []}):
             result = repair_exam_context(self.source(), 'Toán', 12, ai_generator=lambda _: payload)
             event = result['context_recovery']['events'][0]
-            self.assertEqual((event['replacement_stage'], event['replacement_error_type']), ('decode', 'ValueError'))
+            self.assertEqual((event['replacement_stage'], event['replacement_error_type']), ('envelope', 'ValueError'))
+
+    def test_parseable_json_wrong_wrapper_is_logged_without_private_content(self):
+        calls = []
+        raw = json.dumps({'output': {'q': 'PRIVATE QUESTION', 'ans': 'PRIVATE ANSWER'}})
+        def generate(_):
+            calls.append(1)
+            return raw
+        source = self.source()
+        before = copy.deepcopy(source)
+        result = repair_exam_context(source, 'Toán', 12, ai_generator=generate)
+        summary = recovery_failure_summary('Toán học', 12, result['context_recovery'])
+        self.assertEqual(summary['events'][0]['replacement_stage'], 'envelope')
+        self.assertEqual(summary['events'][0]['replacement_error_type'], 'ValueError')
+        self.assertNotIn('PRIVATE', json.dumps(summary))
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(source, before)
+        self.assertEqual(result['context_recovery']['unresolved'], 1)
 
     def test_untrusted_stage_and_error_fields_are_whitelisted(self):
         summary = recovery_failure_summary('Toán học', 12, {'events': [{
