@@ -11,6 +11,14 @@ from services.curriculum_policy import (assessment_profile, check_current_facts,
 
 
 class TestCurriculumPolicy(unittest.TestCase):
+    def test_english_hint_generation_guidance_is_subject_scoped(self):
+        for grade in range(6, 13):
+            for prompt in (lesson_prompt('Anh', grade, 'Community'),
+                           exam_prompt('Tiếng Anh', grade, ['Community'], (3, 0, 0), 'QA')):
+                self.assertIn('không dịch nghĩa hoặc diễn giải riêng phương án đúng', prompt)
+                self.assertIn('chỉ đặt trong explain sau nộp bài', prompt)
+        self.assertNotIn('Tiếng Anh — hint từ vựng:', lesson_prompt('Toán', 9, 'Phương trình'))
+
     def question(self):
         return {"q": "Tính một nửa của 4", "opt": ["A. 1", "B. 2", "C. 3", "D. 4"], "ans": "B", "topic": "Phân số"}
 

@@ -53,8 +53,14 @@ def policy_prompt(subject, grade, station, topic="", pathway=""):
     refs = legal_references()
     codes = "; ".join(r["code"] for r in refs if r["scope"] in {"curriculum", "textbook", "assessment"})
     profile = assessment_profile(subject, grade)
+    hint_guidance = ("Tiếng Anh — hint từ vựng: không dịch nghĩa hoặc diễn giải riêng phương án đúng, "
+                     "không cho từ đồng nghĩa của đáp án hay loại sẵn phương án. Hỏi học sinh tự nhận diện "
+                     "mục đích, quan hệ nghĩa hoặc dấu hiệu trong câu trước khi so sánh các lựa chọn. "
+                     "Định nghĩa/dịch nghĩa và kết luận đáp án chỉ đặt trong explain sau nộp bài."
+                     if subject == "Tiếng Anh" else "")
     return f"""\n[NGỮ CẢNH CHƯƠNG TRÌNH — rà soát nguồn ngày {POLICY_DATE}]
 Trạm {station}; môn {subject}; lớp {grade}; chủ đề {topic}; định hướng {pathway or 'chưa khai báo'}.
+{hint_guidance}
 Chương trình GDPT 2018 đọc cùng các sửa đổi còn áp dụng: {codes}.
 Sử dụng Kết nối tri thức với cuộc sống, đối chiếu đính chính/cập nhật NXBGD; bộ sách thống nhất từ năm học 2026–2027 theo QĐ 3588 ngày 26/12/2025.
 {profile['label']}. {profile['note']}
