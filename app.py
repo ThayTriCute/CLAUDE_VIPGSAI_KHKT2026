@@ -1,6 +1,6 @@
 from services.context_recovery import repair_exam_context, recover_visual
 from services.cognitive_levels import annotate_question, level_caption
-from services.curriculum_policy import (assessment_profile, legal_references, matrix_html, prepare_exam_for_delivery, validate_exam_structure, validate_lesson_policy, lesson_prompt as build_curriculum_lesson_prompt, exam_prompt as build_curriculum_exam_prompt)
+from services.curriculum_policy import (assessment_profile, legal_references, matrix_html, prepare_exam_for_delivery, validate_exam_structure, validate_lesson_policy, lesson_generation_request as build_curriculum_lesson_request, exam_generation_request as build_curriculum_exam_request)
 from copy import deepcopy
 from services.academic_context import canonical_subject, academic_context, validate_exam_context
 from services.lesson_export import build_lesson_html, handwritten_prompt
@@ -804,8 +804,6 @@ def _legacy_format_pedagogical_math(text):
 
     # 2. Khử vi phạm chương trình cũ 2018 (Chuẩn hóa Tâm đối xứng)
     s = s.replace("điểm uốn", "tâm đối xứng").replace("Điểm uốn", "Tâm đối xứng")
-    s = s.replace("y'' = 0", r"$x_0 = -\frac{b}{3a}$").replace("y''=0", r"$x_0 = -\frac{b}{3a}$")
-    s = s.replace("y''", "đạo hàm")
 
     # 3. Chuẩn hóa KaTeX cho tập hợp & khử triệt để \middle|, \middle\vert, \left, \right đơn độc
     s = re.sub(r'\\middle\s*\\?\|', r'\\mid', s)
@@ -1047,6 +1045,22 @@ def generate_local_qr_base64(data_url: str, fill_color: str = "#38bdf8", back_co
 
 
 
+def annotations_for_page(annotations, page_index, total_pages):
+    """Never broadcast unassigned marks across a multi-page submission."""
+    if not isinstance(annotations, list):
+        return []
+    result = []
+    for ann in annotations:
+        if not isinstance(ann, dict):
+            continue
+        page = ann.get("page", 1 if total_pages == 1 else None)
+        if isinstance(page, str) and re.fullmatch(r"[1-9][0-9]{0,3}", page.strip()):
+            page = int(page)
+        if type(page) is int and page == page_index and 1 <= page <= total_pages:
+            result.append(ann)
+    return result
+
+
 def annotate_student_work(image: Image.Image, annotations: list) -> Image.Image:
 
     """
@@ -1075,8 +1089,15 @@ def annotate_student_work(image: Image.Image, annotations: list) -> Image.Image:
 
 
 
+        try:
+            import matplotlib
+            font_path = os.path.join(matplotlib.get_data_path(), "fonts/ttf/DejaVuSans-Bold.ttf")
+            annotation_font = ImageFont.truetype(font_path, size=13)
+        except (OSError, ImportError):
+            annotation_font = ImageFont.load_default()
         for ann in annotations:
-
+            if not isinstance(ann, dict):
+                continue
             box = ann.get("box", ann.get("box_2d", []))
 
             ann_type = str(ann.get("type", "ok")).strip().lower()
@@ -1133,7 +1154,7 @@ def annotate_student_work(image: Image.Image, annotations: list) -> Image.Image:
 
                 draw.rectangle([x1, badge_y1, x1 + badge_w, y1], fill=(220, 38, 38, 235))
 
-                draw.text((x1 + 6, max(0, badge_y1 + 4)), badge_text[:35], fill=(255, 255, 255, 255))
+                draw.text((x1 + 6, max(0, badge_y1 + 4)), badge_text[:35], fill=(255, 255, 255, 255), font=annotation_font)
 
             else:
 
@@ -1149,7 +1170,7 @@ def annotate_student_work(image: Image.Image, annotations: list) -> Image.Image:
 
                 draw.rectangle([x1, badge_y1, x1 + badge_w, y1], fill=(5, 150, 105, 225))
 
-                draw.text((x1 + 5, max(0, badge_y1 + 3)), badge_text[:35], fill=(255, 255, 255, 255))
+                draw.text((x1 + 5, max(0, badge_y1 + 3)), badge_text[:35], fill=(255, 255, 255, 255), font=annotation_font)
 
 
 
@@ -2243,7 +2264,7 @@ CHẤM BÀI TRỰC TIẾP "FACE TO FACE" - SOI TỪNG DÒNG BÀI LÀM TRÊN ẢN
 
 BẮT BUỘC kẹp khối JSON tọa độ các dòng bài làm giữa cặp thẻ <ANNOTATIONS>...</ANNOTATIONS>:
 
-<ANNOTATIONS>[{{"box":[ymin,xmin,ymax,xmax],"type":"ok","label":"Biến đổi đúng"}},{{"box":[ymin,xmin,ymax,xmax],"type":"var","label":"Chỗ khuất tất: thiếu điều kiện"}}]</ANNOTATIONS>
+<ANNOTATIONS>[{{"page":1,"box":[ymin,xmin,ymax,xmax],"type":"ok","label":"Biến đổi đúng"}},{{"page":1,"box":[ymin,xmin,ymax,xmax],"type":"var","label":"Chỗ khuất tất: thiếu điều kiện"}}]</ANNOTATIONS>
 
 (Tọa độ box là [ymin, xmin, ymax, xmax] theo tỉ lệ 0 đến 1000 trên ảnh. 'type' chỉ nhận 'ok' hoặc 'var').
 
@@ -2691,7 +2712,18 @@ def render_exam_clock():
     remaining = max(0, int(deadline - time.time()))
 
     if remaining <= 0:
-
+        answers = st.session_state.get("exam_answers")
+        if not isinstance(answers, dict):
+            answers = {}
+        payload = st.session_state.get("exam_data") or {}
+        for part in ("p1", "p2", "p3"):
+            for idx, question in enumerate(payload.get(part, [])):
+                suffixes = [f"{idx}_{j}" for j in range(len(question.get("stmts", [])))] if part == "p2" else [str(idx)]
+                for suffix in suffixes:
+                    key = f"t3_{part}_{suffix}"
+                    if key in st.session_state:
+                        answers[f"{part}_{suffix}"] = st.session_state[key]
+        st.session_state.exam_answers = answers
         st.session_state.exam_state = "graded"
 
         st.session_state.exam_submitted_at = get_vn_time()
@@ -3869,7 +3901,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
             if include_answers:
                 answer = q.get("ans", "")
                 if q.get("stmts"):
-                    answer = "; ".join(f"{chr(97+i)}: " + ("Đúng" if (t.get("a") if "a" in t else t.get("ans", True)) else "Sai") for i, t in enumerate(q.get("stmts", [])))
+                    answer = "; ".join(f"{chr(97+i)}: " + ("Đúng" if normalize_bool((t.get("a") if "a" in t else t.get("ans"))) is True else "Sai" if normalize_bool((t.get("a") if "a" in t else t.get("ans"))) is False else "Chưa xác định") for i, t in enumerate(q.get("stmts", [])))
 
                 ans_expl_html = f"""
                 <div style="background-color: #f0fdf4; border-left: 3.5px solid #16a34a; padding: 5px 10px; margin: 4px 0 6px 0; border-radius: 4px; font-size: 13px; line-height: 1.45;">
@@ -3928,7 +3960,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
             tex.append(r"\begin{tabularx}{\textwidth}{|c|X|X|X|X|}\hline")
             tex.append(r"\textbf{Câu} & \textbf{Ý a)} & \textbf{Ý b)} & \textbf{Ý c)} & \textbf{Ý d)} \\ \hline")
             for idx2, q2 in enumerate(p2_items, 1):
-                st_vals = [("Đúng" if (s.get("a") if "a" in s else s.get("ans", True)) else "Sai") for s in q2.get("stmts", [])]
+                st_vals = [("Đúng" if normalize_bool((s.get("a") if "a" in s else s.get("ans"))) is True else "Sai" if normalize_bool((s.get("a") if "a" in s else s.get("ans"))) is False else "Chưa xác định") for s in q2.get("stmts", [])]
                 while len(st_vals) < 4: st_vals.append("-")
                 blocks.append(f"<tr><td style='font-weight: bold;'>Câu {idx2}</td>" + "".join(f"<td style='padding: 4px;'>{v}</td>" for v in st_vals) + "</tr>")
                 tex.append(f"\\textbf{{Câu {idx2}}} & " + " & ".join(st_vals) + r" \\ \hline")
@@ -6852,7 +6884,7 @@ def parse_quiz_questions(text):
         lines = [l.strip() for l in part.strip().split('\n') if l.strip()]
         if not lines: continue
         q_header = lines[0]
-        level, options, correct, explain = "", [], "A", "Gợi ý tự suy luận!"
+        level, options, correct, explain = "", [], "A", ""
         hint = ""
         cognitive_evidence = {}
 
@@ -6901,18 +6933,22 @@ def parse_quiz_questions(text):
             correct_idx = ord(correct) - ord('A')
             new_options = options[:4]
             new_correct = correct
-            if 0 <= correct_idx < len(options):
-                correct_text = re.sub(r'(?i)^[A-D]\.\s*', '', options[correct_idx]).strip()
-                raw_options = [re.sub(r'(?i)^[A-D]\.\s*', '', opt).strip() for opt in options[:4]]
+            if 0 <= correct_idx < len(options[:4]):
+                indexed_options = [
+                    (idx_o == correct_idx, re.sub(r'(?i)^[A-D][\.\)\:]?\s*', '', opt).strip())
+                    for idx_o, opt in enumerate(options[:4])
+                ]
                 import random
-                random.shuffle(raw_options)
+                random.shuffle(indexed_options)
 
                 new_options = []
-                for i, opt in enumerate(raw_options):
+                for i, (is_corr, opt_text) in enumerate(indexed_options):
                     letter = chr(ord('A') + i)
-                    new_options.append(f"{letter}. {opt}")
-                    if opt == correct_text:
+                    new_options.append(f"{letter}. {opt_text}")
+                    if is_corr:
                         new_correct = letter
+            if not explain.strip():
+                explain = "Gợi ý tự suy luận!"
             # TỰ ĐỘNG BÓC TÁCH BBT TỪ NỘI DUNG CÂU HỎI TRẠM 1 (ĐỒNG BỘ NGUYÊN BẢN TRẠM 3)
             raw_q_lines = [l for l in q_text_lines if l.strip()]
             q_bbt_lines = [l for l in raw_q_lines if "|" in l and any(k in l.lower() for k in ["x", "y'", "y", "f'(x)", "f(x)", "daoham", "đạohàm"])]
@@ -10903,11 +10939,11 @@ if selected_station == station_labels[0]:
 
         with st.spinner("Đang biên soạn chuẩn ngữ liệu SGK KNTT và cấu trúc Socratic..."):
 
-            study_prompt = build_curriculum_lesson_prompt(subject, grade_num, topic_input.strip())
+            study_system, study_prompt = build_curriculum_lesson_request(subject, grade_num, topic_input.strip())
 
             try:
 
-                res_text = call_gemini_with_fallback(study_prompt)
+                res_text = call_gemini_with_fallback(study_prompt, system_instruction=study_system)
 
                 # ==============================================================================
                 # BỘ NÃO KIỂM SOÁT BIGDATA CUỐI CÙNG TRẠM 1 (MASTER SOVEREIGN QUALITY GATE)
@@ -12277,7 +12313,7 @@ if selected_station == station_labels[1]:
 
                     review_payload = [
 
-                        f"Học sinh {student_name} nộp {total_pages} trang ảnh bài làm môn {subject} Lớp {grade_num}. Thầy hãy soi kỹ toàn bộ các trang bài làm (theo thứ tự từ trang 1 đến trang {total_pages}), chấm từng dòng với Dòng Tick xanh OK chuẩn chỉ và Dòng Mực đỏ Check VAR khét lẹt, kèm khối <ANNOTATIONS>:",
+                        f"Học sinh {student_name} nộp {total_pages} trang ảnh bài làm môn {subject} Lớp {grade_num}. Thầy hãy soi kỹ toàn bộ các trang bài làm (theo thứ tự từ trang 1 đến trang {total_pages}), chấm từng dòng với Dòng Tick xanh OK chuẩn chỉ và Dòng Mực đỏ Check VAR khét lẹt, kèm khối <ANNOTATIONS>; mỗi khung có page là số trang tương ứng (bắt đầu từ 1), không dùng chung khung cho các trang:",
 
                         *student_images
 
@@ -12315,9 +12351,9 @@ if selected_station == station_labels[1]:
 
                     annotated_imgs = []
 
-                    for s_img in student_images:
-
-                        ann_res = annotate_student_work(s_img, annotations)
+                    for page_index, s_img in enumerate(student_images, start=1):
+                        page_annotations = annotations_for_page(annotations, page_index, len(student_images))
+                        ann_res = annotate_student_work(s_img, page_annotations)
 
                         annotated_imgs.append(ann_res)
 
@@ -13891,49 +13927,54 @@ if selected_station == station_labels[2]:
 
                             if blended and (blended.get("p1") or blended.get("p2") or blended.get("p3")):
 
-                                st.session_state.exam_data = enrich_exam_data(blended, custom_request=custom_matrix_prompt)
-                                for p_key in ("p1", "p2", "p3"):
-                                    for q_new in blended.get(p_key, []):
-                                        q_txt = str(q_new.get("q", "")).strip().lower()
-                                        if q_txt:
-                                            fp_c = ree.q_fingerprint(q_new)
-                                            st.session_state.seen_question_fps.add(fp_c)
-
-                                st.session_state.exam_code = str(blended.get("code", random.randint(1011, 9999)))
-
-                                st.session_state.attempt_id = str(uuid.uuid4())
-
-                                st.session_state.exam_start_timestamp = time.time()
-
-                                st.session_state.exam_deadline = time.time() + exam_time_mins * 60
-
-                                st.session_state.exam_context = {"name": student_name, "grade": grade, "subject": subject, "phase": measure_phase, "student_id": measure_student_id}
-
-                                st.session_state.custom_request_text = custom_matrix_prompt.strip() if custom_matrix_prompt else ""
-
-                                st.session_state.pop("literature_grade", None)
-
-                                st.session_state.pop("exam_submitted_at", None)
-
-                                for widget_key in list(st.session_state):
-
-                                    if widget_key.startswith(("t3_p1_", "t3_p2_", "t3_p3_", "nv_dh_", "nv_v_")):
-
-                                        del st.session_state[widget_key]
-
-                                st.session_state.exam_state = "testing"
-
-                                st.session_state.exam_answers = {}
-
-                                st.session_state.tram3_chat_messages = []
-
-                                if has_custom_prompt:
-                                    st.session_state.show_audit_badges_per_question = True
-                                    st.toast("📚 ĐÃ TRÍCH XUẤT ĐỀ TÙY BIẾN TỪ KHO 600+ ĐỀ THẬT: Có đầy đủ chỉ dấu vân tay & Bảng đối chứng!", icon="✅")
+                                try:
+                                    prepared_bank_exam = enrich_exam_data(blended, custom_request=custom_matrix_prompt)
+                                except (ValueError, TypeError) as error:
+                                    st.error(str(error))
                                 else:
-                                    st.toast("🔥 Đã trộn siêu đề thi mới lạ (Dynamic Seed) thành công trong 0.1 giây!", icon="✨")
+                                    st.session_state.exam_data = prepared_bank_exam
+                                    for p_key in ("p1", "p2", "p3"):
+                                        for q_new in blended.get(p_key, []):
+                                            q_txt = str(q_new.get("q", "")).strip().lower()
+                                            if q_txt:
+                                                fp_c = ree.q_fingerprint(q_new)
+                                                st.session_state.seen_question_fps.add(fp_c)
 
-                                st.rerun()
+                                    st.session_state.exam_code = str(blended.get("code", random.randint(1011, 9999)))
+
+                                    st.session_state.attempt_id = str(uuid.uuid4())
+
+                                    st.session_state.exam_start_timestamp = time.time()
+
+                                    st.session_state.exam_deadline = time.time() + exam_time_mins * 60
+
+                                    st.session_state.exam_context = {"name": student_name, "grade": grade, "subject": subject, "phase": measure_phase, "student_id": measure_student_id}
+
+                                    st.session_state.custom_request_text = custom_matrix_prompt.strip() if custom_matrix_prompt else ""
+
+                                    st.session_state.pop("literature_grade", None)
+
+                                    st.session_state.pop("exam_submitted_at", None)
+
+                                    for widget_key in list(st.session_state):
+
+                                        if widget_key.startswith(("t3_p1_", "t3_p2_", "t3_p3_", "nv_dh_", "nv_v_")):
+
+                                            del st.session_state[widget_key]
+
+                                    st.session_state.exam_state = "testing"
+
+                                    st.session_state.exam_answers = {}
+
+                                    st.session_state.tram3_chat_messages = []
+
+                                    if has_custom_prompt:
+                                        st.session_state.show_audit_badges_per_question = True
+                                        st.toast("📚 ĐÃ TRÍCH XUẤT ĐỀ TÙY BIẾN TỪ KHO 600+ ĐỀ THẬT: Có đầy đủ chỉ dấu vân tay & Bảng đối chứng!", icon="✅")
+                                    else:
+                                        st.toast("🔥 Đã trộn siêu đề thi mới lạ (Dynamic Seed) thành công trong 0.1 giây!", icon="✨")
+
+                                    st.rerun()
 
                             else:
 
@@ -13966,13 +14007,13 @@ if selected_station == station_labels[2]:
                         selected_topics_str = "; ".join(chosen_topics)
 
                         enable_blend_cfg = False
-                        exam_prompt = build_curriculum_exam_prompt(subject, grade_num, chosen_topics,
+                        exam_system, exam_prompt = build_curriculum_exam_request(subject, grade_num, chosen_topics,
                             (num_p1, num_p2, num_p3), st.session_state.exam_code, custom_matrix_prompt,
                             st.session_state.get("curriculum_pathway", ""))
 
                         try:
 
-                            raw_json_ex = call_gemini_with_fallback(exam_prompt, json_mode=True)
+                            raw_json_ex = call_gemini_with_fallback(exam_prompt, system_instruction=exam_system, json_mode=True)
 
                             raw_json_ex = raw_json_ex.strip()
 
@@ -14357,17 +14398,21 @@ if selected_station == station_labels[2]:
 
                         if st.button("🏛️ Nạp Shard Quốc Gia", key="btn_save_national_shard", width="stretch"):
 
-                            with st.spinner("Đang chạy 5 TẦNG KIỂM ĐỊNH CHẤT LƯỢNG (Quality Gate) & Nạp vào Shard Quốc Gia..."):
+                            if not st.session_state.get("tab4_authenticated", False):
+                                st.warning("Cần mở khóa quản trị ở Trạm 4 trước khi cập nhật ngân hàng chung.")
+                            else:
 
-                                if ree and hasattr(ree, "append_exam_to_national_shard") and ree.append_exam_to_national_shard(p_gv):
+                                with st.spinner("Đang chạy 5 TẦNG KIỂM ĐỊNH CHẤT LƯỢNG (Quality Gate) & Nạp vào Shard Quốc Gia..."):
 
-                                    st.toast("🎉 Đã kiểm định 5 tầng và nạp thành công vào Ngân hàng Quốc gia!", icon="✨")
+                                    if ree and hasattr(ree, "append_exam_to_national_shard") and ree.append_exam_to_national_shard(p_gv):
 
-                                    st.success("✅ Đề thi đã được cấp Universal QID và sẵn sàng trộn chung cho toàn bộ học sinh!")
+                                        st.toast("🎉 Đã kiểm định 5 tầng và nạp thành công vào Ngân hàng Quốc gia!", icon="✨")
 
-                                else:
+                                        st.success("✅ Đề thi đã được cấp Universal QID và sẵn sàng trộn chung cho toàn bộ học sinh!")
 
-                                    st.error("Không thể nạp vào Shard Quốc gia.")
+                                    else:
+
+                                        st.error("Không thể nạp vào Shard Quốc gia.")
 
 
 
@@ -15343,7 +15388,7 @@ if selected_station == station_labels[2]:
 
 
 
-                    is_p1_right = (re.sub(r'[^A-D]', '', user_c[:3]).upper()[:1] == correct_a)
+                    is_p1_right = mcq_answer_matches(q, user_c)
 
                     badge_p1 = "✅ Làm đúng" if is_p1_right else "❌ Làm sai"
 
@@ -15373,8 +15418,8 @@ if selected_station == station_labels[2]:
                     render_fast_visual(q, f"sol_p2_{idx}")
                     for s_idx, stmt in enumerate(q.get("stmts", [])):
                         user_ans_s = st.session_state.exam_answers.get(f"p2_{idx}_{s_idx}", "Chưa chọn")
-                        expected_bool_rev = stmt["a"] if "a" in stmt else stmt.get("ans", True)
-                        expected_str = "Đúng" if expected_bool_rev else "Sai"
+                        expected_bool_rev = normalize_bool(stmt["a"] if "a" in stmt else stmt.get("ans"))
+                        expected_str = "Đúng" if expected_bool_rev is True else "Sai" if expected_bool_rev is False else "Chưa xác định"
                         mark_icon = "✅" if user_ans_s == expected_str else "❌"
                         st.markdown(f"- Ý {chr(97+s_idx)}): *{stmt.get('t')}* -> Em chọn: **{user_ans_s}** | **Chuẩn Bộ:** **{expected_str}** {mark_icon}")
 

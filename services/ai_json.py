@@ -72,6 +72,17 @@ def _decode_with_commas(text):
         try:
             return json.loads(text, strict=False, object_pairs_hook=_unique_object)
         except json.JSONDecodeError as error:
+            if error.msg == "Extra data":
+                candidate = text.lstrip()
+                value, end = json.JSONDecoder(
+                    strict=False, object_pairs_hook=_unique_object).raw_decode(candidate)
+                suffix = ''.join(candidate[end:].split())
+                closer = {'{': '}', '[': ']'}.get(candidate[:1])
+                # Observed local response: complete exam object + one extra }.
+                # Only discard up to three matching closing tokens, never any
+                # answer/question text, another root, or a missing root closer.
+                if closer and 1 <= len(suffix) <= 3 and suffix == closer * len(suffix):
+                    return value
             # The decoder has already recognized a complete value. Inserting a
             # separator here does not create a key, an answer or a closing brace.
             if (attempt == 8 or error.msg != "Expecting ',' delimiter"
@@ -86,6 +97,13 @@ def parse_ai_json(raw, prepare=lambda value: value):
     if len(raw) > 2_000_000:
         raise ValueError("Phản hồi JSON quá lớn; chưa đưa vào đề.")
     text = raw.strip().lstrip('\ufeff')
+    # Treat a short prose preamble followed by a JSON code fence exactly like
+    # a fence at the start. Do not trim arbitrary text after the root or invent
+    # closing braces; the full remaining candidate must still decode.
+    if not text.startswith(('{', '[', '```')):
+        fence = re.search(r'```(?:json)?[ \t]*\r?\n', text, flags=re.I)
+        if fence and not any(char in text[:fence.start()] for char in '{}[]'):
+            text = text[fence.start():]
     if text.startswith('```'):
         text = re.sub(r'^```(?:json)?\s*', '', text, count=1, flags=re.I)
         text = re.sub(r'\s*```\s*$', '', text, count=1)

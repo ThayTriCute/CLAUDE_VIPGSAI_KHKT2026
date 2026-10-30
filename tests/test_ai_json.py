@@ -5,6 +5,26 @@ from data.socratic_anchors import safe_json_loads
 
 
 class TestAIJSON(unittest.TestCase):
+    def test_complete_root_with_one_redundant_matching_closer_is_recovered(self):
+        payload = {'p1': [{'q': 'Câu đầy đủ', 'ans': 'B'}], 'p2': [], 'p3': []}
+        self.assertEqual(safe_json_loads(json.dumps(payload) + '\n}'), payload)
+        self.assertEqual(safe_json_loads('[{"q":"x"}]\n]'), [{'q': 'x'}])
+
+    def test_closer_recovery_does_not_discard_content_or_accept_mismatched_tail(self):
+        for suffix in ('\n]', '\n}{"ans":"D"}', '\n} explanation', '\n}}}}'):
+            with self.subTest(suffix=suffix), self.assertRaises(ValueError):
+                safe_json_loads('{"q":"x","ans":"B"}' + suffix)
+
+    def test_complete_json_fence_after_short_preamble_is_recovered(self):
+        data = {'p1': [{'q': 'Câu đầy đủ', 'ans': 'B'}], 'p2': [], 'p3': []}
+        raw = 'Dữ liệu JSON:\n```json\n' + json.dumps(data, ensure_ascii=False) + '\n```'
+        self.assertEqual(safe_json_loads(raw), data)
+
+    def test_preamble_fence_does_not_hide_multiple_roots_or_truncation(self):
+        for body in ('{"q":"x"} {"q":"y"}', '{"q":"chưa xong'):
+            with self.subTest(body=body), self.assertRaises(ValueError):
+                safe_json_loads('Dữ liệu JSON:\n```json\n' + body + '\n```')
+
     def test_standard_exam_is_unchanged(self):
         data = {'p1': [{'q': 'Tìm x.', 'opt': ['A. 1', 'B. 2', 'C. 3', 'D. 4'], 'ans': 'B'}], 'p2': [], 'p3': []}
         self.assertEqual(safe_json_loads(json.dumps(data, ensure_ascii=False)), data)

@@ -20,21 +20,31 @@ def _content_digest(question):
     return _digest({k: question.get(k) for k in ("q", "opt", "ans", "stmts")})
 
 
+def _parse_coeff(val_str):
+    if not val_str:
+        return 1.0
+    if "/" in val_str:
+        num_s, den_s = val_str.split("/", 1)
+        den = float(den_s)
+        return float(num_s) / den if den != 0 else float("nan")
+    return float(val_str)
+
 def _polynomial(expression):
+    expression = re.sub(r"\\(?:d|t)?frac\{(\d+(?:\.\d+)?)\}\{(\d+(?:\.\d+)?)\}", r"\1/\2", str(expression))
     expression = expression.replace(" ", "").replace("{", "").replace("}", "")
-    if not expression or not re.fullmatch(r"[0-9x.+\-^]+", expression):
+    if not expression or not re.fullmatch(r"[0-9x.+\-^/]+", expression):
         return None
     coefficients = [0.0] * 4
     terms = re.findall(r"[+-]?[^+-]+", expression)
     if "".join(terms) != expression:
         return None
     for term in terms:
-        match = re.fullmatch(r"([+-]?)(\d+(?:\.\d+)?)?x(?:\^([0-3]))?", term)
+        match = re.fullmatch(r"([+-]?)(\d+(?:\.\d+)?(?:/\d+(?:\.\d+)?)?)?x(?:\^([0-3]))?", term)
         if match:
             sign, number, power = match.groups()
-            coefficients[int(power or 1)] += (-1 if sign == "-" else 1) * float(number or 1)
-        elif re.fullmatch(r"[+-]?\d+(?:\.\d+)?", term):
-            coefficients[0] += float(term)
+            coefficients[int(power or 1)] += (-1 if sign == "-" else 1) * _parse_coeff(number)
+        elif re.fullmatch(r"[+-]?\d+(?:\.\d+)?(?:/\d+(?:\.\d+)?)?", term):
+            coefficients[0] += _parse_coeff(term)
         else:
             return None
     return coefficients if all(math.isfinite(c) for c in coefficients) else None
@@ -43,6 +53,7 @@ def _polynomial(expression):
 def model_from_explicit_formula(text):
     """Numeric polynomials/rationals only. No eval, answer inversion or defaults."""
     source = re.sub(r"x\^\{([0-3])\}", r"x^\1", str(text))
+    source = re.sub(r"\\(?:d|t)?frac\{([+-]?\d+(?:\.\d+)?)\}\{(\d+(?:\.\d+)?)\}", r"\1/\2", source)
     match = re.search(r"(?:\by|\bf\s*\(\s*x\s*\))\s*=\s*(\\(?:d?frac)\{[0-9x+\-^{}. ]+\}\{[0-9x+\-^{}. ]+\}|[0-9xX+\-^{}()./\s]+)", source)
     if not match:
         return None
@@ -70,6 +81,25 @@ def model_from_explicit_formula(text):
     return None
 
 
+def model_from_rational_constraints(text):
+    """A linear fraction is fixed by two numeric asymptotes and one point."""
+    from fractions import Fraction
+    raw = str(text)
+    if not re.search(r'\\(?:d?frac)\{ax\+b\}\{cx\+d\}', raw.replace(' ', '')):
+        return None
+    number = r'([+-]?\d{1,6}(?:[.,]\d{1,6})?)'
+    vertical = re.findall(r'tiệm cận đứng\s*\$?\s*x\s*=\s*' + number, raw, re.I)
+    horizontal = re.findall(r'tiệm cận ngang\s*\$?\s*y\s*=\s*' + number, raw, re.I)
+    points = re.findall(r'đi qua điểm\s*\$?\s*\(\s*' + number + r'\s*;\s*' + number + r'\s*\)', raw, re.I)
+    if len(vertical) != 1 or len(horizontal) != 1 or len(points) != 1:
+        return None
+    pole, height, px, py = [Fraction(v.replace(',', '.')) for v in (vertical[0], horizontal[0], *points[0])]
+    if px == pole or py == height:
+        return None  # Impossible point or removable pole.
+    intercept = py * (px - pole) - height * px
+    return dict(type="func_1_1", a=float(height), b=float(intercept), c=1.0, d=float(-pole))
+
+
 def needs_visual(question):
     value = str(question.get("q", "")).lower()
     # Restored from e0dbab1: constructing a table is an output task,
@@ -85,7 +115,9 @@ def has_visual(question):
         if isinstance(question.get(key), str) and question[key].startswith(("data:image/png;base64,", "data:image/jpeg;base64,", "data:image/webp;base64,")):
             return True
     bbt = question.get("bbt")
-    if isinstance(bbt, str) and bbt.count("|") >= 4 and len(bbt.splitlines()) >= 2:
+    # Match the existing BBT renderer's treatment of literal escaped newlines.
+    # Inspect only; preserve the supplied payload and all table values.
+    if isinstance(bbt, str) and bbt.count("|") >= 4 and len(bbt.replace(r"\n", "\n").splitlines()) >= 2:
         return True
     data = question.get("mslgn_data")
     if isinstance(data, dict) and data.get("groups") and len(data["groups"]) == len(data.get("freq", [])):
@@ -110,10 +142,25 @@ def recover_visual(question, subject, grade):
     """Leave complete supplied payloads alone; reconstruct explicit formulas only."""
     subject, grade = academic_context(subject, grade)
     result = deepcopy(question)
+    if subject == "Toán học" and not has_visual(result) and not result.get("bbt"):
+        from services.bbt_display_contract import aligned_bbt_rows
+        raw = str(result.get("q", ""))
+        lines = raw.splitlines()
+        candidates = [(i, "\n".join(lines[i:i+3])) for i in range(len(lines)-2)
+                      if aligned_bbt_rows("\n".join(lines[i:i+3])) is not None]
+        if len(candidates) == 1:
+            start, table = candidates[0]
+            result["bbt"] = table
+            result["q"] = "\n".join(lines[:start] + lines[start+3:]).strip()
+            result["visual_recovery"] = {"method": "supplied_inline_table", "input_sha256": _digest(question)}
     if has_visual(result) or not needs_visual(result):
         return result
     if subject == "Toán học" and grade >= 10:
         model = model_from_explicit_formula(result.get("q", ""))
+        method = "explicit_numeric_formula"
+        if model is None:
+            model = model_from_rational_constraints(result.get("q", ""))
+            method = "explicit_rational_constraints"
         # A function does not supply a missing variation table; do not invent it.
         if model and "bảng biến thiên" not in str(result.get("q", "")).lower() and "bảng xét dấu" not in str(result.get("q", "")).lower():
             result["f"] = model
@@ -123,7 +170,7 @@ def recover_visual(question, subject, grade):
                     result["tikz"] = engine.build_rational_1_1_tikz(*(model[k] for k in ("a", "b", "c", "d")))
                 else:
                     result["tikz"] = engine.build_rational_2_1_tikz(*(model[k] for k in ("a", "b", "c", "d", "e")))
-            result["visual_recovery"] = {"method": "explicit_numeric_formula", "input_sha256": _digest(question)}
+            result["visual_recovery"] = {"method": method, "input_sha256": _digest(question)}
     return result
 
 
@@ -207,11 +254,13 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
             if not issue:
                 questions[index] = recovered
                 if recovered != original:
-                    events.append({"part": part, "index": index, "action": "recovered_from_formula", "before_sha256": _digest(original)})
+                    events.append({"part": part, "index": index, "action": "recovered_from_inline_table" if recovered.get("visual_recovery", {}).get("method") == "supplied_inline_table" else "recovered_from_formula", "before_sha256": _digest(original)})
                 continue
             requested = (list(topics) if issue in {"outside_explicit_request", "outside_selected_topic"} and topics
                          else [original["topic"]] if original.get("topic") else list(topics))
-            required_level = normalize_level(original.get("level"))
+            # A misclassified topic's proposed level is not a user matrix constraint.
+            # Keep the replacement's own evidence/label; never invent an inherited level.
+            required_level = "" if issue == "outside_selected_topic" else normalize_level(original.get("level"))
             replacement = None
             origin = ""
             ai_candidate_issue = ""
@@ -223,10 +272,11 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                 candidates = (c for c in pool.get(part, []) if isinstance(c, dict)
                               and canonical_subject(c.get("subject")) == subject
                               and str(c.get("grade")) == str(grade)
+                              and _content_digest(c) not in used
                               and any(topic_matches(t, c.get("topic", "")) for t in requested))
                 for candidate in islice(candidates, 250):
                     item = recover_visual(candidate, subject, grade)
-                    if _content_digest(candidate) not in used and _candidate_ok(item, part, subject, grade, requested, needs_visual(original), required_level, request_scope):
+                    if _candidate_ok(item, part, subject, grade, requested, needs_visual(original), required_level, request_scope):
                         replacement, origin = item, "bank_replacement"
                         break
             if replacement is None and ai_generator is not None and ai_calls < max_ai_questions:

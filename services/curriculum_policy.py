@@ -200,6 +200,31 @@ Chỉ tạo hình/bảng khi có đủ dữ kiện của bài, không chèn bả
 """
 
 
+def lesson_generation_request(subject, grade, topic):
+    """Promote existing policy/level instructions without duplicating their text."""
+    from services.cognitive_levels import LEVEL_GUIDANCE
+    prefix = policy_prompt(subject, grade, 1, topic) + LEVEL_GUIDANCE
+    system = policy_prompt(subject, grade, 1) + LEVEL_GUIDANCE
+    full = lesson_prompt(subject, grade, topic)
+    if not full.startswith(prefix):
+        raise ValueError("Lesson instruction boundary changed; review request builder.")
+    return system, json.dumps({"lesson_topic": str(topic)}, ensure_ascii=False) + "\n" + full[len(prefix):]
+
+
+def exam_generation_request(subject, grade, topics, counts, code, custom="", pathway=""):
+    """Keep custom requests/schema in user content; no new API call or retry."""
+    from services.cognitive_levels import LEVEL_GUIDANCE
+    # Materialize once so callers may supply an iterable without losing topics.
+    topics = list(topics)
+    prefix = policy_prompt(subject, grade, 3, "; ".join(topics), pathway) + LEVEL_GUIDANCE
+    system = policy_prompt(subject, grade, 3) + LEVEL_GUIDANCE
+    full = exam_prompt(subject, grade, topics, counts, code, custom, pathway)
+    if not full.startswith(prefix):
+        raise ValueError("Exam instruction boundary changed; review request builder.")
+    context = json.dumps({"selected_topics": topics, "pathway": str(pathway)}, ensure_ascii=False)
+    return system, context + "\n" + full[len(prefix):]
+
+
 def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
     from services.web_question_contract import WEB_QUESTION_INSTRUCTION
     from services.cognitive_levels import LEVEL_GUIDANCE

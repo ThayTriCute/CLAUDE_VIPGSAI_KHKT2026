@@ -242,6 +242,9 @@ def extract_docx(file_bytes):
     ctx = {"warnings": set(), "img_n": 0}
     hints, images, lines = {}, [], []
     with zipfile.ZipFile(io.BytesIO(file_bytes)) as z:
+        _total_uncompressed = sum(info.file_size for info in z.infolist())
+        if _total_uncompressed > 25 * 1024 * 1024:
+            raise ValueError("Dung lượng giải nén tệp DOCX vượt quá ngưỡng an toàn 25MB.")
         numbering = _Numbering(z)
         _raw = z.read("word/document.xml")
         mathtype_count = len(re.findall(rb'ProgID="Equation\.', _raw))
