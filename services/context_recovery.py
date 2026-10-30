@@ -179,7 +179,7 @@ def _candidate_ok(candidate, part, subject, grade, topics, require_visual=False,
 
 def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_generator=None, max_ai_questions=2, custom_request=""):
     """Bounded, atomic substitution. No caller input mutation or hidden source relabel."""
-    from services.web_question_contract import WEB_QUESTION_INSTRUCTION, replacement_schema
+    from services.web_question_contract import WEB_QUESTION_INSTRUCTION, replacement_schema, replacement_question_object
     subject, grade = academic_context(subject, grade)
     request_scope = explicit_request_scope(subject, custom_request)
     result = deepcopy(exam)
@@ -232,8 +232,10 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                     "required_keys": ["subject", "grade", "topic", "q", "ans", "opt (p1)", "stmts (p2)", "complete f/bbt/image if required"],
                     "must_preserve_visual_reading_task": needs_visual(original),
                     "required_claimed_level": required_level,
-                    "output": replacement_schema(part, subject, grade, requested, required_level),
                     "original": {k: original[k] for k in ("q", "opt", "ans", "stmts", "topic") if k in original}}, ensure_ascii=False)
+                prompt += ("\nReturn ONLY the response object below, replacing placeholders with ONE complete question. "
+                           "The root key must be replacement_question; do not echo task, original or output.\n"
+                           + json.dumps(replacement_schema(part, subject, grade, requested, required_level), ensure_ascii=False))
                 stage = "provider"
                 try:
                     response = ai_generator(prompt)
@@ -242,10 +244,9 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                         from data.socratic_anchors import safe_json_loads
                         response = safe_json_loads(response)
                     stage = "envelope"
-                    if not isinstance(response, dict) or not isinstance(response.get("replacement_question"), dict):
-                        raise ValueError("Replacement response must contain a question object.")
+                    question_object = replacement_question_object(response)
                     stage = "recover"
-                    item = recover_visual(response["replacement_question"], subject, grade)
+                    item = recover_visual(question_object, subject, grade)
                     stage = "validate"
                     ai_candidate_issue = _candidate_issue(item, part, subject, grade, requested, needs_visual(original), required_level, request_scope)
                     if not ai_candidate_issue:
