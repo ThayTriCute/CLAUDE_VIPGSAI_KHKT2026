@@ -7,6 +7,49 @@ from qa_runtime import parse_math_expression
 from services.academic_context import canonical_subject, folded
 
 
+def _unbounded_integer_parameter_count(raw, text):
+    """Prove an unrestricted cubic no-extrema parameter count is infinite."""
+    if not re.search(r'bao nhieu gia tri nguyen\b', text):
+        return ''
+    prefix, separator, _ = text.partition('de ham so')
+    if not separator or not re.fullmatch(r'(?:co )?bao nhieu gia tri nguyen cua (?:tham so )?m', prefix.strip()):
+        return ''  # Unknown qualifiers may bound the integer parameter.
+    match = re.search(r'khong co (?:diem )?cuc tri', text)
+    if not match or text[match.end():].strip():
+        return ''
+    if (re.search(r'\bm\s*(?:\\in\b|∈|[<>≤≥=])', raw)
+            or any(t in text for t in ('nguyen duong', 'nguyen am', 'm thuoc',
+                                        'm duong', 'm am', 'trong doan', 'trong khoang'))):
+        return ''
+    expressions = list(re.finditer(r'(?:\by|\bf\s*\(\s*x\s*\))\s*=\s*([^$\n;]+)', raw))
+    for expression_match in expressions[:3]:
+        if not re.fullmatch(r'khong co (?:diem )?cuc tri', folded(raw[expression_match.end():])):
+            continue
+        expression = expression_match.group(1)
+        expression = re.sub(r'^f\s*\(\s*x\s*\)\s*=\s*', '', expression).strip()
+        expression = re.sub(r'\\frac\s*\{\s*([+-]?\d+)\s*\}\s*\{\s*(\d+)\s*\}', r'(\1/\2)', expression)
+        if len(expression) > 160 or not re.fullmatch(r'[0-9xm+\-*/^().{}\s]+', expression):
+            continue
+        value = expression.replace('m', 't').replace('^', '**').replace('{', '(').replace('}', ')')
+        value = re.sub(r'(?<=[0-9xt)])(?=[xt(])', '*', value)
+        try:
+            polynomial = parse_math_expression(value)
+            x, t = sp.symbols('x t', real=True)
+            if not polynomial.is_polynomial(x, t) or sp.degree(polynomial, x) != 3:
+                continue
+            a, b, c, d = [sp.expand(polynomial).coeff(x, i) for i in (3, 2, 1, 0)]
+            if any(v.free_symbols for v in (a, b, d)) or a == 0 or sp.degree(c, t) != 1:
+                continue
+            # Derivative discriminant <=0 is a nonempty half-line in m.
+            # Either direction contains infinitely many unrestricted integers.
+            slope = sp.diff(4*b*b - 12*a*c, t)
+            if not slope.free_symbols and slope != 0:
+                return 'unbounded_integer_parameter_count'
+        except (ValueError, TypeError, NotImplementedError, ZeroDivisionError):
+            continue
+    return ''
+
+
 def math_condition_conflict(question):
     if not isinstance(question, dict):
         return ""
@@ -16,6 +59,18 @@ def math_condition_conflict(question):
     if len(raw) > 10000:
         return ""
     text = folded(raw)
+    count_issue = _unbounded_integer_parameter_count(raw, text)
+    if count_issue:
+        answer = str(question.get('ans', '')).strip()
+        options = question.get('opt')
+        if isinstance(options, list) and answer.upper() in ('A', 'B', 'C', 'D'):
+            index = ord(answer.upper()) - ord('A')
+            if index < len(options):
+                answer = str(options[index])
+        answer_text = folded(answer)
+        if re.search(r'\b(?:vo han|infty|infinite|infinity)\b', answer_text) and 'khong' not in answer_text:
+            return ''  # Infinite counts are valid when the answer contract says so.
+        return count_issue
     from services.polynomial_choice_contract import polynomial_choice_conflict
     choice_issue = polynomial_choice_conflict(question)
     if choice_issue:
