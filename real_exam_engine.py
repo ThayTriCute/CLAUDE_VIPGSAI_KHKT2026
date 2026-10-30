@@ -1903,7 +1903,17 @@ def parse_file_direct_with_ai(file_bytes: bytes, filename: str, subject: str, gr
     - Xuất JSON chuẩn ma trận khảo thí QĐ 764/QĐ-BGDĐT (Phần I, Phần II, Phần III).
     """
     fname_lower = filename.lower()
-    
+
+    # Plain text already has no visual payload to decode. Reuse the existing
+    # regex/text parser first; it retains the same AI fallback when necessary.
+    # Keep PDF and Word on their visual path to preserve figures and MathType.
+    if fname_lower.endswith((".txt", ".tex", ".md")):
+        extracted_text = extract_text_from_file_upload(file_bytes, filename)
+        return parse_raw_exam_text(
+            extracted_text, subject, grade, school, title,
+            ai_caller=ai_caller, user_prompt=user_prompt,
+        )
+
     # 0. CHIẾN LƯỢC CHO FILE SIÊU KHỦNG (> 15MB):
     if len(file_bytes) > 15 * 1024 * 1024:
         extracted_text = extract_text_from_file_upload(file_bytes, filename)
