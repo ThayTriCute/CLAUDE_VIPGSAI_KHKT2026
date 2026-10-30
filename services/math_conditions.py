@@ -7,6 +7,75 @@ from qa_runtime import parse_math_expression
 from services.academic_context import canonical_subject, folded
 
 
+def _rational_interval_choice_conflict(question):
+    """Exact signs on explicit intervals for a numeric linear fraction only."""
+    raw = str(question.get('q', ''))
+    formula = re.search(r'\by\s*=\s*\\frac\{([^{}]+)\}\{([^{}]+)\}', raw)
+    options = question.get('opt')
+    if not formula or not isinstance(options, list) or len(options) != 4:
+        return ''
+    stem = folded(raw[:formula.start()] + ' FORMULA ' + raw[formula.end():])
+    match = re.fullmatch(r'ham so formula (dong bien|nghich bien) tren khoang nao (?:duoi day|sau day)', stem)
+    if not match:
+        return ''
+    x = sp.Symbol('x', real=True)
+    try:
+        polynomials = []
+        for text in formula.groups():
+            if len(text) > 80 or not re.fullmatch(r'[0-9x+\-*/().\s]+', text):
+                return ''
+            text = re.sub(r'(?<=[0-9x)])(?=[x(])', '*', text)
+            value = parse_math_expression(text)
+            if value.free_symbols - {x} or not value.is_polynomial(x) or sp.degree(value, x) > 1:
+                return ''
+            polynomials.append(sp.expand(value))
+        numerator, denominator = polynomials
+        a, b = numerator.coeff(x), numerator.subs(x, 0)
+        c, d = denominator.coeff(x), denominator.subs(x, 0)
+        determinant = sp.simplify(a*d-b*c)
+        if c == 0 or determinant == 0:
+            return ''
+        pole = -d/c
+        sign_matches = bool(determinant > 0 if match[1] == 'dong bien' else determinant < 0)
+        truths = []
+        def bound(text):
+            text = text.strip()
+            if text in (r'\infty', r'+\infty', '∞', '+∞'):
+                return sp.oo
+            if text in (r'-\infty', '-∞'):
+                return -sp.oo
+            if len(text) > 20 or not re.fullmatch(r'[+\-]?\d+(?:\.\d+|/\d+)?', text):
+                raise ValueError('Unknown interval bound')
+            return sp.Rational(text)
+        for option in options:
+            value = re.sub(r'^[A-D][.)]\s*', '', str(option).strip(), flags=re.I)
+            value = value.replace('$', '').replace(r'\left', '').replace(r'\right', '').strip().rstrip('.')
+            domain = re.sub(r'\\(?:mathbb|mathbf)\s*\{R\}', 'R', value)
+            domain = domain.replace(r'\setminus', '\\').replace(r'\{', '{').replace(r'\}', '}').replace(' ', '')
+            if domain.startswith('R\\{') and domain.endswith('}'):
+                bound(domain[3:-1])  # Only a known single excluded real point.
+                truths.append(False)  # Across a nonremovable pole global monotonicity fails.
+                continue
+            chunks = re.split(r'\s+và\s+', value)
+            if not 1 <= len(chunks) <= 2:
+                return ''
+            interval_truths = []
+            for chunk in chunks:
+                interval = re.fullmatch(r'\(\s*([^;]+)\s*;\s*([^;]+)\s*\)', chunk.strip())
+                if not interval:
+                    return ''
+                lower, upper = map(bound, interval.groups())
+                if not lower < upper:
+                    return ''
+                interval_truths.append(sign_matches and not bool(lower < pole < upper))
+            truths.append(all(interval_truths))
+        if sum(truths) != 1:
+            return 'rational_interval_choice_not_unique'
+    except (ValueError, TypeError, NotImplementedError, ZeroDivisionError):
+        return ''
+    return ''
+
+
 def _unbounded_integer_parameter_count(raw, text):
     """Prove an unrestricted cubic no-extrema parameter count is infinite."""
     if not re.search(r'bao nhieu gia tri nguyen\b', text):
@@ -59,6 +128,9 @@ def math_condition_conflict(question):
     if len(raw) > 10000:
         return ""
     text = folded(raw)
+    rational_issue = _rational_interval_choice_conflict(question)
+    if rational_issue:
+        return rational_issue
     count_issue = _unbounded_integer_parameter_count(raw, text)
     if count_issue:
         answer = str(question.get('ans', '')).strip()
