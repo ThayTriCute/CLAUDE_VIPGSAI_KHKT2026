@@ -22,3 +22,24 @@ def replacement_schema(part, subject, grade, topics, level=''):
     else:
         question['ans'] = 'Đáp số cùng đơn vị/quy tắc làm tròn phù hợp'
     return {'replacement_question': question}
+
+
+def replacement_question_object(response):
+    """Accept one unambiguous question, never select from multiple candidates."""
+    if not isinstance(response, dict):
+        raise ValueError('Replacement response must contain a question object.')
+    # One explicit transport wrapper is equivalent to the requested root.
+    if set(response) == {'output'} and isinstance(response['output'], dict):
+        response = response['output']
+    containers = {'p1', 'p2', 'p3', 'questions', 'question', 'output'}
+    if 'replacement_question' in response:
+        item = response['replacement_question']
+        if not isinstance(item, dict) or any(k in response for k in containers | {'q'}):
+            raise ValueError('Ambiguous replacement response.')
+        return item
+    # A bare complete question carries its own identity; do not fill metadata.
+    if (isinstance(response.get('q'), str) and response['q'].strip()
+            and {'subject', 'grade', 'topic'} <= response.keys()
+            and not any(k in response for k in containers)):
+        return response
+    raise ValueError('Replacement response must contain one identified question.')
