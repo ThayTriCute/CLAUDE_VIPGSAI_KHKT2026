@@ -3385,10 +3385,14 @@ def question_visual_html(question):
     pieces = []
     raw_bbt = str(question.get("bbt") or "").strip()
     if raw_bbt and raw_bbt.lower() not in {"null", "none", "{}"}:
-        table_rows = [line.strip().strip("|").split("|") for line in raw_bbt.splitlines() if "|" in line]
-        if table_rows:
-            cells = "".join("<tr>" + "".join("<td style='border:1px solid #64748b;padding:6px'>" + html.escape(cell.strip()) + "</td>" for cell in row) + "</tr>" for row in table_rows)
-            pieces.append("<div style='overflow-x:auto'><table>" + cells + "</table></div>")
+        from services.bbt_display_contract import aligned_bbt_rows
+        aligned = aligned_bbt_rows(raw_bbt)
+        if aligned:
+            safe_rows = [[html.escape(cell) for cell in row] for row in aligned]
+            pieces.append(_build_svg_bbt_from_rows(*safe_rows))
+        else:
+            # Unknown/two-row formats remain visible without splitting double bars.
+            pieces.append("<pre style='overflow-x:auto;white-space:pre'>" + html.escape(raw_bbt) + "</pre>")
     grouped = question.get("mslgn_data")
     if isinstance(grouped, dict):
         groups, frequencies = grouped.get("groups", []), grouped.get("freq", [])

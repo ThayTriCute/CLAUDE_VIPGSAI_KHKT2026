@@ -143,6 +143,12 @@ def _question_issue(question, part, subject, grade):
     if needs_visual(question) and not has_visual(question):
         return "missing_source_visual"
     if subject == "Toán học":
+        from services.bbt_display_contract import missing_asymptote_limits
+        if missing_asymptote_limits(question.get('bbt')):
+            return "missing_variation_table_limits"
+        from services.web_question_contract import graph_identification_answer_leak
+        if graph_identification_answer_leak(question):
+            return "graph_identification_formula_revealed"
         from services.neuro_symbolic_verifier import audit_ai_generated_question_sympy
         if audit_ai_generated_question_sympy(question).get("hallucination_detected"):
             return "independently_detected_answer_mismatch"
