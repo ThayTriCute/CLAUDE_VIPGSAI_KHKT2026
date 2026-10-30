@@ -309,7 +309,7 @@ def fetch_toanmath_live_exams(max_items: int = 15):
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
-        resp = requests.get(url, headers=headers, timeout=8)
+        resp = _public_get(url, headers=headers, timeout=8)
         if resp.status_code == 200:
             html = resp.text
             # Tìm các thẻ link bài viết và ảnh đại diện
@@ -1009,6 +1009,35 @@ def get_default_category_urls():
         }
     }
 
+def _public_get(url, *, headers=None, timeout=15):
+    """Validate each discovered URL and redirect; do not follow private targets."""
+    import ipaddress
+    import socket
+    from urllib.parse import urlsplit, urljoin
+    current = url
+    for hop in range(4):
+        parsed = urlsplit(current)
+        if parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username or parsed.password:
+            raise ValueError("URL must be a public HTTP(S) address")
+        try:
+            literal = ipaddress.ip_address(parsed.hostname)
+        except ValueError:
+            addresses = [ipaddress.ip_address(row[4][0]) for row in socket.getaddrinfo(parsed.hostname, parsed.port or (443 if parsed.scheme == "https" else 80), type=socket.SOCK_STREAM)]
+        else:
+            addresses = [literal]
+        if not addresses or any(not address.is_global or address.is_multicast for address in addresses):
+            raise ValueError("Private or non-public download target rejected")
+        response = requests.get(current, headers=headers, timeout=timeout, allow_redirects=False)
+        if response.status_code not in (301, 302, 303, 307, 308):
+            return response
+        location = response.headers.get("Location")
+        response.close()
+        if not location or hop == 3:
+            raise ValueError("Download redirect limit reached")
+        current = urljoin(current, location)
+    raise ValueError("Download redirect limit reached")
+
+
 def fetch_portal_category_exams(category_url: str, max_items: int = 15):
     """
     Quét trực tiếp một URL danh mục đề thi (như https://toanmath.com/de-thi-giua-hk1-toan-12).
@@ -1019,7 +1048,7 @@ def fetch_portal_category_exams(category_url: str, max_items: int = 15):
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
-        resp = requests.get(category_url, headers=headers, timeout=12)
+        resp = _public_get(category_url, headers=headers, timeout=12)
         if resp.status_code == 200:
             html = resp.text
             # Tìm tất cả link bài viết theo thẻ tiêu đề h2 hoặc h3
@@ -1095,7 +1124,7 @@ def extract_full_exam_from_url(article_url: str, subject: str = "Toán học", g
             if file_id:
                 direct_drive_url = f"https://drive.google.com/uc?export=download&id={file_id}"
                 try:
-                    d_resp = requests.get(direct_drive_url, headers=headers, timeout=25)
+                    d_resp = _public_get(direct_drive_url, headers=headers, timeout=25)
                     if d_resp.status_code == 200:
                         if ai_caller and len(d_resp.content) <= 5 * 1024 * 1024:
                             fname_guess = "de_thi.pdf" if d_resp.content[:4] == b"%PDF" else "de_thi.docx"
@@ -1142,7 +1171,7 @@ def extract_full_exam_from_url(article_url: str, subject: str = "Toán học", g
             except Exception as _e_cat:
                 logging.warning("Không thể tự động phân giải link chuyên mục: %s", _e_cat)
 
-        resp = requests.get(clean_url, headers=headers, timeout=15)
+        resp = _public_get(clean_url, headers=headers, timeout=15)
         if resp.status_code != 200:
             return None
             
@@ -1177,7 +1206,7 @@ def extract_full_exam_from_url(article_url: str, subject: str = "Toán học", g
             if not pdf_target_url.startswith("http"):
                 pdf_target_url = urllib.parse.urljoin(article_url, pdf_target_url)
             try:
-                pdf_resp = requests.get(pdf_target_url, headers=headers, timeout=20)
+                pdf_resp = _public_get(pdf_target_url, headers=headers, timeout=20)
                 if pdf_resp.status_code == 200:
                     if ai_caller and len(pdf_resp.content) <= 5 * 1024 * 1024:
                         direct_pdf_exam = parse_file_direct_with_ai(pdf_resp.content, "de_thi_link.pdf", subject, grade, school_name, title, ai_caller=ai_caller)

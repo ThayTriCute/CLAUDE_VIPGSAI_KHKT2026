@@ -171,6 +171,83 @@ def _unbounded_integer_parameter_count(raw, text):
     return ''
 
 
+def _bbt_interval_choice_conflict(question):
+    """Prove interval-choice conflicts only for complete numeric supplied tables."""
+    from services.bbt_display_contract import aligned_bbt_rows
+    rows = aligned_bbt_rows(question.get('bbt'))
+    options = question.get('opt')
+    task = re.search(r'ham so (?:da cho )?(dong bien|nghich bien) tren khoang nao (?:duoi day|sau day)$', folded(str(question.get('q', ''))))
+    if not rows or not task or not isinstance(options, list) or len(options) != 4:
+        return ''
+    def bound(value):
+        value = value.replace('\\', '').replace('$', '').strip()
+        if value in ('inf', '+inf', 'infty', '+infty', '∞', '+∞'):
+            return sp.oo
+        if value in ('-inf', '-infty', '-∞'):
+            return -sp.oo
+        if len(value) > 20 or not re.fullmatch(r'[+\-]?\d+(?:\.\d+|/\d+)?', value):
+            raise ValueError('Unknown bound')
+        return sp.Rational(value)
+    try:
+        points = [bound(v) for v in rows[0][1:]]
+        if any(not a < b for a, b in zip(points, points[1:])):
+            return ''
+        signs = rows[1][2:-1:2]
+        markers = rows[1][3:-1:2]
+        desired = '+' if task[1] == 'dong bien' else '-'
+        truths = []
+        for option in options:
+            value = re.sub(r'^[A-D][.)]\s*', '', str(option).strip(), flags=re.I)
+            value = value.replace('$', '').replace(r'\left', '').replace(r'\right', '').strip().rstrip('.')
+            interval = re.fullmatch(r'\(\s*([^;]+);([^;]+)\s*\)', value)
+            if not interval:
+                return ''
+            left, right = map(bound, interval.groups())
+            if not left < right:
+                return ''
+            if left < points[0] or right > points[-1]:
+                return ''  # A partial table cannot disprove behaviour outside its range.
+            valid = all(sign == desired for a, b, sign in zip(points, points[1:], signs)
+                                  if max(left, a) < min(right, b))
+            valid = valid and not any(marker == '||' and left < point < right
+                                      for point, marker in zip(points[1:-1], markers))
+            truths.append(bool(valid))
+        if sum(truths) != 1:
+            return 'bbt_interval_choice_not_unique'
+        key = str(question.get('ans', '')).strip().upper()
+        if key in 'ABCD' and len(key) == 1 and not truths[ord(key)-ord('A')]:
+            return 'bbt_interval_key_mismatch'
+    except (ValueError, TypeError, ZeroDivisionError):
+        return ''
+    return ''
+
+
+def _rational_monotonic_statement_conflict(question):
+    model = question.get('f')
+    if not isinstance(model, dict) or model.get('type') != 'func_1_1':
+        return ''
+    statements = question.get('stmts')
+    if not isinstance(statements, list):
+        return ''
+    try:
+        values = [sp.Rational(str(model[k])) for k in ('a', 'b', 'c', 'd')]
+        a, b, c, d = values
+        determinant = a*d-b*c
+        if c == 0 or determinant == 0:
+            return ''
+        for statement in statements:
+            if not isinstance(statement, dict) or type(statement.get('a')) is not bool:
+                continue
+            task = re.fullmatch(r'ham so (?:da cho )?(dong bien|nghich bien) tren tung khoang xac dinh', folded(str(statement.get('t', ''))))
+            if task:
+                expected = bool(determinant > 0 if task[1] == 'dong bien' else determinant < 0)
+                if statement['a'] != expected:
+                    return 'rational_monotonic_statement_key_mismatch'
+    except (KeyError, ValueError, TypeError, ZeroDivisionError):
+        return ''
+    return ''
+
+
 def math_condition_conflict(question):
     if not isinstance(question, dict):
         return ""
@@ -186,6 +263,12 @@ def math_condition_conflict(question):
     rational_issue = _rational_interval_choice_conflict(question)
     if rational_issue:
         return rational_issue
+    statement_issue = _rational_monotonic_statement_conflict(question)
+    if statement_issue:
+        return statement_issue
+    bbt_issue = _bbt_interval_choice_conflict(question)
+    if bbt_issue:
+        return bbt_issue
     count_issue = _unbounded_integer_parameter_count(raw, text)
     if count_issue:
         answer = str(question.get('ans', '')).strip()

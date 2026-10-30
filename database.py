@@ -351,9 +351,9 @@ class DatabaseManager:
                 FROM exam_attempts pre
                 INNER JOIN exam_attempts post
                     ON pre.student_id = post.student_id
-                    AND pre.subject = post.subject
                     AND pre.grade_level = post.grade_level
                 WHERE pre.subject IN ({placeholders})
+                  AND post.subject IN ({placeholders})
                   AND pre.grade_level = ?
                   AND LOWER(pre.phase) IN ('pre', 'pre_test', 'trước')
                   AND LOWER(post.phase) IN ('post', 'post_test', 'sau')
@@ -361,7 +361,7 @@ class DatabaseManager:
                   AND post.grading_status != 'ai_reference'
                 GROUP BY pre.student_id
                 HAVING COUNT(DISTINCT pre.id) = 1 AND COUNT(DISTINCT post.id) = 1
-                """, (*subj_list, grade_level))
+                """, (*subj_list, *subj_list, grade_level))
                 rows = cursor.fetchall()
                 return [dict(r) for r in rows]
         except Exception as e:

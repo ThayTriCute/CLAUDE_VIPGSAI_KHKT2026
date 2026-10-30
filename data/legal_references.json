@@ -7,9 +7,11 @@
       "effective_from": "2019-02-15",
       "scope": "curriculum",
       "status": "partially_amended",
-      "url": "https://vbpl.moj.gov.vn/bogiaoducdaotao/Pages/vbpq-toanvan.aspx?ItemID=146721",
+      "url": "https://vbpl.vn/van-ban/chi-tiet/thong-tu-so-32-2018-tt-bgddt-ban-hanh-chuong-trinh-giao-duc-pho-thong--146721",
       "note": "Chương trình GDPT 2018; đọc cùng văn bản sửa đổi, không dùng bản gốc đơn lẻ.",
-      "checked_at": "2026-10-24"
+      "checked_at": "2026-10-30",
+      "verification_scope": "document_identity_status_history_only; subject appendices not yet mapped",
+      "amendments_observed": ["20/2021/TT-BGDĐT", "13/2022/TT-BGDĐT", "17/2025/TT-BGDĐT"]
     },
     {
       "code": "20/2021/TT-BGDĐT",
@@ -34,9 +36,10 @@
       "effective_from": "2025-09-12",
       "scope": "curriculum",
       "status": "active",
-      "url": "https://vbpl.vn/bogiaoducdaotao/Pages/vbpq-toanvan.aspx?ItemID=183284",
+      "url": "https://vbpl.vn/van-ban/chi-tiet/thong-tu-so-17-2025-tt-bgddt-sua-doi-bo-sung-mot-so-noi-dung-trong-chuong-trinh-giao-duc-pho-thong-ban-hanh-kem-theo-thong-tu-so-32-2018-tt-bgddt-ngay-26-thang-12-nam-2018-cua-bo-truong-bo-giao-duc-va-dao-tao--183284?tabs=toan-van",
       "note": "Phụ lục sửa Lịch sử và Địa lí, Lịch sử 10, Địa lí, GDCD; cần áp đúng phụ lục/lớp.",
-      "checked_at": "2026-10-24"
+      "checked_at": "2026-10-30",
+      "verification_scope": "document_identity_status_articles_1_2_only; appendix contents not yet mapped"
     },
     {
       "code": "22/2021/TT-BGDĐT",

@@ -34,9 +34,11 @@ def clean_latex_math_to_sympy_expr(expr_str: str) -> Optional[sp.Expr]:
     s = s.replace('$', '').strip()
     s = re.sub(r'^(y|f\(x\))\s*=\s*', '', s)
 
-    # 1. Chuyển đổi phân số & căn thức LaTeX trước
-    for _ in range(2):
-        s = re.sub(r'\\(d)?frac\{([^{}]+)\}\{([^{}]+)\}', r'((\2)/(\3))', s)
+    # 1. Chuẩn hóa số mũ/chỉ số có ngoặc nhọn trước khi giải nén phân số & căn thức LaTeX
+    s = re.sub(r'\^\{([^{}]+)\}', r'**(\1)', s)
+    s = re.sub(r'_\{([^{}]+)\}', r'_\1', s)
+    for _ in range(4):
+        s = re.sub(r'\\(?:d|t)?frac\{([^{}]+)\}\{([^{}]+)\}', r'((\1)/(\2))', s)
     s = re.sub(r'\\sqrt\{([^{}]+)\}', r'sqrt(\1)', s)
 
     # 2. Chuẩn hóa tên hàm trước khi thêm phép nhân ẩn

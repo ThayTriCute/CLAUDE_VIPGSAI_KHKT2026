@@ -10,8 +10,9 @@ _SUBJECTS = {
     "Vật lý", "Hóa học", "Sinh học", "Lịch sử", "Địa lý",
     "Giáo dục kinh tế và pháp luật",
 }
-_ACTIONS = {"needs_review", "recovered_from_formula", "bank_replacement", "ai_replacement"}
+_ACTIONS = {"needs_review", "recovered_from_formula", "recovered_from_inline_table", "bank_replacement", "ai_replacement"}
 _REASONS = {
+    "chemical_identity_mismatch", "missing_variation_table_limits", "graph_identification_formula_revealed",
     "invalid_question_structure", "missing_or_invalid_question_data",
     "missing_source_visual", "independently_detected_answer_mismatch",
     "outside_explicit_request", "outside_selected_topic",
