@@ -114,6 +114,32 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#ffffff80;padding:10p
 <script>''' + js + r'''</script><script>
 (async function(){let errors=document.querySelectorAll('[data-source-issue]').length;const status=document.getElementById('render-status');
 for(const el of document.querySelectorAll('.lesson-math')){try{katex.render(el.dataset.tex,el,{displayMode:el.dataset.display==='true',throwOnError:true,trust:false,strict:'warn',maxExpand:1000,maxSize:20});}catch(error){errors++;el.textContent=el.dataset.tex;el.classList.add('formula-error');el.title='Công thức chưa dựng được; cần kiểm tra cú pháp.';}}
+// Variation tables: keep source values, draw continuous interval arrows.
+for(const table of document.querySelectorAll('article table')){
+ const rows=Array.from(table.rows);
+ const plain=cell=>{const c=cell.cloneNode(true);for(const m of c.querySelectorAll('.lesson-math'))m.replaceWith(m.dataset.tex);return c.textContent.trim().replace(/\\(?:infty)/g,'∞').replace(/[$ {}]/g,'').replace(/−/g,'-');};
+ if(rows.length!==3)continue;
+ const data=rows.map(r=>Array.from(r.cells).map(plain));
+ if(data[0][0]!=='x'||!/^y[′']$/.test(data[1][0])||data[2][0]!=='y')continue;
+ if(!data.every(r=>r.length===data[0].length)||data.some(r=>r.some(v=>v.includes('||'))))continue;
+ const points=[];for(let i=1;i<data[0].length;i++)if(data[0][i])points.push(i);
+ if(points.length<2||points.length>8)continue;
+ const dirs=[];for(let k=0;k<points.length-1;k++){const a=points[k],b=points[k+1];const sign=data[1].slice(a+1,b).join('');const arrow=data[2].slice(a+1,b).join('');dirs.push(arrow.includes('↗')||sign==='+'?'up':arrow.includes('↘')||sign==='-'?'down':null);}
+ if(dirs.some(d=>!d)||dirs.some((d,k)=>{const a=data[2][points[k]],b=data[2][points[k+1]];const num=v=>v==='-∞'?-Infinity:v==='+∞'||v==='∞'?Infinity:Number(v.replace(',','.'));return d==='up'?num(a)>=num(b):num(a)<=num(b);})||points.some(i=>!/^[-+]?([0-9]+([.,][0-9]+)?|∞)$/.test(data[2][i])))continue;
+ const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
+ svg.setAttribute('viewBox','0 0 820 220');svg.setAttribute('role','img');svg.setAttribute('aria-label',table.innerText);svg.style.cssText='display:block;width:100%;height:auto;background:white;color:#111;break-inside:avoid;font:20px Times New Roman,serif';
+ const add=(tag,attrs,text)=>{const el=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,v);if(text!==undefined)el.textContent=text;svg.append(el);return el;};
+ add('rect',{x:1,y:1,width:818,height:218,fill:'white',stroke:'#111','stroke-width':2});
+ for(const y of [52,100])add('line',{x1:1,y1:y,x2:819,y2:y,stroke:'#111','stroke-width':1.5});
+ add('line',{x1:82,y1:1,x2:82,y2:219,stroke:'#111','stroke-width':1.5});
+ const label=(x,y,t)=>add('text',{x,y,fill:'#111','text-anchor':'middle','dominant-baseline':'middle'},t.replace(/-/g,'−'));
+ label(42,28,'x');label(42,77,'y′');label(42,160,'y');
+ const xs=points.map((_,k)=>130+k*640/(points.length-1));
+ const ys=points.map((i,k)=>{const v=data[2][i];if(v.includes('∞'))return v.startsWith('-')?196:124;return (dirs[k]==='down'||dirs[k-1]==='up')?145:178;});
+ points.forEach((i,k)=>{label(xs[k],28,data[0][i]);label(xs[k],77,data[1][i]);label(xs[k],ys[k],data[2][i]);});
+ dirs.forEach((d,k)=>{label((xs[k]+xs[k+1])/2,77,data[1].slice(points[k]+1,points[k+1]).join(''));const x1=xs[k]+25,x2=xs[k+1]-25,y1=ys[k],y2=ys[k+1];add('line',{x1,y1,x2,y2,stroke:'#111','stroke-width':2});const a=Math.atan2(y2-y1,x2-x1);add('path',{d:`M ${x2-9*Math.cos(a-.45)} ${y2-9*Math.sin(a-.45)} L ${x2} ${y2} L ${x2-9*Math.cos(a+.45)} ${y2-9*Math.sin(a+.45)}`,fill:'none',stroke:'#111','stroke-width':2});});
+ table.replaceWith(svg);
+}
 await document.fonts.ready;status.textContent=errors?'Có '+errors+' công thức cần kiểm tra; chưa cho in.':'Đã dựng công thức. Có thể in hoặc lưu PDF.';status.className=errors?'notice':'';
 const print=document.getElementById('print');print.disabled=errors>0;print.onclick=()=>window.print();document.documentElement.dataset.renderErrors=String(errors);document.documentElement.dataset.renderReady='true';
 })();</script></body></html>'''

@@ -203,6 +203,16 @@ def lesson_prompt(subject, grade, topic):
             "đủ mốc, dấu đạo hàm, giá trị hoặc giới hạn và mũi tên theo đúng hàm đang xét; "
             "không thay bảng bằng đoạn văn xét dấu. Giữ các cột tương ứng để công cụ dựng bảng hiện có xử lý. "
             "Không tự bịa giới hạn, điểm gián đoạn hoặc thêm bảng giải tích cho bài không cần.\n"
+            "Trước khi lập bảng hoặc đồ thị, kiểm tập xác định, nghiệm đạo hàm, dấu từng khoảng, "
+            "cực trị, giới hạn và tiệm cận; thiếu dữ kiện thì nêu rõ, không tự bổ sung số liệu. "
+            "Bảng ba hàng x, y′, y dùng cột xen kẽ mốc và khoảng: hàng x để trống ô khoảng; "
+            "hàng y′ ghi dấu ở ô khoảng và 0 đúng mốc nghiệm; hàng y ghi giá trị ở mốc, "
+            "mũi tên ↗ hoặc ↘ ở khoảng. Không chép các số -2, 0, 4, 1 từ ảnh mẫu. "
+            "Đồ thị cần trục Ox/Oy, gốc O, khung nhìn chứa các đặc điểm quan trọng, "
+            "tách nhánh tại điểm không xác định; tiệm cận nét đứt, nhãn không đè đường cong. "
+            "Đồ thị và bảng phải cùng hàm số, cùng cực trị và giới hạn; "
+            "không dùng hình ví dụ khác thay hình của bài.\n"
+
         )
     if canonical_subject(subject) == "Ngữ văn":
         visual_guidance += (
