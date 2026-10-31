@@ -10,6 +10,15 @@ def math_context_question(question):
     if 'truc tung' in text and any(term in text for term in ('cat truc tung', 'giao diem', 'tung do')):
         return ('Một điểm nằm trên trục tung thì hoành độ có đặc điểm gì? '
                 'Từ đó, em sẽ dùng hàm số đã cho để xác định tung độ như thế nào?')
+    has_parameter = 'tham so' in text
+    monotonic = any(term in text for term in ('dong bien', 'nghich bien'))
+    real_text = folded(re.sub(r'\\(?:mathbb|mathbf|mathrm)\s*(?:\{[Rr]\}|[Rr])|ℝ', 'R', str(question)))
+    real_line = bool(re.search(r'\btren\s+(?:tap\s+)?r\b', real_text)) or 'tren toan bo truc so' in text
+    if has_parameter and monotonic and real_line:
+        tail = (' Khi đã tìm được miền tham số, em sẽ lọc và đếm các giá trị nguyên như thế nào?'
+                if 'nguyen' in text else ' Em sẽ suy ra điều kiện của tham số như thế nào?')
+        return ('Em sẽ tính đạo hàm chứa tham số và đặt điều kiện về dấu nào để tính đơn điệu '
+                'đúng với mọi giá trị của biến trên toàn bộ trục số?' + tail)
     for kind in ('tieu', 'dai'):
         if 'toa do diem cuc ' + kind in text:
             label = 'cực tiểu' if kind == 'tieu' else 'cực đại'

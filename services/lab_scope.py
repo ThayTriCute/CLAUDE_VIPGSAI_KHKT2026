@@ -1,7 +1,27 @@
 """Label the existing preset library without pretending it is the current lesson."""
 import re
 
-from services.academic_context import academic_context
+from services.academic_context import academic_context, canonical_subject
+
+
+def resolve_preset_lab(subject, label, payload):
+    """Correct one mismatched preset; keep its menu identity and other payloads."""
+    if (canonical_subject(subject) == 'Tin học'
+            and label == 'Sơ đồ thuật toán & Cây nhị phân'
+            and payload.get('type') == 'oxyz'):
+        return {'type': 'mermaid', 'code': '''graph TD
+R["Mẫu minh họa: tìm kiếm trên cây nhị phân tìm kiếm"] --> T["Cây mẫu"]
+T --> N8["8"]
+N8 --> N3["Nhánh trái: 3"]
+N8 --> N10["Nhánh phải: 10"]
+N3 --> N1["Nhánh trái: 1"]
+N3 --> N6["Nhánh phải: 6"]
+R --> A["Thuật toán: bắt đầu tại gốc, so sánh k với khóa nút"]
+A --> E["Nút rỗng: kết luận không tìm thấy"]
+A --> F["k bằng khóa: tìm thấy, dừng"]
+A --> L["k nhỏ hơn khóa: sang con trái và lặp lại"]
+A --> G["k lớn hơn khóa: sang con phải và lặp lại"]'''}
+    return dict(payload)
 
 
 def preset_lab_label(label, subject, grade):

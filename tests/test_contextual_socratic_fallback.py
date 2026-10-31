@@ -27,6 +27,20 @@ class TestContextualSocraticFallback(unittest.TestCase):
         self.assertNotIn('1', result)
         self.assertNotIn('Định hướng tư duy Socratic', result)
 
+    def test_parameter_monotonicity_on_real_line_guides_parameter_then_integer_count(self):
+        question = 'Có bao nhiêu giá trị nguyên của tham số m để hàm số y=1/3x^3-mx^2+4x+3 đồng biến trên R?'
+        result = sanitize_socratic_hint('', 'D', question, ['A. 2','B. 3','C. 4','D. 5'])
+        for real_notation in (r'$\mathbb{R}$', r'\mathbb R', 'ℝ', 'tập R'):
+            variant = sanitize_socratic_hint('', 'D', question.replace('trên R', 'trên '+real_notation))
+            self.assertIn('tham số', variant, real_notation)
+        self.assertIn('tham số', result)
+        self.assertIn('mọi', result)
+        self.assertIn('nguyên', result)
+        self.assertTrue(result.endswith('?'))
+        for answer in ('m²', 'm^2', '≤4', '5', 'đáp án'):
+            self.assertNotIn(answer, result)
+        self.assertIsNone(math_context_question('Tìm tham số để hàm số đồng biến trên (1;2).'))
+
     def test_maximum_uses_requested_kind(self):
         result = math_context_question(MINIMUM.replace('cực tiểu','cực đại'))
         self.assertIn('cực đại', result)
