@@ -2016,6 +2016,13 @@ def detect_student_concluded_intent(user_input: str, history: list = None) -> bo
         return False
 
     txt = user_input.strip().lower()
+    # Explicit negation of remaining confusion is not a new question. Keep
+    # genuine follow-up questions and unresolved confusion as higher priority.
+    if re.search(r"(?:chưa|không)\s+hết\s+(?:thắc\s+mắc|câu\s+hỏi)|không\s+hiểu", txt):
+        return False
+    question_scan = txt
+    for settled in ("không còn thắc mắc", "không có thắc mắc", "hết thắc mắc"):
+        question_scan = question_scan.replace(settled, "")
 
     # 1. NẾU CÂU CÓ DẤU HIỆU ĐẶT CÂU HỎI MỚI -> CHẮC CHẮN VẪN ĐANG HỎI, CHƯA PHẢI CLOSURE
     # (Dù có từ 'cảm ơn', ví dụ: 'Em cảm ơn thầy nhưng chỗ này tại sao...')
@@ -2025,7 +2032,7 @@ def detect_student_concluded_intent(user_input: str, history: list = None) -> bo
         "thầy cho em hỏi", "cho em hỏi", "giải thích giúp", "hỏi thêm", "thắc mắc",
         "còn chỗ", "đoạn này", "tính sao", "bước này"
     ]
-    if any(qm in txt for qm in question_markers):
+    if any(qm in question_scan for qm in question_markers):
         return False
 
     # 2. XÉT CÁC MẪU NGỮ NGHĨA BIỂU ĐẠT THẤU HIỂU & KHÔNG CÒN CÂU HỎI
@@ -6874,8 +6881,11 @@ def heal_bbt_markdown_table(text: str) -> str:
 
 def parse_quiz_questions(text):
     questions = []
-    part3_match = re.search(r'(?i)###\s*PHẦN\s*3', text)
+    part3_match = re.search(r'(?im)^\s*(?:#{1,6}\s*)?PHẦN\s*3(?!\d)', text)
     part2_text = text[:part3_match.start()] if part3_match else text
+    part2_match = re.search(r'(?im)^\s*(?:#{1,6}\s*)?PHẦN\s*2(?!\d)', part2_text)
+    if part2_match:
+        part2_text = part2_text[part2_match.end():]
 
     pattern = r'(?i)(?:\[Q\d+\]|C[âa]u\s*\d+[\.\:]?)'
     parts = re.split(pattern, part2_text)
@@ -6884,7 +6894,7 @@ def parse_quiz_questions(text):
         lines = [l.strip() for l in part.strip().split('\n') if l.strip()]
         if not lines: continue
         q_header = lines[0]
-        level, options, correct, explain = "", [], "A", ""
+        level, options, correct, explain = "", [], "", ""
         hint = ""
         cognitive_evidence = {}
 
@@ -6892,6 +6902,9 @@ def parse_quiz_questions(text):
         if match:
             level = match.group(1)
             q_header = re.sub(r'(?i)\[Mức độ:\s*.*?\]', '', q_header).strip()
+
+        if q_header.startswith("**") and q_header.count("**") % 2:
+            q_header = q_header[2:].lstrip()
 
         q_text_lines = [q_header]
         parsing_options = False
@@ -6917,8 +6930,9 @@ def parse_quiz_questions(text):
                 parsing_options = True
                 options.append(clean_line)
             elif re.search(r'(?i)^(CORRECT|ĐÁP ÁN|Đáp án đúng)\s*:', line):
-                ext = re.sub(r'[^A-D]', '', line.split(":")[-1].upper())
-                if ext: correct = ext[0]
+                key_text = line.split(":", 1)[-1].strip()
+                key_match = re.match(r'(?i)^(?:chọn\s+|phương án\s+)?([A-D])(?=$|[\s.);,:])', key_text)
+                correct = key_match[1].upper() if key_match else ""
             elif re.search(r'(?i)^(HINT|SOCRATIC_HINT)\s*:', line):
                 hint = line.split(":", 1)[-1].strip()
             elif re.search(r'(?i)^(EXPLAIN|GIẢI THÍCH|Gợi ý)\s*:', line):
@@ -6930,7 +6944,7 @@ def parse_quiz_questions(text):
                     explain += " " + line
 
         if len(options) >= 4:
-            correct_idx = ord(correct) - ord('A')
+            correct_idx = ord(correct) - ord('A') if correct in ('A', 'B', 'C', 'D') else -1
             new_options = options[:4]
             new_correct = correct
             if 0 <= correct_idx < len(options[:4]):
@@ -10246,8 +10260,6 @@ def _normalize_moet_bbt_grid(x_cells: list, yp_cells: list, y_cells: list) -> di
             y_arrows[i] = 'down'
         elif not yp_intervals[i] and y_arrows[i]:
             yp_intervals[i] = '+' if y_arrows[i] == 'up' else '−'
-        elif not y_arrows[i]:
-            y_arrows[i] = 'up' if i % 2 == 0 else 'down'
 
     for i in range(1, n_pts - 1):
         if '||' in y_at_pts[i] and not yp_at_pts[i]:
@@ -10280,26 +10292,26 @@ def _build_svg_bbt_from_rows(x_cells: list, yp_cells: list, y_cells: list, is_si
         grid = _normalize_moet_bbt_grid(x_cells, y_cells, [])
         n_pts = len(grid["points"])
         n_int = n_pts - 1
-        x_html = f'<td style="padding:10px 14px;font-weight:800;font-style:italic;border-right:2px solid #0f172a;border-bottom:1.8px solid #0f172a;background:#f1f5f9;text-align:center;width:72px;">{grid["x_label"]}</td>'
-        fx_html = f'<td style="padding:10px 14px;font-weight:800;font-style:italic;border-right:2px solid #0f172a;background:#f1f5f9;text-align:center;">{grid["yp_label"]}</td>'
+        x_html = f'<td style="color:#0f172a;padding:10px 14px;font-weight:800;font-style:italic;border-right:2px solid #0f172a;border-bottom:1.8px solid #0f172a;background:#f1f5f9;text-align:center;width:72px;">{grid["x_label"]}</td>'
+        fx_html = f'<td style="color:#0f172a;padding:10px 14px;font-weight:800;font-style:italic;border-right:2px solid #0f172a;background:#f1f5f9;text-align:center;">{grid["yp_label"]}</td>'
 
         for i in range(n_pts):
             pt_str = _render_math_html_token(grid["points"][i])
-            x_html += f'<td style="padding:8px 10px;text-align:center;font-weight:700;border-bottom:1.8px solid #0f172a;min-width:48px;">{pt_str}</td>'
+            x_html += f'<td style="color:#0f172a;padding:8px 10px;text-align:center;font-weight:700;border-bottom:1.8px solid #0f172a;min-width:48px;">{pt_str}</td>'
             p_val = grid["yp_at_pts"][i]
             if p_val == '||':
-                fx_html += '<td style="padding:0;text-align:center;position:relative;height:44px;"><div style="display:inline-block;width:6px;height:100%;border-left:1.8px solid #dc2626;border-right:1.8px solid #dc2626;"></div></td>'
+                fx_html += '<td style="color:#0f172a;padding:0;text-align:center;position:relative;height:44px;"><div style="color:#0f172a;display:inline-block;width:6px;height:100%;border-left:1.8px solid #dc2626;border-right:1.8px solid #dc2626;"></div></td>'
             else:
                 fx_html += f'<td style="padding:8px 10px;text-align:center;font-weight:700;color:#0f172a;">{p_val}</td>'
 
             if i < n_int:
-                x_html += '<td style="padding:8px 16px;border-bottom:1.8px solid #0f172a;min-width:64px;"></td>'
+                x_html += '<td style="color:#0f172a;padding:8px 16px;border-bottom:1.8px solid #0f172a;min-width:64px;"></td>'
                 sgn = grid["yp_intervals"][i]
                 sgn_color = "#16a34a" if sgn == '+' else "#dc2626"
                 fx_html += f'<td style="padding:8px 16px;text-align:center;font-weight:800;font-size:1.18rem;color:{sgn_color};">{sgn}</td>'
 
         return (
-            '<div style="margin:14px 0;overflow-x:auto;background:#ffffff;border:2px solid #0f172a;border-radius:8px;box-shadow:0 3px 10px rgba(15,23,42,0.06);">'
+            '<div style="color:#0f172a;margin:14px 0;overflow-x:auto;background:#ffffff;border:2px solid #0f172a;border-radius:8px;box-shadow:0 3px 10px rgba(15,23,42,0.06);">'
             '<table style="width:100%;border-collapse:collapse;font-family:\'Times New Roman\',Times,serif;font-size:1.05rem;color:#0f172a;">'
             f'<tr>{x_html}</tr><tr>{fx_html}</tr></table></div>'
         )
@@ -10317,23 +10329,23 @@ def _build_svg_bbt_from_rows(x_cells: list, yp_cells: list, y_cells: list, is_si
         elif right_arr == "up" or left_arr == "down":
             pt_pos[i] = "bottom"
 
-    x_row_html = f'<td style="padding:10px 14px;font-weight:800;font-style:italic;border-right:2px solid #0f172a;border-bottom:1.8px solid #0f172a;background:#f8fafc;text-align:center;width:72px;">{grid["x_label"]}</td>'
-    yp_row_html = f'<td style="padding:10px 14px;font-weight:800;font-style:italic;border-right:2px solid #0f172a;border-bottom:1.8px solid #0f172a;background:#f8fafc;text-align:center;">{grid["yp_label"]}</td>'
-    y_row_html = f'<td style="padding:16px 14px;font-weight:800;font-style:italic;border-right:2px solid #0f172a;background:#f8fafc;text-align:center;vertical-align:middle;">{grid["y_label"]}</td>'
+    x_row_html = f'<td style="color:#0f172a;padding:10px 14px;font-weight:800;font-style:italic;border-right:2px solid #0f172a;border-bottom:1.8px solid #0f172a;background:#f8fafc;text-align:center;width:72px;">{grid["x_label"]}</td>'
+    yp_row_html = f'<td style="color:#0f172a;padding:10px 14px;font-weight:800;font-style:italic;border-right:2px solid #0f172a;border-bottom:1.8px solid #0f172a;background:#f8fafc;text-align:center;">{grid["yp_label"]}</td>'
+    y_row_html = f'<td style="color:#0f172a;padding:16px 14px;font-weight:800;font-style:italic;border-right:2px solid #0f172a;background:#f8fafc;text-align:center;vertical-align:middle;">{grid["y_label"]}</td>'
 
     for i in range(n_pts):
         pt_html = _render_math_html_token(grid["points"][i])
-        x_row_html += f'<td style="padding:8px 8px;text-align:center;font-weight:700;border-bottom:1.8px solid #0f172a;min-width:52px;white-space:nowrap;">{pt_html}</td>'
+        x_row_html += f'<td style="color:#0f172a;padding:8px 8px;text-align:center;font-weight:700;border-bottom:1.8px solid #0f172a;min-width:52px;white-space:nowrap;">{pt_html}</td>'
 
         yp_pt = grid["yp_at_pts"][i]
         if yp_pt == '||':
             yp_row_html += (
-                '<td style="padding:0;text-align:center;border-bottom:1.8px solid #0f172a;height:42px;">'
-                '<div style="display:inline-block;width:6px;height:100%;border-left:1.8px solid #dc2626;border-right:1.8px solid #dc2626;"></div>'
+                '<td style="color:#0f172a;padding:0;text-align:center;border-bottom:1.8px solid #0f172a;height:42px;">'
+                '<div style="color:#0f172a;display:inline-block;width:6px;height:100%;border-left:1.8px solid #dc2626;border-right:1.8px solid #dc2626;"></div>'
                 '</td>'
             )
         else:
-            yp_row_html += f'<td style="padding:8px 8px;text-align:center;font-weight:700;border-bottom:1.8px solid #0f172a;">{yp_pt}</td>'
+            yp_row_html += f'<td style="color:#0f172a;padding:8px 8px;text-align:center;font-weight:700;border-bottom:1.8px solid #0f172a;">{yp_pt}</td>'
 
         raw_y_val = grid["y_at_pts"][i]
         is_asymptote = (yp_pt == '||' or '||' in raw_y_val)
@@ -10344,21 +10356,21 @@ def _build_svg_bbt_from_rows(x_cells: list, yp_cells: list, y_cells: list, is_si
             left_align = "flex-start" if (i > 0 and grid["y_arrows"][i - 1] == "up") or "+∞" in left_lim else "flex-end"
             right_align = "flex-start" if (i < n_int and grid["y_arrows"][i] == "down") or "+∞" in right_lim else "flex-end"
             y_row_html += (
-                '<td style="padding:0 4px;height:108px;vertical-align:stretch;">'
-                '<div style="display:flex;align-items:stretch;justify-content:center;height:100%;">'
-                f'<div style="display:flex;align-items:{left_align};padding:6px 4px;font-weight:700;font-size:0.95rem;white-space:nowrap;">{left_lim}</div>'
-                '<div style="width:6px;border-left:1.8px solid #dc2626;border-right:1.8px solid #dc2626;margin:0 2px;"></div>'
-                f'<div style="display:flex;align-items:{right_align};padding:6px 4px;font-weight:700;font-size:0.95rem;white-space:nowrap;">{right_lim}</div>'
+                '<td style="color:#0f172a;padding:0 4px;height:108px;vertical-align:stretch;">'
+                '<div style="color:#0f172a;display:flex;align-items:stretch;justify-content:center;height:100%;">'
+                f'<div style="color:#0f172a;display:flex;align-items:{left_align};padding:6px 4px;font-weight:700;font-size:0.95rem;white-space:nowrap;">{left_lim}</div>'
+                '<div style="color:#0f172a;width:6px;border-left:1.8px solid #dc2626;border-right:1.8px solid #dc2626;margin:0 2px;"></div>'
+                f'<div style="color:#0f172a;display:flex;align-items:{right_align};padding:6px 4px;font-weight:700;font-size:0.95rem;white-space:nowrap;">{right_lim}</div>'
                 '</div></td>'
             )
         else:
             val_html = _render_math_html_token(raw_y_val)
             v_align = "top" if pt_pos[i] == "top" else ("bottom" if pt_pos[i] == "bottom" else "middle")
             pad_style = "padding:8px 6px 42px 6px;" if v_align == "top" else ("padding:42px 6px 8px 6px;" if v_align == "bottom" else "padding:12px 6px;")
-            y_row_html += f'<td style="{pad_style}text-align:center;vertical-align:{v_align};font-weight:700;white-space:nowrap;height:108px;">{val_html}</td>'
+            y_row_html += f'<td style="color:#0f172a;{pad_style}text-align:center;vertical-align:{v_align};font-weight:700;white-space:nowrap;height:108px;">{val_html}</td>'
 
         if i < n_int:
-            x_row_html += '<td style="padding:8px 18px;border-bottom:1.8px solid #0f172a;min-width:84px;"></td>'
+            x_row_html += '<td style="color:#0f172a;padding:8px 18px;border-bottom:1.8px solid #0f172a;min-width:84px;"></td>'
             sgn = grid["yp_intervals"][i]
             sgn_color = "#16a34a" if sgn == '+' else "#dc2626"
             yp_row_html += f'<td style="padding:8px 18px;text-align:center;font-weight:800;font-size:1.2rem;color:{sgn_color};border-bottom:1.8px solid #0f172a;">{sgn}</td>'
@@ -10372,7 +10384,7 @@ def _build_svg_bbt_from_rows(x_cells: list, yp_cells: list, y_cells: list, is_si
                     '<line x1="8" y1="68" x2="90" y2="12" stroke="#16a34a" stroke-width="2.2" marker-end="url(#bbt_up)"/>'
                     '</svg>'
                 )
-            else:
+            elif arr_dir == "down":
                 svg_arrow = (
                     '<svg width="100%" height="78" viewBox="0 0 100 78" preserveAspectRatio="none" style="overflow:visible;display:block;">'
                     '<defs><marker id="bbt_dn" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">'
@@ -10380,11 +10392,13 @@ def _build_svg_bbt_from_rows(x_cells: list, yp_cells: list, y_cells: list, is_si
                     '<line x1="8" y1="12" x2="90" y2="68" stroke="#dc2626" stroke-width="2.2" marker-end="url(#bbt_dn)"/>'
                     '</svg>'
                 )
-            y_row_html += f'<td style="padding:6px 4px;vertical-align:middle;min-width:84px;">{svg_arrow}</td>'
+            else:
+                svg_arrow = ""
+            y_row_html += f'<td style="color:#0f172a;padding:6px 4px;vertical-align:middle;min-width:84px;">{svg_arrow}</td>'
 
     yp_tr = f'<tr>{yp_row_html}</tr>' if grid["has_yp"] else ''
     return (
-        '<div style="margin:16px 0;overflow-x:auto;background:#ffffff;border:2px solid #0f172a;border-radius:8px;box-shadow:0 4px 12px rgba(15,23,42,0.07);">'
+        '<div style="color:#0f172a;margin:16px 0;overflow-x:auto;background:#ffffff;border:2px solid #0f172a;border-radius:8px;box-shadow:0 4px 12px rgba(15,23,42,0.07);">'
         '<div style="background:#0f172a;color:#f8fafc;font-size:0.75rem;font-weight:700;padding:4px 12px;letter-spacing:0.5px;text-transform:uppercase;">'
         '📐 Bảng Biến Thiên Chuẩn Sư Phạm (CT GDPT 2018)</div>'
         '<table style="width:100%;border-collapse:collapse;font-family:\'Times New Roman\',Times,serif;font-size:1.05rem;color:#0f172a !important;">'
@@ -11013,6 +11027,8 @@ if selected_station == station_labels[0]:
             if "tram1_chat_history" not in st.session_state or st.session_state.get("tram1_active_chat_key") != chat_context_key:
 
                 st.session_state.tram1_active_chat_key = chat_context_key
+                st.session_state.tram1_understood = False
+                st.session_state.pop("tram1_closure_info", None)
 
                 st.session_state.tram1_chat_history = []
 
@@ -11076,6 +11092,15 @@ if selected_station == station_labels[0]:
                                 t1_cross_ctx = get_cross_station_pedagogical_context(1)
 
                                 if is_t1_understood:
+                                    quote_reference = (
+                                        f"Danh ngôn đã đối chiếu nguồn {t1_quote_data['source_url']}: {t1_quote_data['author']}: {t1_quote_data['quote']}."
+                                        if t1_quote_data.get('source_verified') is True and t1_quote_data.get('source_url')
+                                        else "Diễn đạt bằng lời nhắn giáo dục, không gán tác giả hoặc trích dẫn nguyên văn khi nguồn chưa được xác minh."
+                                    )
+                                    science_closure = (
+                                        " Với hàm bậc ba, không nhầm đạo hàm cấp một f'(x) là tam thức bậc hai với đạo hàm cấp hai f''(x)."
+                                        if subject == "Toán học" else ""
+                                    )
                                     t1_prompt_msg = (
                                         f"Bối cảnh liên trạm của học sinh:\n{t1_cross_ctx}\n"
                                         f"Lịch sử đối thoại trước đó:\n{t1_hist_ctx}\n"
@@ -11083,11 +11108,10 @@ if selected_station == station_labels[0]:
                                         f"🎯 MỆNH LỆNH SƯ PHẠM ĐỈNH CAO - CHỐT ĐIỂM CHẠM SƯ PHẠM TRẠM 1 (CLOSURE) & TRAO TRUYỀN TRIẾT LÝ NHÂN CÁCH Á - ÂU:\n"
                                         f"1. DỪNG TRUY VẤN NGAY: Tuyệt đối KHÔNG hỏi thêm bất kỳ câu hỏi nào nữa. Học sinh đã thấu hiểu trọn vẹn và không còn thắc mắc về bài học '{st.session_state.get('current_topic', subject)}'!\n"
                                         f"2. BIỂU DƯƠNG NỒNG NHIỆT: Khen ngợi sự nhạy bén, khiêm tốn và tinh thần tự học vượt bậc của {student_name}.\n"
-                                        f"3. ĐÓNG GÓI BẢN CHẤT: Chốt 1 câu tinh hoa quy luật khoa học cốt lõi của bài học hôm nay.\n"
-                                        f"4. BÀI HỌC TRIẾT LÝ NHÂN CÁCH & LẼ SỐNG (BẮT BUỘC): Đúc kết bài học về đạo làm người: {t1_quote_data['lesson']} kèm câu danh ngôn triết lý bất hủ của {t1_quote_data['author']} ({t1_quote_data['origin']}): \"{t1_quote_data['quote']}\".\n"
+                                        f"3. ĐÓNG GÓI BẢN CHẤT: Chốt một câu khoa học bám đúng bài đang học; không suy diễn từ ẩn dụ đạo đức thành kết luận chuyên môn.{science_closure}\n"
+                                        f"4. BÀI HỌC TRIẾT LÝ NHÂN CÁCH & LẼ SỐNG (BẮT BUỘC): Đúc kết bài học về đạo làm người: {t1_quote_data['lesson']}. {quote_reference}\n"
                                         f"5. LỜI CHÚC ÂN CẦN: Lời chúc yêu thương của Người Thầy khích lệ {student_name} tự tin tiến sang Trạm 2 (Giải bài tập & Check VAR trực tiếp)!"
                                     )
-                                    register_station_closure(1, t1_quote_data)
                                 else:
                                     t1_prompt_msg = (
                                         f"Bối cảnh liên trạm:\n{t1_cross_ctx}\n"
@@ -11105,6 +11129,8 @@ if selected_station == station_labels[0]:
                                 t1_ans = st.write_stream(stream_gen)
                                 t1_ans_clean = sanitize_katex_latex(t1_ans)
                                 st.session_state.tram1_chat_history.append({"role": "assistant", "content": t1_ans_clean})
+                                if is_t1_understood and isinstance(t1_ans_clean, str) and t1_ans_clean.strip():
+                                    register_station_closure(1, t1_quote_data)
                             except Exception as exc:
                                 st.error(f"Lỗi kết nối Thầy AI: {exc}")
 
@@ -11195,7 +11221,10 @@ if selected_station == station_labels[0]:
 
                 if st.button(f"🔍 Kiểm tra câu {idx+1}", key=f"btn_{idx}"):
 
-                    if user_choice:
+                    if q.get('correct') not in ('A', 'B', 'C', 'D'):
+                        st.session_state.quiz_states.pop(idx, None)
+                        st.warning("Câu này chưa có khóa đáp án xác định; cần đối chiếu nguồn trước khi chấm.")
+                    elif user_choice:
 
                         choice_letter = re.sub(r'[^A-D]', '', user_choice.strip()[:3]).upper()[:1]
 
@@ -11663,7 +11692,7 @@ if selected_station == station_labels[0]:
 
 
 
-    from services.lab_scope import preset_lab_label, preset_lab_note
+    from services.lab_scope import preset_lab_label, preset_lab_note, resolve_preset_lab
     manual_lab = st.selectbox("Mô phỏng có sẵn (không cần API):", list(available_labs),
         format_func=lambda label: preset_lab_label(label, subject, grade_num))
     st.caption(preset_lab_note(subject, grade_num))
@@ -11671,7 +11700,7 @@ if selected_station == station_labels[0]:
     if st.button("Mở mô phỏng có sẵn"):
         st.session_state.lab_request_revision = st.session_state.get("lab_request_revision", 0) + 1
 
-        st.session_state.lab_data = dict(available_labs[manual_lab])
+        st.session_state.lab_data = resolve_preset_lab(subject, manual_lab, available_labs[manual_lab])
 
     lab_command = st.text_input("Lệnh mô phỏng:", placeholder=lab_ph, key=f"lab_cmd_{current_context_key}", label_visibility="collapsed")
 

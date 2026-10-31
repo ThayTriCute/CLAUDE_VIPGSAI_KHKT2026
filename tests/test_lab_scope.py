@@ -19,6 +19,25 @@ class TestLabScope(unittest.TestCase):
         self.assertEqual(len(nodes), manifest['count'])
         self.assertEqual(digest, manifest['sha256'])
 
+    def test_computing_algorithm_preset_dispatches_diagram(self):
+        from types import SimpleNamespace
+        from services import lab_scope
+        class State(dict):
+            __getattr__ = dict.__getitem__
+            __setattr__ = dict.__setitem__
+        tree=ast.parse(Path('app.py').read_text(encoding='utf-8'))
+        node=next(n for n in ast.walk(tree) if isinstance(n,ast.If) and 'Mở mô phỏng có sẵn' in ast.dump(n.test))
+        label='Sơ đồ thuật toán & Cây nhị phân'
+        original={label:{'type':'oxyz','x':2,'y':2,'z':2}}
+        state=State()
+        ns=dict(st=SimpleNamespace(button=lambda *a,**kw:True,session_state=state),available_labs=original,
+            manual_lab=label,subject='Tin học',resolve_preset_lab=getattr(lab_scope,'resolve_preset_lab',lambda *a:dict(a[-1])))
+        exec(compile(ast.Module(body=[node],type_ignores=[]),'actual-lab-button','exec'),ns)
+        self.assertEqual(state.lab_data['type'],'mermaid')
+        self.assertIn('nhị phân',state.lab_data['code'])
+        self.assertEqual(original[label]['type'],'oxyz')
+        self.assertEqual(state.lab_request_revision,1)
+
     def test_higher_grade_preset_is_explicitly_an_extension(self):
         for grade in range(6, 12):
             value = preset_lab_label('Hàm bậc ba (KNTT 12)', 'Toán', grade)

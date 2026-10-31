@@ -28,6 +28,45 @@ class TestVisualTableAnswerLeak(unittest.TestCase):
         self.assertIn('∞', output)
         self.assertNotIn('-inf<', output)
 
+    def test_bbt_text_cells_have_explicit_dark_foreground(self):
+        import re
+        from html.parser import HTMLParser
+        namespace = {'html': html, 're': re}
+        tree = ast.parse(Path('app.py').read_text(encoding='utf-8'))
+        for name in ('_render_math_html_token', '_normalize_moet_bbt_grid', '_build_svg_bbt_from_rows'):
+            node = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == name)
+            exec(compile(ast.Module(body=[node], type_ignores=[]), 'bbt-contrast-test', 'exec'), namespace)
+        class Cells(HTMLParser):
+            def handle_starttag(self, tag, attrs):
+                if tag == 'td':
+                    style=dict(attrs).get('style','')
+                    self.styles.append(style)
+        for sign in (False, True):
+            out=namespace['_build_svg_bbt_from_rows'](['x','-inf','0','2','+inf'],
+                ["y'",'+','0','-','0','+'],['y','-inf','2','-2','+inf'],is_sign_table=sign)
+            parser=Cells();parser.styles=[];parser.feed(out)
+            self.assertTrue(parser.styles)
+            for style in parser.styles:
+                self.assertRegex(style, r'(?:^|;)color:')
+            self.assertIn('#16a34a',out)
+            self.assertIn('#dc2626',out)
+
+    def test_missing_variation_direction_does_not_invent_alternating_arrows(self):
+        namespace={'html':html, 're':__import__('re')}
+        tree=ast.parse(Path('app.py').read_text(encoding='utf-8'))
+        for name in ('_render_math_html_token','_normalize_moet_bbt_grid','_build_svg_bbt_from_rows'):
+            node=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name==name)
+            exec(compile(ast.Module(body=[node],type_ignores=[]),'bbt-direction-test','exec'),namespace)
+        x=['x',r'-\infty','1',r'+\infty']
+        missing=['y',r'+\infty','0',r'+\infty']
+        grid=namespace['_normalize_moet_bbt_grid'](x,[],missing)
+        self.assertEqual(grid['y_arrows'],['',''])
+        output=namespace['_build_svg_bbt_from_rows'](x,[],missing)
+        self.assertNotIn('<svg',output)
+        self.assertIn('∞',output)
+        supplied=['y',r'+\infty',r'\searrow','0',r'\nearrow',r'+\infty']
+        self.assertEqual(namespace['_normalize_moet_bbt_grid'](x,[],supplied)['y_arrows'],['down','up'])
+
     def test_missing_limits_not_invented(self):
         raw = "x | -inf | -2 | -1 | 0 | +inf\ny' | + | 0 | - | || | - | 0 | +\ny | 2 | 4 | || | 0 | 2"
         self.assertIsNone(aligned_bbt_rows(raw))

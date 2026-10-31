@@ -1,6 +1,6 @@
 """Versioned references and conservative checks, not an academic certification."""
 from copy import deepcopy
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 import hashlib
 import html
 import json
@@ -14,8 +14,13 @@ POLICY_DATE = "2026-10-24"
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
+def policy_evaluation_date():
+    """Vietnam issue day; separate from the last source-review snapshot."""
+    return datetime.now(timezone(timedelta(hours=7))).date().isoformat()
+
+
 def legal_references(on_date=None, include_upcoming=False):
-    today = date.fromisoformat(on_date or POLICY_DATE)
+    today = date.fromisoformat(on_date or policy_evaluation_date())
     rows = json.loads(REGISTRY.read_text(encoding="utf-8"))["documents"]
     return [r for r in rows if r.get("status") != "draft"
             and (include_upcoming or date.fromisoformat(r["effective_from"]) <= today)
@@ -50,7 +55,8 @@ def assessment_profile(subject, grade):
 
 def policy_prompt(subject, grade, station, topic="", pathway=""):
     subject, grade = academic_context(subject, grade)
-    refs = legal_references()
+    evaluation_day = policy_evaluation_date()
+    refs = legal_references(evaluation_day)
     codes = "; ".join(r["code"] for r in refs if r["scope"] in {"curriculum", "textbook", "assessment"})
     profile = assessment_profile(subject, grade)
     hint_guidance = ("Tiếng Anh — hint từ vựng: không dịch nghĩa hoặc diễn giải riêng phương án đúng, "
@@ -58,7 +64,7 @@ def policy_prompt(subject, grade, station, topic="", pathway=""):
                      "mục đích, quan hệ nghĩa hoặc dấu hiệu trong câu trước khi so sánh các lựa chọn. "
                      "Định nghĩa/dịch nghĩa và kết luận đáp án chỉ đặt trong explain sau nộp bài."
                      if subject == "Tiếng Anh" else "")
-    return f"""\n[NGỮ CẢNH CHƯƠNG TRÌNH — rà soát nguồn ngày {POLICY_DATE}]
+    return f"""\n[NGỮ CẢNH CHƯƠNG TRÌNH — ngày áp dụng {evaluation_day}; ngày rà soát nguồn {POLICY_DATE}]
 Trạm {station}; môn {subject}; lớp {grade}; chủ đề {topic}; định hướng {pathway or 'chưa khai báo'}.
 {hint_guidance}
 Chương trình GDPT 2018 đọc cùng các sửa đổi còn áp dụng: {codes}.
@@ -133,7 +139,7 @@ def prepare_exam_for_delivery(exam, subject, grade, duration=45, custom_request=
     check_current_facts("\n".join(texts))
     payload = {k: result[k] for k in ("p1", "p2", "p3", "part_doc_hieu", "part_viet") if k in result}
     result["curriculum_audit"] = {
-        "policy_checked_at": POLICY_DATE, "textbook": "Kết nối tri thức với cuộc sống",
+        "policy_checked_at": POLICY_DATE, "policy_evaluated_on": policy_evaluation_date(), "textbook": "Kết nối tri thức với cuộc sống",
         "status": "needs_teacher_review", "academic_verified": False,
         "source_sha256": hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode()).hexdigest(),
         "note": "Đã kiểm tra ngữ cảnh khai báo và một số mâu thuẫn xác định; chưa xác minh từng yêu cầu cần đạt/trang SGK/nguồn gốc."}
@@ -189,7 +195,22 @@ def matrix_html(subject, grade):
 
 def lesson_prompt(subject, grade, topic):
     from services.cognitive_levels import LEVEL_GUIDANCE
-    return policy_prompt(subject, grade, 1, topic) + LEVEL_GUIDANCE + r"""
+    visual_guidance = ""
+    if canonical_subject(subject) == "Toán học":
+        visual_guidance = (
+            "\nBảng biến thiên: chỉ khi nội dung bài thực sự cần và có đủ dữ kiện, "
+            "trình bày bảng Markdown với các hàng x, y′, y (bậc hai có thể x, y), "
+            "đủ mốc, dấu đạo hàm, giá trị hoặc giới hạn và mũi tên theo đúng hàm đang xét; "
+            "không thay bảng bằng đoạn văn xét dấu. Giữ các cột tương ứng để công cụ dựng bảng hiện có xử lý. "
+            "Không tự bịa giới hạn, điểm gián đoạn hoặc thêm bảng giải tích cho bài không cần.\n"
+        )
+    if canonical_subject(subject) == "Ngữ văn":
+        visual_guidance += (
+            "\nPhần 3 Ngữ văn: ở Bước 2, hỏi học sinh tự đề xuất luận điểm, "
+            "tìm dẫn chứng và sắp xếp ý; không nêu sẵn luận điểm hoặc kết luận cần chứng minh. "
+            "Bước 3 gợi cách triển khai, không viết hộ đoạn văn hoặc áp đặt một cách cảm nhận duy nhất.\n"
+        )
+    return policy_prompt(subject, grade, 1, topic) + LEVEL_GUIDANCE + visual_guidance + r"""
 Soạn bài học với ba tiêu đề chính: '### PHẦN 1: BÀI HỌC', '### PHẦN 2: TRẮC NGHIỆM KHÁCH QUAN SOCRATIC', '### PHẦN 3: BÀI TẬP TỰ LUẬN'.
 Phần 1: khởi động, hình thành kiến thức, ví dụ có lời giải phù hợp lớp, luyện tập và vận dụng; đặc trưng thể loại/môn học phải được giữ.
 Phần 2: đúng 3 câu trắc nghiệm, mỗi câu có 4 phương án A/B/C/D và duy nhất một đáp án. Ghi CORRECT: cho đáp án nội bộ, EXPLAIN: cho giải thích nội bộ, HINT: cho gợi mở Socratic theo riêng ngữ cảnh câu hỏi. HINT chỉ dẫn dắt học sinh tự nghĩ; không giải hộ hoặc tiết lộ đáp án. Không dùng EXPLAIN thay HINT.
