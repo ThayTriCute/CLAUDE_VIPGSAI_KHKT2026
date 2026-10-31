@@ -27,3 +27,9 @@ Bản phát hành tách riêng khỏi corpus/evidence/legal-watch thử nghiệm
 - Test trước sửa tái hiện lỗi; targeted61/61 qua13.386s, full358/358 qua356.966s sau sửaHTML, diffcheck theo CRLF gốc đạt. Bản355 trước đó chưa gồm váHTML, không dùng làm bằng chứng cuối.
 - Tin học12 thử thật: có3MCQ và2tựluận×4bước; câu1 chọnhead sai nhận gợiý, chọnbody đúng chấmđúng. Đã quan sát chốt nhân sinh không gán tácgiảthiếunguồn. Gợiý còn quá gần đápán, thẻ trongchat bịđưavàomathmode, câu3 cần rà tínhduynhất khi đủthẻ. Chưa nghiệmthu họcthuật.
 - Mã mới chưa xác minh reload runtime tại thời điểm ghi. Ma trận65cặp vẫn0accepted,2livepartial,63chưathửbàithật. Không chứng nhận từfixture. Không tăngretry/capAPI, không thêmdependency; cache/DB/Key không đưa vàoGit.
+
+## Xác minh runtime local sau sửa HTML
+
+Đã khởi lại local8502 đúng mãcf3f26b, Key do người dùng nhập trực tiếp. Một bài Tin học12 mới hiện nguyên vẹn p/br trong lý thuyết, mã mẫu, phương án và Pólya. Có3MCQ×4phươngán và2tựluận×4bước; khóaC/B/D được tự đối chiếu rồi chấmUIđúng3/3. TảiMarkdown vàHTML qua đúng nút app: cả hai giữ p/br và mã mẫu. GợiýQ2 còn dùng từOrder quá gần đápán; giữ mục chấtlượnghướngdẫn mở.
+
+UI đổi ngữ cảnh65/65môn/lớp trênChrome:heading đúng và nútLab hiện,0API; median1881ms,p953048ms,max4112ms tính cảMCP/snapshot. Không suy ra độtrễAI hoặc65bàihọc đạt họcthuật. Mộtbàimới được quan sát AItrảlờiở21s vàdựngđủbàiở49s; đây mốcquan sát,không phảiTTFT chínhxác.
