@@ -630,7 +630,11 @@ def deep_clean_pua_and_artifacts(text: str) -> str:
     for ch in ["\u00ad", "\u200b", "\uf0b7", "\ufeff"]:
         text = text.replace(ch, "")
     # 3. Thẻ HTML trần lộ text
-    text = re.sub(r'</?(?:b|i|u|span|div|p|br)\b[^>]*>', '', text, flags=re.IGNORECASE)
+    from services.text_boundaries import preserve_math_and_code
+    text = preserve_math_and_code(
+        text,
+        lambda prose: re.sub(r'</?(?:b|i|u|span|div|p|br)\b[^>]*>', '', prose, flags=re.IGNORECASE),
+    )
     # 4. KaTeX \\middle| không có \\left
     text = re.sub(r'\\middle\s*\|', r'\\mid', text)
     # 5. Khử công thức rỗng

@@ -6887,7 +6887,7 @@ def parse_quiz_questions(text):
     if part2_match:
         part2_text = part2_text[part2_match.end():]
 
-    pattern = r'(?i)(?:\[Q\d+\]|C[âa]u\s*\d+[\.\:]?)'
+    pattern = r'(?im)^[ \t]*(?:\*\*)?(?:\[Q\d+\]|C[âa]u[ \t]*\d+[\.\:]?)'
     parts = re.split(pattern, part2_text)
 
     for part in parts[1:]:
@@ -6921,7 +6921,7 @@ def parse_quiz_questions(text):
                         value = []
                 cognitive_evidence[field] = value
                 continue
-            clean_line = re.sub(r'(?i)^\*{0,2}([A-D])\b[\.\:]?\*{0,2}\s*', r'\1. ', line)
+            clean_line = re.sub(r'(?i)^\*{0,2}([A-D])\b[\.\)\:]?\*{0,2}\s*', r'\1. ', line)
 
             if re.match(r'(?i)###\s*PHẦN\s*3', line):
                 break
