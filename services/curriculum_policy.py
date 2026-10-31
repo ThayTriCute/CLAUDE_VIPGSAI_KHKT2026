@@ -210,6 +210,26 @@ def lesson_prompt(subject, grade, topic):
             "tìm dẫn chứng và sắp xếp ý; không nêu sẵn luận điểm hoặc kết luận cần chứng minh. "
             "Bước 3 gợi cách triển khai, không viết hộ đoạn văn hoặc áp đặt một cách cảm nhận duy nhất.\n"
         )
+    if canonical_subject(subject) == "Ngữ văn":
+        visual_guidance += (
+            "\nDạy viết theo đúng thể loại: với kể trải nghiệm, học sinh tự chọn sự việc, tìm ý, "
+            "lập dàn ý, viết bài hoàn chỉnh rồi đọc sửa theo tiêu chí ngôi thứ nhất nhất quán "
+            "(em hoặc tôi đều được), trình tự hợp lý, chi tiết, cảm xúc, ý nghĩa, liên kết và chính tả. "
+            "Trải nghiệm bình dị vẫn có giá trị; không bắt buộc cao trào hoặc biến cố kịch tính. "
+            "Hai bài tự luận cần có hoạt động tạo bài viết hoàn chỉnh phù hợp mục tiêu, không chỉ dàn ý và đoạn rời. "
+            "Không yêu cầu luận điểm/dẫn chứng nghị luận cho bài kể chuyện.\n"
+        )
+    if canonical_subject(subject) == "Tin học":
+        visual_guidance += (
+            "\nHTML: phân biệt ngữ nghĩa tiêu đề cấp 1, đoạn văn và ngắt dòng với cách hiển thị. "
+            "Nếu hỏi kích thước chữ hoặc khoảng cách đoạn, phải nêu điều kiện CSS mặc định/chưa tùy chỉnh. "
+            "Thẻ rỗng như br không có thẻ đóng; không yêu cầu mọi thẻ đều có thẻ đóng. "
+            "Bài sửa lỗi cần hỏi học sinh tự phát hiện và đề xuất cách sửa, không liệt kê sẵn toàn bộ bản sửa.\n"
+        )
+    visual_guidance += (
+        "\nKhông gán VDC chỉ vì bài dài, nhiều bước, viết đoạn văn hoặc sửa cú pháp cơ bản. "
+        "Chọn mức độ theo thao tác tư duy và yêu cầu cần đạt; chưa đủ căn cứ thì để trống nhãn.\n"
+    )
     return policy_prompt(subject, grade, 1, topic) + LEVEL_GUIDANCE + visual_guidance + r"""
 Soạn bài học với ba tiêu đề chính: '### PHẦN 1: BÀI HỌC', '### PHẦN 2: TRẮC NGHIỆM KHÁCH QUAN SOCRATIC', '### PHẦN 3: BÀI TẬP TỰ LUẬN'.
 Phần 1: khởi động, hình thành kiến thức, ví dụ có lời giải phù hợp lớp, luyện tập và vận dụng; đặc trưng thể loại/môn học phải được giữ.
