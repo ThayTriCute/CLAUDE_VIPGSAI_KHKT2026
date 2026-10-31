@@ -19,3 +19,17 @@ Các ca lỗi có log trước/sau trong qa_evidence của workspace. Đã kiể
 Ma trận hỗ trợ có65cặp môn/lớp; chưa nghiệm thu học thuật đủ65cặp. Giọng đọc,Lab toàn bộ,độ trễ,nguồn CT2018/KNTT/pháp quy đầy đủ và Cloud sau triển khai còn phải kiểm. Không xóa cảnh báo chưa thẩm định.
 
 Bản phát hành tách riêng khỏi corpus/evidence/legal-watch thử nghiệm, không thêm thư viện hoặc tăng retry/trần gọi AI. Các hàm BBT/Socratic/nhận ý chốt dùng chung có thể tác động nơi gọi khác; có kiểm hồi quy trong bộ test. Không tuyên bố tuyệt đối không lỗi.
+
+## Bổ sung sau PR62: bảo toàn ranh giới câu và mã HTML
+
+- Chỉ tách nhãn Câu/[Q] ở đầu dòng để không cắt mất dữ kiện khi thân câu nhắc Câu2. Nhãn A) không còn giữ thừa dấu ngoặc; khóa vẫn theo phương án sau trộn.
+- Lỗi thực tế Tin học12: cleaner dùng chung xóa p/br/b/i cả trong inline/fenced code. Giữ nguyên vùng code/math quanh bước gỡ HTML; markup trang trí ngoài code vẫn được xử lý. Hàm dùng chung cũng phục vụ câu hỏi Trạm3, có hồi quy chéo; không thay giao diện.
+- Test trước sửa tái hiện lỗi; targeted61/61 qua13.386s, full358/358 qua356.966s sau sửaHTML, diffcheck theo CRLF gốc đạt. Bản355 trước đó chưa gồm váHTML, không dùng làm bằng chứng cuối.
+- Tin học12 thử thật: có3MCQ và2tựluận×4bước; câu1 chọnhead sai nhận gợiý, chọnbody đúng chấmđúng. Đã quan sát chốt nhân sinh không gán tácgiảthiếunguồn. Gợiý còn quá gần đápán, thẻ trongchat bịđưavàomathmode, câu3 cần rà tínhduynhất khi đủthẻ. Chưa nghiệmthu họcthuật.
+- Mã mới chưa xác minh reload runtime tại thời điểm ghi. Ma trận65cặp vẫn0accepted,2livepartial,63chưathửbàithật. Không chứng nhận từfixture. Không tăngretry/capAPI, không thêmdependency; cache/DB/Key không đưa vàoGit.
+
+## Xác minh runtime local sau sửa HTML
+
+Đã khởi lại local8502 đúng mãcf3f26b, Key do người dùng nhập trực tiếp. Một bài Tin học12 mới hiện nguyên vẹn p/br trong lý thuyết, mã mẫu, phương án và Pólya. Có3MCQ×4phươngán và2tựluận×4bước; khóaC/B/D được tự đối chiếu rồi chấmUIđúng3/3. TảiMarkdown vàHTML qua đúng nút app: cả hai giữ p/br và mã mẫu. GợiýQ2 còn dùng từOrder quá gần đápán; giữ mục chấtlượnghướngdẫn mở.
+
+UI đổi ngữ cảnh65/65môn/lớp trênChrome:heading đúng và nútLab hiện,0API; median1881ms,p953048ms,max4112ms tính cảMCP/snapshot. Không suy ra độtrễAI hoặc65bàihọc đạt họcthuật. Mộtbàimới được quan sát AItrảlờiở21s vàdựngđủbàiở49s; đây mốcquan sát,không phảiTTFT chínhxác.

@@ -50,6 +50,24 @@ class Station1AnswerParsingTests(unittest.TestCase):
     def test_standard_key_still_shuffles_correctly(self):
         self.assertEqual(self.parse('CORRECT: A')['correct'], 'D')
 
+    def test_question_reference_inside_stem_is_not_a_new_question(self):
+        fn = load_function('parse_quiz_questions', sanitize_katex_latex=lambda s:s,
+            format_pedagogical_math=None, annotate_question=lambda q:q)
+        stem = 'Đối chiếu dữ kiện ở Câu 2: nhân vật có hành động nào?'
+        text = 'Câu 1: ' + stem + '\nA. Một\nB. Hai\nC. Ba\nD. Bốn\nCORRECT: B'
+        result = fn(text)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['question'], stem)
+
+    def test_parenthesized_option_labels_do_not_leave_a_stray_parenthesis(self):
+        fn = load_function('parse_quiz_questions', sanitize_katex_latex=lambda s:s,
+            format_pedagogical_math=None, annotate_question=lambda q:q)
+        text = 'Câu 1: Select the word.\nA) One\nB) Two\nC) Three\nD) Four\nCORRECT: B'
+        with patch('random.shuffle', side_effect=lambda items:items.reverse()):
+            result = fn(text)[0]
+        self.assertEqual(result['options'], ['A. Four', 'B. Three', 'C. Two', 'D. One'])
+        self.assertEqual(result['correct'], 'C')
+
 
 if __name__ == '__main__':
     unittest.main()
