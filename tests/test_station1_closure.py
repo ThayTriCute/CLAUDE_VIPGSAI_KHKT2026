@@ -7,32 +7,50 @@ from tests.test_expert_patch_regressions import load_function
 
 
 class Station1ClosureTests(unittest.TestCase):
+    def test_negated_or_past_mastery_is_not_a_closure(self):
+        detect = load_function('detect_student_concluded_intent')
+        for message in ('Em chưa nắm vững rồi', 'Lúc trước em đã hiểu bài, giờ em còn băn khoăn',
+                        'Em không có ý nói em đã hiểu bài', 'Em đã hiểu bài nhưng vẫn lúng túng'):
+            with self.subTest(message=message):
+                self.assertFalse(detect(message))
+
     def test_explicit_no_more_questions_is_a_conclusion(self):
         detect = load_function('detect_student_concluded_intent')
-        for message in ('Dạ em không còn thắc mắc.', 'Em hiểu bài rồi, không có thắc mắc.', 'Dạ hết thắc mắc rồi thầy.'):
+        for message in ('Dạ em không còn thắc mắc.', 'Em hiểu bài rồi, không có thắc mắc.', 'Dạ hết thắc mắc rồi thầy.',
+                        'Em đã hiểu bài và muốn chuyển sang luyện tập.'):
             with self.subTest(message=message):
                 self.assertTrue(detect(message))
 
     def test_new_question_or_unresolved_confusion_is_not_closed(self):
         detect = load_function('detect_student_concluded_intent')
-        for message in ('Em không còn thắc mắc phần trước nhưng thầy cho em hỏi thêm?', 'Em chưa hết thắc mắc.', 'Em không hiểu.', 'Em chưa hết câu hỏi.', 'Em hiểu bài rồi nhưng không hiểu vì đổi dấu.', 'Em hiểu bài rồi nhưng chỗ này tại sao đổi dấu?'):
+        for message in ('Em không còn thắc mắc phần trước nhưng thầy cho em hỏi thêm?', 'Em chưa hết thắc mắc.', 'Em không hiểu.', 'Em chưa hết câu hỏi.', 'Em hiểu bài rồi nhưng không hiểu vì đổi dấu.', 'Em hiểu bài rồi nhưng chỗ này tại sao đổi dấu?',
+                        'Em đã hiểu bài nhưng tại sao quỳ đổi màu?'):
             with self.subTest(message=message):
                 self.assertFalse(detect(message))
 
     def closure_try(self):
         tree = ast.parse((Path(__file__).resolve().parents[1] / 'app.py').read_text(encoding='utf-8'))
         return next(node for node in ast.walk(tree) if isinstance(node, ast.Try) and
-                    any(isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id=='t1_ans' for t in n.targets) for n in node.body))
+                    any(isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id=='t1_ans' for t in n.targets)
+                        for child in node.body for n in ast.walk(child)))
 
     def run_reply(self, reply='', failure=False):
         class State(dict):
             __getattr__ = dict.__getitem__
         state=State(tram1_chat_history=[])
         register=Mock()
-        st=SimpleNamespace(session_state=state, write_stream=Mock(side_effect=RuntimeError('offline') if failure else None,return_value=reply),error=Mock())
-        ns=dict(st=st,t1_input='Em không còn thắc mắc.',t1_hist_ctx='',t1_sys_inst='',subject='Toán học',student_name='QA',
+        class Slot:
+            def __init__(self): self.markdown = Mock()
+            def container(self): return self
+            def __enter__(self): return self
+            def __exit__(self, *_): return False
+        st=SimpleNamespace(session_state=state,
+            write_stream=Mock(side_effect=RuntimeError('offline') if failure else None,return_value=reply),
+            empty=Slot, error=Mock())
+        ns=dict(st=st,grade_num=8,t1_input='Em không còn thắc mắc.',t1_hist_ctx='',t1_sys_inst='',subject='Toán học',student_name='QA',
             detect_student_concluded_intent=lambda *a:True,get_unique_philosophical_lesson=lambda *a:{'lesson':'Kiên trì','author':'FixtureAuthor','origin':'fixture','quote':'test'},get_cross_station_pedagogical_context=lambda *a:'',register_station_closure=register,
-            stream_gemini_with_fallback=Mock(return_value=iter(())),sanitize_katex_latex=lambda s:s)
+            stream_gemini_with_fallback=Mock(return_value=iter(())),sanitize_katex_latex=lambda s:s,
+            chemical_display_markdown=lambda s:s)
         exec(compile(ast.Module(body=[self.closure_try()],type_ignores=[]),'t1-closure-try','exec'),ns)
         self.last_prompt = ns['stream_gemini_with_fallback'].call_args.args[0]
         return register

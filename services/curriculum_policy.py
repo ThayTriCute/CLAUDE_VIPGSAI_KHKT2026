@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110101
+T1_CONTEXT_REVISION = 2026110118
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -73,7 +73,7 @@ def policy_prompt(subject, grade, station, topic="", pathway=""):
 Trạm {station}; môn {subject}; lớp {grade}; chủ đề {topic}; định hướng {pathway or 'chưa khai báo'}.
 {hint_guidance}
 Chương trình GDPT 2018 đọc cùng các sửa đổi còn áp dụng: {codes}.
-Sử dụng Kết nối tri thức với cuộc sống, đối chiếu đính chính/cập nhật NXBGD; bộ sách thống nhất từ năm học 2026–2027 theo QĐ 3588 ngày 26/12/2025.
+Sử dụng Kết nối tri thức với cuộc sống, đối chiếu đính chính/cập nhật NXBGD; bộ sách thống nhất toàn quốc từ năm học 2026–2027 theo QĐ 3588/2025 và danh mục bổ sung tại QĐ 185/2026. Phải kiểm đúng tên sách/lớp trong phụ lục và bản cập nhật năm 2026; không suy ra nội dung bài đã được thẩm định.
 {edition_guidance}
 {profile['label']}. {profile['note']}
 Không có nội dung SGK hoặc văn bản gốc trong ngữ cảnh thì KHÔNG tuyên bố đã đọc/đối chiếu từng trang, không bịa số trang, trích dẫn, tác giả, URL hay xác nhận của Bộ.
@@ -100,14 +100,22 @@ def check_current_facts(text):
 def validate_lesson_policy(text, subject, grade):
     subject, grade = academic_context(subject, grade)
     for line in str(text).splitlines()[:8]:
-        clean = line.strip().lstrip("#* ")
-        declared_subject = re.match(r"Môn(?: học)?\s*:\s*([^|;·]+)", clean, re.I)
-        if declared_subject and canonical_subject(declared_subject[1].strip().rstrip("*")) != subject:
-            raise ValueError("Bài học tự khai báo khác môn đang chọn; cần sinh lại hoặc sửa nguồn.")
-        declared_grade = re.search(r"(?:lớp|khối)\s*:?\s*(\d{1,2})\b", clean, re.I)
-        if declared_grade and (line.lstrip().startswith("#") or re.match(r"(?:khối lớp|lớp|khối)\s*:", clean, re.I)):
-            if normalize_grade(declared_grade[1]) != grade:
+        clean = re.sub(r"\*\*|__", "", line.strip()).lstrip("#* ")
+        for field in re.split(r"[|;·]", clean):
+            field = field.strip()
+            declared_book = re.match(r"(?:Bộ sách|Sách giáo khoa|SGK)\s*:\s*(.+)", field, re.I)
+            if declared_book and any(name in folded(declared_book[1]) for name in ('canh dieu', 'chan troi sang tao')):
+                raise ValueError("Bài học khai báo bộ sách khác KNTT; cần đối chiếu nguồn trước khi sử dụng.")
+            declared_subject = re.match(r"Môn(?: học)?\s*:\s*(.+)", field, re.I)
+            if declared_subject and canonical_subject(declared_subject[1].strip()) != subject:
+                raise ValueError("Bài học tự khai báo khác môn đang chọn; cần đối chiếu nguồn.")
+            declared_grade = re.match(r"(?:khối lớp|lớp|khối)\s*:\s*(\d{1,2})\b", field, re.I)
+            if declared_grade and normalize_grade(declared_grade[1]) != grade:
                 raise ValueError("Tiêu đề bài học khai báo khác lớp đang chọn.")
+        if line.lstrip().startswith('#'):
+            for declared_grade in re.finditer(r"(?:lớp|khối)\s*:?\s*(\d{1,2})\b", clean, re.I):
+                if normalize_grade(declared_grade[1]) != grade:
+                    raise ValueError("Tiêu đề bài học khai báo khác lớp đang chọn.")
     check_current_facts(text)
     return text
 
@@ -199,6 +207,94 @@ def matrix_html(subject, grade):
             "<p>Yêu cầu cần đạt và tỷ lệ mức độ nhận thức phải được giáo viên duyệt theo nội dung đã dạy.</p></div>")
 
 
+def correct_khtn8_lime_soil_confusion(text, subject, grade, topic=""):
+    """Narrow repair for the observed KHTN 8 CaO/Ca(OH)2 soil exercise.
+
+    It runs only when both formulas and the lime/soil context are present,
+    preserving all unrelated lesson content.
+    """
+    value = str(text or "")
+    if canonical_subject(subject) == "Khoa học tự nhiên" and normalize_grade(grade) == 8:
+        if all(term in folded(value) for term in ('nuoc xa phong', 'qua cam', 'nuoc tinh khiet')):
+            value = re.sub(
+                r'Xác định môi trường của từng mẫu dựa trên kiến thức thực tế\s*\(Ví dụ:[^\n]*Xà phòng có cảm giác nhờn[^\n]*\)\.',
+                'Dùng dữ liệu được cung cấp hoặc kết quả thử chỉ thị dưới sự hướng dẫn của giáo viên '
+                'để xác định môi trường từng mẫu; không nếm hoặc chạm mẫu để nhận biết.', value,
+                flags=re.I)
+            value = re.sub(
+                r'(?mi)^([ \t]*(?:[-*][ \t]*)?)(Mẫu\s*\([123]\)):[^\n]*Dự đoán màu quỳ[^\n]*dựa vào tính[^\n]*',
+                lambda match: match.group(1) + match.group(2) + ': Em hãy tự xác định môi trường từ dữ kiện, '
+                'dự đoán màu quỳ và nêu căn cứ cho dự đoán của mình.', value)
+        value = re.sub(
+            r"(?ms)(^[# \t]*(?:\*\*)?1\.\s*Khởi động(?:\*\*)?)(.*?)(?=\n[# \t]*(?:\*\*)?2\.\s*Hình thành kiến thức)",
+            lambda match: (match.group(1) + '\n\nQuan sát dữ liệu do giáo viên cung cấp: '
+                           'hai mẫu dung dịch được đo có pH lần lượt là 3 và 10. '
+                           'Em sẽ dùng thang pH để phân biệt môi trường của chúng như thế nào? '
+                           'Hãy nêu căn cứ, không nếm hoặc chạm dung dịch để nhận biết.\n\n')
+            if any(term in folded(match.group(2)) for term in ('nhua mit', 'cam giac', 'khi cham'))
+            else match.group(0), value)
+        # Observed unsafe application: neutralisation is not a treatment rule.
+        # NHS: https://www.nhs.uk/conditions/insect-bites-and-stings/
+        lines = value.splitlines(keepends=True)
+        for index, line in enumerate(lines):
+            normalized = folded(line)
+            if ('ong dot' in normalized and 'boi' in normalized
+                    and ('nuoc voi' in normalized or 'kem danh rang' in normalized)):
+                lines[index] = ('**Vận dụng — đánh giá thông tin:** Vì sao không thể suy từ phản ứng trung hòa '
+                                'trong phòng thí nghiệm để kết luận cách xử lý vết côn trùng đốt? '
+                                'Không tự bôi nước vôi hoặc kem đánh răng lên vết đốt; cần hỏi người lớn '
+                                'và tìm hướng dẫn y tế phù hợp. Hãy chỉ ra dữ kiện và nguồn chuyên môn '
+                                'cần kiểm chứng trước khi áp dụng một mẹo đời sống.\n')
+        value = ''.join(lines)
+    if (canonical_subject(subject) != "Khoa học tự nhiên" or normalize_grade(grade) != 8
+            or not re.search(r"base|pH|đất", folded(topic))
+            or not re.search(r"Ca\s*O", value, re.I)
+            or not re.search(r"Ca\s*\(\s*OH\s*\)\s*(?:\{\s*)?2", value, re.I)
+            or not re.search(r"voi|dat", folded(value))):
+        return value
+
+    value = re.sub(
+        r"tính chất của vôi bột\s*\(\s*Ca\s*\(\s*OH\s*\)\s*(?:\{\s*)?2\s*\}?\s+là\s+base\s*\)",
+        "tính chất của Ca(OH)₂ (vôi tôi, là base; khác với CaO ban đầu là oxide base)",
+        value, flags=re.I,
+    )
+    def clarify_khtn_alkali(match):
+        line = match.group(2)
+        if ("KNTT yêu cầu tra bảng tính tan" in line or "độ tan Ca(OH)₂ có giới hạn" in line
+                or not re.search(r"Ca\s*\(\s*OH\s*\)\s*(?:\{\s*)?2", line, re.I)):
+            return line
+        return (line + " (Lưu ý: độ tan Ca(OH)₂ có giới hạn; khi xác định kiềm, "
+                "hãy đối chiếu bảng tính tan và quy ước trong bài KNTT).")
+    value = re.sub(r"(?im)(^|\n)([^\n]*Base tan\s*\(kiềm\):[^\n]*)", lambda m: m.group(1) + clarify_khtn_alkali(m), value)
+    note = " (Lưu ý: độ tan Ca(OH)₂ có giới hạn; khi xác định kiềm, hãy đối chiếu bảng tính tan và quy ước trong bài KNTT)."
+    value = re.sub('(?:' + re.escape(note) + '){2,}', lambda _: note, value)
+    value = re.sub(
+        r"b\)\s*Để giảm độ chua[^\n.]{0,400}?Hãy giải thích\.",
+        "b) Vì sao CaO có thể góp phần giảm độ chua sau khi phản ứng với nước tạo Ca(OH)₂? "
+        "Cần biết thêm những thông tin nào về loại đất, cây trồng và khuyến cáo kỹ thuật "
+        "trước khi quyết định vật liệu, liều lượng cải tạo?",
+        value, flags=re.I,
+    )
+    polya_anchor = re.compile(r"Em hãy so sánh số 5 với số 7.{0,1600}?phân đạm acid.{0,500}?đất\.", re.I | re.S)
+    def repair_polya(match):
+        old = match.group(0)
+        normalized_old = folded(old)
+        if "phan dam" not in normalized_old or "chon phuong an" not in normalized_old:
+            return old
+        return ("Em hãy so sánh pH = 5 với mốc 7 để nhận biết môi trường. Tự viết phương trình CaO phản ứng "
+                "với nước, gọi tên đúng chất tạo thành, rồi nêu dữ kiện về cây trồng, đất và hướng dẫn kỹ thuật "
+                "còn cần trước khi đề xuất cải tạo.")
+    value = polya_anchor.sub(repair_polya, value)
+    value = re.sub(
+        r"Việc bón vôi bột có giúp đưa pH của đất về gần mức trung tính\s*\(\s*pH\s*=\s*7\s*\)\s*không\?\s*"
+        r"Giải pháp này có phù hợp với thực tế sản xuất nông nghiệp không\?",
+        "Đã đủ dữ kiện để kết luận đất cần đạt pH = 7 chưa? Em cần đối chiếu thêm loại cây, "
+        "đặc điểm đất và hướng dẫn kỹ thuật nào trước khi đề xuất cải tạo?",
+        value, flags=re.I,
+    )
+    return value
+
+
 def lesson_prompt(subject, grade, topic):
     from services.cognitive_levels import LEVEL_GUIDANCE
     visual_guidance = ""
@@ -262,9 +358,19 @@ def lesson_prompt(subject, grade, topic):
         "\nKhông gán VDC chỉ vì bài dài, nhiều bước, viết đoạn văn hoặc sửa cú pháp cơ bản. "
         "Chọn mức độ theo thao tác tư duy và yêu cầu cần đạt; chưa đủ căn cứ thì để trống nhãn.\n"
     )
+    if canonical_subject(subject) in ("Khoa học tự nhiên", "Hóa học"):
+        visual_guidance += (
+            "\nKIỂM SOÁT CHÍNH XÁC KHOA HỌC HÓA HỌC: phân biệt tên chất, công thức và loại hợp chất; "
+            "không gọi CaO là Ca(OH)2. Nếu nhắc vôi sống, ghi CaO (oxide base); phản ứng với nước tạo "
+            "Ca(OH)2 (base, vôi tôi). Không gọi chung hai chất là một. Khi bàn cải tạo đất, pH=7 không "
+            "phải mục tiêu mặc định cho mọi cây/đất; không kết luận liều bón từ một giá trị pH đơn lẻ. "
+            "Nêu dữ kiện còn thiếu và khuyến cáo cần đối chiếu. Phân biệt base với kiềm theo độ tan được "
+            "nêu trong tài liệu lớp học; không đánh đồng base ít tan với kiềm tan tốt.\n"
+        )
     return policy_prompt(subject, grade, 1, topic) + LEVEL_GUIDANCE + visual_guidance + r"""
 Soạn bài học với ba tiêu đề chính: '### PHẦN 1: BÀI HỌC', '### PHẦN 2: TRẮC NGHIỆM KHÁCH QUAN SOCRATIC', '### PHẦN 3: BÀI TẬP TỰ LUẬN'.
 Phần 1: khởi động, hình thành kiến thức, ví dụ có lời giải phù hợp lớp, luyện tập và vận dụng; đặc trưng thể loại/môn học phải được giữ.
+Trình bày rõ năm mục của Phần 1: Khởi động; Hình thành kiến thức; Ví dụ có lời giải; Luyện tập; Vận dụng. Mỗi mục hoạt động phải có việc học sinh thực hiện và câu hỏi tự kiểm hoặc tiêu chí sản phẩm. Khởi động dùng tình huống gần gũi gắn đúng bài; luyện tập kiểm tra kiến thức vừa học; vận dụng cho nhiệm vụ khả thi, phù hợp tuổi, không đòi dữ kiện chưa cung cấp. Ví dụ có lời giải phải giải thích cách làm. Với môn đọc hiểu, ngoại ngữ và xã hội, chọn hoạt động đặc trưng môn, không ép thành bài toán tính số. Với thí nghiệm hoặc hóa chất, ưu tiên dữ liệu/mô phỏng và chỉ quan sát thí nghiệm do giáo viên tổ chức; không giao tự pha trộn hóa chất tại nhà.
 Phần 2: đúng 3 câu trắc nghiệm, mỗi câu có 4 phương án A/B/C/D và duy nhất một đáp án. Ghi CORRECT: cho đáp án nội bộ, EXPLAIN: cho giải thích nội bộ, HINT: cho gợi mở Socratic theo riêng ngữ cảnh câu hỏi. HINT chỉ dẫn dắt học sinh tự nghĩ; không giải hộ hoặc tiết lộ đáp án. Không dùng EXPLAIN thay HINT.
 Phần 3: đúng 2 câu tự luận, mỗi câu hướng dẫn đủ bốn bước Pólya bằng tiếng Việt: Bước 1: Tìm hiểu đề; Bước 2: Lập kế hoạch; Bước 3: Thực hiện kế hoạch; Bước 4: Kiểm tra và nhìn lại. Chỉ đặt câu hỏi hoặc hướng dẫn để học sinh tự thực hiện, không giải hộ, không đưa đáp án. Phần 1 vẫn được giải thích lý thuyết và có ví dụ minh họa; không áp quy tắc giấu lời giải của Socratic sang Phần 1.
 Mỗi câu Phần 2 và Phần 3 mở đầu 'Câu n. [Mức độ: NB/TH/VD/VDC]' (chọn một nhãn, hoặc để rỗng nếu chưa đủ căn cứ). Tiếp theo là nội dung câu, các dòng OUTCOME: yêu cầu cần đạt; COGNITIVE_REASON: căn cứ phân loại; COGNITIVE_STEPS: ["thao tác tư duy 1", "thao tác tư duy 2"]. Đây là đề xuất cần giáo viên duyệt, không mặc định tất cả câu là vận dụng.

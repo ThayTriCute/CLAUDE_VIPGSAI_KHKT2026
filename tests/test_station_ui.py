@@ -36,6 +36,10 @@ class TestStationUI(unittest.TestCase):
 
     def test_station1_preset_lab_and_grade_context_reset(self):
         at = self.app()
+        next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select("Lớp 8").run()
+        next(s for s in at.selectbox if s.label == "📚 Môn học cần hỗ trợ:").select("Khoa học tự nhiên").run()
+        preset = next(s for s in at.selectbox if s.label == "Mô phỏng có sẵn (không cần API):")
+        preset.select("Thang đo pH & Axit - Bazơ (KHTN)").run()
         next(b for b in at.button if b.label == "Mở mô phỏng có sẵn").click().run()
         self.assertEqual([e.message for e in at.exception], [])
         at.session_state["t3_p3_0"] = "old-answer"
@@ -47,6 +51,114 @@ class TestStationUI(unittest.TestCase):
         subjects = next(s for s in at.selectbox if s.label == "📚 Môn học cần hỗ trợ:").options
         self.assertIn("Khoa học tự nhiên", subjects)
         self.assertNotIn("Vật lý", subjects)
+
+    def test_equilibrium_lab_temperature_pressure_sliders(self):
+        import re
+        at = self.app()
+        next(s for s in at.selectbox if s.label == '📚 Môn học cần hỗ trợ:').select('Hóa học').run()
+        at.session_state['lab_data'] = {'type': 'chem_equilibrium', 'temp': 450, 'p': 100}
+        at.run()
+        def conversion():
+            self.assertEqual([e.message for e in at.exception], [])
+            text = next(item.value for item in at.success if 'Mức chuyển hóa' in item.value)
+            return float(re.search(r'`([0-9.]+)%`', text)[1])
+        baseline = conversion()
+        next(s for s in at.slider if s.label == 'Áp suất P (bar):').set_value(200).run()
+        higher_pressure = conversion()
+        self.assertGreater(higher_pressure, baseline)
+        next(s for s in at.slider if s.label == 'Nhiệt độ T (°C):').set_value(550).run()
+        self.assertLess(conversion(), higher_pressure)
+        self.assertTrue(any('Giữ áp suất' in item.value for item in at.info))
+        self.assertTrue(any('Giữ nhiệt độ' in item.value for item in at.info))
+
+    def test_ph_lab_three_environments_on_actual_slider(self):
+        at = self.app()
+        next(s for s in at.selectbox if s.label == '🎯 Chọn khối lớp:').select('Lớp 8').run()
+        next(s for s in at.selectbox if s.label == '📚 Môn học cần hỗ trợ:').select('Khoa học tự nhiên').run()
+        at.session_state['lab_data'] = {'type': 'chem_ph', 'log_h': -7.0}
+        at.run()
+        for value, expected in [(3.0, 'Môi trường axit'), (7.0, 'Trung tính'), (11.0, 'Môi trường bazơ')]:
+            next(s for s in at.slider if s.label == 'Giá trị pH (thang KNTT 1–14):').set_value(value).run()
+            self.assertEqual([e.message for e in at.exception], [])
+            self.assertTrue(any(item.value == expected for item in at.success))
+
+    def test_mendel_lab_identifies_phenotypes_and_assumptions(self):
+        at = self.app()
+        next(s for s in at.selectbox if s.label == '📚 Môn học cần hỗ trợ:').select('Sinh học').run()
+        at.session_state['lab_data'] = {'type': 'bio_genetics'}
+        at.run()
+        self.assertEqual([e.message for e in at.exception], [])
+        labels = [item.label for item in at.text_input]
+        self.assertIn('Kiểu hình của AA và Aa (trội hoàn toàn):', labels)
+        self.assertIn('Kiểu hình của aa:', labels)
+        self.assertTrue(any('chỉ khi trội hoàn toàn' in item.value for item in at.info))
+
+    def test_function_labs_render_exact_svg_for_valid_inputs(self):
+        at = self.app()
+        for payload in [
+            {'type': 'func_3', 'a': 1, 'b': 0, 'c': -2, 'd': 1},
+            {'type': 'func_1_1', 'a': 1, 'b': 1, 'c': 1, 'd': -1},
+            {'type': 'func_2_1', 'a': 1, 'b': -2, 'c': 2, 'd': 1, 'e': -1},
+        ]:
+            at.session_state['lab_data'] = payload.copy()
+            at.run()
+            self.assertEqual([e.message for e in at.exception], [])
+            self.assertGreaterEqual(sum('<svg' in item.value for item in at.markdown), 2)
+            self.assertFalse(any('Điểm cực đại:' in item.value for item in at.caption))
+            next(r for r in at.radio if r.label == 'Cách hiển thị đồ thị để đối chiếu:').set_value('Plotly tương tác').run()
+            self.assertEqual([e.message for e in at.exception], [])
+            self.assertGreaterEqual(len(at.get('plotly_chart')), 1)
+            self.assertEqual(at.session_state['lab_data'], payload)
+
+    def test_function_labs_reject_degenerate_data_without_changing_it(self):
+        at = self.app()
+        cases = [
+            ({'type': 'func_3', 'a': 0}, 'a khác 0'),
+            ({'type': 'func_1_1', 'a': 1, 'b': 1, 'c': 0, 'd': 1}, 'c khác 0'),
+            ({'type': 'func_1_1', 'a': 1, 'b': 1, 'c': 1, 'd': 1}, 'suy biến'),
+            ({'type': 'func_2_1', 'a': 0, 'b': 1, 'c': 1, 'd': 1, 'e': -1}, 'a khác 0'),
+            ({'type': 'func_2_1', 'a': 1, 'b': 0, 'c': 1, 'd': 0, 'e': -1}, 'd khác 0'),
+            ({'type': 'func_2_1', 'a': 1, 'b': 0, 'c': -1, 'd': 1, 'e': -1}, 'suy biến'),
+        ]
+        for payload, message in cases:
+            at.session_state['lab_data'] = payload.copy()
+            at.run()
+            self.assertEqual([e.message for e in at.exception], [])
+            self.assertTrue(any(message in item.value for item in at.error))
+            self.assertEqual(at.session_state['lab_data'], payload)
+
+    def test_exp_lab_constant_and_invalid_base_in_actual_app(self):
+        at = self.app()
+        at.session_state['lab_data'] = {'type': 'func_exp', 'base': 2.0, 'k': 0.0, 'c': 3.0}
+        at.run()
+        self.assertEqual([e.message for e in at.exception], [])
+        self.assertTrue(any('Hằng số' in item.value for item in at.caption))
+        next(s for s in at.slider if s.label == 'Cơ số a (a > 0, a ≠ 1):').set_value(1.0).run()
+        self.assertEqual([e.message for e in at.exception], [])
+        self.assertTrue(any('khác 1' in item.value for item in at.error))
+
+    def test_log_lab_constant_and_invalid_base_in_actual_app(self):
+        at = self.app()
+        at.session_state['lab_data'] = {'type': 'func_log', 'base': 2.0, 'k': 0.0, 'c': 3.0}
+        at.run()
+        self.assertEqual([e.message for e in at.exception], [])
+        captions = '\n'.join(item.value for item in at.caption)
+        self.assertIn('Không có tiệm cận đứng', captions)
+        self.assertIn('Hằng số', captions)
+        next(s for s in at.slider if s.label == 'Cơ số a (a > 0, a ≠ 1):').set_value(1.0).run()
+        self.assertEqual([e.message for e in at.exception], [])
+        self.assertTrue(any('khác 1' in item.value for item in at.error))
+        self.assertEqual(next(s for s in at.slider if s.label == 'Cơ số a (a > 0, a ≠ 1):').value, 1.0)
+
+    def test_social_lab_rejects_mismatched_graph_without_inventing_lesson(self):
+        at = self.app()
+        next(s for s in at.selectbox if s.label == "📚 Môn học cần hỗ trợ:").select("Ngữ văn").run()
+        at.session_state['lab_data'] = {'type': 'func_3', 'a': 1, 'b': 0, 'c': 0, 'd': 0}
+        at.run()
+        self.assertEqual([e.message for e in at.exception], [])
+        self.assertTrue(any('Chưa có đủ dữ kiện để dựng sơ đồ theo bài học' in item.value for item in at.warning))
+        self.assertFalse(any('Chuẩn kiến thức GDPT 2018' in item.value for item in at.markdown))
+        self.assertEqual(at.session_state['lab_data']['type'], 'func_3')
 
     def test_station3_custom_request_does_not_cross_grade_and_restores_own_draft(self):
         at = self.app()
@@ -101,9 +213,25 @@ class TestStationUI(unittest.TestCase):
     def test_stale_unbound_lesson_is_not_exported_as_current_subject(self):
         at = self.app()
         at.session_state["current_lesson"] = "Bài Hóa học lớp 12 từ phiên cũ."
+        at.session_state['current_lesson_context'] = ('Hóa học', 12)
+        at.session_state['current_topic'] = 'Ester'
         at.run()
         self.assertEqual(at.session_state["current_lesson"], "")
         self.assertIn("Hóa học", at.session_state["orphaned_lesson"])
+        self.assertEqual(at.session_state['orphaned_lesson_context'], ('Hóa học', 12))
+        self.assertEqual(at.session_state['orphaned_lesson_topic'], 'Ester')
+        self.assertTrue(any('tải nguyên văn' in item.value for item in at.warning))
+        at.run()
+        self.assertIn('Hóa học', at.session_state['orphaned_lesson'])
+        at.session_state['current_lesson'] = 'Bài Sinh học lớp 12 thứ hai.'
+        at.session_state['current_lesson_context'] = ('Sinh học', 12)
+        at.session_state['current_topic'] = 'Mendel'
+        at.run()
+        previous = list(at.session_state['orphaned_lesson_archive'].values())
+        self.assertEqual(len(previous), 1)
+        self.assertEqual(previous[0]['text'], 'Bài Hóa học lớp 12 từ phiên cũ.')
+        self.assertEqual(previous[0]['context'], ('Hóa học', 12))
+        self.assertIn('Sinh học', at.session_state['orphaned_lesson'])
         self.assertEqual([e.message for e in at.exception], [])
 
     def test_station3_grade6_uses_practice_counts_not_graduation(self):
@@ -128,7 +256,7 @@ class TestStationUI(unittest.TestCase):
         at.session_state["exam_context"] = {"name": "QA", "grade": "Lớp 8", "subject": "Toán học", "student_id": "qa-label"}
         at.session_state["exam_deadline"] = time.time() + 300
         at.session_state["attempt_id"] = "qa-label"
-        at.run()
+        at.run(timeout=90)
         self.assertEqual([e.message for e in at.exception], [])
         sections = [m.value for m in at.markdown if m.value.startswith("### PHẦN")]
         self.assertTrue(any("Thang điểm luyện tập" in v for v in sections))

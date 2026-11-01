@@ -11,10 +11,21 @@ from unittest.mock import patch
 
 from services.academic_context import academic_context, canonical_subject, subjects_for_grade, topic_matches, validate_exam_context
 from services.lesson_export import build_lesson_html, faithful_infographic_data, handwritten_prompt, lesson_body_html
-from services.lesson_sources import books_for, lesson_references, PUBLISHER_PORTAL, textbook_update_notice
+from services.lesson_sources import books_for, lesson_references, PUBLISHER_PORTAL, PUBLISHER_DIGITAL_LIBRARY, textbook_update_notice
 
 
 class TestAcademicContext(unittest.TestCase):
+    def test_direct_export_rejects_wrong_subject_grade_or_book(self):
+        for lesson in ['Môn: Hóa học\nNội dung', 'Lớp: 9\nNội dung',
+                       'Bộ sách: Cánh Diều\nNội dung']:
+            with self.assertRaises(ValueError):
+                build_lesson_html('Toán', 8, 'Bài đang kiểm', lesson)
+
+    def test_publisher_catalog_and_digital_reader_are_distinct_official_routes(self):
+        self.assertEqual(PUBLISHER_PORTAL, "https://taphuan.nxbgd.vn/tap-huan?tab=public")
+        self.assertEqual(PUBLISHER_DIGITAL_LIBRARY, "https://truonghocsoquocgia.nxbgd.vn/")
+        self.assertNotEqual(PUBLISHER_PORTAL, PUBLISHER_DIGITAL_LIBRARY)
+
     def test_2026_publisher_update_is_scoped_to_seven_supported_pairs(self):
         affected = {(grade, subject) for grade in range(6, 13) for subject in subjects_for_grade(grade)
                     if textbook_update_notice(subject, grade)}
@@ -24,6 +35,7 @@ class TestAcademicContext(unittest.TestCase):
             refs = lesson_references(subject, grade, 'Chủ đề đang kiểm', {}, lambda _: '')
             self.assertIn('Thông báo cập nhật của NXBGD', refs['badge_html'])
             self.assertIn('chưa xác minh là bản chỉnh sửa 2026', refs['badge_html'])
+            self.assertTrue(all(row['kind'] == 'publisher_book_page' for row in books_for(subject, grade)))
 
     def test_aliases_accents_and_case_are_one_identity(self):
         for alias, expected in [("TOÁN", "Toán học"), ("Địa lí", "Địa lý"), ("dia ly", "Địa lý"),
@@ -48,6 +60,17 @@ class TestAcademicContext(unittest.TestCase):
                 self.assertTrue(all(str(grade) in row["title"] for row in rows))
                 count += 1
         self.assertEqual(count, 65)
+
+    def test_technology_textbook_references_link_to_official_grade_and_pathway_pages(self):
+        for grade in range(6, 13):
+            rows = books_for("Công nghệ", grade)
+            self.assertTrue(rows)
+            self.assertTrue(all(row["kind"] == "publisher_book_page" for row in rows), grade)
+            self.assertTrue(all("taphuan.nxbgd.vn/tap-huan/chi-tiet-sach/" in row["url"] for row in rows), grade)
+            self.assertTrue(all(str(grade) in row["title"] for row in rows), grade)
+        self.assertIn("Công nghệ trồng trọt", " ".join(r["title"] for r in books_for("Công nghệ", 10)))
+        self.assertIn("Công nghệ cơ khí", " ".join(r["title"] for r in books_for("Công nghệ", 11)))
+        self.assertIn("Lâm nghiệp", " ".join(r["title"] for r in books_for("Công nghệ", 12)))
 
     def test_explicit_wrong_exam_metadata_is_rejected(self):
         for exam in [{"subject": "Hóa học", "grade": 12}, {"subject": "Toán", "grade": 11},

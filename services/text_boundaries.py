@@ -5,6 +5,112 @@ import re
 
 from services.lesson_export import _TOKENS
 
+T1_CONTEXT_REVISION = 2026110102
+
+
+def _chemical_macros(text, convert):
+    """Visit balanced ce bodies, including braced charges/isotopes."""
+    parts, cursor = [], 0
+    for start in re.finditer(r'\\ce\s*\{', text):
+        if start.start() < cursor:
+            continue
+        depth, end = 1, start.end()
+        while end < len(text) and depth:
+            depth += (text[end] == '{') - (text[end] == '}')
+            end += 1
+        if depth:
+            continue
+        parts.extend((text[cursor:start.start()], convert(text[start.end():end-1])))
+        cursor = end
+    return ''.join(parts) + text[cursor:]
+
+
+def wrap_naked_chemistry(text):
+    """Add math delimiters to ce in prose only; keep formula bodies/code exact."""
+    def wrap(body):
+        # Reactions on their own lines stay readable on narrow screens/print;
+        # ordinary chemical formulae remain inline with the sentence.
+        if re.search(r'->|<-|<=>|→|←|⇌', body):
+            return '\n\n$$\\ce{' + body + '}$$\n\n'
+        return '$\\ce{' + body + '}$'
+    parts, cursor = [], 0
+    for match in _TOKENS.finditer(str(text)):
+        parts.extend((_chemical_macros(text[cursor:match.start()], wrap), match[0]))
+        cursor = match.end()
+    parts.append(_chemical_macros(text[cursor:], wrap))
+    return ''.join(parts)
+
+
+def _chemical_core_tex(body):
+    """Conservative ce presentation subset for native KaTeX without mhchem.
+
+    No atom, coefficient, charge, phase or reaction direction is inferred.
+    Export still uses the complete bundled mhchem renderer and original body.
+    """
+    arrows = {'<=>': r'\rightleftharpoons ', '<->': r'\leftrightarrow ', '->': r'\rightarrow ',
+              '<-': r'\leftarrow ', '→': r'\rightarrow ', '←': r'\leftarrow ', '⇌': r'\rightleftharpoons ',
+              '↑': r'\uparrow ', '↓': r'\downarrow '}
+    output, i, previous = [], 0, ''
+    while i < len(body):
+        arrow = next((key for key in arrows if body.startswith(key, i)), None)
+        if arrow:
+            if body[i+len(arrow):].lstrip().startswith('['):
+                raise ValueError('Annotated chemical arrow needs mhchem')
+            output.append(arrows[arrow]); i += len(arrow); previous = ''
+            continue
+        char = body[i]
+        if char.isspace():
+            output.append(r'\,'); i += 1
+            continue
+        if char in '^_':
+            match = re.match(r'[\^_](?:\{([A-Za-z0-9+\-]+)\}|([0-9]*[+\-]?))', body[i:])
+            value = (match[1] or match[2]) if match else ''
+            if not value:
+                raise ValueError('Unsupported chemical script')
+            output.append(('{}' if not output else '') + char + '{' + value + '}')
+            i += match.end(); previous = 'script'
+            continue
+        match = re.match(r'[A-Za-z]+|\d+(?:\.\d+)?', body[i:])
+        if match:
+            token = match[0]
+            if token[0].isdigit():
+                output.append('_{' + token + '}' if previous in ('atom', ')', ']') else token)
+                previous = 'number'
+            else:
+                output.append(r'\mathrm{' + token + '}'); previous = 'atom'
+            i += len(token)
+            continue
+        if char in '()[]':
+            output.append(char); previous = char; i += 1
+            continue
+        if char in '+-':
+            tail = body[i+1:].lstrip()
+            charge = previous in ('atom', 'number', ')', ']', 'script') and (not tail or tail[0] in ',;+' or tail.startswith(('->','<=>','→','⇌')))
+            output.append('^{' + char + '}' if charge else char)
+            previous = 'script' if charge else ''; i += 1
+            continue
+        if char in ',;=*.·#':
+            output.append({'*': r'\cdot ', '·': r'\cdot ', '#': r'\equiv '}.get(char, char))
+            previous = ''; i += 1
+            continue
+        raise ValueError('Chemical notation needs mhchem review')
+    return ''.join(output)
+
+
+def chemical_display_markdown(text):
+    """Display-only conversion; stored lesson/answers/source remain unchanged."""
+    value = wrap_naked_chemistry(str(text or ''))
+    def token(match):
+        raw = match[0]
+        if raw.startswith(('`', '~~~')):
+            return raw
+        try:
+            return _chemical_macros(raw, _chemical_core_tex)
+        except ValueError:
+            # Do not pretend unsupported notation was rendered correctly.
+            return '⚠️ Công thức cần đối chiếu bản gốc: `' + raw.replace('`', '') + '`'
+    return _TOKENS.sub(token, value)
+
 
 def preserve_math_and_code(text, normalize_prose):
     value = str(text or '')

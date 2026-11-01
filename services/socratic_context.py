@@ -3,6 +3,32 @@ import re
 
 from services.academic_context import canonical_subject, folded
 
+T1_CONTEXT_REVISION = 2026110101
+
+
+def _names_unique_chemical_answer(hint, options, correct_answer, question):
+    """Block a named element cue unique to the correct formula, not given data."""
+    letter = str(correct_answer).strip().upper()
+    if not options or letter not in ('A', 'B', 'C', 'D') or len(options) != 4:
+        return False
+    index = ord(letter)-ord('A')
+    aliases = {'Na': ('natri', 'sodium'), 'K': ('kali', 'potassium'),
+               'Ca': ('canxi', 'calcium', 'nước vôi'), 'Ba': ('bari', 'barium'),
+               'Al': ('nhôm', 'aluminium', 'aluminum'), 'Mg': ('magnesium', 'magie', 'magiê'),
+               'Cu': ('kim loại đồng', 'copper'), 'Fe': ('kim loại sắt', 'iron')}
+    def contains_symbol(text, symbol):
+        return bool(re.search(r'(?<![A-Za-z])'+symbol+r'(?=$|[A-Z0-9(){}^+\-\s$])', str(text)))
+    h, q = folded(hint), folded(question)
+    for symbol, names in aliases.items():
+        if (not contains_symbol(options[index], symbol) or contains_symbol(question, symbol)
+                or any(contains_symbol(o, symbol) for i,o in enumerate(options) if i != index)):
+            continue
+        for name in names:
+            cue = r'\b'+re.escape(folded(name))+r'\b'
+            if re.search(cue, h) and not re.search(cue, q):
+                return True
+    return False
+
 
 def math_context_question(question):
     """Small context-specific fallback library; no calculation or answer content."""
@@ -105,6 +131,10 @@ def computing_context_question(question):
 
 def subject_socratic_hint(hint, subject, options=None, correct_answer='', question_text=''):
     subject = canonical_subject(subject)
+    if subject in ('Hóa học', 'Khoa học tự nhiên') and _names_unique_chemical_answer(hint, options, correct_answer, question_text):
+        if any(term in folded(question_text) for term in ('base tan', 'kiem', 'tinh tan')):
+            return 'Em sẽ dùng tiêu chí nào và tra bảng tính tan ra sao để tự phân biệt từng chất trong các phương án?'
+        return _QUESTIONS[subject]
     question = guiding_question(hint, options, correct_answer)
     if subject == 'Tin học':
         contextual = computing_context_question(question_text)
