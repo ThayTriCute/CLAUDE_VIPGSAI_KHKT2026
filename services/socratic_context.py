@@ -3,7 +3,7 @@ import re
 
 from services.academic_context import canonical_subject, folded
 
-T1_CONTEXT_REVISION = 2026110101
+T1_CONTEXT_REVISION = 2026110102
 
 
 def _names_unique_chemical_answer(hint, options, correct_answer, question):
@@ -113,6 +113,9 @@ def english_reading_question(question):
 def computing_context_question(question):
     """Small task-specific prompts; no numerical result or answer alternative."""
     text = folded(question)
+    if 'danh sach' in text and any(term in text for term in ('thu tu', 'danh so')):
+        return ('Danh sách trong yêu cầu cần thể hiện mối quan hệ nào giữa các mục? '
+                'Em sẽ phân biệt phần tử bao ngoài với từng mục và đối chiếu vai trò của các thẻ ra sao?')
     if 'cpu' in text:
         return ('Em sẽ phân biệt vai trò của CPU với bộ nhớ và thiết bị vào, ra '
                 'theo tiêu chí nào trước khi đối chiếu từng phát biểu?')
@@ -141,7 +144,15 @@ def subject_socratic_hint(hint, subject, options=None, correct_answer='', questi
         # Live CPU hint repeated the identifying metaphor from the correct option.
         # Replace only that observed cue, not every valid supplied computing hint.
         cpu_metaphor = 'cpu' in folded(question_text) and 'bo nao' in folded(hint)
-        if contextual and (not question or cpu_metaphor):
+        key = str(correct_answer).strip().upper()
+        html_name_cue = (
+            'danh sach' in folded(question_text) and options and len(options) == 4
+            and key in ('A', 'B', 'C', 'D')
+            and re.search(r'<\s*ol\b', str(options[ord(key) - ord('A')]), re.I)
+            and re.search(r'\border(?:ed)?\b', folded(hint))
+            and not re.search(r'\border(?:ed)?\b|\bol\b', folded(question_text))
+        )
+        if contextual and (not question or cpu_metaphor or html_name_cue):
             return contextual
     if question:
         return question

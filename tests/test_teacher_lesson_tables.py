@@ -1,6 +1,7 @@
 """Exercise the actual Station 1 renderer against lost-row regressions."""
 import html
 import unittest
+from unittest.mock import patch
 from services.curriculum_policy import correct_khtn8_lime_soil_confusion
 
 from tests.test_expert_patch_regressions import load_function
@@ -20,7 +21,29 @@ class TeacherLessonTableTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.render = staticmethod(load_function('render_pedagogical_lesson_visuals', html=html,
+            sanitize_svg_for_markdown=lambda svg: svg,
             _parse_bbt_cells_safe=load_function('_parse_bbt_cells_safe')))
+
+    def test_chemistry_does_not_substitute_fixed_gas_or_cell_for_other_lessons(self):
+        for grade in range(6, 13):
+            with self.subTest(grade=grade), patch('precision_visual_engine.build_gas_preparation_model') as gas, \
+                    patch('precision_visual_engine.build_daniell_cell_model') as cell:
+                for source in ('Thu khí H2 bằng đẩy nước trong ống nghiệm.',
+                               'Điều chế O2 bằng đun nóng rồi thu khí bằng đẩy nước.',
+                               'Pin điện hóa bạc: xác định anode, cathode và cầu muối.',
+                               'C2H4 là chất khí. Nêu tính chất của chất này.'):
+                    self.assertEqual(self.render(source, 'Hóa học', grade), source)
+                gas.assert_not_called()
+                cell.assert_not_called()
+
+    def test_matching_explicit_chemistry_diagrams_are_kept(self):
+        with patch('precision_visual_engine.build_gas_preparation_model', return_value={'svg': '<svg>gas</svg>'}) as gas:
+            rendered = self.render('Điều chế C2H4 bằng đun nóng, thu bằng đẩy nước.', 'Hóa học', 11)
+            gas.assert_called_once_with('C2H4')
+            self.assertIn('<svg>gas</svg>', rendered)
+        with patch('precision_visual_engine.build_daniell_cell_model', return_value={'svg': '<svg>cell</svg>'}) as cell:
+            self.assertIn('<svg>cell</svg>', self.render('Sơ đồ pin Daniell.', 'Hóa học', 12))
+            cell.assert_called_once()
 
     def test_live_ph_table_keeps_all_three_samples(self):
         source = ('| Dung dịch | Giá trị pH |\n|---|---|\n'

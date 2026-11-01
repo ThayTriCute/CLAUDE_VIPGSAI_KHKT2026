@@ -5,6 +5,20 @@ from services.lesson_export import build_lesson_html
 
 
 class TeacherChemicalDisplayTests(unittest.TestCase):
+    def test_reviewed_base_lesson_completes_missing_properties_only_in_knowledge_section(self):
+        from services.curriculum_policy import correct_khtn8_lime_soil_confusion
+        source = ('### PHẦN 1: BÀI HỌC\n#### 2. Hình thành kiến thức\n'
+                  'Khái niệm base và thang pH.\n\n#### 3. Ví dụ có lời giải\nVí dụ phân loại.\n'
+                  '### PHẦN 3: BÀI TẬP TỰ LUẬN\nCâu 1. Hãy tự giải thích.\n')
+        fixed = correct_khtn8_lime_soil_confusion(source, 'Khoa học tự nhiên', 8, 'Base. Thang pH')
+        self.assertIn('phenolphthalein', fixed)
+        self.assertIn(r'\ce{NaOH + HCl -> NaCl + H2O}', fixed)
+        self.assertEqual(fixed.split('### PHẦN 3:')[1], source.split('### PHẦN 3:')[1])
+        self.assertEqual(correct_khtn8_lime_soil_confusion(fixed, 'Khoa học tự nhiên', 8, 'Base. Thang pH'), fixed)
+        for subject, grade, topic in [('Khoa học tự nhiên', 7, 'Base. Thang pH'),
+                                      ('Ngữ văn', 8, 'Base. Thang pH'), ('Khoa học tự nhiên', 8, 'Áp suất')]:
+            self.assertEqual(correct_khtn8_lime_soil_confusion(source, subject, grade, topic), source)
+
     def test_native_display_keeps_coefficients_subscripts_charges_and_direction(self):
         value = chemical_display_markdown(r'$\ce{2H2 + O2 -> 2H2O}$ và $\ce{SO4^{2-}(aq)}$.')
         self.assertIn(r'2\mathrm{H}_{2}', value)

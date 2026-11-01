@@ -5,6 +5,19 @@ from services.academic_context import subjects_for_grade
 
 
 class TestComputingContextHints(unittest.TestCase):
+    def test_archived_html_order_cue_is_repaired_without_naming_the_answer(self):
+        question = 'Thẻ HTML nào dùng để tạo danh sách có thứ tự?'
+        options = ['A. `<ul>`', 'B. `<ol>`', 'C. `<li>`', 'D. `<p>`']
+        leaked = 'Trong tiếng Anh, từ Order có nghĩa là gì? Nó liên quan gì đến việc sắp xếp theo trình tự 1, 2, 3?'
+        fixed = sanitize_socratic_hint(leaked, 'B', question, options, subject='Tin học', grade_num=12)
+        self.assertNotEqual(fixed, leaked)
+        self.assertNotIn('Order', fixed)
+        self.assertNotIn('<ol>', fixed)
+        self.assertNotIn('1, 2, 3', fixed)
+        supplied = 'Em cần phân biệt vai trò của phần tử bao ngoài và từng mục như thế nào?'
+        self.assertEqual(sanitize_socratic_hint(supplied, 'B', question, options,
+                         subject='Tin học', grade_num=12), supplied)
+
     def test_live_cpu_metaphor_is_replaced_without_changing_valid_hint(self):
         question = 'Phát biểu nào sau đây về CPU là ĐÚNG?'
         leaked = "Thành phần nào được ví như 'bộ não' điều phối mọi hoạt động suy nghĩ và tính toán của máy tính?"

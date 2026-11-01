@@ -4,6 +4,20 @@ from tests.test_expert_patch_regressions import load_function
 
 
 class Station1AnswerParsingTests(unittest.TestCase):
+    def test_recovery_preserves_live_option_order_and_requires_unambiguous_source(self):
+        recover = load_function('recover_missing_quiz_keys')
+        old = {'question': 'Chọn theo tiêu chí', 'options': ['A. Một', 'B. Hai', 'C. Ba', 'D. Bốn'], 'correct': ''}
+        source = dict(old, options=['A. Bốn', 'B. Ba', 'C. Hai', 'D. Một'], correct='C', hint='Tự đối chiếu?')
+        fixed = recover([old], [source])[0]
+        self.assertEqual(fixed['correct'], 'B')
+        self.assertEqual(fixed['options'], old['options'])
+        self.assertEqual(old['correct'], '')
+        self.assertEqual(recover([old], [source, source])[0], old)
+        self.assertEqual(recover([old], [dict(source, question='Khác')])[0], old)
+        self.assertEqual(recover([old], [dict(source, correct='')])[0], old)
+        known = dict(old, correct='A')
+        self.assertEqual(recover([known], [source])[0], known)
+
     def parse(self, answer):
         fn = load_function('parse_quiz_questions', sanitize_katex_latex=lambda s:s,
             format_pedagogical_math=None, annotate_question=lambda q:q)
@@ -13,6 +27,16 @@ class Station1AnswerParsingTests(unittest.TestCase):
 
     def test_missing_key_is_not_invented_as_a(self):
         self.assertEqual(self.parse('')['correct'], '')
+
+    def test_markdown_reserved_fields_keep_key_and_hint_without_leaking_metadata(self):
+        for key in ('**CORRECT:** **B**', '**CORRECT**: B', '__CORRECT:__ B'):
+            with self.subTest(key=key):
+                q = self.parse(key + '\n**HINT:** Em hãy tự đối chiếu tiêu chí?\n'
+                               '**OUTCOME:** Viết theo yêu cầu thể loại.')
+                self.assertEqual(q['correct'], 'C')
+                self.assertEqual(q['hint'], 'Em hãy tự đối chiếu tiêu chí?')
+                self.assertEqual(q['learning_outcome'], 'Viết theo yêu cầu thể loại.')
+                self.assertNotIn('OUTCOME', q['explain'])
 
     def test_vietnamese_choose_prefix_preserves_answer_identity_after_shuffle(self):
         q = self.parse('CORRECT: Chọn B')

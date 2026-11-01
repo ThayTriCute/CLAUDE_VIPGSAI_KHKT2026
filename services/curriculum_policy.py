@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110118
+T1_CONTEXT_REVISION = 2026110120
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -215,6 +215,24 @@ def correct_khtn8_lime_soil_confusion(text, subject, grade, topic=""):
     """
     value = str(text or "")
     if canonical_subject(subject) == "Khoa học tự nhiên" and normalize_grade(grade) == 8:
+        if 'base' in folded(topic) and 'ph' in folded(topic):
+            def complete_base_knowledge(match):
+                knowledge = match.group(2)
+                normalized = folded(knowledge)
+                additions = []
+                if not all(term in normalized for term in ('quy tim', 'phenolphthalein')):
+                    additions.append('**Base và chất chỉ thị:** Quan sát mô phỏng hoặc thí nghiệm do giáo viên tổ chức: '
+                                     'dung dịch NaOH làm quỳ tím chuyển xanh và phenolphthalein không màu chuyển hồng. '
+                                     'Không nếm hoặc chạm hóa chất để nhận biết.')
+                if not ('muoi' in normalized and 'nuoc' in normalized
+                        and any(term in normalized for term in ('trung hoa', 'phan ung'))):
+                    additions.append('**Base tác dụng với acid:** Phản ứng tạo muối và nước. '
+                                     r'Ví dụ: $\ce{NaOH + HCl -> NaCl + H2O}$. '
+                                     'Tự kiểm: Hãy đối chiếu loại chất của các chất tham gia, sản phẩm và số nguyên tử mỗi nguyên tố.')
+                return match.group(0) if not additions else match.group(1) + knowledge.rstrip() + '\n\n' + '\n\n'.join(additions) + '\n'
+            value = re.sub(
+                r'(?ms)(^[# \t]*(?:\*\*)?2\.\s*Hình thành kiến thức(?:\*\*)?[^\n]*\n)(.*?)'
+                r'(?=\n[# \t]*(?:\*\*)?3\.\s*Ví dụ)', complete_base_knowledge, value)
         if all(term in folded(value) for term in ('nuoc xa phong', 'qua cam', 'nuoc tinh khiet')):
             value = re.sub(
                 r'Xác định môi trường của từng mẫu dựa trên kiến thức thực tế\s*\(Ví dụ:[^\n]*Xà phòng có cảm giác nhờn[^\n]*\)\.',
@@ -387,7 +405,12 @@ def lesson_generation_request(subject, grade, topic):
     full = lesson_prompt(subject, grade, topic)
     if not full.startswith(prefix):
         raise ValueError("Lesson instruction boundary changed; review request builder.")
-    return system, json.dumps({"lesson_topic": str(topic)}, ensure_ascii=False) + "\n" + full[len(prefix):]
+    from services.lesson_sources import reviewed_lesson_sources
+    context = {"lesson_topic": str(topic)}
+    review = reviewed_lesson_sources(subject, grade, topic)
+    if review['status'] == 'reviewed_requirements_source':
+        context['reviewed_requirements_source'] = review
+    return system, json.dumps(context, ensure_ascii=False) + "\n" + full[len(prefix):]
 
 
 def exam_generation_request(subject, grade, topics, counts, code, custom="", pathway=""):
