@@ -9,6 +9,22 @@ from services.lesson_export import build_lesson_html
 
 
 class FunctionVisualsTests(unittest.TestCase):
+    def test_irrational_coordinates_are_exact_in_graph_and_all_exports(self):
+        for source in ('x^3-2x', '(x*x+2)/x', 'x^3-3x+1'):
+            with self.subTest(source=source):
+                graph = graph_svg(function_model(source, strict=True))
+                self.assertNotIn('≈', graph)
+                self.assertNotIn('CRootOf', ''.join(ET.fromstring(graph).itertext()))
+                self.assertIn('data-axis-coordinate=', graph)
+                self.assertIn('data-graph-label=', graph)
+                for style in ('handwritten', 'color', 'monochrome'):
+                    page = build_lesson_html('Toán học', 12, 'y='+source+'.', 'Bài học.', style)
+                    self.assertIn(graph, page)
+        graph = graph_svg(function_model('x^3-3x+1'))
+        self.assertIn('α₁', graph)
+        self.assertIn('nghiệm thực phân biệt', graph)
+        self.assertIn('√', graph_svg(function_model('(x*x+2)/x')))
+
     def test_cubic_all_derivative_discriminants_and_both_leading_signs(self):
         for source, roots, signs in [('x^3-3x+1', [-1, 1], [1, -1, 1]),
                                     ('x^3+1', [0], [1, 1]),

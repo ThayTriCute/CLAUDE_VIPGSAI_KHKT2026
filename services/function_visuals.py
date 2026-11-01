@@ -3,11 +3,13 @@ import ast
 import html
 import math
 import re
+import textwrap
 from functools import lru_cache
 
 import sympy as sp
 
 X = sp.Symbol('x', real=True)
+RENDER_REVISION = 2026110102
 
 
 class NonStandardFunction(ValueError):
@@ -159,7 +161,7 @@ def graph_svg(model):
     expression = model['expression']
     numerator, denominator = sp.fraction(expression)
     roots = sp.real_roots(numerator) if sp.degree(numerator, X) > 0 else []
-    roots = [r for r in set(roots) if r not in model['excluded']]
+    roots = sorted((r for r in set(roots) if r not in model['excluded']), key=float)
     center = None
     if X in denominator.free_symbols:
         pole = model['excluded'][0]
@@ -169,6 +171,27 @@ def graph_svg(model):
         poly = sp.Poly(numerator, X)
         xc = -poly.nth(2) / (3*poly.nth(3))
         center = (xc, expression.subs(X, xc))
+    # A generic cubic need not have a short radical expression. Ordered real
+    # roots are exact algebraic coordinates, rather than rounded decimals.
+    root_names = {}
+    legend = []
+    if any(r.has(sp.CRootOf) for r in roots):
+        subscripts = ('₁', '₂', '₃')
+        root_names = {r: 'α' + subscripts[i] for i, r in enumerate(roots)}
+        legend.append(' < '.join(root_names.values()) + ' là tất cả nghiệm thực phân biệt của ' + _text(numerator) + ' = 0.')
+
+    def coordinate(value):
+        return root_names.get(value, _text(sp.simplify(value)))
+
+    special_points = {}
+    for p in model['stationary']:
+        special_points[(p, expression.subs(X, p))] = ['Cực trị' if len(model['stationary']) == 2 else 'Điểm dừng']
+    for p in roots:
+        special_points.setdefault((p, sp.S.Zero), []).append('Ox')
+    if 0 not in model['excluded']:
+        special_points.setdefault((sp.S.Zero, expression.subs(X, 0)), []).append('Oy')
+    if center:
+        special_points.setdefault(center, []).append('I')
     landmarks = [float(v) for v in (*model['stationary'], *model['excluded'], *roots)]
     if center:
         landmarks.append(float(center[0]))
@@ -224,16 +247,68 @@ def graph_svg(model):
         raw = (hi-lo)/6
         base = 10**math.floor(math.log10(raw))
         step = next((factor*base for factor in (1, 2, 5, 10) if factor*base >= raw), 10*base)
-        return [i*step for i in range(math.ceil(lo/step), math.floor(hi/step)+1)]
+        return [i*sp.Rational(str(step)) for i in range(math.ceil(lo/step), math.floor(hi/step)+1)]
+
+    # Reserve the actual label footprints. Axis coordinates take priority over
+    # generic ticks; point labels then choose free positions around their point.
+    occupied = []
+    label_layer = []
+    curve_ink = [(px(x), py(y)) for branch in branches for x, y in branch if ymin <= y <= ymax]
+
+    def touches_curve(rect):
+        return any(rect[0]-3 < cx < rect[2]+3 and rect[1]-3 < cy < rect[3]+3 for cx, cy in curve_ink)
+
+    def box(lx, ly, text, size=13):
+        half = max(size, len(text)*size*.62)/2 + 4
+        return (lx-half, ly-size*.65-3, lx+half, ly+size*.65+3)
+
+    def overlaps(rect):
+        return any(rect[0] < b[2] and rect[2] > b[0] and rect[1] < b[3] and rect[3] > b[1] for b in occupied)
+
+    def annotation(lx, ly, text, kind, size=13, axis=None):
+        rect = box(lx, ly, text, size)
+        occupied.append(rect)
+        # Labels sit above guides with a small white clearance, so a projection
+        # ending on the axis never runs through its exact coordinate.
+        background = f'<rect x="{rect[0]:.3f}" y="{rect[1]:.3f}" width="{rect[2]-rect[0]:.3f}" height="{rect[3]-rect[1]:.3f}" fill="white"/>'
+        attrs = 'data-graph-label="'+kind+'"' + (' data-axis-coordinate="'+axis+'"' if axis else '')
+        label_layer.append(background + _label(lx, ly, text, size).replace('<text ', '<text '+attrs+' ', 1))
+        return ''
+
+    occupied.extend((box(px(0)-12, py(0)+15, 'O', 15),
+                     (px(0)-4, 24, px(0)+4, 440), (58, py(0)-4, 765, py(0)+4)))
+    axis_coords = {'x': {}, 'y': {}}
+    for p, v in special_points:
+        if p != 0:
+            axis_coords['x'][p] = coordinate(p)
+        if v != 0:
+            axis_coords['y'][v] = coordinate(v)
+    for axis, coords in axis_coords.items():
+        for value, text in sorted(coords.items(), key=lambda item: float(item[0])):
+            pos = px(float(value)) if axis == 'x' else py(float(value))
+            lx, ly = (pos, py(0)+18) if axis == 'x' else (px(0)-box(0, 0, text)[2]-10, pos)
+            rect = box(lx, ly, text)
+            if len(text) > 22 or rect[0] < 4 or rect[2] > 810 or overlaps(rect) or touches_curve(rect):
+                # Keep close/long exact coordinates in the point callouts, not
+                # stacked over each other on an axis.
+                continue
+            body += annotation(lx, ly, text, 'axis', axis=axis)
+            body += _line(pos, py(0)-3, pos, py(0)+3) if axis == 'x' else _line(px(0)-3, pos, px(0)+3, pos)
 
     for v in ticks(xmin, xmax):
         if abs(v) < 1e-12:
             continue
-        body += _line(px(v), py(0)-3, px(v), py(0)+3) + _label(px(v), py(0)+18, f'{v:.3g}', 13)
+        text = _text(sp.Rational(str(v)))
+        if any(abs(px(v)-px(float(p))) < 36 for p in axis_coords['x']) or overlaps(box(px(v), py(0)+18, text)) or touches_curve(box(px(v), py(0)+18, text)):
+            continue
+        body += _line(px(v), py(0)-3, px(v), py(0)+3) + annotation(px(v), py(0)+18, text, 'tick')
     for v in ticks(ymin, ymax):
         if abs(v) < 1e-12:
             continue
-        body += _line(px(0)-3, py(v), px(0)+3, py(v)) + _label(px(0)-25, py(v), f'{v:.3g}', 13)
+        text = _text(sp.Rational(str(v)))
+        if any(abs(py(v)-py(float(p))) < 25 for p in axis_coords['y']) or overlaps(box(px(0)-25, py(v), text)) or touches_curve(box(px(0)-25, py(v), text)):
+            continue
+        body += _line(px(0)-3, py(v), px(0)+3, py(v)) + annotation(px(0)-25, py(v), text, 'tick')
     clipped = ''
     for branch in branches:
         coords = ' '.join(f'{px(x):.3f},{max(-10000,min(10000,py(y))):.3f}' for x,y in branch)
@@ -249,19 +324,12 @@ def graph_svg(model):
         else:
             clipped += f'<circle cx="{px(float(p)):.3f}" cy="{py(float(value)):.3f}" r="4" fill="white" stroke="#163e87" stroke-width="2"/>'
     body += '<g clip-path="url(#function-plot-clip)">' + clipped + '</g>'
-    def coordinate(value):
-        return _text(value) if value.is_Rational else '≈' + f'{float(value):.3f}'.rstrip('0').rstrip('.')
-
-    special_points = {}
-    for p in model['stationary']:
-        special_points[(p, expression.subs(X, p))] = ['Cực trị' if len(model['stationary']) == 2 else 'Điểm dừng']
-    for p in roots:
-        special_points.setdefault((p, sp.S.Zero), []).append('Ox')
-    if 0 not in model['excluded']:
-        special_points.setdefault((sp.S.Zero, expression.subs(X, 0)), []).append('Oy')
-    if center:
-        special_points.setdefault(center, []).append('I')
-    labels = []
+    for (p, v), names in special_points.items():
+        xp, yp = px(float(p)), py(float(v))
+        occupied.append((xp-6, yp-6, xp+6, yp+6))
+        if any(n in names for n in ('Cực trị', 'Điểm dừng', 'I')):
+            occupied.extend(((xp-2, min(yp, py(0)), xp+2, max(yp, py(0))),
+                             (min(xp, px(0)), yp-2, max(xp, px(0)), yp+2)))
     guides = ''
     for (p, v), names in special_points.items():
         xp, yp = px(float(p)), py(float(v))
@@ -270,22 +338,43 @@ def graph_svg(model):
         guides += f'<circle data-point="{html.escape(" ".join(names), quote=True)}" cx="{xp:.3f}" cy="{yp:.3f}" r="3.2" fill="#111" stroke="#111" stroke-width="1.5"/>'
         name = 'I' if 'I' in names else ''
         text = f'{name}({coordinate(p)}; {coordinate(v)})'
-        # Keep labels clear of the axes and of other point labels.
-        lx = xp + (48 if abs(xp-px(0)) < 28 else -25 if xp > 690 else 0)
-        ly = yp - 17 if yp < py(0)-6 else yp + 22
-        for old_x, old_y in labels:
-            if abs(lx-old_x) < 95 and abs(ly-old_y) < 20:
-                ly += 23
-        lx, ly = min(730, max(84, lx)), min(446, max(30, ly))
-        labels.append((lx, ly))
-        body += _label(lx, ly, text, 13)
+        point_text = text
+        if len(text) > 34:
+            point_text = name or 'P' + str(len(legend)+1)
+            legend.append(point_text + ': ' + text)
+        placed = False
+        half = max(13, len(point_text)*13*.62)/2 + 4
+        for dy in (-22, 28, -48, 54, -74, 80):
+            for dx in (0, half+12, -half-12, half+40, -half-40):
+                lx, ly = xp+dx, yp+dy
+                rect = box(lx, ly, point_text)
+                if rect[0] < 8 or rect[2] > 808 or rect[1] < 30 or rect[3] > 449 or overlaps(rect):
+                    continue
+                if touches_curve(rect):
+                    continue
+                if abs(dx) > half+20 or abs(dy) > 35:
+                    body += f'<line x1="{xp:.3f}" y1="{yp:.3f}" x2="{lx:.3f}" y2="{ly:.3f}" stroke="#555" stroke-width="0.7"/>'
+                body += annotation(lx, ly, point_text, 'point')
+                placed = True
+                break
+            if placed:
+                break
+        if not placed:
+            # Extremely crowded data keep exact coordinates in a separate key.
+            legend.append(text)
     # Guides are clipped to the graph rectangle; point labels remain readable.
     body += '<g clip-path="url(#function-plot-clip)">' + guides + '</g>'
+    body += ''.join(label_layer)
     if asymptote is not None:
         poles = [p for p in model['excluded'] if sp.limit(expression, X, p) in (sp.oo, -sp.oo)]
         caption = '; '.join(['x=' + _text(p) for p in poles] + ['y=' + _text(asymptote)])
         body += _label(410, 469, 'Tiệm cận: ' + caption, 15)
-    return _svg(820, 490, 'Đồ thị y=' + str(expression), body)
+    legend_y = 500
+    for item in legend:
+        for line in textwrap.wrap(item, width=96, break_long_words=True, break_on_hyphens=False):
+            body += _label(410, legend_y, line, 15).replace('<text ', '<text data-exact-coordinate-key="true" ', 1)
+            legend_y += 23
+    return _svg(820, max(490, legend_y+12) if legend else 490, 'Đồ thị y=' + str(expression), body)
 
 
 @lru_cache(maxsize=64)
@@ -308,7 +397,7 @@ def explicit_function_visuals(topic):
         if re.search(r'1\s*/\s*1|bậc nhất trên bậc nhất', topic, re.I):
             if sp.degree(numerator, X) > 1 or sp.degree(denominator, X) != 1:
                 raise NonStandardFunction('Not a non-degenerate homographic function')
-        return ('<section class="verified-function-visuals" style="break-inside:avoid">'
+        return ('<section class="verified-function-visuals" data-function-renderer="' + str(RENDER_REVISION) + '" style="break-inside:avoid">'
                 '<h3>Bảng biến thiên và đồ thị theo hàm số đã chọn</h3>'
                 '<p class="lesson-math" data-display="false" data-tex="y=' + html.escape(sp.latex(model['expression']), quote=True) + '"></p>'
                 + '<p>Điểm loại khỏi miền xác định: ' + html.escape(', '.join(_text(p) for p in model['excluded']) or 'không có') + '.</p>'

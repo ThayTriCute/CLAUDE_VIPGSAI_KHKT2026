@@ -11,6 +11,24 @@ from services.curriculum_policy import (assessment_profile, check_current_facts,
 
 
 class TestCurriculumPolicy(unittest.TestCase):
+    def test_textbook_decision_issue_day_is_not_effective_day(self):
+        self.assertNotIn('3588/QĐ-BGDĐT', {r['code'] for r in legal_references('2025-12-31')})
+        self.assertIn('3588/QĐ-BGDĐT', {r['code'] for r in legal_references('2026-01-01')})
+
+    def test_literature_reading_does_not_require_two_complete_compositions(self):
+        text = lesson_prompt('Ngữ văn', 9, 'Đọc hiểu thơ trữ tình')
+        self.assertNotIn('Hai bài tự luận cần có hoạt động tạo bài viết hoàn chỉnh', text)
+        self.assertNotIn('ở Bước 2, hỏi học sinh tự đề xuất luận điểm', text)
+
+    def test_informatics_non_html_topics_do_not_receive_html_specific_rules(self):
+        for grade, topic in ((6, 'Thông tin và dữ liệu'), (9, 'Bảng tính điện tử'),
+                             (12, 'Trí tuệ nhân tạo')):
+            with self.subTest(grade=grade, topic=topic):
+                text = lesson_prompt('Tin học', grade, topic)
+                self.assertNotIn('HTML: phân biệt ngữ nghĩa', text)
+                self.assertNotIn('CSS mặc định/chưa tùy chỉnh', text)
+        self.assertIn('HTML: phân biệt ngữ nghĩa', lesson_prompt('Tin học', 12, 'Tạo trang web bằng HTML'))
+
     def test_english_hint_generation_guidance_is_subject_scoped(self):
         for grade in range(6, 13):
             for prompt in (lesson_prompt('Anh', grade, 'Community'),

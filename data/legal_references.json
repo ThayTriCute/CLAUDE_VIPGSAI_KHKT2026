@@ -52,12 +52,15 @@
     },
     {
       "code": "3588/QĐ-BGDĐT",
-      "effective_from": "2025-12-26",
+      "issued_on": "2025-12-26",
+      "effective_from": "2026-01-01",
       "scope": "textbook",
       "status": "active",
       "url": "https://xaydungchinhsach.chinhphu.vn/quyet-dinh-so-3588-qd-bgddt-ve-bo-sach-giao-khoa-giao-duc-pho-thong-su-dung-thong-nhat-toan-quoc-119251227145448874.htm",
       "note": "KNTT dùng thống nhất từ năm học 2026–2027; không chứng nhận học liệu AI của app.",
-      "checked_at": "2026-10-24"
+      "checked_at": "2026-11-01",
+      "original_copy_url": "https://cdn.giaoduc.net.vn/files/b07cd10fdc767c2ae5cffe381ee2faf850d76e1e2ec07ceba44d489b70bfc09731bd7dfb3ea0cd1b971de53ce3c9c5f8/3588-qd-bgddtsigned.pdf",
+      "verification_scope": "Article 2 of signed Ministry decision: effective 2026-01-01; not textbook-page validation"
     },
     {
       "code": "24/2024/TT-BGDĐT",

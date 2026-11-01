@@ -11,10 +11,20 @@ from unittest.mock import patch
 
 from services.academic_context import academic_context, canonical_subject, subjects_for_grade, topic_matches, validate_exam_context
 from services.lesson_export import build_lesson_html, faithful_infographic_data, handwritten_prompt, lesson_body_html
-from services.lesson_sources import books_for, lesson_references, PUBLISHER_PORTAL
+from services.lesson_sources import books_for, lesson_references, PUBLISHER_PORTAL, textbook_update_notice
 
 
 class TestAcademicContext(unittest.TestCase):
+    def test_2026_publisher_update_is_scoped_to_seven_supported_pairs(self):
+        affected = {(grade, subject) for grade in range(6, 13) for subject in subjects_for_grade(grade)
+                    if textbook_update_notice(subject, grade)}
+        self.assertEqual(affected, {(g, 'Lịch sử & Địa lý') for g in range(6, 10)}
+                         | {(10, 'Lịch sử'), (10, 'Giáo dục kinh tế và pháp luật'), (12, 'Địa lý')})
+        for grade, subject in affected:
+            refs = lesson_references(subject, grade, 'Chủ đề đang kiểm', {}, lambda _: '')
+            self.assertIn('Thông báo cập nhật của NXBGD', refs['badge_html'])
+            self.assertIn('chưa xác minh là bản chỉnh sửa 2026', refs['badge_html'])
+
     def test_aliases_accents_and_case_are_one_identity(self):
         for alias, expected in [("TOÁN", "Toán học"), ("Địa lí", "Địa lý"), ("dia ly", "Địa lý"),
                                 ("Vật lí", "Vật lý"), ("Hoá học", "Hóa học"), ("LSĐL", "Lịch sử & Địa lý")]:

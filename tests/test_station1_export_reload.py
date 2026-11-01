@@ -2,6 +2,7 @@
 import ast
 import re
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 
@@ -13,9 +14,40 @@ class Station1ExportReloadTests(unittest.TestCase):
         tree = ast.parse((Path(__file__).resolve().parents[1] / 'app.py').read_text(encoding='utf-8'))
         scope = {'re': re}
         for node in tree.body:
-            if isinstance(node, ast.FunctionDef) and node.name == '_sync_t1_function_export':
+            if isinstance(node, ast.FunctionDef) and node.name in ('_sync_t1_function_export', '_t1_with_function_visuals', '_refresh_t1_context_services'):
                 exec(compile(ast.Module(body=[node], type_ignores=[]), 'app-export-helper', 'exec'), scope)
         return tree, scope
+
+    def test_retained_policy_and_source_modules_refresh_in_dependency_order(self):
+        from services import curriculum_policy, lesson_sources
+        _, scope = self.namespace()
+        with patch.object(curriculum_policy, 'T1_CONTEXT_REVISION', 0), patch.object(lesson_sources, 'T1_CONTEXT_REVISION', 0):
+            with patch('importlib.reload', wraps=__import__('importlib').reload) as refresh:
+                scope['_refresh_t1_context_services']()
+                self.assertEqual([call.args[0] for call in refresh.call_args_list], [lesson_sources, curriculum_policy])
+                self.assertIn('SGK chỉnh sửa năm 2026', curriculum_policy.policy_prompt('Địa lý', 12, 1))
+                scope['_refresh_t1_context_services']()
+                self.assertEqual(refresh.call_count, 2)
+
+    def test_cached_approximate_section_is_replaced_once(self):
+        _, scope = self.namespace()
+        old = self.old_page.replace('<p>KEEP SOURCE</p>', '<p>KEEP SOURCE</p><section class="verified-function-visuals"><svg><text>≈1.414</text></svg></section>')
+        result = scope['_sync_t1_function_export'](old, 'Toán học', 'y=x^3-2x.', 'KEEP SOURCE')
+        self.assertNotIn('≈1.414', result)
+        self.assertEqual(result.count('<section class="verified-function-visuals"'), 1)
+        self.assertIn('data-function-renderer="2026110102"', result)
+        self.assertIn('KEEP SOURCE', result)
+
+    def test_old_module_is_refreshed_but_current_module_is_not_reloaded(self):
+        from services import function_visuals
+        _, scope = self.namespace()
+        render = scope['_t1_with_function_visuals']
+        with patch('importlib.reload', side_effect=AssertionError('current renderer must not reload')):
+            self.assertIn('data-function-renderer="2026110102"', render('', 'y=x^3-2x.'))
+        with patch.object(function_visuals, 'RENDER_REVISION', 0):
+            with patch('importlib.reload', wraps=__import__('importlib').reload) as refresh:
+                self.assertIn('data-function-renderer="2026110102"', render('', 'y=x^3-2x.'))
+                refresh.assert_called_once_with(function_visuals)
 
     def test_actual_app_export_assignments_repair_a_cached_old_builder(self):
         tree, scope = self.namespace()

@@ -11,6 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
+T1_CONTEXT_REVISION = 2026110101
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -55,6 +56,10 @@ def assessment_profile(subject, grade):
 
 def policy_prompt(subject, grade, station, topic="", pathway=""):
     subject, grade = academic_context(subject, grade)
+    from services.lesson_sources import textbook_update_notice
+    book_update = textbook_update_notice(subject, grade)
+    edition_guidance = (book_update['note'] + ' Nguồn thông báo: ' + book_update['url']
+                        + ' Không tuyên bố đã đọc bản chỉnh sửa nếu chưa có nội dung sách trong ngữ cảnh.') if book_update else ''
     evaluation_day = policy_evaluation_date()
     refs = legal_references(evaluation_day)
     codes = "; ".join(r["code"] for r in refs if r["scope"] in {"curriculum", "textbook", "assessment"})
@@ -69,6 +74,7 @@ Trạm {station}; môn {subject}; lớp {grade}; chủ đề {topic}; định h�
 {hint_guidance}
 Chương trình GDPT 2018 đọc cùng các sửa đổi còn áp dụng: {codes}.
 Sử dụng Kết nối tri thức với cuộc sống, đối chiếu đính chính/cập nhật NXBGD; bộ sách thống nhất từ năm học 2026–2027 theo QĐ 3588 ngày 26/12/2025.
+{edition_guidance}
 {profile['label']}. {profile['note']}
 Không có nội dung SGK hoặc văn bản gốc trong ngữ cảnh thì KHÔNG tuyên bố đã đọc/đối chiếu từng trang, không bịa số trang, trích dẫn, tác giả, URL hay xác nhận của Bộ.
 Chỉ dùng nội dung đúng yêu cầu cần đạt của môn/lớp; danh sách chủ đề gợi ý của app không phải mục lục SGK đã kiểm định. Yêu cầu tùy biến không được đổi môn/lớp hoặc tự miễn kiểm tra chương trình.
@@ -216,14 +222,22 @@ def lesson_prompt(subject, grade, topic):
             "Đồ thị cần trục Ox/Oy, gốc O, khung nhìn chứa các đặc điểm quan trọng, "
             "tách nhánh tại điểm không xác định; tiệm cận nét đứt, nhãn không đè đường cong. "
             "Đồ thị và bảng phải cùng hàm số, cùng cực trị và giới hạn; "
-            "không dùng hình ví dụ khác thay hình của bài.\n"
+            "không dùng hình ví dụ khác thay hình của bài. "
+            "Biểu diễn giao Ox/Oy nếu có, cực trị và tâm đối xứng; dóng nét đứt tới hai trục "
+            "(điểm nằm trên trục thì hình chiếu trùng điểm). Giữ phân số, căn thức và tọa độ vô tỉ "
+            "ở dạng chính xác, không đổi thành số thập phân làm tròn. Nghiệm không có biểu thức "
+            "ngắn được ký hiệu và định nghĩa chính xác theo thứ tự nghiệm của phương trình; "
+            "không dùng ký hiệu chưa định nghĩa. Nhãn không đè trục, đường cong, nét dóng hoặc "
+            "nhãn khác; tọa độ dài dùng chú giải rõ ràng. Áp dụng thống nhất trong bài và infographic.\n"
 
         )
     if canonical_subject(subject) == "Ngữ văn":
         visual_guidance += (
-            "\nPhần 3 Ngữ văn: ở Bước 2, hỏi học sinh tự đề xuất luận điểm, "
-            "tìm dẫn chứng và sắp xếp ý; không nêu sẵn luận điểm hoặc kết luận cần chứng minh. "
-            "Bước 3 gợi cách triển khai, không viết hộ đoạn văn hoặc áp đặt một cách cảm nhận duy nhất.\n"
+            "\nPhần 3 Ngữ văn: chọn nhiệm vụ theo mục tiêu đọc, viết, nói và nghe hoặc tiếng Việt "
+            "của bài đang học. Với nghị luận, Bước 2 hỏi học sinh tự đề xuất luận điểm, tìm dẫn chứng "
+            "và sắp xếp ý; với tự sự, tìm sự việc và trình tự kể; với đọc hiểu, tìm chi tiết trong "
+            "ngữ liệu và giải thích cách hiểu. Không áp luận điểm nghị luận cho mọi thể loại, "
+            "không nêu sẵn kết luận, không viết hộ hoặc áp đặt một cách cảm nhận duy nhất.\n"
         )
     if canonical_subject(subject) == "Ngữ văn":
         visual_guidance += (
@@ -231,10 +245,13 @@ def lesson_prompt(subject, grade, topic):
             "lập dàn ý, viết bài hoàn chỉnh rồi đọc sửa theo tiêu chí ngôi thứ nhất nhất quán "
             "(em hoặc tôi đều được), trình tự hợp lý, chi tiết, cảm xúc, ý nghĩa, liên kết và chính tả. "
             "Trải nghiệm bình dị vẫn có giá trị; không bắt buộc cao trào hoặc biến cố kịch tính. "
-            "Hai bài tự luận cần có hoạt động tạo bài viết hoàn chỉnh phù hợp mục tiêu, không chỉ dàn ý và đoạn rời. "
+            "Nếu mục tiêu bài là viết một bài văn, cần có hoạt động tạo bài viết hoàn chỉnh "
+            "và tự sửa theo tiêu chí thể loại, không chỉ dàn ý và đoạn rời. Bài đọc hiểu hoặc "
+            "tiếng Việt không bị buộc chuyển thành hai bài tập viết cả bài văn. "
             "Không yêu cầu luận điểm/dẫn chứng nghị luận cho bài kể chuyện.\n"
         )
-    if canonical_subject(subject) == "Tin học":
+    if canonical_subject(subject) == "Tin học" and re.search(
+            r"\b(?:html|css|web)\b|trang mạng", folded(topic)):
         visual_guidance += (
             "\nHTML: phân biệt ngữ nghĩa tiêu đề cấp 1, đoạn văn và ngắt dòng với cách hiển thị. "
             "Nếu hỏi kích thước chữ hoặc khoảng cách đoạn, phải nêu điều kiện CSS mặc định/chưa tùy chỉnh. "

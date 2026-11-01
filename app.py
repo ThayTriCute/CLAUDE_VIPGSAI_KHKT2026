@@ -1,3 +1,16 @@
+def _refresh_t1_context_services():
+    """Refresh changed lesson policy/source modules once in a retained worker."""
+    from importlib import reload
+    from services import lesson_sources, curriculum_policy
+    for module in (lesson_sources, curriculum_policy):
+        if getattr(module, 'T1_CONTEXT_REVISION', None) != 2026110101:
+            reload(module)
+        if getattr(module, 'T1_CONTEXT_REVISION', None) != 2026110101:
+            raise RuntimeError('Ngữ cảnh Trạm 1 chưa đồng bộ bản phát hành; cần nạp lại ứng dụng.')
+
+
+_refresh_t1_context_services()
+
 from services.context_recovery import repair_exam_context, recover_visual
 from services.cognitive_levels import annotate_question, level_caption
 from services.curriculum_policy import (assessment_profile, legal_references, matrix_html, prepare_exam_for_delivery, validate_exam_structure, validate_lesson_policy, lesson_generation_request as build_curriculum_lesson_request, exam_generation_request as build_curriculum_exam_request)
@@ -10280,15 +10293,28 @@ def _normalize_moet_bbt_grid(x_cells: list, yp_cells: list, y_cells: list) -> di
     }
 
 
+def _t1_with_function_visuals(body, topic, lesson=''):
+    """Load this release's math renderer if a long-lived worker retained it."""
+    from services import function_visuals
+    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026110102:
+        from importlib import reload
+        function_visuals = reload(function_visuals)
+    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026110102:
+        raise RuntimeError('Bộ dựng đồ thị chưa đồng bộ bản phát hành; cần nạp lại ứng dụng.')
+    return function_visuals.with_function_visuals(body, topic, lesson)
+
+
 def _sync_t1_function_export(export_html, subject, topic, lesson):
     """Keep exports current even if Cloud retains an older imported builder."""
     if subject != "Toán học":
         return export_html
     article = re.search(r'(<article\b[^>]*>)([\s\S]*?)(</article>)', export_html)
-    if not article or 'class="verified-function-visuals"' in article[2] or 'data-function-rejected' in article[2]:
+    if not article or 'data-function-renderer="2026110102"' in article[2] or 'data-function-rejected' in article[2]:
         return export_html
-    from services.function_visuals import with_function_visuals
-    updated = with_function_visuals(article[2], topic, lesson)
+    body = re.sub(r'<section\b[^>]*\bclass="verified-function-visuals"[^>]*>[\s\S]*?</section>', '', article[2])
+    updated = _t1_with_function_visuals(body, topic, lesson)
+    if updated == body:
+        return export_html
     if updated == article[2]:
         return export_html
     result = export_html[:article.start(2)] + updated + export_html[article.end(2):]
@@ -11011,8 +11037,7 @@ if selected_station == station_labels[0]:
             cleaned_p1 = station1_master_sovereign_brain_gate(cleaned_p1, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''))
             cleaned_p1_vis = render_pedagogical_lesson_visuals(cleaned_p1, subject=subject, grade=grade_num)
             if subject == "Toán học":
-                from services.function_visuals import with_function_visuals
-                cleaned_p1_vis = with_function_visuals(cleaned_p1_vis, st.session_state.get('current_topic', ''), cleaned_p1)
+                cleaned_p1_vis = _t1_with_function_visuals(cleaned_p1_vis, st.session_state.get('current_topic', ''), cleaned_p1)
             st.markdown(cleaned_p1_vis, unsafe_allow_html=True)
 
             # ==============================================================================
