@@ -11,6 +11,7 @@ from markdown_it import MarkdownIt
 from services.academic_context import academic_context
 
 ROOT = Path(__file__).resolve().parents[1]
+T1_CONTEXT_REVISION = 2026110102
 _TOKENS = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$)")
 
 
@@ -36,6 +37,8 @@ def renderer_assets():
 
 def lesson_body_html(lesson):
     """Protect math/code separately; never convert formulas to approximate Unicode."""
+    from services.text_boundaries import wrap_naked_chemistry
+    lesson = wrap_naked_chemistry(lesson)
     replacements = {}
     nonce = hashlib.sha256(lesson.encode()).hexdigest()[:12]
 
@@ -72,6 +75,8 @@ def build_lesson_html(subject, grade, topic, lesson, style="handwritten"):
         raise ValueError("Chưa có nội dung bài học để xuất.")
     if len(lesson) > 250000:
         raise ValueError("Bài học quá dài để xuất trong một lượt.")
+    from services.curriculum_policy import validate_lesson_policy
+    validate_lesson_policy(lesson, subject, grade)
     if style not in {"handwritten", "color", "monochrome"}:
         raise ValueError("Kiểu bản in không hợp lệ.")
     css, font, js = renderer_assets()

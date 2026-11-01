@@ -7,13 +7,70 @@ from unittest.mock import patch
 
 from services.academic_context import validate_exam_context
 from services.curriculum_policy import (assessment_profile, check_current_facts, exam_prompt,
-    legal_references, lesson_prompt, matrix_html, prepare_exam_for_delivery, validate_exam_structure)
+    correct_khtn8_lime_soil_confusion, legal_references, lesson_prompt, matrix_html,
+    prepare_exam_for_delivery, validate_exam_structure)
 
 
 class TestCurriculumPolicy(unittest.TestCase):
+    def test_observed_lime_note_and_sting_repair_are_idempotent(self):
+        source = ('Base tan (kiềm): Ca(OH)2; CaO và đất.\n'
+                  'Vận dụng: Khi bị ong đốt, người ta thường bôi nước vôi hoặc kem đánh răng vào vết đốt?\n')
+        fixed = correct_khtn8_lime_soil_confusion(source, 'Khoa học tự nhiên', 8, 'Base. Thang pH')
+        self.assertEqual(fixed, correct_khtn8_lime_soil_confusion(fixed, 'Khoa học tự nhiên', 8, 'Base. Thang pH'))
+        self.assertEqual(fixed.count('độ tan Ca(OH)₂ có giới hạn'), 1)
+        self.assertNotIn('người ta thường bôi', fixed)
+        self.assertIn('đánh giá thông tin', fixed)
+        self.assertEqual(correct_khtn8_lime_soil_confusion(source, 'Ngữ văn', 8, 'Đọc hiểu'), source)
+
+    def test_lesson_activities_define_student_tasks_without_math_only_template(self):
+        for subject, grade in [('Khoa học tự nhiên', 8), ('Ngữ văn', 6), ('Tiếng Anh', 7)]:
+            request = lesson_prompt(subject, grade, 'Bài đang kiểm')
+            self.assertIn('câu hỏi tự kiểm hoặc tiêu chí sản phẩm', request)
+            self.assertIn('không ép thành bài toán tính số', request)
+            self.assertIn('không giao tự pha trộn hóa chất tại nhà', request)
+
+    def test_lesson_rejects_explicit_other_book_but_preserves_comparison(self):
+        from services.curriculum_policy import validate_lesson_policy
+        for name in ('Cánh Diều', 'Chân trời sáng tạo'):
+            with self.assertRaisesRegex(ValueError, 'bộ sách khác KNTT'):
+                validate_lesson_policy(f'Bộ sách: {name}\nBài học', 'Toán', 8)
+        source = 'Bộ sách: Kết nối tri thức với cuộc sống\nSo sánh cách trình bày với sách Cánh Diều.'
+        self.assertEqual(validate_lesson_policy(source, 'Toán', 8), source)
+        for declaration in ('Môn: Toán học | Môn: Hóa học', 'Lớp: 8 | Lớp: 9',
+                            'Bộ sách: KNTT | Bộ sách: Cánh Diều'):
+            with self.assertRaises(ValueError):
+                validate_lesson_policy(declaration, 'Toán', 8)
+        for declaration in ('**Môn:** Hóa học', '**Lớp:** 9', '__Lớp:__ 9'):
+            with self.assertRaises(ValueError):
+                validate_lesson_policy(declaration, 'Toán', 8)
+        valid = '**Môn:** Toán học\n**Lớp:** 8\n**Bộ sách:** Kết nối tri thức với cuộc sống'
+        self.assertEqual(validate_lesson_policy(valid, 'Toán', 8), valid)
+        for separator in (' | ', '; ', ' · '):
+            with self.assertRaises(ValueError):
+                validate_lesson_policy('Môn: Toán học' + separator + 'Lớp: 9', 'Toán', 8)
+            with self.assertRaises(ValueError):
+                validate_lesson_policy('Lớp: 8' + separator + 'Môn: Hóa học', 'Toán', 8)
+            with self.assertRaises(ValueError):
+                validate_lesson_policy('Lớp: 8' + separator + 'Bộ sách: Cánh Diều', 'Toán', 8)
+        source = 'Môn: Toán học | Lớp: 8\nÔn lại kiến thức lớp 7.'
+        self.assertEqual(validate_lesson_policy(source, 'Toán', 8), source)
+
     def test_textbook_decision_issue_day_is_not_effective_day(self):
         self.assertNotIn('3588/QĐ-BGDĐT', {r['code'] for r in legal_references('2025-12-31')})
         self.assertIn('3588/QĐ-BGDĐT', {r['code'] for r in legal_references('2026-01-01')})
+
+    def test_supplemental_textbook_decision_is_available_from_its_issue_day(self):
+        self.assertNotIn('185/QĐ-BGDĐT', {r['code'] for r in legal_references('2026-01-28')})
+        refs = {r['code']: r for r in legal_references('2026-01-29')}
+        self.assertIn('185/QĐ-BGDĐT', refs)
+        self.assertIn('đúng tên sách/lớp', refs['185/QĐ-BGDĐT']['note'])
+        self.assertIn('185/QĐ-BGDĐT', {r['code'] for r in legal_references('2026-01-28', include_upcoming=True)})
+
+    def test_lesson_context_names_both_unified_textbook_decisions_with_scope_limit(self):
+        prompt = lesson_prompt('Toán', 12, 'Ứng dụng đạo hàm')
+        self.assertIn('QĐ 3588/2025', prompt)
+        self.assertIn('QĐ 185/2026', prompt)
+        self.assertIn('không suy ra nội dung bài đã được thẩm định', prompt)
 
     def test_literature_reading_does_not_require_two_complete_compositions(self):
         text = lesson_prompt('Ngữ văn', 9, 'Đọc hiểu thơ trữ tình')
@@ -36,6 +93,50 @@ class TestCurriculumPolicy(unittest.TestCase):
                 self.assertIn('không dịch nghĩa hoặc diễn giải riêng phương án đúng', prompt)
                 self.assertIn('chỉ đặt trong explain sau nộp bài', prompt)
         self.assertNotIn('Tiếng Anh — hint từ vựng:', lesson_prompt('Toán', 9, 'Phương trình'))
+
+    def test_khtn_chemistry_prompt_checks_lime_identity_and_crop_specific_soil_ph(self):
+        prompt = lesson_prompt('Khoa học tự nhiên', 8, 'Base. Thang pH')
+        self.assertIn('không gọi CaO là Ca(OH)2', prompt)
+        self.assertIn('pH=7 không phải mục tiêu mặc định', prompt)
+        self.assertNotIn('không gọi CaO', lesson_prompt('Toán', 8, 'Phân số'))
+
+    def test_known_khtn8_lime_soil_claims_are_repaired_only_in_matching_context(self):
+        source = ('Base tan (kiềm): $\\ce{NaOH, KOH, Ba(OH)2, Ca(OH)2}$... '
+                  'Đất pH=5. b) Để giảm độ chua, bón vôi bột (CaO tạo Ca(OH)2) hay phân đạm acid? '
+                  'Hãy giải thích. Bước 3: xét tính chất của vôi bột (Ca(OH)2 là base). '
+                  'Em hãy so sánh số 5 với số 7 trên thang pH để kết luận tính chất đất. '
+                  'Tiếp theo, hãy xem xét tính chất của vôi bột (Ca(OH)2 là base) và tính chất của phân đạm acid '
+                  'để chọn phương án giúp trung hòa đất. '
+                  'Việc bón vôi bột có giúp đưa pH của đất về gần mức trung tính (pH = 7) không? '
+                  'Giải pháp này có phù hợp với thực tế sản xuất nông nghiệp không?')
+        fixed = correct_khtn8_lime_soil_confusion(source, 'Khoa học tự nhiên', 8, 'Base. Thang pH')
+        self.assertIn('Ca(OH)₂ (vôi tôi, là base; khác với CaO ban đầu là oxide base)', fixed)
+        self.assertIn('Cần biết thêm những thông tin nào về loại đất, cây trồng', fixed)
+        self.assertIn('Đã đủ dữ kiện để kết luận đất cần đạt pH = 7 chưa?', fixed)
+        self.assertIn('độ tan Ca(OH)₂ có giới hạn', fixed)
+        self.assertIn('$\\ce{NaOH, KOH, Ba(OH)2, Ca(OH)2}$...', fixed)
+        self.assertIn('Tự viết phương trình CaO phản ứng với nước', fixed)
+        self.assertNotIn('tính chất của vôi bột (Ca(OH)2 là base)', fixed)
+        self.assertEqual(correct_khtn8_lime_soil_confusion(source, 'Hóa học', 8, 'Base. Thang pH'), source)
+        self.assertEqual(correct_khtn8_lime_soil_confusion(source, 'Khoa học tự nhiên', 7, 'Base. Thang pH'), source)
+
+    def test_khtn8_lime_repair_handles_rendered_latex_and_polya_linebreaks(self):
+        source = ("Base tan (kiềm): $\\ce{NaOH, KOH, Ba(OH)2, Ca(OH)2}$...\n"
+                  "Bước 3: Em hãy so sánh số 5 với số 7 trên thang pH để kết luận tính chất đất.\n"
+                  "Tiếp theo, hãy xem xét tính chất của Ca(OH)₂ (vôi tôi, là base; khác với CaO ban đầu là oxide base) "
+                  "và tính chất của phân đạm acid để chọn phương án giúp \"trung hòa\" đất.")
+        fixed = correct_khtn8_lime_soil_confusion(source, 'Khoa học tự nhiên', 8, 'Base. Thang pH')
+        self.assertIn('$\\ce{NaOH, KOH, Ba(OH)2, Ca(OH)2}$...', fixed)
+        self.assertIn('độ tan Ca(OH)₂ có giới hạn', fixed)
+        self.assertIn('Tự viết phương trình CaO phản ứng với nước', fixed)
+        self.assertNotIn('phân đạm acid', fixed)
+        ui_source = ('Em hãy so sánh số 5 với số 7 trên thang pH để kết luận tính chất đất. '
+                     'Tiếp theo, hãy xem xét tính chất của vôi bột ($\\ce{Ca(OH)2}$ là base) '
+                     'và tính chất của phân đạm acid để chọn phương án giúp "trung hòa" đất.')
+        ui_fixed = correct_khtn8_lime_soil_confusion(
+            'CaO và đất pH=5; ' + ui_source, 'Khoa học tự nhiên', 8, 'Base. Thang pH')
+        self.assertIn('Tự viết phương trình CaO phản ứng với nước', ui_fixed)
+        self.assertNotIn('chọn phương án giúp', ui_fixed)
 
     def question(self):
         return {"q": "Tính một nửa của 4", "opt": ["A. 1", "B. 2", "C. 3", "D. 4"], "ans": "B", "topic": "Phân số"}

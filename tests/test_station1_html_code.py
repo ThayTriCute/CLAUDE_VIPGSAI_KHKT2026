@@ -2,7 +2,8 @@ import unittest
 
 import real_exam_engine as ree
 from services.academic_context import academic_context, subjects_for_grade
-from services.curriculum_policy import validate_lesson_policy
+from services.curriculum_policy import (T1_CONTEXT_REVISION as CURRICULUM_POLICY_REVISION,
+    correct_khtn8_lime_soil_confusion, validate_lesson_policy)
 from tests.test_expert_patch_regressions import load_function
 
 
@@ -20,7 +21,9 @@ class Station1HTMLCodeTests(unittest.TestCase):
         sanitize = load_function('sanitize_katex_latex', _legacy_sanitize_katex_latex=legacy)
         gate = load_function('station1_master_sovereign_brain_gate', ree=ree,
             academic_context=academic_context, validate_lesson_policy=validate_lesson_policy,
-            sanitize_katex_latex=sanitize)
+            sanitize_katex_latex=sanitize,
+            CURRICULUM_POLICY_REVISION=CURRICULUM_POLICY_REVISION,
+            correct_khtn8_lime_soil_confusion=correct_khtn8_lime_soil_confusion)
         source = 'Mã minh họa: `<p>` và `<br>`.\n```html\n<p>Nội dung</p>\n```\n$x<2$'
         count = 0
         for grade in range(6, 13):

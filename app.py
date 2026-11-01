@@ -1,11 +1,13 @@
 def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
-    from services import lesson_sources, curriculum_policy
-    for module in (lesson_sources, curriculum_policy):
-        if getattr(module, 'T1_CONTEXT_REVISION', None) != 2026110101:
+    from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
+    for module, revision in ((lesson_sources, 2026110102), (curriculum_policy, 2026110118),
+                             (lab_scope, 2026110105), (lesson_export, 2026110102),
+                             (text_boundaries, 2026110102), (socratic_context, 2026110101)):
+        if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
-        if getattr(module, 'T1_CONTEXT_REVISION', None) != 2026110101:
+        if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             raise RuntimeError('Ngữ cảnh Trạm 1 chưa đồng bộ bản phát hành; cần nạp lại ứng dụng.')
 
 
@@ -13,12 +15,13 @@ _refresh_t1_context_services()
 
 from services.context_recovery import repair_exam_context, recover_visual
 from services.cognitive_levels import annotate_question, level_caption
-from services.curriculum_policy import (assessment_profile, legal_references, matrix_html, prepare_exam_for_delivery, validate_exam_structure, validate_lesson_policy, lesson_generation_request as build_curriculum_lesson_request, exam_generation_request as build_curriculum_exam_request)
+from services.curriculum_policy import (T1_CONTEXT_REVISION as CURRICULUM_POLICY_REVISION, assessment_profile, legal_references, matrix_html, prepare_exam_for_delivery, validate_exam_structure, validate_lesson_policy, correct_khtn8_lime_soil_confusion, lesson_generation_request as build_curriculum_lesson_request, exam_generation_request as build_curriculum_exam_request)
 from copy import deepcopy
 from services.academic_context import canonical_subject, academic_context, validate_exam_context
 from services.lesson_export import build_lesson_html, handwritten_prompt
-from services.lesson_sources import books_for, lesson_references, PUBLISHER_PORTAL
-from services.text_boundaries import option_markdown_label
+from services.lesson_sources import books_for, lesson_references, PUBLISHER_PORTAL, PUBLISHER_DIGITAL_LIBRARY, textbook_update_notice
+from services.lab_scope import lesson_context_examples, function_formula_latex
+from services.text_boundaries import option_markdown_label, chemical_display_markdown
 from qa_runtime import (split_api_keys, admin_password_matches, normalize_bool, display_frame,
     exam_response_metadata, observed_item_matrix, mcq_answer_matches)
 # VIP 76.0 - HỆ THỐNG GIA SƯ AI THPT 2026 (CHUẨN GDPT 2018 - EDTECH & PSYCHOMETRICS SOTA QUỐC TẾ)
@@ -400,7 +403,7 @@ def get_kntt_books_for(subject_name, grade_lvl):
 
 def get_nxbgd_books_for(subject_name, grade_lvl):
     subject_name, grade_lvl = academic_context(subject_name, grade_lvl)
-    return [{"title": f"Tra cứu SGK {subject_name} lớp {grade_lvl} tại NXBGD", "url": PUBLISHER_PORTAL, "kind": "portal"}]
+    return [{"title": "Thư viện số SGK NXBGDVN (tra cứu theo môn/lớp)", "url": PUBLISHER_DIGITAL_LIBRARY, "kind": "digital_library"}]
 
 
 
@@ -1754,7 +1757,7 @@ with st.sidebar.expander(f"📚 Thư Viện SGK KNTT - Lớp {grade_num} (VniTea
 
         st.image(generate_local_qr_base64(curr_books_nxbgd[0]['url']), width="stretch")
 
-    st.link_button("🌐 Kho Toàn Bộ SGK Điện Tử KNTT (NXBGD)", PUBLISHER_PORTAL, width="stretch")
+    st.link_button("🌐 Danh mục SGK & tài liệu Tập huấn NXBGDVN (mọi lớp)", PUBLISHER_PORTAL, width="stretch")
 
 
 
@@ -2029,6 +2032,14 @@ def detect_student_concluded_intent(user_input: str, history: list = None) -> bo
         return False
 
     txt = user_input.strip().lower()
+    # A quoted/past understanding claim or a negated mastery phrase must not
+    # trigger the educational closing message through substring matching.
+    if re.search(r"(?:chưa|không)\s+(?:thật\s+sự\s+)?(?:nắm\s+(?:vững|chắc)|thông\s+suốt|tự\s+làm\s+được)", txt):
+        return False
+    if re.search(r"(?:còn|vẫn)\s+(?:băn\s+khoăn|lúng\s+túng|khó\s+hiểu)", txt):
+        return False
+    if re.search(r"không\s+(?:có\s+ý\s+nói|nói|khẳng\s+định).*đã\s+hiểu", txt):
+        return False
     # Explicit negation of remaining confusion is not a new question. Keep
     # genuine follow-up questions and unresolved confusion as higher priority.
     if re.search(r"(?:chưa|không)\s+hết\s+(?:thắc\s+mắc|câu\s+hỏi)|không\s+hiểu", txt):
@@ -2054,6 +2065,7 @@ def detect_student_concluded_intent(user_input: str, history: list = None) -> bo
         "không có thắc mắc", "không còn câu hỏi", "hết câu hỏi", "không hỏi gì thêm",
         "thông suốt rồi", "thấu suốt rồi", "thông rồi", "đã thông", "hiểu rõ rồi",
         "nắm chắc rồi", "nắm vững rồi", "hiểu bài rồi", "em hiểu hết rồi", "con hiểu hết rồi",
+        "em đã hiểu bài", "em đã hiểu và muốn chuyển sang luyện tập",
         "dạ hết rồi", "hết rồi thầy", "hết rồi ạ", "không thầy ơi", "không ạ thầy",
         "dạ không ạ", "không còn gì nữa", "tự tin làm được", "em tự làm được rồi",
         "em làm được rồi", "ổn rồi thầy", "ổn áp rồi", "tự tin rồi"
@@ -5285,6 +5297,11 @@ def render_smart_lab(data, current_subject=""):
 
     dtype = data.get("type")
 
+    if (current_subject in ('Hóa học', 'Khoa học tự nhiên') and dtype == 'func_log'
+            and data.get('base') == 10 and data.get('k') == -1 and data.get('c') == 7):
+        st.info('Mẫu pH cũ cần cập nhật. Hãy chọn lại mẫu pH trong danh sách để dùng đúng định nghĩa và đơn vị.')
+        return
+
 
 
     # BẢO VỆ PHÁP CHẾ & SƯ PHẠM: MÔN XÃ HỘI TUYỆT ĐỐI KHÔNG HIỂN THỊ ĐỒ THỊ TOÁN HỌC
@@ -5293,35 +5310,10 @@ def render_smart_lab(data, current_subject=""):
 
     if current_subject in social_subjects and dtype in ["func_3", "parabola", "func_1_1", "func_2_1", "func_2", "area", "revolve_ox", "oxyz", "geometry_3d", "func_exp", "func_log"]:
 
-        st.info(f"💡 Không gian học tập môn **{current_subject}**: Phòng Lab tự động chuyển sang chế độ Sơ đồ tư duy D3/Mermaid chuyên biệt cho môn học thay vì hiển thị đồ thị giải tích Toán học.")
-
-        data = {
-
-            "type": "mermaid",
-
-            "code": f"""graph LR
-
-    Root["🎯 CHỦ ĐỀ MÔN {current_subject.upper()}"] --> A["1. Khái niệm & Cơ sở lý luận"]
-
-    Root --> B["2. Nội dung Trọng tâm"]
-
-    Root --> C["3. Phương pháp Tiếp cận"]
-
-    Root --> D["4. Vận dụng Thực tiễn"]
-
-    A --> A1["Chuẩn kiến thức GDPT 2018"]
-
-    B --> B1["Hệ thống luận điểm cốt lõi"]
-
-    C --> C1["Kỹ năng tư duy phản biện"]
-
-    D --> D1["Liên hệ đời sống & bài thi 2026"]"""
-
-        }
-
-        dtype = "mermaid"
-
-
+        st.warning(f"Dữ liệu mô phỏng hiện tại chưa phù hợp với môn {current_subject}. "
+                   "Em hãy nhập tên bài, nội dung hoặc số liệu cần trực quan hóa vào lệnh mô phỏng. "
+                   "Chưa có đủ dữ kiện để dựng sơ đồ theo bài học.")
+        return
 
     if dtype == "mermaid":
 
@@ -5639,21 +5631,25 @@ def render_smart_lab(data, current_subject=""):
 
                 fa = st.slider("Cơ số a (a > 0, a ≠ 1):", 0.1, 4.5, float(data.get("base", 2.0)), 0.1, key=lab_key("lab_exp_a"))
 
-                if abs(fa - 1.0) < 0.05: fa = 1.05
 
 
 
             fk = st.slider("Hệ số k:", -3.0, 3.0, float(data.get("k", 1.0)), 0.5, key=lab_key("lab_exp_k"))
 
-            if fk == 0: fk = 1.0
 
             fc = st.slider("Hệ số tịnh tiến c:", -4.0, 4.0, float(data.get("c", 0.0)), 0.5, key=lab_key("lab_exp_c"))
 
 
 
-            base_label = "e" if use_e else f"{fa:.1f}"
+            if fa <= 0 or abs(fa - 1.0) < 1e-12:
+                st.error("Cơ số a phải dương và khác 1. Hãy chọn lại cơ số.")
+                return
+            base_label = "e" if use_e else f"{fa:g}"
+            coefficient_text = "" if fk == 1 else "-" if fk == -1 else f"{fk:g}"
+            shift_text = f" + {fc:g}" if fc > 0 else f" - {abs(fc):g}" if fc < 0 else ""
+            formula = f"{coefficient_text}{base_label}^x{shift_text}" if fk else f"{fc:g}"
 
-            st.success(f"📈 **Công thức:** $y = {fk if fk != 1 else ''}{base_label}^x {('+' + str(fc)) if fc > 0 else (str(fc) if fc < 0 else '')}$")
+            st.success(f"📈 **Công thức:** $y = {formula}$")
 
 
 
@@ -5665,7 +5661,11 @@ def render_smart_lab(data, current_subject=""):
 
                 nature = "🟠 **Nghịch biến trên toàn trục số $\\mathbb{R}$**" if fa > 1 else "🟢 **Đồng biến trên toàn trục số $\\mathbb{R}$**"
 
-            st.caption(f"📌 **Tính đơn điệu:** {nature}<br>📌 **Tiệm cận ngang:** $y = {fc:.1f}$ (khi $x \\to -\\infty$ nếu $a>1$)<br>📌 **Điểm luôn đi qua:** $(0; {fk + fc:.1f})$", unsafe_allow_html=True)
+            if fk == 0:
+                nature = f"Hằng số $y={fc:g}$ trên $\\mathbb{{R}}$"
+            limit_direction = r"-\infty" if fa > 1 else r"+\infty"
+            asymptote_note = f"Giới hạn khi $x \\to {limit_direction}$: $y \\to {fc:g}$" if fk else "Hàm hằng trên toàn trục số"
+            st.caption(f"📌 **Tính chất:** {nature}<br>📌 {asymptote_note}<br>📌 **Điểm thuộc đồ thị:** $(0; {fk + fc:g})$", unsafe_allow_html=True)
 
         with c2:
 
@@ -5679,9 +5679,10 @@ def render_smart_lab(data, current_subject=""):
 
 
 
-            fig_exp.add_trace(go.Scatter(x=x_vals, y=y_vals, mode='lines', line=dict(color='#38bdf8', width=3.5), name=f'y = {base_label}^x'))
+            fig_exp.add_trace(go.Scatter(x=x_vals, y=y_vals, mode='lines', line=dict(color='#38bdf8', width=3.5), name=f'y = {formula}'))
 
-            fig_exp.add_trace(go.Scatter(x=[-5, 5], y=[fc, fc], mode='lines', line=dict(color='#f59e0b', width=2, dash='dash'), name=f'TC Ngang y={fc}'))
+            if fk != 0:
+                fig_exp.add_trace(go.Scatter(x=[-5, 5], y=[fc, fc], mode='lines', line=dict(color='#f59e0b', width=2, dash='dash'), name=f'TC Ngang y={fc}'))
 
             fig_exp.add_trace(go.Scatter(x=[0], y=[fk + fc], mode='markers+text', marker=dict(size=8, color='#f43f5e'), text=[f'(0; {fk+fc:.1f})'], textposition="top left", name='Điểm (0; y0)'))
 
@@ -5689,7 +5690,7 @@ def render_smart_lab(data, current_subject=""):
 
             setup_pedagogical_oxy(fig_exp, [-5, 5], [min(-3, fc - 2), max(6, fc + 8)])
 
-            fig_exp.update_layout(title=f"Đồ thị Hàm số Mũ: $y = {base_label}^x$ (CT GDPT 2018 Lớp 11-12)", height=500)
+            fig_exp.update_layout(title=f"Đồ thị hàm số $y={formula}$", height=500)
 
             st.plotly_chart(fig_exp, width="stretch")
 
@@ -5717,33 +5718,34 @@ def render_smart_lab(data, current_subject=""):
 
                 fa = st.slider("Cơ số a (a > 0, a ≠ 1):", 0.1, 4.5, float(data.get("base", 2.0)), 0.1, key=lab_key("lab_log_a"))
 
-                if abs(fa - 1.0) < 0.05: fa = 1.05
+
 
 
 
             fk = st.slider("Hệ số k:", -3.0, 3.0, float(data.get("k", 1.0)), 0.5, key=lab_key("lab_log_k"))
 
-            if fk == 0: fk = 1.0
+
 
             fc = st.slider("Hệ số tịnh tiến c:", -4.0, 4.0, float(data.get("c", 0.0)), 0.5, key=lab_key("lab_log_c"))
 
 
 
-            log_label = "\\ln(x)" if use_ln else f"\\log_{{{fa:.1f}}}(x)"
+            from services.lab_scope import logarithm_model
+            try:
+                log_model = logarithm_model(fa, fk, fc, natural=use_ln)
+            except ValueError as exc:
+                st.error(f"⚠️ {exc} Hãy chọn lại cơ số.")
+                return
+            fa, fk, fc = log_model['base'], log_model['coefficient'], log_model['vertical_shift']
+            log_label = "\\ln(x)" if use_ln else f"\\log_{{{fa:g}}}(x)"
 
-            st.success(f"📈 **Công thức:** $y = {fk if fk != 1 else ''}{log_label} {('+' + str(fc)) if fc > 0 else (str(fc) if fc < 0 else '')}$")
-
-
-
-            if fk > 0:
-
-                nature = "🟢 **Đồng biến trên khoảng $(0; +\\infty)$**" if fa > 1 else "🟠 **Nghịch biến trên khoảng $(0; +\\infty)$**"
-
-            else:
-
-                nature = "🟠 **Nghịch biến trên khoảng $(0; +\\infty)$**" if fa > 1 else "🟢 **Đồng biến trên khoảng $(0; +\\infty)$**"
-
-            st.caption(f"📌 **Tập xác định:** $D = (0; +\\infty)$<br>📌 **Tính đơn điệu:** {nature}<br>📌 **Tiệm cận đứng:** $x = 0$ (Trục Oy)<br>📌 **Điểm luôn đi qua:** $(1; {fc:.1f})$", unsafe_allow_html=True)
+            coefficient_text = ("" if fk == 1 else "-" if fk == -1 else f"{fk:g}") if fk else "0·"
+            shift_text = f" + {fc:g}" if fc > 0 else f" - {abs(fc):g}" if fc < 0 else ""
+            formula = f"{coefficient_text}{log_label}{shift_text}" if fk else f"{fc:g}"
+            st.success(f"📈 **Công thức:** $y = {formula}$")
+            nature = {"increasing": "Đồng biến trên $(0; +\\infty)$", "decreasing": "Nghịch biến trên $(0; +\\infty)$", "constant": f"Hằng số $y={fc:g}$ trên $(0; +\\infty)$"}[log_model['behavior']]
+            asymptote_text = "📌 **Tiệm cận đứng:** $x = 0$" if log_model['has_vertical_asymptote'] else "📌 **Không có tiệm cận đứng** (đồ thị là đường thẳng $y=c$ trên miền xác định)"
+            st.caption(f"📌 **Tập xác định:** $D = (0; +\\infty)$<br>📌 **Tính chất:** {nature}<br>{asymptote_text}<br>📌 **Điểm thuộc đồ thị:** $(1; {fc:g})$", unsafe_allow_html=True)
 
         with c2:
 
@@ -5757,9 +5759,10 @@ def render_smart_lab(data, current_subject=""):
 
 
 
-            fig_log.add_trace(go.Scatter(x=x_vals, y=y_vals, mode='lines', line=dict(color='#38bdf8', width=3.5), name=f'y = {log_label}'))
+            fig_log.add_trace(go.Scatter(x=x_vals, y=y_vals, mode='lines', line=dict(color='#38bdf8', width=3.5), name=f'y = {formula}'))
 
-            fig_log.add_trace(go.Scatter(x=[0, 0], y=[-10, 10], mode='lines', line=dict(color='#f59e0b', width=2, dash='dash'), name='TC Đứng x=0'))
+            if log_model['has_vertical_asymptote']:
+                fig_log.add_trace(go.Scatter(x=[0, 0], y=[-10, 10], mode='lines', line=dict(color='#f59e0b', width=2, dash='dash'), name='TC đứng x=0'))
 
             fig_log.add_trace(go.Scatter(x=[1], y=[fc], mode='markers+text', marker=dict(size=8, color='#f43f5e'), text=[f'(1; {fc:.1f})'], textposition="top left", name='Điểm (1; c)'))
 
@@ -5769,7 +5772,7 @@ def render_smart_lab(data, current_subject=""):
 
             setup_pedagogical_oxy(fig_log, [-2, 8], [-6, 6])
 
-            fig_log.update_layout(title=f"Đồ thị Hàm số Lôgarit: $y = {log_label}$ (CT GDPT 2018 Lớp 11-12)", height=500)
+            fig_log.update_layout(title=f"Đồ thị hàm số $y={formula}$", height=500)
 
             st.plotly_chart(fig_log, width="stretch")
 
@@ -6219,7 +6222,55 @@ def render_smart_lab(data, current_subject=""):
 
 
 
+    if dtype == "chem_ph":
+        from services.lab_scope import ideal_ph
+        c1, c2 = st.columns([1.2, 2.8])
+        with c1:
+            st.caption("⚙️ Thang pH — mô hình dung dịch lý tưởng ở 25 °C")
+            if current_subject == 'Khoa học tự nhiên':
+                ph_value = st.slider('Giá trị pH (thang KNTT 1–14):', 1.0, 14.0, -float(data.get('log_h', -7.0)),
+                                     0.5, key=lab_key('lab_ph_value'))
+                log_h = -ph_value
+            else:
+                log_h = st.slider("log₁₀([H⁺]/c°), c° = 1 mol/L:", -14.0, 0.0,
+                                  float(data.get('log_h', -7.0)), 0.5, key=lab_key('lab_ph_log_h'))
+            state = ideal_ph(log_h)
+            if current_subject != 'Khoa học tự nhiên':
+                st.latex(r'\mathrm{pH}=-\log_{10}([\mathrm{H}^+]/c^\circ)=' + f"{state['ph']:g}")
+                st.latex(r'[\mathrm{H}^+]=10^{' + f'{log_h:g}' + r'}\,\mathrm{mol/L},\quad [\mathrm{OH}^-]=10^{' + f"{state['log_oh']:g}" + r'}\,\mathrm{mol/L}')
+            nature = 'Trung tính' if state['ph'] == 7 else 'Môi trường axit' if state['ph'] < 7 else 'Môi trường bazơ'
+            st.success(nature)
+            if current_subject == 'Khoa học tự nhiên':
+                st.caption('Ở 25 °C: pH < 7 là môi trường axit, pH = 7 trung tính, pH > 7 là môi trường bazơ. '
+                           'Mẫu minh họa giúp đọc thang pH, không thay thí nghiệm đo pH của dung dịch thật.')
+            else:
+                st.caption('Giả thiết hoạt độ xấp xỉ nồng độ tương đối và Kw = 10⁻¹⁴ ở 25 °C. '
+                           'pH thực được định nghĩa theo hoạt độ; dung dịch không lý tưởng cần hiệu chỉnh hoạt độ.')
+        with c2:
+            fig_ph = go.Figure()
+            if current_subject == 'Khoa học tự nhiên':
+                fig_ph.add_trace(go.Scatter(x=[state['ph']], y=[1], mode='markers+text',
+                    text=[f"pH = {state['ph']:g}"], textposition='top center', marker=dict(size=16), name=nature))
+                fig_ph.add_vrect(x0=1, x1=7, fillcolor='rgba(239,68,68,.15)', line_width=0, annotation_text='Axit')
+                fig_ph.add_vrect(x0=7, x1=14, fillcolor='rgba(59,130,246,.15)', line_width=0, annotation_text='Bazơ')
+                fig_ph.add_vline(x=7, line_dash='dash', annotation_text='Trung tính')
+                fig_ph.update_xaxes(title='pH (thang 1–14)', range=[1,14], dtick=1)
+                fig_ph.update_yaxes(visible=False, range=[0,2])
+                fig_ph.update_layout(title='Đọc thang pH ở 25 °C', template='plotly_dark', height=500)
+            else:
+                ph_x = np.linspace(-14, 0, 141)
+                fig_ph.add_trace(go.Scatter(x=ph_x, y=-ph_x, mode='lines', name='pH = −log₁₀([H⁺]/c°)'))
+                fig_ph.add_trace(go.Scatter(x=[log_h], y=[state['ph']], mode='markers', name='Dung dịch đang chọn'))
+                fig_ph.add_hline(y=7, line_dash='dash', annotation_text='Trung tính ở 25 °C')
+                fig_ph.update_layout(title='Thang pH trong mô hình dung dịch lý tưởng',
+                                     xaxis_title='log₁₀([H⁺]/c°), c° = 1 mol/L', yaxis_title='pH',
+                                     template='plotly_dark', height=500)
+            st.plotly_chart(fig_ph, width='stretch')
+        return
+
     if dtype == "chem_equilibrium":
+
+        from services.lab_scope import ammonia_equilibrium
 
         c1, c2 = st.columns([1.2, 2.8])
 
@@ -6227,7 +6278,10 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("⚙️ **Cân bằng Le Chatelier:** $N_2(g) + 3H_2(g) \\rightleftharpoons 2NH_3(g)$")
 
-            st.caption("$\\Delta_r H^\\circ_{298} = -92 \\text{ kJ/mol}$ (Phản ứng tỏa nhiệt)")
+            st.caption("$\\Delta_r H^\\circ_{298} \\approx -91.8 \\text{ kJ/mol phản ứng}$ (Phản ứng tỏa nhiệt)")
+            st.caption('Mô hình khí lý tưởng: ban đầu N₂:H₂ = 1:3, chưa có NH₃; áp suất chuẩn 1 bar. '
+                       'Kp(T) tính từ dữ liệu nhiệt hóa NIST. Kết quả không phải hiệu suất công nghiệp; '
+                       'chưa xét khí thực, chuyển pha hoặc tốc độ phản ứng/xúc tác.')
 
             c_temp = st.slider("Nhiệt độ T (°C):", 100, 700, int(data.get("temp", 450)), 50, key=lab_key("lab_eq_t"))
 
@@ -6235,21 +6289,12 @@ def render_smart_lab(data, current_subject=""):
 
 
 
-            yield_pct = np.clip(100 / (1 + np.exp(0.01 * (c_temp - 400))) * (c_p / 200)**0.4, 5, 95)
+            yield_pct = ammonia_equilibrium(c_temp, c_p)['conversion']
 
-            st.success(f"📊 **Hiệu suất cân bằng NH₃:** `{yield_pct:.1f}%`")
+            st.success(f"📊 **Mức chuyển hóa N₂ ở cân bằng (khí lý tưởng):** `{yield_pct:.1f}%`")
 
-            if c_temp > 450:
-
-                st.warning("🔥 Tăng nhiệt độ: Cân bằng chuyển dịch theo chiều thu nhiệt (chiều nghịch, giảm hiệu suất).")
-
-            else:
-
-                st.info("❄️ Giảm nhiệt độ: Cân bằng chuyển dịch theo chiều tỏa nhiệt (chiều thuận, tăng hiệu suất).")
-
-            if c_p > 200:
-
-                st.info("⚡ Tăng áp suất: Cân bằng chuyển dịch sang chiều giảm số mol khí (chiều thuận).")
+            st.info("Giữ áp suất và thành phần ban đầu như nhau: tăng nhiệt độ làm giảm mức chuyển hóa N₂ ở cân bằng; giảm nhiệt độ có tác động ngược lại, vì phản ứng thuận tỏa nhiệt.")
+            st.info("Giữ nhiệt độ và tỉ lệ ban đầu N₂:H₂ = 1:3: tăng áp suất làm tăng mức chuyển hóa N₂ ở cân bằng do chiều thuận làm giảm số mol khí. Đây là so sánh các trạng thái trong mô hình khí lý tưởng.")
 
         with c2:
 
@@ -6257,19 +6302,19 @@ def render_smart_lab(data, current_subject=""):
 
             t_axis = np.linspace(100, 700, 100)
 
-            y_curve = np.clip(100 / (1 + np.exp(0.01 * (t_axis - 400))) * (c_p / 200)**0.4, 5, 95)
+            y_curve = [ammonia_equilibrium(float(t), c_p)['conversion'] for t in t_axis]
 
-            fig_eq.add_trace(go.Scatter(x=t_axis, y=y_curve, mode='lines', line=dict(color='#38bdf8', width=3), name=f'Hiệu suất tại P={c_p} bar'))
+            fig_eq.add_trace(go.Scatter(x=t_axis, y=y_curve, mode='lines', line=dict(color='#38bdf8', width=3), name=f'Chuyển hóa cân bằng tại P={c_p} bar'))
 
             fig_eq.add_trace(go.Scatter(x=[c_temp], y=[yield_pct], mode='markers', marker=dict(color='#f43f5e', size=12), name='Trạng thái hiện tại'))
 
             fig_eq.update_layout(
 
-                title=f"Chuyển dịch Cân bằng Hóa học Le Chatelier (Hóa học 11 IUPAC)",
+                title="Cân bằng N₂ + 3H₂ ⇌ 2NH₃ — mô hình khí lý tưởng",
 
                 xaxis_title="Nhiệt độ T (°C)",
 
-                yaxis_title="Hiệu suất tạo thành NH₃ (%)",
+                yaxis_title="Mức chuyển hóa N₂ ở cân bằng (%)",
 
                 template="plotly_dark",
 
@@ -6285,21 +6330,22 @@ def render_smart_lab(data, current_subject=""):
 
     if dtype == "bio_genetics":
 
-        st.markdown("### 🧬 Mô phỏng Quy luật Phân ly Mendel (Sinh học 12)")
+        st.markdown("### 🧬 Mô hình lai một cặp alen $Aa \\times Aa$")
 
         c1, c2 = st.columns([1.2, 2.8])
 
         with c1:
 
-            st.caption("⚙️ **Phép lai một cặp tính trạng:** $P: Aa \\times Aa$")
+            st.caption("⚙️ **Phép lai một cặp gen:** $P: Aa \\times Aa$")
 
-            gen_A = st.text_input("Tên gen trội A:", "Hạt vàng (A)", key=lab_key("lab_bio_A"))
+            gen_A = st.text_input("Kiểu hình của AA và Aa (trội hoàn toàn):", "Hạt vàng", key=lab_key("lab_bio_A"))
 
-            gen_a = st.text_input("Tên gen lặn a:", "Hạt xanh (a)", key=lab_key("lab_bio_a"))
+            gen_a = st.text_input("Kiểu hình của aa:", "Hạt xanh", key=lab_key("lab_bio_a"))
 
             st.success("Tỉ lệ kiểu gen F1: **1 AA : 2 Aa : 1 aa**")
 
-            st.info(f"Tỉ lệ kiểu hình F1: **3 {gen_A} : 1 {gen_a}** (75% trội : 25% lặn)")
+            st.info(f"Tỉ lệ kiểu hình F1: **3 {gen_A} : 1 {gen_a}** (75% : 25%) — chỉ khi trội hoàn toàn.")
+            st.caption("Giả thiết minh họa: một gen có hai alen, trội hoàn toàn; bố mẹ dị hợp Aa, giảm phân và thụ tinh bình thường; xét một locus, không xét liên kết gen hay các yếu tố làm sai lệch phân li.")
 
         with c2:
 
@@ -6309,7 +6355,7 @@ def render_smart_lab(data, current_subject=""):
 
             fig_bio = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.35, marker_colors=['#38bdf8', '#f59e0b'])])
 
-            fig_bio.update_layout(title="Phân ly Kiểu hình F1 chuẩn Mendel (Sinh học CT GDPT 2018)", template="plotly_dark", height=420)
+            fig_bio.update_layout(title="Tỉ lệ kiểu hình đời con Aa × Aa — giả thiết trội hoàn toàn", template="plotly_dark", height=420)
 
             st.plotly_chart(fig_bio, width="stretch")
 
@@ -6328,11 +6374,13 @@ def render_smart_lab(data, current_subject=""):
         with c1:
             st.caption("⚙️ **Thay đổi hệ số hàm bậc 3:**")
             fa = st.slider("Hệ số a:", -3.0, 3.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_f3_a"))
-            if fa == 0: fa = 0.5
+            if fa == 0:
+                st.error("Hàm bậc ba yêu cầu a khác 0. Hãy chọn lại hệ số a.")
+                return
             fb = st.slider("Hệ số b:", -5.0, 5.0, float(data.get("b", -3.0)), 0.5, key=lab_key("lab_f3_b"))
             fc = st.slider("Hệ số c:", -5.0, 5.0, float(data.get("c", 0.0)), 0.5, key=lab_key("lab_f3_c"))
             fd = st.slider("Hệ số d:", -5.0, 5.0, float(data.get("d", 2.0)), 0.5, key=lab_key("lab_f3_d"))
-            st.info(f"**$y = {fa}x^3 + ({fb})x^2 + ({fc})x + ({fd})$**")
+            st.latex(function_formula_latex([fa, fb, fc, fd]))
 
             # Tính toán Điểm uốn / Tâm đối xứng
             x_uon = -fb / (3.0 * fa)
@@ -6364,72 +6412,82 @@ def render_smart_lab(data, current_subject=""):
             else:
                 c_info.append("ℹ️ Hàm số đơn điệu, không có cực trị.")
 
-            st.caption("<br>".join(c_info), unsafe_allow_html=True)
+            st.caption("Tọa độ chính xác, đường gióng và giao trục được thể hiện trong hình bên cạnh.")
 
         with c2:
-            # Thuật toán căn chỉnh co giãn tối ưu (Auto-zoom bounds)
-            if has_extrema and x_cd is not None and x_ct is not None:
-                span_x = max(abs(x_cd - x_ct), 1.5)
-                x_min = min(x_cd, x_ct, x_uon, 0.0) - span_x * 0.85
-                x_max = max(x_cd, x_ct, x_uon, 0.0) + span_x * 0.85
-                y_spec = [y_cd, y_ct, y_uon, fd, 0.0]
-                span_y = max(y_spec) - min(y_spec)
-                if span_y < 3.5: span_y = 5.0
-                y_min = min(y_spec) - span_y * 0.35
-                y_max = max(y_spec) + span_y * 0.35
+            visual_mode = st.radio("Cách hiển thị đồ thị để đối chiếu:", ["SVG chính xác", "Plotly tương tác"], key=lab_key("compare_func_3"), horizontal=True)
+            if visual_mode == "SVG chính xác":
+                from services.function_visuals import function_model, variation_svg, graph_svg
+                exact_model = function_model(f"({fa})*x**3+({fb})*x**2+({fc})*x+({fd})", strict=True)
+                st.markdown(sanitize_svg_for_markdown(variation_svg(exact_model)), unsafe_allow_html=True)
+                st.markdown(sanitize_svg_for_markdown(graph_svg(exact_model)), unsafe_allow_html=True)
             else:
-                x_min = min(x_uon, 0.0) - 4.5
-                x_max = max(x_uon, 0.0) + 4.5
-                y_min = y_uon - 7.0
-                y_max = y_uon + 7.0
-
-            if abs(x_max - x_min) < 6:
-                x_mid = (x_min + x_max) / 2
-                x_min, x_max = x_mid - 3.5, x_mid + 3.5
-
-            x_vals = np.linspace(x_min, x_max, 800)
-            y_vals = fa * (x_vals**3) + fb * (x_vals**2) + fc * x_vals + fd
-
-            # Đường đồ thị chính
-            fig.add_trace(go.Scatter(x=x_vals, y=y_vals, mode='lines', line=dict(color='#38bdf8', width=3.5), name='Đồ thị f(x)'))
-
-            # Marker và dóng tọa độ Cực Trị
-            if has_extrema and x_cd is not None and x_ct is not None:
-                # Cực đại
-                fig.add_trace(go.Scatter(x=[x_cd], y=[y_cd], mode='markers+text', marker=dict(size=10, color='#f43f5e', symbol='diamond'),
-                                         text=[f'CĐ({x_cd:.1f}; {y_cd:.1f})'], textposition="top center", name='Cực đại (CĐ)'))
-                fig.add_trace(go.Scatter(x=[x_cd, x_cd, 0], y=[0, y_cd, y_cd], mode='lines', line=dict(color='#f43f5e', width=1.4, dash='dash'), hoverinfo='skip', showlegend=False))
-
-                # Cực tiểu
-                fig.add_trace(go.Scatter(x=[x_ct], y=[y_ct], mode='markers+text', marker=dict(size=10, color='#f59e0b', symbol='diamond'),
-                                         text=[f'CT({x_ct:.1f}; {y_ct:.1f})'], textposition="bottom center", name='Cực tiểu (CT)'))
-                fig.add_trace(go.Scatter(x=[x_ct, x_ct, 0], y=[0, y_ct, y_ct], mode='lines', line=dict(color='#f59e0b', width=1.4, dash='dash'), hoverinfo='skip', showlegend=False))
-
-            # Marker Điểm uốn / Tâm đối xứng
-            fig.add_trace(go.Scatter(x=[x_uon], y=[y_uon], mode='markers+text', marker=dict(size=9, color='#a855f7', symbol='circle'),
-                                     text=[f'I({x_uon:.1f}; {y_uon:.1f})'], textposition="top right", name='Tâm ĐX / Điểm uốn I'))
-            fig.add_trace(go.Scatter(x=[x_uon, x_uon, 0], y=[0, y_uon, y_uon], mode='lines', line=dict(color='#a855f7', width=1.2, dash='dot'), hoverinfo='skip', showlegend=False))
-
-            # Marker Giao điểm trục tung Oy
-            if y_min <= fd <= y_max:
-                fig.add_trace(go.Scatter(x=[0], y=[fd], mode='markers+text', marker=dict(size=8, color='#10b981', symbol='cross'),
-                                         text=[f'(0; {fd:.1f})'], textposition="middle right", name='Giao trục Oy'))
-
-            # Marker Giao điểm trục hoành Ox (các nghiệm thực)
-            try:
-                roots = np.roots([fa, fb, fc, fd])
-                for r in roots:
-                    if np.isreal(r):
-                        rx = float(np.real(r))
-                        if x_min <= rx <= x_max and abs(rx) > 0.15:
-                            fig.add_trace(go.Scatter(x=[rx], y=[0], mode='markers+text', marker=dict(size=7, color='#06b6d4', symbol='circle-open'),
-                                                     text=[f'({rx:.1f}; 0)'], textposition="bottom left", name='Giao trục Ox', showlegend=False))
-            except Exception:
-                pass
-
-            setup_pedagogical_oxy(fig, [x_min, x_max], [y_min, y_max])
-            fig.update_layout(title="Đồ thị Hàm số Bậc 3 (Tối ưu co giãn • Kèm CĐ, CT, Tâm ĐX & Giao trục)", height=520, showlegend=True)
-            st.plotly_chart(fig, width="stretch")
+                st.caption("Luồng Plotly để đối chiếu tương tác; nhãn tọa độ của bản cũ có thể đang hiển thị gần đúng.")
+    
+                # Thuật toán căn chỉnh co giãn tối ưu (Auto-zoom bounds)
+                if has_extrema and x_cd is not None and x_ct is not None:
+                    span_x = max(abs(x_cd - x_ct), 1.5)
+                    x_min = min(x_cd, x_ct, x_uon, 0.0) - span_x * 0.85
+                    x_max = max(x_cd, x_ct, x_uon, 0.0) + span_x * 0.85
+                    y_spec = [y_cd, y_ct, y_uon, fd, 0.0]
+                    span_y = max(y_spec) - min(y_spec)
+                    if span_y < 3.5: span_y = 5.0
+                    y_min = min(y_spec) - span_y * 0.35
+                    y_max = max(y_spec) + span_y * 0.35
+                else:
+                    x_min = min(x_uon, 0.0) - 4.5
+                    x_max = max(x_uon, 0.0) + 4.5
+                    y_min = y_uon - 7.0
+                    y_max = y_uon + 7.0
+    
+                if abs(x_max - x_min) < 6:
+                    x_mid = (x_min + x_max) / 2
+                    x_min, x_max = x_mid - 3.5, x_mid + 3.5
+    
+                x_vals = np.linspace(x_min, x_max, 800)
+                y_vals = fa * (x_vals**3) + fb * (x_vals**2) + fc * x_vals + fd
+    
+                # Đường đồ thị chính
+                fig.add_trace(go.Scatter(x=x_vals, y=y_vals, mode='lines', line=dict(color='#38bdf8', width=3.5), name='Đồ thị f(x)'))
+    
+                # Marker và dóng tọa độ Cực Trị
+                if has_extrema and x_cd is not None and x_ct is not None:
+                    # Cực đại
+                    fig.add_trace(go.Scatter(x=[x_cd], y=[y_cd], mode='markers+text', marker=dict(size=10, color='#f43f5e', symbol='diamond'),
+                                             text=[f'CĐ({x_cd:.1f}; {y_cd:.1f})'], textposition="top center", name='Cực đại (CĐ)'))
+                    fig.add_trace(go.Scatter(x=[x_cd, x_cd, 0], y=[0, y_cd, y_cd], mode='lines', line=dict(color='#f43f5e', width=1.4, dash='dash'), hoverinfo='skip', showlegend=False))
+    
+                    # Cực tiểu
+                    fig.add_trace(go.Scatter(x=[x_ct], y=[y_ct], mode='markers+text', marker=dict(size=10, color='#f59e0b', symbol='diamond'),
+                                             text=[f'CT({x_ct:.1f}; {y_ct:.1f})'], textposition="bottom center", name='Cực tiểu (CT)'))
+                    fig.add_trace(go.Scatter(x=[x_ct, x_ct, 0], y=[0, y_ct, y_ct], mode='lines', line=dict(color='#f59e0b', width=1.4, dash='dash'), hoverinfo='skip', showlegend=False))
+    
+                # Marker Điểm uốn / Tâm đối xứng
+                fig.add_trace(go.Scatter(x=[x_uon], y=[y_uon], mode='markers+text', marker=dict(size=9, color='#a855f7', symbol='circle'),
+                                         text=[f'I({x_uon:.1f}; {y_uon:.1f})'], textposition="top right", name='Tâm ĐX / Điểm uốn I'))
+                fig.add_trace(go.Scatter(x=[x_uon, x_uon, 0], y=[0, y_uon, y_uon], mode='lines', line=dict(color='#a855f7', width=1.2, dash='dot'), hoverinfo='skip', showlegend=False))
+    
+                # Marker Giao điểm trục tung Oy
+                if y_min <= fd <= y_max:
+                    fig.add_trace(go.Scatter(x=[0], y=[fd], mode='markers+text', marker=dict(size=8, color='#10b981', symbol='cross'),
+                                             text=[f'(0; {fd:.1f})'], textposition="middle right", name='Giao trục Oy'))
+    
+                # Marker Giao điểm trục hoành Ox (các nghiệm thực)
+                try:
+                    roots = np.roots([fa, fb, fc, fd])
+                    for r in roots:
+                        if np.isreal(r):
+                            rx = float(np.real(r))
+                            if x_min <= rx <= x_max and abs(rx) > 0.15:
+                                fig.add_trace(go.Scatter(x=[rx], y=[0], mode='markers+text', marker=dict(size=7, color='#06b6d4', symbol='circle-open'),
+                                                         text=[f'({rx:.1f}; 0)'], textposition="bottom left", name='Giao trục Ox', showlegend=False))
+                except Exception:
+                    pass
+    
+                setup_pedagogical_oxy(fig, [x_min, x_max], [y_min, y_max])
+                fig.update_layout(title="Đồ thị Hàm số Bậc 3 (Tối ưu co giãn • Kèm CĐ, CT, Tâm ĐX & Giao trục)", height=520, showlegend=True)
+                st.plotly_chart(fig, width="stretch")
+    
 
     elif dtype == "func_1_1":
         c1, c2 = st.columns([1.2, 2.8])
@@ -6438,15 +6496,20 @@ def render_smart_lab(data, current_subject=""):
             fa = st.slider("Hệ số a:", -4.0, 4.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_f11_a"))
             fb = st.slider("Hệ số b:", -5.0, 5.0, float(data.get("b", 1.0)), 0.5, key=lab_key("lab_f11_b"))
             fc = st.slider("Hệ số c:", -4.0, 4.0, float(data.get("c", 1.0)), 0.5, key=lab_key("lab_f11_c"))
-            if fc == 0: fc = 1.0
+            if fc == 0:
+                st.error("Mẫu số bậc nhất yêu cầu c khác 0. Hãy chọn lại hệ số c.")
+                return
             fd = st.slider("Hệ số d:", -5.0, 5.0, float(data.get("d", -1.0)), 0.5, key=lab_key("lab_f11_d"))
 
+            if abs(fa * fd - fb * fc) < 1e-12:
+                st.error("Hàm phân thức 1/1 đang suy biến: ad - bc phải khác 0. Hãy chọn lại hệ số.")
+                return
             x_tc_dung = -fd / fc
             y_tc_ngang = fa / fc
             y_oy = (fb / fd) if fd != 0 else None
             x_ox = (-fb / fa) if fa != 0 else None
 
-            st.info(f"**$y = \\frac{{{fa}x + {fb}}}{{{fc}x + {fd}}}$**")
+            st.latex(function_formula_latex([fa, fb], [fc, fd]))
             info_lines = [
                 f"📌 **Tiệm cận đứng (TCĐ):** $x = {x_tc_dung:.2f}$",
                 f"📌 **Tiệm cận ngang (TCN):** $y = {y_tc_ngang:.2f}$",
@@ -6457,66 +6520,83 @@ def render_smart_lab(data, current_subject=""):
             if x_ox is not None:
                 info_lines.append(f"📍 **Giao trục hoành $Ox$:** $({x_ox:.2f}; 0)$")
 
-            st.caption("<br>".join(info_lines), unsafe_allow_html=True)
+            st.caption("Tọa độ chính xác, đường gióng và giao trục được thể hiện trong hình bên cạnh.")
 
         with c2:
-            # Thuật toán căn chỉnh co giãn tự động tối ưu (Auto-zoom bám sát tâm I và giao điểm)
-            dx = max(4.5, abs(x_tc_dung) + 2.2, (abs(x_ox - x_tc_dung) + 1.8) if x_ox is not None else 4.5)
-            dy = max(4.5, abs(y_tc_ngang) + 2.2, (abs(y_oy - y_tc_ngang) + 1.8) if y_oy is not None else 4.5)
-            x_min = x_tc_dung - dx
-            x_max = x_tc_dung + dx
-            y_min = y_tc_ngang - dy
-            y_max = y_tc_ngang + dy
-
-            # Vẽ hai nhánh hypebol
-            x_left = np.linspace(x_min, x_tc_dung - 0.04, 400)
-            x_right = np.linspace(x_tc_dung + 0.04, x_max, 400)
-            y_left = (fa * x_left + fb) / (fc * x_left + fd)
-            y_right = (fa * x_right + fb) / (fc * x_right + fd)
-
-            clip_limit = max(abs(y_min), abs(y_max)) * 1.6
-            y_left[np.abs(y_left) > clip_limit] = np.nan
-            y_right[np.abs(y_right) > clip_limit] = np.nan
-
-            fig.add_trace(go.Scatter(x=x_left, y=y_left, mode='lines', line=dict(color='#38bdf8', width=3.5), name='Nhánh trái'))
-            fig.add_trace(go.Scatter(x=x_right, y=y_right, mode='lines', line=dict(color='#38bdf8', width=3.5), name='Nhánh phải'))
-
-            # Hai đường tiệm cận
-            fig.add_trace(go.Scatter(x=[x_tc_dung, x_tc_dung], y=[y_min, y_max], mode='lines', line=dict(color='#f59e0b', width=1.8, dash='dash'), name='TC Đứng'))
-            fig.add_trace(go.Scatter(x=[x_min, x_max], y=[y_tc_ngang, y_tc_ngang], mode='lines', line=dict(color='#10b981', width=1.8, dash='dash'), name='TC Ngang'))
-
-            # Marker Tâm đối xứng I (Giao điểm 2 tiệm cận)
-            fig.add_trace(go.Scatter(x=[x_tc_dung], y=[y_tc_ngang], mode='markers+text', marker=dict(size=11, color='#facc15', symbol='star'),
-                                     text=[f'I({x_tc_dung:.1f}; {y_tc_ngang:.1f})'], textposition="top right", name='Tâm đối xứng I'))
-
-            # Marker Giao điểm trục tung Oy
-            if y_oy is not None and y_min <= y_oy <= y_max:
-                fig.add_trace(go.Scatter(x=[0], y=[y_oy], mode='markers+text', marker=dict(size=8, color='#34d399', symbol='cross'),
-                                         text=[f'(0; {y_oy:.1f})'], textposition="middle right", name='Giao Oy'))
-                fig.add_trace(go.Scatter(x=[0, x_tc_dung], y=[y_oy, y_oy], mode='lines', line=dict(color='#34d399', width=1.0, dash='dot'), hoverinfo='skip', showlegend=False))
-
-            # Marker Giao điểm trục hoành Ox
-            if x_ox is not None and x_min <= x_ox <= x_max:
-                fig.add_trace(go.Scatter(x=[x_ox], y=[0], mode='markers+text', marker=dict(size=8, color='#38bdf8', symbol='cross'),
-                                         text=[f'({x_ox:.1f}; 0)'], textposition="bottom center", name='Giao Ox'))
-                fig.add_trace(go.Scatter(x=[x_ox, x_ox], y=[0, y_tc_ngang], mode='lines', line=dict(color='#38bdf8', width=1.0, dash='dot'), hoverinfo='skip', showlegend=False))
-
-            setup_pedagogical_oxy(fig, [x_min, x_max], [y_min, y_max])
-            fig.update_layout(title="Đồ thị Hàm phân thức Bậc 1 / Bậc 1 (Tối ưu co giãn • Kèm Tâm ĐX & Giao trục)", height=520, showlegend=True)
-            st.plotly_chart(fig, width="stretch")
+            visual_mode = st.radio("Cách hiển thị đồ thị để đối chiếu:", ["SVG chính xác", "Plotly tương tác"], key=lab_key("compare_func_1_1"), horizontal=True)
+            if visual_mode == "SVG chính xác":
+                from services.function_visuals import function_model, variation_svg, graph_svg
+                exact_model = function_model(f"(({fa})*x+({fb}))/(({fc})*x+({fd}))", strict=True)
+                st.markdown(sanitize_svg_for_markdown(variation_svg(exact_model)), unsafe_allow_html=True)
+                st.markdown(sanitize_svg_for_markdown(graph_svg(exact_model)), unsafe_allow_html=True)
+            else:
+                st.caption("Luồng Plotly để đối chiếu tương tác; nhãn tọa độ của bản cũ có thể đang hiển thị gần đúng.")
+    
+                # Thuật toán căn chỉnh co giãn tự động tối ưu (Auto-zoom bám sát tâm I và giao điểm)
+                dx = max(4.5, abs(x_tc_dung) + 2.2, (abs(x_ox - x_tc_dung) + 1.8) if x_ox is not None else 4.5)
+                dy = max(4.5, abs(y_tc_ngang) + 2.2, (abs(y_oy - y_tc_ngang) + 1.8) if y_oy is not None else 4.5)
+                x_min = x_tc_dung - dx
+                x_max = x_tc_dung + dx
+                y_min = y_tc_ngang - dy
+                y_max = y_tc_ngang + dy
+    
+                # Vẽ hai nhánh hypebol
+                x_left = np.linspace(x_min, x_tc_dung - 0.04, 400)
+                x_right = np.linspace(x_tc_dung + 0.04, x_max, 400)
+                y_left = (fa * x_left + fb) / (fc * x_left + fd)
+                y_right = (fa * x_right + fb) / (fc * x_right + fd)
+    
+                clip_limit = max(abs(y_min), abs(y_max)) * 1.6
+                y_left[np.abs(y_left) > clip_limit] = np.nan
+                y_right[np.abs(y_right) > clip_limit] = np.nan
+    
+                fig.add_trace(go.Scatter(x=x_left, y=y_left, mode='lines', line=dict(color='#38bdf8', width=3.5), name='Nhánh trái'))
+                fig.add_trace(go.Scatter(x=x_right, y=y_right, mode='lines', line=dict(color='#38bdf8', width=3.5), name='Nhánh phải'))
+    
+                # Hai đường tiệm cận
+                fig.add_trace(go.Scatter(x=[x_tc_dung, x_tc_dung], y=[y_min, y_max], mode='lines', line=dict(color='#f59e0b', width=1.8, dash='dash'), name='TC Đứng'))
+                fig.add_trace(go.Scatter(x=[x_min, x_max], y=[y_tc_ngang, y_tc_ngang], mode='lines', line=dict(color='#10b981', width=1.8, dash='dash'), name='TC Ngang'))
+    
+                # Marker Tâm đối xứng I (Giao điểm 2 tiệm cận)
+                fig.add_trace(go.Scatter(x=[x_tc_dung], y=[y_tc_ngang], mode='markers+text', marker=dict(size=11, color='#facc15', symbol='star'),
+                                         text=[f'I({x_tc_dung:.1f}; {y_tc_ngang:.1f})'], textposition="top right", name='Tâm đối xứng I'))
+    
+                # Marker Giao điểm trục tung Oy
+                if y_oy is not None and y_min <= y_oy <= y_max:
+                    fig.add_trace(go.Scatter(x=[0], y=[y_oy], mode='markers+text', marker=dict(size=8, color='#34d399', symbol='cross'),
+                                             text=[f'(0; {y_oy:.1f})'], textposition="middle right", name='Giao Oy'))
+                    fig.add_trace(go.Scatter(x=[0, x_tc_dung], y=[y_oy, y_oy], mode='lines', line=dict(color='#34d399', width=1.0, dash='dot'), hoverinfo='skip', showlegend=False))
+    
+                # Marker Giao điểm trục hoành Ox
+                if x_ox is not None and x_min <= x_ox <= x_max:
+                    fig.add_trace(go.Scatter(x=[x_ox], y=[0], mode='markers+text', marker=dict(size=8, color='#38bdf8', symbol='cross'),
+                                             text=[f'({x_ox:.1f}; 0)'], textposition="bottom center", name='Giao Ox'))
+                    fig.add_trace(go.Scatter(x=[x_ox, x_ox], y=[0, y_tc_ngang], mode='lines', line=dict(color='#38bdf8', width=1.0, dash='dot'), hoverinfo='skip', showlegend=False))
+    
+                setup_pedagogical_oxy(fig, [x_min, x_max], [y_min, y_max])
+                fig.update_layout(title="Đồ thị Hàm phân thức Bậc 1 / Bậc 1 (Tối ưu co giãn • Kèm Tâm ĐX & Giao trục)", height=520, showlegend=True)
+                st.plotly_chart(fig, width="stretch")
+    
 
     elif dtype == "func_2_1":
         c1, c2 = st.columns([1.2, 2.8])
         with c1:
             st.caption("⚙️ **Hệ số hàm phân thức bậc 2/1:**")
             fa = st.slider("a:", -3.0, 3.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_f21_a"))
-            if fa == 0: fa = 1.0
+            if fa == 0:
+                st.error("Tử số bậc hai yêu cầu a khác 0. Hãy chọn lại hệ số a.")
+                return
             fb = st.slider("b:", -5.0, 5.0, float(data.get("b", -2.0)), 0.5, key=lab_key("lab_f21_b"))
             fc = st.slider("c:", -5.0, 5.0, float(data.get("c", 2.0)), 0.5, key=lab_key("lab_f21_c"))
             fd = st.slider("d:", -3.0, 3.0, float(data.get("d", 1.0)), 0.5, key=lab_key("lab_f21_d"))
-            if fd == 0: fd = 1.0
+            if fd == 0:
+                st.error("Mẫu số bậc nhất yêu cầu d khác 0. Hãy chọn lại hệ số d.")
+                return
             fe = st.slider("e:", -5.0, 5.0, float(data.get("e", -1.0)), 0.5, key=lab_key("lab_f21_e"))
 
+            if abs(fa * fe**2 - fb * fe * fd + fc * fd**2) < 1e-12:
+                st.error("Hàm phân thức 2/1 đang suy biến do tử và mẫu có nhân tử chung. Hãy chọn lại hệ số.")
+                return
             x_tc_dung = -fe / fd
             m_slope = fa / fd
             n_intercept = (fb - m_slope * fe) / fd
@@ -6531,7 +6611,7 @@ def render_smart_lab(data, current_subject=""):
             delta_der = (B_der ** 2) - 4.0 * A_der * C_der
             has_extrema_21 = delta_der > 1e-6
 
-            st.info(f"**$y = \\frac{{{fa}x^2 + {fb}x + {fc}}}{{{fd}x + {fe}}}$**")
+            st.latex(function_formula_latex([fa, fb, fc], [fd, fe]))
             info_lines_21 = [
                 f"📌 **Tiệm cận đứng:** $x = {x_tc_dung:.2f}$",
                 f"📌 **Tiệm cận xiên:** $y = {m_slope:.2f}x + ({n_intercept:.2f})$",
@@ -6624,74 +6704,84 @@ def render_smart_lab(data, current_subject=""):
                 info_lines_21.append(f"🔴 **Điểm cực đại:** $CĐ({lbl_x_cd}; {lbl_y_cd}) \\approx ({x_cd_21:.2f}; {y_cd_21:.2f})$")
                 info_lines_21.append(f"🟠 **Điểm cực tiểu:** $CT({lbl_x_ct}; {lbl_y_ct}) \\approx ({x_ct_21:.2f}; {y_ct_21:.2f})$")
 
-            st.caption("<br>".join(info_lines_21), unsafe_allow_html=True)
+            st.caption("Tọa độ chính xác, đường gióng và giao trục được thể hiện trong hình bên cạnh.")
 
         with c2:
-            # Thuật toán co giãn tự động tối ưu
-            dx = max(4.5, abs(x_tc_dung) + 2.5)
-            if has_extrema_21 and x_cd_21 is not None and x_ct_21 is not None:
-                dx = max(dx, abs(x_cd_21 - x_tc_dung) + 2.0, abs(x_ct_21 - x_tc_dung) + 2.0)
-            x_min = x_tc_dung - dx
-            x_max = x_tc_dung + dx
-
-            dy = max(6.0, abs(y_tam_dx) + 3.0)
-            if has_extrema_21 and y_cd_21 is not None and y_ct_21 is not None:
-                dy = max(dy, abs(y_cd_21 - y_tam_dx) + 3.0, abs(y_ct_21 - y_tam_dx) + 3.0)
-            y_min = y_tam_dx - dy
-            y_max = y_tam_dx + dy
-
-            x_left = np.linspace(x_min, x_tc_dung - 0.05, 400)
-            x_right = np.linspace(x_tc_dung + 0.05, x_max, 400)
-            y_left = (fa * x_left**2 + fb * x_left + fc) / (fd * x_left + fe)
-            y_right = (fa * x_right**2 + fb * x_right + fc) / (fd * x_right + fe)
-
-            clip_limit_21 = max(abs(y_min), abs(y_max)) * 1.5
-            y_left[np.abs(y_left) > clip_limit_21] = np.nan
-            y_right[np.abs(y_right) > clip_limit_21] = np.nan
-
-            fig.add_trace(go.Scatter(x=x_left, y=y_left, mode='lines', line=dict(color='#38bdf8', width=3.5), name='Nhánh trái'))
-            fig.add_trace(go.Scatter(x=x_right, y=y_right, mode='lines', line=dict(color='#38bdf8', width=3.5), name='Nhánh phải'))
-            fig.add_trace(go.Scatter(x=[x_tc_dung, x_tc_dung], y=[y_min, y_max], mode='lines', line=dict(color='#f59e0b', width=1.8, dash='dash'), name='TC Đứng'))
-
-            # Tiệm cận xiên
-            x_slant = np.linspace(x_min, x_max, 100)
-            y_slant = m_slope * x_slant + n_intercept
-            fig.add_trace(go.Scatter(x=x_slant, y=y_slant, mode='lines', line=dict(color='#ec4899', width=1.8, dash='dash'), name='TC Xiên'))
-
-            # Marker Tâm đối xứng I
-            fig.add_trace(go.Scatter(x=[x_tam_dx], y=[y_tam_dx], mode='markers+text', marker=dict(size=11, color='#facc15', symbol='star'),
-                                     text=[f'I({x_tam_dx:.1f}; {y_tam_dx:.1f})'], textposition="top right", name='Tâm đối xứng I'))
-
-            # Marker Cực trị & Đường gióng vuông góc xuống Ox, Oy chuẩn mực SGK GDPT 2018
-            if has_extrema_21 and x_cd_21 is not None and x_ct_21 is not None:
-                # 1. Đường gióng nét đứt xuống Ox và Oy cho Cực đại (CĐ)
-                fig.add_trace(go.Scatter(x=[x_cd_21, x_cd_21], y=[0, y_cd_21], mode='lines', line=dict(color='#f43f5e', width=1.3, dash='dot'), showlegend=False, hoverinfo='skip'))
-                fig.add_trace(go.Scatter(x=[0, x_cd_21], y=[y_cd_21, y_cd_21], mode='lines', line=dict(color='#f43f5e', width=1.3, dash='dot'), showlegend=False, hoverinfo='skip'))
-
-                # 2. Đường gióng nét đứt xuống Ox và Oy cho Cực tiểu (CT)
-                fig.add_trace(go.Scatter(x=[x_ct_21, x_ct_21], y=[0, y_ct_21], mode='lines', line=dict(color='#f59e0b', width=1.3, dash='dot'), showlegend=False, hoverinfo='skip'))
-                fig.add_trace(go.Scatter(x=[0, x_ct_21], y=[y_ct_21, y_ct_21], mode='lines', line=dict(color='#f59e0b', width=1.3, dash='dot'), showlegend=False, hoverinfo='skip'))
-
-                # Nhãn tọa độ chính xác tại chân đường gióng trên trục Ox và Oy
-                fig.add_annotation(x=x_cd_21, y=0, text=f"<b>{lbl_x_cd}</b>", showarrow=True, arrowhead=2, arrowsize=0.8, ax=0, ay=18, font=dict(color="#f43f5e", size=10))
-                fig.add_annotation(x=0, y=y_cd_21, text=f"<b>{lbl_y_cd}</b>", showarrow=True, arrowhead=2, arrowsize=0.8, ax=-22, ay=0, font=dict(color="#f43f5e", size=10))
-                fig.add_annotation(x=x_ct_21, y=0, text=f"<b>{lbl_x_ct}</b>", showarrow=True, arrowhead=2, arrowsize=0.8, ax=0, ay=18, font=dict(color="#f59e0b", size=10))
-                fig.add_annotation(x=0, y=y_ct_21, text=f"<b>{lbl_y_ct}</b>", showarrow=True, arrowhead=2, arrowsize=0.8, ax=-22, ay=0, font=dict(color="#f59e0b", size=10))
-
-                # Điểm đánh dấu CĐ và CT kèm nhãn chính xác
-                fig.add_trace(go.Scatter(x=[x_cd_21], y=[y_cd_21], mode='markers+text', marker=dict(size=10, color='#f43f5e', symbol='diamond'),
-                                         text=[f'CĐ({lbl_x_cd}; {lbl_y_cd})'], textposition="top center", name='Cực đại (CĐ)'))
-                fig.add_trace(go.Scatter(x=[x_ct_21], y=[y_ct_21], mode='markers+text', marker=dict(size=10, color='#f59e0b', symbol='diamond'),
-                                         text=[f'CT({lbl_x_ct}; {lbl_y_ct})'], textposition="bottom center", name='Cực tiểu (CT)'))
-
-            # Marker Giao trục Oy
-            if y_oy is not None and y_min <= y_oy <= y_max:
-                fig.add_trace(go.Scatter(x=[0], y=[y_oy], mode='markers+text', marker=dict(size=8, color='#34d399', symbol='cross'),
-                                         text=[f'(0; {y_oy:.1f})'], textposition="middle right", name='Giao Oy'))
-
-            setup_pedagogical_oxy(fig, [x_min, x_max], [y_min, y_max])
-            fig.update_layout(title="Đồ thị Hàm phân thức Bậc 2 / Bậc 1 (Tối ưu co giãn • Kèm CĐ, CT, Tâm ĐX & TC Xiên)", height=520, showlegend=True)
-            st.plotly_chart(fig, width="stretch")
+            visual_mode = st.radio("Cách hiển thị đồ thị để đối chiếu:", ["SVG chính xác", "Plotly tương tác"], key=lab_key("compare_func_2_1"), horizontal=True)
+            if visual_mode == "SVG chính xác":
+                from services.function_visuals import function_model, variation_svg, graph_svg
+                exact_model = function_model(f"(({fa})*x**2+({fb})*x+({fc}))/(({fd})*x+({fe}))", strict=True)
+                st.markdown(sanitize_svg_for_markdown(variation_svg(exact_model)), unsafe_allow_html=True)
+                st.markdown(sanitize_svg_for_markdown(graph_svg(exact_model)), unsafe_allow_html=True)
+            else:
+                st.caption("Luồng Plotly để đối chiếu tương tác; nhãn tọa độ của bản cũ có thể đang hiển thị gần đúng.")
+    
+                # Thuật toán co giãn tự động tối ưu
+                dx = max(4.5, abs(x_tc_dung) + 2.5)
+                if has_extrema_21 and x_cd_21 is not None and x_ct_21 is not None:
+                    dx = max(dx, abs(x_cd_21 - x_tc_dung) + 2.0, abs(x_ct_21 - x_tc_dung) + 2.0)
+                x_min = x_tc_dung - dx
+                x_max = x_tc_dung + dx
+    
+                dy = max(6.0, abs(y_tam_dx) + 3.0)
+                if has_extrema_21 and y_cd_21 is not None and y_ct_21 is not None:
+                    dy = max(dy, abs(y_cd_21 - y_tam_dx) + 3.0, abs(y_ct_21 - y_tam_dx) + 3.0)
+                y_min = y_tam_dx - dy
+                y_max = y_tam_dx + dy
+    
+                x_left = np.linspace(x_min, x_tc_dung - 0.05, 400)
+                x_right = np.linspace(x_tc_dung + 0.05, x_max, 400)
+                y_left = (fa * x_left**2 + fb * x_left + fc) / (fd * x_left + fe)
+                y_right = (fa * x_right**2 + fb * x_right + fc) / (fd * x_right + fe)
+    
+                clip_limit_21 = max(abs(y_min), abs(y_max)) * 1.5
+                y_left[np.abs(y_left) > clip_limit_21] = np.nan
+                y_right[np.abs(y_right) > clip_limit_21] = np.nan
+    
+                fig.add_trace(go.Scatter(x=x_left, y=y_left, mode='lines', line=dict(color='#38bdf8', width=3.5), name='Nhánh trái'))
+                fig.add_trace(go.Scatter(x=x_right, y=y_right, mode='lines', line=dict(color='#38bdf8', width=3.5), name='Nhánh phải'))
+                fig.add_trace(go.Scatter(x=[x_tc_dung, x_tc_dung], y=[y_min, y_max], mode='lines', line=dict(color='#f59e0b', width=1.8, dash='dash'), name='TC Đứng'))
+    
+                # Tiệm cận xiên
+                x_slant = np.linspace(x_min, x_max, 100)
+                y_slant = m_slope * x_slant + n_intercept
+                fig.add_trace(go.Scatter(x=x_slant, y=y_slant, mode='lines', line=dict(color='#ec4899', width=1.8, dash='dash'), name='TC Xiên'))
+    
+                # Marker Tâm đối xứng I
+                fig.add_trace(go.Scatter(x=[x_tam_dx], y=[y_tam_dx], mode='markers+text', marker=dict(size=11, color='#facc15', symbol='star'),
+                                         text=[f'I({x_tam_dx:.1f}; {y_tam_dx:.1f})'], textposition="top right", name='Tâm đối xứng I'))
+    
+                # Marker Cực trị & Đường gióng vuông góc xuống Ox, Oy chuẩn mực SGK GDPT 2018
+                if has_extrema_21 and x_cd_21 is not None and x_ct_21 is not None:
+                    # 1. Đường gióng nét đứt xuống Ox và Oy cho Cực đại (CĐ)
+                    fig.add_trace(go.Scatter(x=[x_cd_21, x_cd_21], y=[0, y_cd_21], mode='lines', line=dict(color='#f43f5e', width=1.3, dash='dot'), showlegend=False, hoverinfo='skip'))
+                    fig.add_trace(go.Scatter(x=[0, x_cd_21], y=[y_cd_21, y_cd_21], mode='lines', line=dict(color='#f43f5e', width=1.3, dash='dot'), showlegend=False, hoverinfo='skip'))
+    
+                    # 2. Đường gióng nét đứt xuống Ox và Oy cho Cực tiểu (CT)
+                    fig.add_trace(go.Scatter(x=[x_ct_21, x_ct_21], y=[0, y_ct_21], mode='lines', line=dict(color='#f59e0b', width=1.3, dash='dot'), showlegend=False, hoverinfo='skip'))
+                    fig.add_trace(go.Scatter(x=[0, x_ct_21], y=[y_ct_21, y_ct_21], mode='lines', line=dict(color='#f59e0b', width=1.3, dash='dot'), showlegend=False, hoverinfo='skip'))
+    
+                    # Nhãn tọa độ chính xác tại chân đường gióng trên trục Ox và Oy
+                    fig.add_annotation(x=x_cd_21, y=0, text=f"<b>{lbl_x_cd}</b>", showarrow=True, arrowhead=2, arrowsize=0.8, ax=0, ay=18, font=dict(color="#f43f5e", size=10))
+                    fig.add_annotation(x=0, y=y_cd_21, text=f"<b>{lbl_y_cd}</b>", showarrow=True, arrowhead=2, arrowsize=0.8, ax=-22, ay=0, font=dict(color="#f43f5e", size=10))
+                    fig.add_annotation(x=x_ct_21, y=0, text=f"<b>{lbl_x_ct}</b>", showarrow=True, arrowhead=2, arrowsize=0.8, ax=0, ay=18, font=dict(color="#f59e0b", size=10))
+                    fig.add_annotation(x=0, y=y_ct_21, text=f"<b>{lbl_y_ct}</b>", showarrow=True, arrowhead=2, arrowsize=0.8, ax=-22, ay=0, font=dict(color="#f59e0b", size=10))
+    
+                    # Điểm đánh dấu CĐ và CT kèm nhãn chính xác
+                    fig.add_trace(go.Scatter(x=[x_cd_21], y=[y_cd_21], mode='markers+text', marker=dict(size=10, color='#f43f5e', symbol='diamond'),
+                                             text=[f'CĐ({lbl_x_cd}; {lbl_y_cd})'], textposition="top center", name='Cực đại (CĐ)'))
+                    fig.add_trace(go.Scatter(x=[x_ct_21], y=[y_ct_21], mode='markers+text', marker=dict(size=10, color='#f59e0b', symbol='diamond'),
+                                             text=[f'CT({lbl_x_ct}; {lbl_y_ct})'], textposition="bottom center", name='Cực tiểu (CT)'))
+    
+                # Marker Giao trục Oy
+                if y_oy is not None and y_min <= y_oy <= y_max:
+                    fig.add_trace(go.Scatter(x=[0], y=[y_oy], mode='markers+text', marker=dict(size=8, color='#34d399', symbol='cross'),
+                                             text=[f'(0; {y_oy:.1f})'], textposition="middle right", name='Giao Oy'))
+    
+                setup_pedagogical_oxy(fig, [x_min, x_max], [y_min, y_max])
+                fig.update_layout(title="Đồ thị Hàm phân thức Bậc 2 / Bậc 1 (Tối ưu co giãn • Kèm CĐ, CT, Tâm ĐX & TC Xiên)", height=520, showlegend=True)
+                st.plotly_chart(fig, width="stretch")
+    
 
     elif dtype in ["parabola", "func_2"]:
         c1, c2 = st.columns([1.2, 2.8])
@@ -7073,7 +7163,7 @@ for idx_st, (col_st, label_st) in enumerate(zip([nav_t1, nav_t2, nav_t3, nav_t4]
         is_cur_active = (st.session_state.selected_station == label_st)
         btn_type = "primary" if is_cur_active else "secondary"
         btn_title = f"⭐ {label_st}" if is_cur_active else label_st
-        st.button(btn_title, key=f"top_nav_station_{idx_st}", type=btn_type, use_container_width=True,
+        st.button(btn_title, key=f"top_nav_station_{idx_st}", type=btn_type, width="stretch",
                   on_click=navigate_to_station, args=(label_st,))
 
 st.markdown('<div style="border-bottom: 1px solid rgba(51, 65, 85, 0.45); margin-top: 6px; margin-bottom: 18px;"></div>', unsafe_allow_html=True)
@@ -10076,7 +10166,7 @@ def render_math_graph_to_webp_base64(graph_data, extra_points=None, xlabel=r'$x$
         return ""
 
 @st.cache_data(show_spinner=False, max_entries=256)
-def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán học", grade: int = 12, topic: str = "") -> str:
+def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán học", grade: int = 12, topic: str = "", policy_revision: int = CURRICULUM_POLICY_REVISION) -> str:
     """Validate the selected curriculum context and normalize display syntax.
 
     This gate does not certify factual accuracy or official textbook alignment.
@@ -10091,6 +10181,9 @@ def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán h�
     # 1. Tẩy sạch PUA & Soft-hyphen
     if ree and hasattr(ree, "deep_clean_pua_and_artifacts"):
         t = ree.deep_clean_pua_and_artifacts(t)
+
+    # Correct only the reviewed KHTN 8 lime/soil misconception pattern.
+    t = correct_khtn8_lime_soil_confusion(t, subject, grade, topic)
 
     # 2. Quét & chuẩn hóa KaTeX
     t = sanitize_katex_latex(t)
@@ -10567,7 +10660,8 @@ def render_pedagogical_lesson_visuals(markdown_text: str, subject: str = "", gra
     mslgn_pattern = re.compile(
         r'(?:^[ \t]*\|[^\n]*(?:nhóm|khoảng|giá trị|lớp)[^\n]*\|\s*\n)'
         r'(?:^[ \t]*\|(?:\s*\:?\-{2,}\:?\s*\|)+\s*\n)'
-        r'(?:^[ \t]*\|[^\n]*(?:tần số|số học sinh|số lượng|tần suất|n)[^\n]*\|)',
+        r'(?:^[ \t]*\|[ \t]*(?:tần số|số học sinh|số lượng|tần suất|n)[ \t]*\|[^\n]*\|[ \t]*(?=\r?$))'
+        r'(?!\r?\n[ \t]*\|)',
         flags=re.MULTILINE | re.IGNORECASE
     )
     text = mslgn_pattern.sub(_replace_mslgn_table, text)
@@ -10798,7 +10892,8 @@ if selected_station == station_labels[0]:
         "Công nghệ": "Ví dụ: Bản vẽ kỹ thuật, Trồng trọt công nghệ cao, Mạch điện tử điều khiển, Cơ khí chế tạo..."
     }
 
-    curr_ph = subject_placeholders.get(subject, f"Ví dụ: Bài học trọng tâm môn {subject} Lớp {grade_num}...")
+    grade_topics = BIGDATA_CURRICULUM.get(subject, {}).get(grade_num, [])
+    curr_ph = lesson_context_examples(subject, grade_num, grade_topics)
 
     # Quick topics gợi ý chọn nhanh cho từng môn
     quick_topics_dict = {
@@ -10825,6 +10920,9 @@ if selected_station == station_labels[0]:
     curr_t1_books = get_kntt_books_for(subject, grade_num)
 
     curr_t1_books_nxbgd = get_nxbgd_books_for(subject, grade_num)
+    curr_vniteach_books = [b for b in curr_t1_books if b.get('kind') != 'publisher_book_page']
+    curr_publisher_books = [b for b in curr_t1_books if b.get('kind') == 'publisher_book_page']
+    current_book_update = textbook_update_notice(subject, grade_num)
 
 
 
@@ -10834,31 +10932,35 @@ if selected_station == station_labels[0]:
 
         with c_kntt1:
 
-            st.markdown(f"**📖 Nguồn: VniTeach**")
+            st.markdown("**📖 Nguồn tra cứu sách**")
 
-            for b_item in curr_t1_books:
+            for b_item in curr_vniteach_books:
 
                 st.link_button(f"📖 Mở {b_item['title']}", b_item['url'], width="stretch")
 
             st.link_button("🌐 Mở toàn bộ Thư viện KNTT (VniTeach)", "https://www.vniteach.com/sach-dien-tu-ket-noi-tri-thuc/#google_vignette", width="stretch")
 
-            if curr_t1_books:
+            if curr_vniteach_books:
 
                 st.caption("📱 Quét QR để lật sách (VniTeach):")
 
-                st.image(generate_local_qr_base64(curr_t1_books[0]['url']), width=150)
+                st.image(generate_local_qr_base64(curr_vniteach_books[0]['url']), width=150)
 
 
 
         with c_kntt2:
 
-            st.markdown(f"**📖 Nguồn: Tập Huấn NXBGD (Bộ GD&ĐT)**")
+            st.markdown(f"**📖 Nền tảng Tập huấn NXBGDVN**")
+
+            for b_item in curr_publisher_books:
+
+                st.link_button(f"📖 Mở {b_item['title']}", b_item['url'], width="stretch")
 
             for b_item in curr_t1_books_nxbgd:
 
                 st.link_button(f"📖 Mở {b_item['title']}", b_item['url'], width="stretch")
 
-            st.link_button("🌐 Mở Nguồn Tập Huấn NXBGD (Trang chủ)", PUBLISHER_PORTAL, width="stretch")
+            st.link_button("🌐 Mở danh mục Tập huấn NXBGDVN (mọi lớp)", PUBLISHER_PORTAL, width="stretch")
 
             if curr_t1_books_nxbgd:
 
@@ -10867,6 +10969,10 @@ if selected_station == station_labels[0]:
                 st.image(generate_local_qr_base64(curr_t1_books_nxbgd[0]['url']), width=150)
 
 
+
+    if current_book_update:
+        st.warning(current_book_update['note'])
+        st.link_button("Mở thông báo cập nhật SGK NXBGDVN", current_book_update['url'], width="stretch")
 
     # MENU CHỌN NHANH BÀI HỌC NGOÀI SGK (1-CLICK LESSON SELECTOR)
 
@@ -10925,7 +11031,7 @@ if selected_station == station_labels[0]:
 
     else:
 
-        q_topics = quick_topics_dict.get(subject, ["Chuyên đề trọng tâm 1", "Chuyên đề trọng tâm 2"])
+        q_topics = [f'Bài học môn {subject} lớp {grade_num}: nhập tên bài và dữ kiện để học.']
 
     st.caption("💡 **Chủ đề gợi ý học nhanh:** " + " • ".join([f"`{t}`" for t in q_topics]))
 
@@ -11005,7 +11111,7 @@ if selected_station == station_labels[0]:
                 # ==============================================================================
                 # BỘ NÃO KIỂM SOÁT BIGDATA CUỐI CÙNG TRẠM 1 (MASTER SOVEREIGN QUALITY GATE)
                 # ==============================================================================
-                res_text = station1_master_sovereign_brain_gate(res_text, subject=subject, grade=grade_num, topic=topic_input.strip())
+                res_text = station1_master_sovereign_brain_gate(res_text, subject=subject, grade=grade_num, topic=topic_input.strip(), policy_revision=CURRICULUM_POLICY_REVISION)
 
                 st.session_state.current_lesson = res_text
                 st.session_state.current_lesson_context = (subject, grade_num)
@@ -11021,12 +11127,35 @@ if selected_station == station_labels[0]:
                 st.error(f"Lỗi: {e}")
 
     if st.session_state.get("current_lesson") and st.session_state.get("current_lesson_context") != (subject, grade_num):
+        if st.session_state.get("orphaned_lesson"):
+            import hashlib
+            previous = {"text": st.session_state.orphaned_lesson,
+                        "context": st.session_state.get("orphaned_lesson_context"),
+                        "topic": st.session_state.get("orphaned_lesson_topic", "")}
+            identity = hashlib.sha256(repr(previous).encode("utf-8")).hexdigest()
+            archive = dict(st.session_state.get("orphaned_lesson_archive", {}))
+            archive.setdefault(identity, previous)
+            st.session_state.orphaned_lesson_archive = archive
         st.session_state.orphaned_lesson = st.session_state.current_lesson
+        st.session_state.orphaned_lesson_context = st.session_state.get("current_lesson_context")
+        st.session_state.orphaned_lesson_topic = st.session_state.get("current_topic", "")
         st.session_state.current_lesson = ""
-        st.warning("Bài từ phiên cũ chưa có ngữ cảnh môn/lớp khớp. Hãy soạn lại bài trước khi xuất.")
+    if st.session_state.get("orphaned_lesson"):
+        st.warning("Một bài từ phiên trước đang được giữ riêng vì ngữ cảnh môn/lớp chưa khớp. "
+                   "Em có thể tải nguyên văn để đối chiếu trước khi quyết định soạn lại.")
+        st.download_button("📥 Tải nguyên văn bài đang chờ đối chiếu ngữ cảnh",
+                           st.session_state.orphaned_lesson,
+                           file_name="bai_hoc_cho_doi_chieu.md", mime="text/markdown",
+                           key="t1_orphaned_lesson_download")
+    if st.session_state.get("orphaned_lesson_archive"):
+        with st.expander("📚 Các bản chờ đối chiếu trước đó trong phiên"):
+            for index, (identity, saved) in enumerate(st.session_state.orphaned_lesson_archive.items(), 1):
+                st.download_button(f"📥 Tải bản {index}: {saved.get('topic') or 'Chưa xác định chủ đề'}",
+                                   saved['text'], file_name=f"bai_cho_doi_chieu_{index}.md",
+                                   mime="text/markdown", key=f"t1_orphaned_archive_{identity}")
 
     if st.session_state.get("current_lesson"):
-        lesson_text = station1_master_sovereign_brain_gate(st.session_state.current_lesson, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''))
+        lesson_text = station1_master_sovereign_brain_gate(st.session_state.current_lesson, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''), policy_revision=CURRICULUM_POLICY_REVISION)
         part2_split = re.split(r'(?i)(?:###\s*)?PHẦN 2[\:\.]?', lesson_text)
         part3_split = re.split(r'(?i)(?:###\s*)?PHẦN 3[\:\.]?', lesson_text)
 
@@ -11034,11 +11163,11 @@ if selected_station == station_labels[0]:
         if len(part2_split) > 0 and part2_split[0].strip():
             cleaned_p1 = re.sub(r'\n\s*\n', '\n\n', part2_split[0].strip())
             cleaned_p1 = re.sub(r'(?:\s*\-\-\-\s*)+$', '', cleaned_p1)
-            cleaned_p1 = station1_master_sovereign_brain_gate(cleaned_p1, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''))
+            cleaned_p1 = station1_master_sovereign_brain_gate(cleaned_p1, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''), policy_revision=CURRICULUM_POLICY_REVISION)
             cleaned_p1_vis = render_pedagogical_lesson_visuals(cleaned_p1, subject=subject, grade=grade_num)
             if subject == "Toán học":
                 cleaned_p1_vis = _t1_with_function_visuals(cleaned_p1_vis, st.session_state.get('current_topic', ''), cleaned_p1)
-            st.markdown(cleaned_p1_vis, unsafe_allow_html=True)
+            st.markdown(chemical_display_markdown(cleaned_p1_vis), unsafe_allow_html=True)
 
             # ==============================================================================
             # BẢO CHỨNG ĐỊNH VỊ CHỈ MỤC ADN BÀI HỌC SGK KNTT & VIDEO YOUTUBE ĐA MÔN ĂN KHỚP 100%
@@ -11106,7 +11235,7 @@ if selected_station == station_labels[0]:
 
                         with st.chat_message(t1_msg["role"]):
 
-                            st.markdown(t1_msg["content"])
+                            st.markdown(chemical_display_markdown(t1_msg["content"]))
 
 
 
@@ -11122,7 +11251,7 @@ if selected_station == station_labels[0]:
 
                         with st.chat_message("user"):
 
-                            st.markdown(t1_input)
+                            st.markdown(chemical_display_markdown(t1_input))
 
                         t1_hist_ctx = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.tram1_chat_history[-4:-1]])
                         t1_sys_inst = build_socratic_master_instruction(
@@ -11138,6 +11267,10 @@ if selected_station == station_labels[0]:
                                 t1_cross_ctx = get_cross_station_pedagogical_context(1)
 
                                 if is_t1_understood:
+                                    t1_student_evidence = "\n".join(
+                                        str(message.get('content', ''))
+                                        for message in st.session_state.tram1_chat_history[-8:]
+                                        if message.get('role') == 'user')
                                     quote_reference = (
                                         f"Danh ngôn đã đối chiếu nguồn {t1_quote_data['source_url']}: {t1_quote_data['author']}: {t1_quote_data['quote']}."
                                         if t1_quote_data.get('source_verified') is True and t1_quote_data.get('source_url')
@@ -11149,14 +11282,15 @@ if selected_station == station_labels[0]:
                                     )
                                     t1_prompt_msg = (
                                         f"Bối cảnh liên trạm của học sinh:\n{t1_cross_ctx}\n"
-                                        f"Lịch sử đối thoại trước đó:\n{t1_hist_ctx}\n"
+                                        f"Phát biểu thực tế của học sinh (không bao gồm lời thầy):\n{t1_student_evidence}\n"
                                         f"Học sinh {student_name} phản hồi: \"{t1_input}\"\n\n"
-                                        f"🎯 MỆNH LỆNH SƯ PHẠM ĐỈNH CAO - CHỐT ĐIỂM CHẠM SƯ PHẠM TRẠM 1 (CLOSURE) & TRAO TRUYỀN TRIẾT LÝ NHÂN CÁCH Á - ÂU:\n"
-                                        f"1. DỪNG TRUY VẤN NGAY: Tuyệt đối KHÔNG hỏi thêm bất kỳ câu hỏi nào nữa. Học sinh đã thấu hiểu trọn vẹn và không còn thắc mắc về bài học '{st.session_state.get('current_topic', subject)}'!\n"
-                                        f"2. BIỂU DƯƠNG NỒNG NHIỆT: Khen ngợi sự nhạy bén, khiêm tốn và tinh thần tự học vượt bậc của {student_name}.\n"
-                                        f"3. ĐÓNG GÓI BẢN CHẤT: Chốt một câu khoa học bám đúng bài đang học; không suy diễn từ ẩn dụ đạo đức thành kết luận chuyên môn.{science_closure}\n"
-                                        f"4. BÀI HỌC TRIẾT LÝ NHÂN CÁCH & LẼ SỐNG (BẮT BUỘC): Đúc kết bài học về đạo làm người: {t1_quote_data['lesson']}. {quote_reference}\n"
+                                        f"CHỐT CUỘC ĐỐI THOẠI TRẠM 1:\n"
+                                        f"1. Học sinh cho biết đã hiểu hoặc muốn kết thúc lượt hỏi. Không hỏi thêm. Đây là ý định kết thúc đối thoại, chưa phải bằng chứng đã thành thạo bài '{st.session_state.get('current_topic', subject)}'.\n"
+                                        f"2. Chỉ ghi nhận: 'Em cho biết đã hiểu và muốn chuyển sang luyện tập.' Không tự thêm đánh giá rằng học sinh đã làm chủ, phân biệt được hay thấu suốt kiến thức; lời thầy hoặc lời tổng kết trước đó không phải bằng chứng học sinh đã trả lời.\n"
+                                        f"3. Nhắc cách tự kiểm khi luyện tập: nêu căn cứ từ bài học và kiểm tra kết quả. Không bổ sung kết luận khoa học mới, không mô tả pH là linh hồn/chìa khóa chính xác nhất, không gán acid mạnh hay base dịu êm. Không dùng ẩn dụ trong nội dung chuyên môn.{science_closure}\n"
+                                        f"4. Lời nhắn giáo dục 1–2 câu phù hợp độ tuổi, gắn tự nhiên với việc học: {t1_quote_data['lesson']}. Không dùng ẩn dụ làm bằng chứng khoa học hoặc đánh giá đạo đức học sinh. {quote_reference}\n"
                                         f"5. LỜI CHÚC ÂN CẦN: Lời chúc yêu thương của Người Thầy khích lệ {student_name} tự tin tiến sang Trạm 2 (Giải bài tập & Check VAR trực tiếp)!"
+                                        f" Học sinh đang học lớp {grade_num}; không tự gọi học sinh lớp 6–9 là học sinh THPT, không tự gán tên trường. Toàn bộ lời chốt tối đa 160 từ, không dùng các tiêu đề hành chính như 'Đóng gói bản chất'."
                                     )
                                 else:
                                     t1_prompt_msg = (
@@ -11172,8 +11306,11 @@ if selected_station == station_labels[0]:
                                     t1_prompt_msg,
                                     system_instruction=t1_sys_inst
                                 )
-                                t1_ans = st.write_stream(stream_gen)
+                                t1_reply_slot = st.empty()
+                                with t1_reply_slot.container():
+                                    t1_ans = st.write_stream(stream_gen)
                                 t1_ans_clean = sanitize_katex_latex(t1_ans)
+                                t1_reply_slot.markdown(chemical_display_markdown(t1_ans_clean))
                                 st.session_state.tram1_chat_history.append({"role": "assistant", "content": t1_ans_clean})
                                 if is_t1_understood and isinstance(t1_ans_clean, str) and t1_ans_clean.strip():
                                     register_station_closure(1, t1_quote_data)
@@ -11215,7 +11352,7 @@ if selected_station == station_labels[0]:
                 # 2. Tách sạch sẽ văn bản câu hỏi và khử hoàn toàn rác bảng markdown dính liền:
                 clean_q_display = clean_question_bbt_text(q['question'])
                 clean_q_display = sanitize_katex_latex(clean_q_display)
-                st.markdown(f"**Câu {idx+1}:** `[{level_caption(q)}]`\n\n{clean_q_display}")
+                st.markdown(chemical_display_markdown(f"**Câu {idx+1}:** `[{level_caption(q)}]`\n\n{clean_q_display}"))
 
                 # 3. Hiển thị Bảng Biến Thiên (BBT) WebP siêu nét chuẩn Bộ GD&ĐT (Trạm 3 Master Quality):
                 raw_bbt_content = q_dict_vis.get("bbt") or q.get("bbt")
@@ -11261,7 +11398,8 @@ if selected_station == station_labels[0]:
                 previous_choice = st.session_state.quiz_selections.get(idx)
                 if widget_key not in st.session_state and previous_choice in q['options']:
                     st.session_state[widget_key] = previous_choice
-                user_choice = st.radio(f"Chọn đáp án câu {idx+1}:", q['options'], key=widget_key, label_visibility="collapsed", index=None, format_func=option_markdown_label)
+                user_choice = st.radio(f"Chọn đáp án câu {idx+1}:", q['options'], key=widget_key, label_visibility="collapsed", index=None,
+                    format_func=lambda option: chemical_display_markdown(option_markdown_label(option)))
                 if user_choice is not None:
                     st.session_state.quiz_selections[idx] = user_choice
 
@@ -11295,7 +11433,7 @@ if selected_station == station_labels[0]:
 
                     if status == "correct": st.success(msg)
 
-                    else: st.warning("🤔 Suy ngẫm thêm gợi ý dưới đây nhé:"); st.info(msg)
+                    else: st.warning("🤔 Suy ngẫm thêm gợi ý dưới đây nhé:"); st.info(chemical_display_markdown(msg))
 
                 st.markdown("---")
 
@@ -11305,7 +11443,7 @@ if selected_station == station_labels[0]:
 
             fallback_p2 = re.split(r'(?i)###\s*PHẦN\s*3', part2_split[1])[0]
             fallback_p2_vis = render_pedagogical_lesson_visuals(fallback_p2.strip(), subject=subject, grade=grade_num)
-            st.markdown(fallback_p2_vis, unsafe_allow_html=True)
+            st.markdown(chemical_display_markdown(fallback_p2_vis), unsafe_allow_html=True)
 
 
 
@@ -11317,7 +11455,7 @@ if selected_station == station_labels[0]:
             st.caption("Mức độ tự luận là đề xuất của AI; cần đối chiếu yêu cầu cần đạt, lời giải và rubric theo đúng môn/lớp. Bài dài hoặc nhiều bước không tự động là VDC.")
             from services.text_boundaries import student_essay_text
             p3_vis = render_pedagogical_lesson_visuals(student_essay_text(part3_split[-1]), subject=subject, grade=grade_num)
-            st.markdown(p3_vis, unsafe_allow_html=True)
+            st.markdown(chemical_display_markdown(p3_vis), unsafe_allow_html=True)
 
 
 
@@ -11353,6 +11491,8 @@ if selected_station == station_labels[0]:
 
         lab_intro_text = f"Hệ thống AI đang liên kết trực tiếp với <b>Môn {subject} - Lớp {grade_num}</b>. Nhập yêu cầu xây dựng sơ đồ tư duy dòng thời gian lịch sử, bản đồ địa lý, cấu trúc kinh tế - pháp luật, giải thuật tin học:"
 
+    lab_intro_text = (f'Hệ thống AI đang liên kết trực tiếp với <b>Môn {subject} - Lớp {grade_num}</b>. '
+                      'Nhập bài học và dữ kiện cần trực quan hóa theo môn/lớp đang chọn. ' + curr_ph)
     st.markdown(f'<div style="color: #cbd5e1; font-size: 15px; margin-bottom: 12px;">{lab_intro_text}</div>', unsafe_allow_html=True)
 
 
@@ -11739,16 +11879,17 @@ if selected_station == station_labels[0]:
 
 
     from services.lab_scope import preset_lab_label, preset_lab_note, resolve_preset_lab
-    manual_lab = st.selectbox("Mô phỏng có sẵn (không cần API):", list(available_labs),
+    manual_lab = st.selectbox("Mô phỏng có sẵn (không cần API):", list(available_labs), index=None,
+        placeholder='Chọn mẫu tham khảo; có công cụ mở rộng ngoài bài học',
         format_func=lambda label: preset_lab_label(label, subject, grade_num))
     st.caption(preset_lab_note(subject, grade_num))
 
-    if st.button("Mở mô phỏng có sẵn"):
+    if st.button("Mở mô phỏng có sẵn", disabled=manual_lab is None):
         st.session_state.lab_request_revision = st.session_state.get("lab_request_revision", 0) + 1
 
         st.session_state.lab_data = resolve_preset_lab(subject, manual_lab, available_labs[manual_lab])
 
-    lab_command = st.text_input("Lệnh mô phỏng:", placeholder=lab_ph, key=f"lab_cmd_{current_context_key}", label_visibility="collapsed")
+    lab_command = st.text_input("Lệnh mô phỏng:", placeholder=curr_ph, key=f"lab_cmd_{current_context_key}", label_visibility="collapsed")
 
 
 
@@ -11791,7 +11932,7 @@ Môn học: {subject} - Lớp {grade_num}.
 
 Chủ đề trọng tâm học sinh đang học: '{topic_hint}'.
 
-Hệ thống AI BẮT BUỘC dựa vào toàn bộ kiến thức chuẩn SGK Kết Nối Tri Thức (NXB Giáo Dục Việt Nam) của môn {subject} Lớp {grade_num} về chủ đề này để dựng mô phỏng / sơ đồ tư duy đầy đủ, toàn diện nhất!""")
+Chỉ dựng nội dung phù hợp môn/lớp và dữ kiện đã có. Khi chưa có trang SGK trong ngữ cảnh, không tuyên bố đã đọc hoặc đối chiếu sách; thiếu dữ kiện mô hình thì yêu cầu bổ sung thay vì tự dựng số liệu.""")
 
 
 
@@ -11879,6 +12020,15 @@ QUY TẮC PHÂN LOẠI MÔ HÌNH:
 
    {{"type": "func_log", "base": 2.0, "k": 1.0, "c": 0.0}}
 
+8a. THANG pH (Hóa học/KHTN, mô hình dung dịch lý tưởng 25 °C):
+   {{"type": "chem_ph", "log_h": -7.0}}
+   log_h = log10([H+]/c°), c° = 1 mol/L, miền mô hình từ -14 đến 0. Chỉ lấy nồng độ từ bài hoặc yêu cầu.
+   Không dùng hàm -log10(x)+7 làm định nghĩa pH. Không suy pH từ nồng độ axit yếu khi chưa có dữ kiện cân bằng.
+
+8b. CÂN BẰNG N2 + 3H2 = 2NH3 (mô hình khí lý tưởng, hỗn hợp đầu 1:3, chưa có NH3):
+   {{"type": "chem_equilibrium", "temp": 450, "p": 200}}
+   Chỉ chọn nếu các giả thiết này khớp yêu cầu; nhiệt độ Celsius và áp suất bar phải lấy đúng dữ kiện.
+
 9. HÌNH HỌC KHÔNG GIAN 3D (Hình chóp, hình lăng trụ, hình hộp chữ nhật, lập phương, quan hệ song song/vuông góc Lớp 11-12):
 
    - NẾU câu hỏi hoặc bài học nhắc đến: hình chóp (S.ABCD, S.ABC, tứ diện...), hình lăng trụ, hình hộp chữ nhật, hình lập phương, hai đường thẳng song song, đường thẳng song song mặt phẳng, quan hệ song song trong không gian:
@@ -11905,9 +12055,9 @@ QUY TẮC PHÂN LOẠI MÔ HÌNH:
 
    QUY CHUẨN SƠ ĐỒ BẮT BUỘC:
 
-   - ĐỘ SÂU & TOÀN DIỆN: Phải tóm tắt ĐẦY ĐỦ VÀ SÂU SẮC toàn bộ kiến thức cốt lõi, công thức, định lý ở bài học phía trên. Tối thiểu 3-5 nhánh chính cấp 1, mỗi nhánh chính bắt buộc có 2-4 nhánh con chi tiết. Tuyệt đối không vẽ sơ sài 1-2 nhánh!
+   - Chọn nhánh theo lượng dữ kiện và mục tiêu bài học thực sự. Không ép số nhánh hoặc tự bổ sung kiến thức chỉ để sơ đồ trông đầy đủ. Phân biệt dữ kiện, quan hệ và kết luận; giữ chính xác tên riêng, mốc thời gian, đơn vị và công thức.
 
-   - HỖ TRỢ ĐA NGÔN NGỮ (VIỆT - ANH): Khi môn học là Tiếng Anh, sơ đồ tư duy phải được trình bày chuẩn phong cách Tiếng Anh học thuật CEFR/IELTS, các nhánh từ vựng kèm loại từ (n, v, adj) và câu ví dụ ngữ cảnh rõ ràng.
+   - Tiếng Anh: dùng từ vựng, ngữ pháp và câu ví dụ vừa trình độ lớp đang chọn; không tự áp IELTS hoặc tiếng Anh học thuật cho mọi lớp. Chú thích tiếng Việt chỉ khi giúp hiểu đúng mục tiêu bài; ghi từ loại đúng khi cần.
 
    Mẫu chuẩn: {{\"type\": \"mermaid\", \"code\": \"graph LR\\n   Root[\\\"🎯 TIÊU ĐỀ CHỦ ĐỀ CHÍNH\\\"] --> A[\\\"1. Khái niệm trọng tâm\\\"]\\n   Root --> B[\\\"2. Các nội dung cơ bản\\\"]\\n   Root --> C[\\\"3. Ứng dụng thực tiễn\\\"]\"}}
 
@@ -11917,7 +12067,9 @@ QUY TẮC PHÂN LOẠI MÔ HÌNH:
 
             try:
 
-                raw_json = call_gemini_with_fallback(lab_prompt, json_mode=True)
+                from services.curriculum_policy import policy_prompt
+                raw_json = call_gemini_with_fallback(lab_prompt, json_mode=True,
+                    system_instruction=policy_prompt(subject, grade_num, 1, st.session_state.get('current_topic') or lab_command.strip()))
 
                 raw_json = raw_json.strip()
 
@@ -15546,7 +15698,7 @@ if selected_station == station_labels[2]:
             with col_c1:
                 q3_input = st.text_input("Hỏi Thầy về câu em làm sai hoặc chưa rõ trong bài thi...", placeholder="Nhập câu hỏi tại đây để Thầy giải thích gợi mở tư duy (Nhấn Enter để gửi)...", label_visibility="collapsed")
             with col_c2:
-                btn_send_socratic = st.form_submit_button("💬 Gửi hỏi Thầy", type="primary", use_container_width=True)
+                btn_send_socratic = st.form_submit_button("💬 Gửi hỏi Thầy", type="primary", width="stretch")
 
         if btn_send_socratic and q3_input.strip():
             q3 = q3_input.strip()
@@ -15665,7 +15817,7 @@ if selected_station == station_labels[2]:
         st.markdown("---")
         col_new1, col_new2, col_new3 = st.columns([1, 2, 1])
         with col_new2:
-            if st.button("🔄 Làm đề khảo thí mới", type="primary", use_container_width=True, key="btn_do_new_exam_bottom"):
+            if st.button("🔄 Làm đề khảo thí mới", type="primary", width="stretch", key="btn_do_new_exam_bottom"):
                 st.session_state.exam_state = "config"
                 st.session_state.exam_data = None
                 st.session_state.exam_answers = {}
@@ -15708,7 +15860,7 @@ if selected_station == station_labels[3]:
 
                 st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
 
-                btn_unlock = st.form_submit_button("🔓 Mở khóa", type="primary", use_container_width=True)
+                btn_unlock = st.form_submit_button("🔓 Mở khóa", type="primary", width="stretch")
 
             if btn_unlock:
 
@@ -16122,7 +16274,7 @@ if selected_station == station_labels[3]:
                         "Khuyến nghị khảo thí": it["recommendation"]
                     } for it in item_details])
 
-                    st.dataframe(df_items, use_container_width=True, height=260)
+                    st.dataframe(df_items, width="stretch", height=260)
                     st.download_button(
                         "📥 Tải Báo Cáo Đo Lường Khảo Thí (CSV Item Analysis)",
                         df_items.to_csv(index=False).encode("utf-8-sig"),

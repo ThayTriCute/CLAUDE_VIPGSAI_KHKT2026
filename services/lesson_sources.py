@@ -6,8 +6,9 @@ from urllib.parse import quote_plus
 from kntt_sgk_library import KNTT_DIGITAL_LIBRARY
 from services.academic_context import academic_context, canonical_subject
 
-PUBLISHER_PORTAL = "https://truonghocsoquocgia.nxbgd.vn/"
-T1_CONTEXT_REVISION = 2026110101
+PUBLISHER_PORTAL = "https://taphuan.nxbgd.vn/tap-huan?tab=public"
+PUBLISHER_DIGITAL_LIBRARY = "https://truonghocsoquocgia.nxbgd.vn/"
+T1_CONTEXT_REVISION = 2026110102
 PUBLISHER_2026_NOTICE = "https://nxbgd.vn/bai-viet/nha-xuat-ban-giao-duc-viet-nam-thong-bao-ve-viec-su-dung-sach-giao-khoa-nam-hoc-2026-2027"
 
 
@@ -30,13 +31,19 @@ def books_for(subject, grade):
     rows = KNTT_DIGITAL_LIBRARY.get(str(grade), {})
     books = next((books for key, books in rows.items() if canonical_subject(key) == subject), [])
     if not books:
-        return [{"title": f"Tra cứu SGK {subject} lớp {grade} tại NXBGD", "url": PUBLISHER_PORTAL, "kind": "portal"}]
+        return [{"title": f"Danh mục SGK NXBGDVN — chọn {subject}, lớp {grade}", "url": PUBLISHER_PORTAL, "kind": "portal"}]
     result = []
     for book in books:
         book = dict(book)
-        unavailable = book["url"] == PUBLISHER_PORTAL or "taphuan.nxbgd.vn" in book["url"] or book["url"].endswith("bo-sach-ket-noi-tri-thuc-voi-cuoc-song-sgk-sinh-hoc-10/")
+        publisher_book_page = ("taphuan.nxbgd.vn" in book["url"]
+                               and "/tap-huan/chi-tiet-sach/" in book["url"])
+        unavailable = (book["url"] in {PUBLISHER_PORTAL, PUBLISHER_DIGITAL_LIBRARY}
+                       or ("taphuan.nxbgd.vn" in book["url"] and not publisher_book_page)
+                       or book["url"].endswith("bo-sach-ket-noi-tri-thuc-voi-cuoc-song-sgk-sinh-hoc-10/"))
         if unavailable:
             book.update(title="Tra cứu " + book["title"], url=PUBLISHER_PORTAL, kind="portal")
+        elif publisher_book_page:
+            book["kind"] = "publisher_book_page"
         else:
             book["kind"] = "reference_page"
         result.append(book)

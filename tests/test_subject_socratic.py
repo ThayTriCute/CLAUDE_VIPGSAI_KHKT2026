@@ -5,6 +5,20 @@ from services.academic_context import subjects_for_grade
 
 
 class TestSubjectSocratic(unittest.TestCase):
+    def test_chemistry_hint_does_not_name_element_unique_to_the_answer(self):
+        hint = 'Nhóm base của kim loại kiềm như Natri, Kali có tính chất gì với nước?'
+        opts = [r'A. $\ce{NaOH}$', r'B. $\ce{Cu(OH)2}$', r'C. $\ce{Al(OH)3}$', r'D. $\ce{Fe(OH)3}$']
+        value = sanitize_socratic_hint(hint, 'A', 'Chất nào thuộc base tan (kiềm)?', opts, subject='KHTN', grade_num=8)
+        self.assertNotEqual(value, hint)
+        self.assertNotIn('Natri', value)
+        self.assertIn('bảng tính tan', value)
+
+    def test_chemistry_hint_can_refer_to_an_element_already_given(self):
+        hint = 'Với NaOH đã cho, em sẽ dựa vào bằng chứng nào để nhận xét hiện tượng?'
+        opts = [r'A. $\ce{NaCl}$', 'B. Không đổi', 'C. Chưa biết', 'D. Kết tủa']
+        self.assertEqual(sanitize_socratic_hint(hint, 'A', 'Cho NaOH vào dung dịch...', opts,
+                         subject='Hóa học', grade_num=11), hint)
+
     def test_non_math_fallback_does_not_instruct_every_subject_to_solve_equations(self):
         for grade in range(6, 13):
             for subject in subjects_for_grade(grade):

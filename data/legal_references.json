@@ -63,6 +63,18 @@
       "verification_scope": "Article 2 of signed Ministry decision: effective 2026-01-01; not textbook-page validation"
     },
     {
+      "code": "185/QĐ-BGDĐT",
+      "issued_on": "2026-01-29",
+      "effective_from": "2026-01-29",
+      "scope": "textbook",
+      "status": "active",
+      "url": "https://thuvienphapluat.vn/van-ban/giao-duc/quyet-dinh-185-qd-bgddt-2026-bo-sung-sach-giao-khoa-giao-duc-pho-thong-toan-quoc-695295.aspx",
+      "corroborating_source_url": "https://nxbgd.vn/bai-viet/nha-xuat-ban-giao-duc-viet-nam-thong-bao-ve-viec-su-dung-sach-giao-khoa-nam-hoc-2026-2027",
+      "note": "Bổ sung danh mục SGK dùng thống nhất toàn quốc từ năm học 2026–2027; phải đối chiếu đúng tên sách/lớp trong phụ lục. Không thay QĐ 3588 và không chứng nhận nội dung học liệu AI.",
+      "checked_at": "2026-11-01",
+      "verification_scope": "decision_identity_issue_and_effective_date_and_scope_checked; annex not mapped to app curriculum topics"
+    },
+    {
       "code": "24/2024/TT-BGDĐT",
       "effective_from": "2025-02-08",
       "scope": "graduation",
