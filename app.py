@@ -10993,6 +10993,9 @@ if selected_station == station_labels[0]:
             cleaned_p1 = re.sub(r'(?:\s*\-\-\-\s*)+$', '', cleaned_p1)
             cleaned_p1 = station1_master_sovereign_brain_gate(cleaned_p1, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''))
             cleaned_p1_vis = render_pedagogical_lesson_visuals(cleaned_p1, subject=subject, grade=grade_num)
+            if subject == "Toán học":
+                from services.function_visuals import with_function_visuals
+                cleaned_p1_vis = with_function_visuals(cleaned_p1_vis, st.session_state.get('current_topic', ''), cleaned_p1)
             st.markdown(cleaned_p1_vis, unsafe_allow_html=True)
 
             # ==============================================================================
