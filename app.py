@@ -10280,6 +10280,23 @@ def _normalize_moet_bbt_grid(x_cells: list, yp_cells: list, y_cells: list) -> di
     }
 
 
+def _sync_t1_function_export(export_html, subject, topic, lesson):
+    """Keep exports current even if Cloud retains an older imported builder."""
+    if subject != "Toán học":
+        return export_html
+    article = re.search(r'(<article\b[^>]*>)([\s\S]*?)(</article>)', export_html)
+    if not article or 'class="verified-function-visuals"' in article[2] or 'data-function-rejected' in article[2]:
+        return export_html
+    from services.function_visuals import with_function_visuals
+    updated = with_function_visuals(article[2], topic, lesson)
+    if updated == article[2]:
+        return export_html
+    result = export_html[:article.start(2)] + updated + export_html[article.end(2):]
+    if '.monochrome .verified-function-visuals' not in result:
+        result = result.replace('</style>', '.monochrome .verified-function-visuals polyline{stroke:#111}</style>', 1)
+    return result
+
+
 def _build_svg_bbt_from_rows(x_cells: list, yp_cells: list, y_cells: list, is_sign_table: bool = False) -> str:
     """
     Dựng Bảng Biến Thiên / Bảng Xét Dấu chuẩn Bộ GD&ĐT (SGK Kết nối tri thức):
@@ -11013,6 +11030,7 @@ if selected_station == station_labels[0]:
                 export_mode = st.radio("Kiểu phiếu bài học:", ["Chữ viết tay trên giấy ô ly", "Infographic màu theo bài học", "Bản in trắng đen"], horizontal=True, key=f"lesson_export_{t1_indexing_data['index_code']}")
                 export_style = "handwritten" if export_mode.startswith("Chữ") else "color" if export_mode.startswith("Infographic") else "monochrome"
                 export_html = build_lesson_html(subject, grade_num, current_topic_name, cleaned_p1, export_style)
+                export_html = _sync_t1_function_export(export_html, subject, current_topic_name, cleaned_p1)
                 components.html(export_html, height=790, scrolling=True)
                 st.download_button("📥 Tải phiếu HTML để xem / In PDF", export_html.encode("utf-8"), file_name=f"Bai_hoc_{t1_indexing_data['index_code']}_{export_style}.html", mime="text/html", key="download_lesson_html")
                 st.download_button("📄 Tải nội dung gốc Markdown", cleaned_p1.encode("utf-8"), file_name=f"Bai_hoc_{t1_indexing_data['index_code']}.md", mime="text/markdown", key="download_lesson_source")
