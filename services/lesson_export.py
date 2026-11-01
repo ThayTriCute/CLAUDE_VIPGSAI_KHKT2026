@@ -79,6 +79,9 @@ def build_lesson_html(subject, grade, topic, lesson, style="handwritten"):
     metadata = json.dumps({"subject": subject, "grade": grade, "topic": topic, "source_sha256": digest}, ensure_ascii=False).replace("<", "\\u003c")
     title = html.escape(str(topic or subject))
     body = lesson_body_html(lesson)
+    if subject == 'Toán học':
+        from services.function_visuals import with_function_visuals
+        body = with_function_visuals(body, topic, lesson)
     return r'''<!doctype html><html lang="vi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>''' + title + r'''</title>
 <style>''' + css + r'''
@@ -101,6 +104,7 @@ article{font-size:17px;line-height:1.6}article p{margin:0 0 .75em}article li{mar
 pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#ffffff80;padding:10px;font:14px/1.4 monospace}code{font-family:monospace;font-size:.8em}.katex{font-size:1.02em}.katex-display{overflow-x:auto;overflow-y:hidden;margin:.7em 0}
 .formula-error{outline:2px solid #b91c1c;color:#991b1b;white-space:pre-wrap;font-family:monospace}.monochrome,.monochrome h1,.monochrome h2,.monochrome h3,.monochrome h4{color:#111}.monochrome .paper{background:#fff}
 .color .paper{background:#fff}.color h2{border-left:4px solid #0891b2;padding-left:10px}.notice{color:#b91c1c}
+.monochrome .verified-function-visuals polyline{stroke:#111}
 @media(max-width:600px){.paper{margin:10px 8px;padding:20px}.handwritten .paper{padding:24px 18px 28px 48px}.handwritten article{font-size:22px}.handwritten .notebook-header{grid-template-columns:1fr;gap:14px}.notebook-identity span{margin-top:2px}.notebook-heading h1{font-size:28px}}
 @page{size:A4;margin:10mm}@media print{body{background:#fff}.toolbar{display:none}.paper{margin:0;max-width:none;min-height:0;padding:10mm 7mm 10mm 12mm;box-shadow:none}.handwritten .paper{padding:5mm 5mm 7mm 16mm;box-shadow:none;print-color-adjust:exact;-webkit-print-color-adjust:exact;box-decoration-break:clone;-webkit-box-decoration-break:clone}.handwritten .notebook-header{grid-template-columns:minmax(120px,1fr) minmax(0,2fr);break-inside:avoid}.handwritten article{font-size:23px}.handwritten .source-note{font-size:16px}article{orphans:3;widows:3}p,li{break-inside:avoid}pre{break-inside:auto}thead{display:table-header-group}tr{break-inside:avoid}.katex-display{overflow:visible}a{color:inherit;text-decoration:none}}
 </style></head><body class="''' + style + r'''">
