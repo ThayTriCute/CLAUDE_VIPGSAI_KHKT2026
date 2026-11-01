@@ -2,9 +2,9 @@ def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
-    for module, revision in ((lesson_sources, 2026110102), (curriculum_policy, 2026110118),
-                             (lab_scope, 2026110105), (lesson_export, 2026110102),
-                             (text_boundaries, 2026110102), (socratic_context, 2026110101)):
+    for module, revision in ((lesson_sources, 2026110105), (curriculum_policy, 2026110120),
+                             (lab_scope, 2026110105), (lesson_export, 2026110106),
+                             (text_boundaries, 2026110103), (socratic_context, 2026110102)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
@@ -4630,7 +4630,7 @@ def render_mermaid(code: str):
 
         const zoom = d3.zoom()
 
-            .scaleExtent([0.25, 3.5])
+            .scaleExtent([0.05, 3.5])
 
             .on("zoom", (e) => g.attr("transform", e.transform));
 
@@ -5006,7 +5006,26 @@ def render_mermaid(code: str):
 
 
 
-        svg.call(zoom.transform, d3.zoomIdentity.translate(50, height / 2.3).scale(0.85));
+        let fitTimer;
+        function fitMindmap() {
+            clearTimeout(fitTimer);
+            // Wait for the node/link transitions before measuring their bounds.
+            fitTimer = setTimeout(() => {
+                const bounds = g.node().getBBox();
+                const width = container.clientWidth;
+                const padding = 24;
+                if (!width || !bounds.width || !bounds.height) return;
+                const scale = Math.min(1, (width - 2 * padding) / bounds.width,
+                                       (height - 2 * padding) / bounds.height);
+                if (!Number.isFinite(scale) || scale <= 0) return;
+                const tx = (width - bounds.width * scale) / 2 - bounds.x * scale;
+                const ty = (height - bounds.height * scale) / 2 - bounds.y * scale;
+                svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+            }, 400);
+        }
+        fitMindmap();
+        window.addEventListener('resize', fitMindmap);
+        if (document.fonts) document.fonts.ready.then(fitMindmap);
 
 
 
@@ -5023,6 +5042,8 @@ def render_mermaid(code: str):
             expand(root);
 
             update(root);
+
+            fitMindmap();
 
         };
 
@@ -5050,13 +5071,15 @@ def render_mermaid(code: str):
 
             update(root);
 
+            fitMindmap();
+
         };
 
 
 
         window.resetZoom = function() {
 
-            svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity.translate(50, height / 2.3).scale(0.85));
+            fitMindmap();
 
         };
 
@@ -6982,6 +7005,30 @@ def heal_bbt_markdown_table(text: str) -> str:
 
     return s
 
+def recover_missing_quiz_keys(existing, reparsed):
+    """Recover explicit source keys without reshuffling a student's live options."""
+    def body(option):
+        return re.sub(r'^[A-D][.):]\s*', '', str(option)).strip()
+    result = []
+    for old in existing:
+        repaired = dict(old)
+        if old.get('correct') not in ('A', 'B', 'C', 'D'):
+            candidates = [q for q in reparsed if q.get('question') == old.get('question')]
+            if len(candidates) == 1:
+                new = candidates[0]
+                key = new.get('correct', '')
+                old_options = old.get('options', [])
+                new_options = new.get('options', [])
+                if key in ('A', 'B', 'C', 'D') and len(old_options) == len(new_options) == 4:
+                    old_bodies, new_bodies = list(map(body, old_options)), list(map(body, new_options))
+                    if len(set(old_bodies)) == 4 and sorted(old_bodies) == sorted(new_bodies):
+                        answer = new_bodies[ord(key) - ord('A')]
+                        repaired['correct'] = chr(ord('A') + old_bodies.index(answer))
+                        repaired['hint'] = new.get('hint', '')
+        result.append(repaired)
+    return result
+
+
 def parse_quiz_questions(text):
     questions = []
     part3_match = re.search(r'(?im)^\s*(?:#{1,6}\s*)?PHẦN\s*3(?!\d)', text)
@@ -7013,7 +7060,9 @@ def parse_quiz_questions(text):
         parsing_options = False
 
         for line in lines[1:]:
-            evidence_match = re.match(r'^(OUTCOME|COGNITIVE_REASON|COGNITIVE_STEPS):\s*(.*)', line, re.I)
+            # Formatting on reserved fields is presentation, not part of a key.
+            field_line = re.sub(r'\*\*|__', '', line)
+            evidence_match = re.match(r'^(OUTCOME|COGNITIVE_REASON|COGNITIVE_STEPS):\s*(.*)', field_line, re.I)
             if evidence_match:
                 field = {"OUTCOME": "learning_outcome", "COGNITIVE_REASON": "cognitive_rationale", "COGNITIVE_STEPS": "solution_steps"}[evidence_match[1].upper()]
                 value = evidence_match[2].strip()
@@ -7032,14 +7081,14 @@ def parse_quiz_questions(text):
             if clean_line.upper().startswith(('A.', 'B.', 'C.', 'D.')):
                 parsing_options = True
                 options.append(clean_line)
-            elif re.search(r'(?i)^(CORRECT|ĐÁP ÁN|Đáp án đúng)\s*:', line):
-                key_text = line.split(":", 1)[-1].strip()
+            elif re.search(r'(?i)^(CORRECT|ĐÁP ÁN|Đáp án đúng)\s*:', field_line):
+                key_text = field_line.split(":", 1)[-1].strip()
                 key_match = re.match(r'(?i)^(?:chọn\s+|phương án\s+)?([A-D])(?=$|[\s.);,:])', key_text)
                 correct = key_match[1].upper() if key_match else ""
-            elif re.search(r'(?i)^(HINT|SOCRATIC_HINT)\s*:', line):
-                hint = line.split(":", 1)[-1].strip()
-            elif re.search(r'(?i)^(EXPLAIN|GIẢI THÍCH|Gợi ý)\s*:', line):
-                explain = line.split(":", 1)[-1].strip()
+            elif re.search(r'(?i)^(HINT|SOCRATIC_HINT)\s*:', field_line):
+                hint = field_line.split(":", 1)[-1].strip()
+            elif re.search(r'(?i)^(EXPLAIN|GIẢI THÍCH|Gợi ý)\s*:', field_line):
+                explain = field_line.split(":", 1)[-1].strip()
             else:
                 if not parsing_options:
                     q_text_lines.append(line)
@@ -10743,7 +10792,12 @@ def render_pedagogical_lesson_visuals(markdown_text: str, subject: str = "", gra
         # B. HÓA HỌC / KHOA HỌC TỰ NHIÊN:
         elif "hóa học" in subj_norm or "hóa" in subj_norm:
             # 1. Thí nghiệm điều chế khí
-            if any(k in text_lower for k in ["điều chế", "thu khí", "ống nghiệm", "đẩy nước", "đẩy không khí", "bình tam giác"]) and "svg_chem_inserted" not in text:
+            # The fixed diagram contains heating and water displacement; only
+            # use it when those details and the gas are explicit in the lesson.
+            if (re.search(r'c\s*_?\{?2\}?\s*h\s*_?\{?4\}?|\b(?:ethylene|ethene|etilen)\b', text_lower)
+                    and 'đẩy nước' in text_lower
+                    and any(k in text_lower for k in ('đun nóng', 'đèn cồn'))
+                    and 'svg_chem_inserted' not in text):
                 try:
                     chem_model = pve.build_gas_preparation_model("C2H4")
                     if chem_model and chem_model.get("svg"):
@@ -10758,7 +10812,7 @@ def render_pedagogical_lesson_visuals(markdown_text: str, subject: str = "", gra
                 except Exception:
                     pass
             # 2. Pin điện hóa Daniell
-            if any(k in text_lower for k in ["pin điện hóa", "daniell", "cực âm", "cực dương", "anode", "cathode", "cầu muối"]) and "svg_daniell_inserted" not in text:
+            if ('daniell' in text_lower and 'svg_daniell_inserted' not in text):
                 try:
                     dan_model = pve.build_daniell_cell_model()
                     if dan_model and dan_model.get("svg"):
@@ -11260,6 +11314,18 @@ if selected_station == station_labels[0]:
                             topic_nm=st.session_state.get('current_topic', subject),
                             context_data=cleaned_p1
                         )
+                        t1_sys_inst += (
+                            f"\nHọc sinh đang học môn {subject}, lớp {grade_num}. "
+                            "Tên trường trong thương hiệu ứng dụng là thông tin tác giả; không phải trường của học sinh. "
+                            "Không tự gọi học sinh là học sinh Tân Hiệp hoặc THPT khi chưa có dữ kiện. "
+                            "Phản hồi ngắn, rõ, phù hợp lứa tuổi; trả lời trực tiếp thắc mắc về yêu cầu bài học trước khi gợi hỏi."
+                        )
+                        if subject == 'Ngữ văn' and 'trải nghiệm' in st.session_state.get('current_topic', '').lower():
+                            t1_sys_inst += (
+                                "\nVới bài kể trải nghiệm, tôi và em đều có thể là ngôi thứ nhất; "
+                                "không ngụ ý một cách xưng luôn sâu sắc hơn. Không bắt buộc trải nghiệm phải có cao trào "
+                                "hay biến cố; không dùng tiêu chí mỗi cử chỉ đều phải kèm cảm xúc."
+                            )
                         with st.chat_message("assistant"):
                             try:
                                 is_t1_understood = detect_student_concluded_intent(t1_input, st.session_state.tram1_chat_history)
@@ -11324,6 +11390,12 @@ if selected_station == station_labels[0]:
         # In Phần 2 (Trắc nghiệm tương tác)
 
         quiz_list = st.session_state.get("parsed_quiz", [])
+        quiz_recovery_key = (st.session_state.get('current_lesson', ''), 2026110101)
+        if (quiz_list and any(q.get('correct') not in ('A', 'B', 'C', 'D') for q in quiz_list)
+                and st.session_state.get('quiz_key_recovery_checked') != quiz_recovery_key):
+            quiz_list = recover_missing_quiz_keys(quiz_list, parse_quiz_questions(quiz_recovery_key[0]))
+            st.session_state.parsed_quiz = quiz_list
+            st.session_state.quiz_key_recovery_checked = quiz_recovery_key
 
         if quiz_list:
 
@@ -11454,7 +11526,10 @@ if selected_station == station_labels[0]:
             st.markdown("### ✍️ Phần 3: Bài tập tự luận & Hướng dẫn tư duy")
             st.caption("Mức độ tự luận là đề xuất của AI; cần đối chiếu yêu cầu cần đạt, lời giải và rubric theo đúng môn/lớp. Bài dài hoặc nhiều bước không tự động là VDC.")
             from services.text_boundaries import student_essay_text
-            p3_vis = render_pedagogical_lesson_visuals(student_essay_text(part3_split[-1]), subject=subject, grade=grade_num)
+            from services.lesson_sources import apply_reviewed_essay_labels
+            p3_student = apply_reviewed_essay_labels(student_essay_text(part3_split[-1]), subject, grade_num,
+                                                    st.session_state.get('current_topic', ''))
+            p3_vis = render_pedagogical_lesson_visuals(p3_student, subject=subject, grade=grade_num)
             st.markdown(chemical_display_markdown(p3_vis), unsafe_allow_html=True)
 
 

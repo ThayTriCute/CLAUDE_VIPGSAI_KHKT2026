@@ -1,15 +1,114 @@
 """Reference links are navigation aids, not invented textbook page citations."""
 import hashlib
 import html
-from urllib.parse import quote_plus
+import json
+import re
+from datetime import date, datetime, timedelta, timezone
+from functools import lru_cache
+from pathlib import Path
+from urllib.parse import quote_plus, urlparse
 
 from kntt_sgk_library import KNTT_DIGITAL_LIBRARY
-from services.academic_context import academic_context, canonical_subject
+from services.academic_context import academic_context, canonical_subject, folded
 
 PUBLISHER_PORTAL = "https://taphuan.nxbgd.vn/tap-huan?tab=public"
 PUBLISHER_DIGITAL_LIBRARY = "https://truonghocsoquocgia.nxbgd.vn/"
-T1_CONTEXT_REVISION = 2026110102
+T1_CONTEXT_REVISION = 2026110105
+REVIEW_REGISTRY = Path(__file__).resolve().parents[1] / 'data/lesson_reference_reviews.json'
 PUBLISHER_2026_NOTICE = "https://nxbgd.vn/bai-viet/nha-xuat-ban-giao-duc-viet-nam-thong-bao-ve-viec-su-dung-sach-giao-khoa-nam-hoc-2026-2027"
+
+
+@lru_cache(maxsize=1)
+def _review_registry(revision):
+    # Cache local evidence, not a new AI or network request on each rerun.
+    payload = json.loads(REVIEW_REGISTRY.read_text(encoding='utf-8-sig'))
+    if (not isinstance(payload, dict) or payload.get('schema_version') != 1
+            or not isinstance(payload.get('reviews'), list)
+            or any(not isinstance(row, dict) for row in payload['reviews'])):
+        raise ValueError('Định dạng hồ sơ nguồn đối chiếu chưa hợp lệ.')
+    return payload['reviews']
+
+
+def reviewed_lesson_sources(subject, grade, topic):
+    """Match the reviewed lesson exactly; never turn a directory into approval."""
+    subject, grade = academic_context(subject, grade)
+    missing = {'status': 'missing_lesson_review', 'sources': [], 'reviewed_on': None,
+               'scope': 'Chưa có hồ sơ đối chiếu đúng bài; các liên kết môn/lớp chỉ dùng tra cứu.'}
+    try:
+        rows = _review_registry(REVIEW_REGISTRY.stat().st_mtime_ns)
+        matches = [r for r in rows if r.get('subject') == subject and r.get('grade') == grade
+                   and folded(topic) in {folded(t) for t in r.get('topics', [])}]
+        if len(matches) > 1:
+            return dict(missing, status='ambiguous_lesson_review',
+                        scope='Có nhiều hồ sơ cùng bài; cần đối chiếu và thống nhất trước khi xác nhận.')
+        if not matches:
+            return missing
+        row = matches[0]
+        reviewed_on = date.fromisoformat(row['reviewed_on'])
+        today = datetime.now(timezone(timedelta(hours=7))).date()
+        if reviewed_on > today or not row.get('sources') or not row.get('scope'):
+            raise ValueError('Thiếu nguồn, phạm vi hoặc ngày đối chiếu hợp lệ.')
+        for source in row['sources']:
+            url = urlparse(source.get('url', ''))
+            host = (url.hostname or '').lower()
+            official = any(host == domain or host.endswith('.' + domain)
+                           for domain in ('nxbgd.vn', 'moet.gov.vn', 'chinhphu.vn', 'vbpl.vn', 'moj.gov.vn', 'baochinhphu.vn'))
+            if (url.scheme != 'https' or url.username or url.password or not official or not source.get('title')
+                    or not source.get('locator') or not source.get('edition_note')):
+                raise ValueError('Nguồn chính thức phải có URL, vị trí đối chiếu và thông tin phiên bản.')
+            if not isinstance(source.get('criteria', []), list) or not all(
+                    isinstance(item, str) for item in source.get('criteria', [])):
+                raise ValueError('Tiêu chí đối chiếu phải là danh sách văn bản.')
+        # Return a copy so callers cannot corrupt evidence reused on later reruns.
+        return json.loads(json.dumps(dict(row, status='reviewed_requirements_source'), ensure_ascii=False))
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return dict(missing, status='invalid_review_registry',
+                    scope='Hồ sơ đối chiếu chưa đọc được hoặc chưa hợp lệ; không dùng để xác nhận bài đạt.')
+
+
+def lesson_source_review_html(subject, grade, topic):
+    review = reviewed_lesson_sources(subject, grade, topic)
+    if review['status'] != 'reviewed_requirements_source':
+        return ('<div class="lesson-source-review" data-source-review-status="'
+                + html.escape(review['status'], quote=True) + '"><b>Nguồn đối chiếu:</b> '
+                + html.escape(review['scope']) + '</div>')
+    items = []
+    for source in review['sources']:
+        page = f" Trang: {source['page']}." if source.get('page') is not None else ''
+        criteria = '; '.join(source.get('criteria', []))
+        items.append('<li><a href="' + html.escape(source['url'], quote=True)
+                     + '" target="_blank" rel="noopener noreferrer">' + html.escape(source['title'])
+                     + '</a><br>' + html.escape(source['locator'] + page)
+                     + '<br>' + html.escape(source['edition_note'])
+                     + ('<br>' + html.escape(criteria) if criteria else '') + '</li>')
+    return ('<div class="lesson-source-review" data-source-review-status="reviewed_requirements_source">'
+            + '<b>Nguồn đã đối chiếu yêu cầu bài học</b>'
+            + '<p>Ngày đối chiếu: ' + html.escape(review['reviewed_on']) + '. '
+            + html.escape(review['scope']) + '</p><ul>' + ''.join(items) + '</ul></div>')
+
+
+def apply_reviewed_essay_labels(text, subject, grade, topic):
+    """Apply only an explicit teacher decision for the exact reviewed stem."""
+    review = reviewed_lesson_sources(subject, grade, topic)
+    if review['status'] != 'reviewed_requirements_source':
+        return text
+    starts = list(re.finditer(r'(?mi)^[ \t]*(?:\*\*)?Câu[ \t]+\d+[.:]', text))
+    value = text
+    for index in range(len(starts) - 1, -1, -1):
+        start = starts[index].start()
+        end = starts[index + 1].start() if index + 1 < len(starts) else len(text)
+        block = text[start:end]
+        label = re.search(r'\[Mức độ:[^\]\n]*\]', block, re.I)
+        if not label:
+            continue
+        stem = re.split(r'(?mi)^[ \t]*(?:[-*][ \t]+)?(?:\*\*)?Bước[ \t]+1\b', block[label.end():], maxsplit=1)[0]
+        matches = [row for row in review.get('assessment_decisions', [])
+                   if folded(row.get('question', '')) == folded(stem)
+                   and row.get('level') in ('NB', 'TH', 'VD', 'VDC') and row.get('reason')]
+        if len(matches) == 1:
+            replacement = '[Mức độ: ' + matches[0]['level'] + ']'
+            value = value[:start + label.start()] + replacement + value[start + label.end():]
+    return value
 
 
 def textbook_update_notice(subject, grade):
@@ -59,12 +158,15 @@ def lesson_references(subject, grade, topic, channels, qr_builder):
     books = books_for(subject, grade)
     links = " · ".join(f'<a href="{html.escape(b["url"], quote=True)}" target="_blank" rel="noopener noreferrer">{html.escape(b["title"])}</a>' for b in books)
     update = textbook_update_notice(subject, grade)
+    review = reviewed_lesson_sources(subject, grade, topic)
+    review_html = lesson_source_review_html(subject, grade, topic)
     update_html = (f'<p>{html.escape(update["note"])} <a href="{html.escape(update["url"], quote=True)}" '
                    'target="_blank" rel="noopener noreferrer">Thông báo cập nhật của NXBGD</a></p>') if update else ''
     badge = (f'<div class="lesson-reference"><b>{html.escape(subject)} · Lớp {grade}</b> — {html.escape(topic)}'
-             f'<p>Mã lưu nội bộ: {code}. Liên kết tra cứu theo môn/lớp; chưa xác minh bài/trang SGK cụ thể.</p>{update_html}{links}'
+             f'<p>Mã lưu nội bộ: {code}. Các liên kết dưới đây dùng tra cứu theo môn/lớp.</p>{review_html}{update_html}{links}'
              f'<p><a href="{html.escape(video, quote=True)}" target="_blank" rel="noopener noreferrer">Tìm video theo chủ đề</a>'
              ' — đây là kết quả tìm kiếm, không phải video đã được thẩm định.</p></div>')
     return {"index_code": code, "chapter_name": topic, "clean_topic": topic,
             "book_name": f"Tài liệu tham khảo {subject} lớp {grade}", "channel_info": channel,
-            "yt_deep_url": video, "qr_img_data": qr_builder(video), "badge_html": badge}
+            "yt_deep_url": video, "qr_img_data": qr_builder(video), "badge_html": badge,
+            "reference_review": review}

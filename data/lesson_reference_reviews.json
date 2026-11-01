@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "reviews": [
+    {
+      "id": "kntt-van6-bai3-viet-trai-nghiem-20261101",
+      "subject": "Ngữ văn",
+      "grade": 6,
+      "topics": [
+        "Viết bài văn kể lại một trải nghiệm của em — Ngữ văn 6, Kết nối tri thức với cuộc sống, Bài 3: Yêu thương và chia sẻ."
+      ],
+      "reviewed_on": "2026-11-01",
+      "assessment_decisions": [
+        {
+          "question": "Sau khi hoàn thành bài văn ở câu 1, em hãy tự đánh giá bài viết của mình bằng cách lập một bảng kiểm (Checklist) gồm ít nhất 5 tiêu chí để xem bài văn đã đạt yêu cầu của thể loại kể lại một trải nghiệm hay chưa.",
+          "level": "VD",
+          "reason": "Vận dụng yêu cầu thể loại đã học để lập tiêu chí và tự sửa bài; nhiệm vụ chưa nêu bối cảnh chuyển giao hoặc yêu cầu phân hóa đủ để giữ nhãn VDC."
+        }
+      ],
+      "scope": "Đối chiếu yêu cầu kiểu bài và quy trình viết; chưa phải xác nhận mọi câu hỏi, phản hồi AI hoặc toàn bộ chương trình đã đạt.",
+      "sources": [
+        {
+          "title": "SGV Ngữ văn 6, tập một — Kết nối tri thức với cuộc sống",
+          "url": "https://sachdientu.nxbgd.vn/thu-vien-so/doc-sach/sgv-ngu-van-6-tap-1.4505054581",
+          "locator": "Bài 3: Yêu thương và chia sẻ → Viết bài văn kể lại một trải nghiệm của em → Phân tích yêu cầu cần đạt; Những lưu ý về yêu cầu đối với bài văn; Hoạt động 4 và trả bài.",
+          "page": null,
+          "edition_note": "Nguồn SGV trực tuyến đã đọc; chưa xác minh năm tái bản, không tự gán số trang.",
+          "criteria": [
+            "Ngôi kể thứ nhất; kể trải nghiệm của bản thân.",
+            "Sự việc và chi tiết theo trình tự hợp lí; thể hiện cảm xúc và ý nghĩa trải nghiệm.",
+            "Xác định mục đích/người đọc, tìm ý, lập dàn ý, viết và chỉnh sửa theo yêu cầu thể loại."
+          ]
+        },
+        {
+          "title": "Báo Điện tử Chính phủ — hướng dẫn đổi mới dạy học Ngữ văn, CV 3175/BGDĐT-GDTrH",
+          "url": "https://baochinhphu.vn/bo-gddt-chi-dao-doi-moi-phuong-phap-day-hoc-va-kiem-tra-mon-ngu-van-102220722103501798.htm",
+          "locator": "Các mục Phát huy tính chủ động, sáng tạo; Tránh đọc chép; Đổi mới cách kiểm tra, đánh giá; Tôn trọng cách nghĩ, cách cảm riêng.",
+          "page": null,
+          "edition_note": "Bài giới thiệu chính thức ngày 22/07/2022; dùng đối chiếu định hướng dạy viết, không thay bản gốc công văn.",
+          "criteria": [
+            "Giao nhiệm vụ và sản phẩm phù hợp lứa tuổi; hướng dẫn các bước tạo lập văn bản.",
+            "Khuyến khích ý tưởng và cách thể hiện riêng; không áp đặt văn mẫu cho học sinh."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kntt-khtn8-bai9-base-ph-20261101",
+      "subject": "Khoa học tự nhiên",
+      "grade": 8,
+      "topics": [
+        "Base. Thang pH",
+        "Base. Thang pH — Khoa học tự nhiên 8, Kết nối tri thức với cuộc sống."
+      ],
+      "reviewed_on": "2026-11-01",
+      "scope": "Đối chiếu yêu cầu và nội dung kiến thức của Bài 9; không chứng nhận toàn bộ SGK hoặc mọi phản hồi AI.",
+      "sources": [
+        {
+          "title": "SGV Khoa học tự nhiên 8 — Kết nối tri thức với cuộc sống",
+          "url": "https://sachdientu.nxbgd.vn/thu-vien-so/doc-sach/sgv-khoa-hoc-tu-nhien.4492016197",
+          "locator": "Bài 9: Base. Thang pH → Mục tiêu; Hoạt động 2, 3, 4; phiếu học tập tính chất hóa học của base.",
+          "page": null,
+          "edition_note": "Nguồn SGV trực tuyến đã đọc ngày 01/11/2026; không tự gán số trang hoặc năm tái bản.",
+          "criteria": [
+            "Khái niệm base, kiềm và tra bảng tính tan.",
+            "Chỉ thị màu và phản ứng base với acid tạo muối, nước; giải thích hiện tượng và viết phương trình.",
+            "Thang pH và nhận xét môi trường dung dịch; quan sát thí nghiệm có hướng dẫn, không nhận biết hóa chất bằng nếm/chạm."
+          ]
+        }
+      ]
+    }
+  ]
+}

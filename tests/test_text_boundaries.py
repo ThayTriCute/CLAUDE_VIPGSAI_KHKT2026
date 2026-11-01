@@ -55,6 +55,18 @@ class TestLessonBoundaries(unittest.TestCase):
         self.assertIn('Câu 2.', value)
         self.assertIn('Bước 1:', value)
 
+    def test_live_bold_author_metadata_does_not_reach_student(self):
+        for marker in ('**OUTCOME:**', '**OUTCOME**:', '__OUTCOME:__', '- **OUTCOME:**'):
+            source = ('Câu 1. Viết bài văn.\n' + marker + ' PRIVATE_OUTCOME\n'
+                      '**COGNITIVE_REASON:** PRIVATE_REASON\n'
+                      '**COGNITIVE_STEPS:** [\n "PRIVATE_STEP"\n]\n'
+                      'Bước 1: Tìm hiểu đề\nCâu 2. Tự đánh giá.')
+            with self.subTest(marker=marker):
+                value = student_essay_text(source)
+                self.assertNotIn('PRIVATE', value)
+                self.assertIn('Bước 1: Tìm hiểu đề', value)
+                self.assertIn('Câu 2. Tự đánh giá.', value)
+
     def test_reserved_token_collision_keeps_user_text(self):
         source = 'GSAIPRESERVE literal $x$ $y$'
         self.assertEqual(preserve_math_and_code(source, lambda s: s), source)

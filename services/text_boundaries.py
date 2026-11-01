@@ -5,7 +5,7 @@ import re
 
 from services.lesson_export import _TOKENS
 
-T1_CONTEXT_REVISION = 2026110102
+T1_CONTEXT_REVISION = 2026110103
 
 
 def _chemical_macros(text, convert):
@@ -157,7 +157,10 @@ def student_essay_text(text):
     """
     value = str(text or '')
     spans = []
-    for match in re.finditer(r'(?mi)^[ \t]*(OUTCOME|COGNITIVE_REASON|COGNITIVE_STEPS):[ \t]*', value):
+    for match in re.finditer(
+            r'(?mi)^[ \t]*(?:[-*][ \t]+)?(?:\*\*|__)?'
+            r'(OUTCOME|COGNITIVE_REASON|COGNITIVE_STEPS)(?:\*\*|__)?'
+            r':[ \t]*(?:\*\*|__)?[ \t]*', value):
         end = value.find('\n', match.end())
         end = len(value) if end < 0 else end
         if match[1].upper() == 'COGNITIVE_STEPS':

@@ -11,7 +11,7 @@ from markdown_it import MarkdownIt
 from services.academic_context import academic_context
 
 ROOT = Path(__file__).resolve().parents[1]
-T1_CONTEXT_REVISION = 2026110102
+T1_CONTEXT_REVISION = 2026110106
 _TOKENS = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$)")
 
 
@@ -28,9 +28,9 @@ def renderer_assets():
         encoded = base64.b64encode((vendor / "fonts" / font[1]).read_bytes()).decode()
         return re.sub(r"src:[^;}]+", 'src:url("data:font/woff2;base64,' + encoded + '") format("woff2")', block)
     css = re.sub(r"@font-face\{[^}]+\}", font_source, css)
-    notebook = base64.b64encode((ROOT / "assets/fonts/Caveat.ttf").read_bytes()).decode()
+    notebook = base64.b64encode((ROOT / "assets/fonts/PatrickHand-Regular.ttf").read_bytes()).decode()
     js = "\n".join((vendor / name).read_text(encoding="utf-8") for name in ("katex.min.js", "contrib/mhchem.min.js"))
-    license_text = (ROOT / "assets/fonts/Caveat-OFL.txt").read_text(encoding="utf-8") + "\n" + (ROOT / "assets/vendor/katex/LICENSE").read_text(encoding="utf-8")
+    license_text = (ROOT / "assets/fonts/PatrickHand-OFL.txt").read_text(encoding="utf-8") + "\n" + (ROOT / "assets/vendor/katex/LICENSE").read_text(encoding="utf-8")
     css += "\n/* " + license_text.replace("*/", "* /") + " */"
     return css, notebook, js.replace("</script", r"<\/script")
 
@@ -77,11 +77,14 @@ def build_lesson_html(subject, grade, topic, lesson, style="handwritten"):
         raise ValueError("Bài học quá dài để xuất trong một lượt.")
     from services.curriculum_policy import validate_lesson_policy
     validate_lesson_policy(lesson, subject, grade)
+    from services.lesson_sources import lesson_source_review_html, reviewed_lesson_sources
+    source_review_html = lesson_source_review_html(subject, grade, topic)
     if style not in {"handwritten", "color", "monochrome"}:
         raise ValueError("Kiểu bản in không hợp lệ.")
     css, font, js = renderer_assets()
     digest = hashlib.sha256(lesson.encode()).hexdigest()
-    metadata = json.dumps({"subject": subject, "grade": grade, "topic": topic, "source_sha256": digest}, ensure_ascii=False).replace("<", "\\u003c")
+    metadata = json.dumps({"subject": subject, "grade": grade, "topic": topic, "source_sha256": digest,
+                           "reference_review": reviewed_lesson_sources(subject, grade, topic)}, ensure_ascii=False).replace("<", "\\u003c")
     title = html.escape(str(topic or subject))
     body = lesson_body_html(lesson)
     if subject == 'Toán học':
@@ -90,14 +93,14 @@ def build_lesson_html(subject, grade, topic, lesson, style="handwritten"):
     return r'''<!doctype html><html lang="vi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>''' + title + r'''</title>
 <style>''' + css + r'''
-@font-face{font-family:GSAIHand;src:url(data:font/ttf;base64,''' + font + r''') format('truetype');font-weight:100 900;font-display:swap}
+@font-face{font-family:GSAIHand;src:url(data:font/ttf;base64,''' + font + r''') format('truetype');font-style:normal;font-weight:400;font-display:swap}
 *{box-sizing:border-box}body{margin:0;background:#e8e3d8;color:#182c73;font-family:Georgia,'Times New Roman',serif}
 .toolbar{padding:12px;background:#fff;position:sticky;top:0;z-index:5;font:14px system-ui;color:#334155}.toolbar button{padding:8px 18px;margin-right:12px;cursor:pointer}
 .paper{max-width:820px;margin:20px auto;padding:32px 35px 40px 66px;background:#f5eedc;min-height:1120px;overflow-wrap:anywhere;position:relative}
 .handwritten .paper{padding:30px 34px 40px 76px;background-color:#f5eedc;background-image:linear-gradient(#aea18a30 1px,transparent 1px),linear-gradient(90deg,#aea18a30 1px,transparent 1px),linear-gradient(90deg,#e1d3b9,transparent 10%,#fff5 55%,transparent);background-size:24px 24px,24px 24px,100% 100%;box-shadow:0 6px 24px #36280c26;border-radius:2px}
 .handwritten .paper:before{content:"";position:absolute;top:0;bottom:0;left:0;width:37px;background:radial-gradient(ellipse 8px 7px at 27px 24px,#332e27 65%,#b0a18a 72%,transparent 82%) 0 0/37px 48px repeat-y;pointer-events:none}
 .handwritten .paper:after{content:"";position:absolute;top:0;bottom:0;left:-5px;width:36px;background:repeating-linear-gradient(180deg,transparent 0 18px,#222 18px 21px,#8a8983 21px 24px,#252521 24px 28px,transparent 28px 48px);border-radius:5px;pointer-events:none}
-.handwritten article{font:26px/1.48 GSAIHand,cursive;font-weight:500;font-synthesis:none}.handwritten h1,.handwritten h2,.handwritten h3,.handwritten h4{font-family:GSAIHand,cursive}
+.handwritten{font-family:GSAIHand,cursive;font-synthesis:none}.handwritten article{font:26px/1.48 GSAIHand,cursive;font-weight:400}.handwritten h1,.handwritten h2,.handwritten h3,.handwritten h4{font-family:GSAIHand,cursive}
 .notebook-header{display:none}.handwritten .notebook-header{display:grid;grid-template-columns:minmax(140px,1fr) minmax(0,2fr);gap:18px;align-items:start;border-bottom:2px solid #a72b36;padding-bottom:15px;margin-bottom:24px;font:24px/1.2 GSAIHand,cursive}
 .notebook-identity{text-align:center;padding-top:3px}.notebook-identity strong{display:block;font-weight:600}.notebook-identity span{display:inline-block;border-bottom:1px solid #a72b36;padding-bottom:6px;margin-top:6px;font-size:20px}.notebook-heading h1{margin:0 0 7px;font-size:30px;text-align:center}.notebook-heading .context{font:24px/1.25 GSAIHand,cursive;margin:0;color:#182c73}
 .handwritten>.toolbar{border-bottom:1px solid #d6c6aa}.handwritten .plain-header{display:none}.handwritten article h1,.handwritten article h2,.handwritten article h3,.handwritten article h4{color:#a82332;font-weight:650;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:5px;text-align:left;margin:22px 0 12px}.handwritten article h1{font-size:1.25em}.handwritten article h2{font-size:1.15em}.handwritten article h3,.handwritten article h4{font-size:1.07em}
@@ -110,6 +113,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#ffffff80;padding:10p
 .formula-error{outline:2px solid #b91c1c;color:#991b1b;white-space:pre-wrap;font-family:monospace}.monochrome,.monochrome h1,.monochrome h2,.monochrome h3,.monochrome h4{color:#111}.monochrome .paper{background:#fff}
 .color .paper{background:#fff}.color h2{border-left:4px solid #0891b2;padding-left:10px}.notice{color:#b91c1c}
 .monochrome .verified-function-visuals polyline{stroke:#111}
+.lesson-source-review{margin-top:18px;padding-top:12px;border-top:1px solid #94a3b8;font:14px/1.5 Georgia,'Times New Roman',serif;color:#334155}.monochrome .lesson-source-review{color:#111}
+.handwritten .lesson-source-review{font-family:GSAIHand,cursive;font-size:18px;line-height:1.4}
 @media(max-width:600px){.paper{margin:10px 8px;padding:20px}.handwritten .paper{padding:24px 18px 28px 48px}.handwritten article{font-size:22px}.handwritten .notebook-header{grid-template-columns:1fr;gap:14px}.notebook-identity span{margin-top:2px}.notebook-heading h1{font-size:28px}}
 @page{size:A4;margin:10mm}@media print{body{background:#fff}.toolbar{display:none}.paper{margin:0;max-width:none;min-height:0;padding:10mm 7mm 10mm 12mm;box-shadow:none}.handwritten .paper{padding:5mm 5mm 7mm 16mm;box-shadow:none;print-color-adjust:exact;-webkit-print-color-adjust:exact;box-decoration-break:clone;-webkit-box-decoration-break:clone}.handwritten .notebook-header{grid-template-columns:minmax(120px,1fr) minmax(0,2fr);break-inside:avoid}.handwritten article{font-size:23px}.handwritten .source-note{font-size:16px}article{orphans:3;widows:3}p,li{break-inside:avoid}pre{break-inside:auto}thead{display:table-header-group}tr{break-inside:avoid}.katex-display{overflow:visible}a{color:inherit;text-decoration:none}}
 </style></head><body class="''' + style + r'''">
@@ -118,6 +123,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#ffffff80;padding:10p
 <header class="plain-header"><h1>''' + title + r'''</h1><div class="context">''' + html.escape(subject) + f" · Lớp {grade}" + r'''</div></header>
 <article id="lesson">''' + body + r'''</article>
 <div class="lesson-end" aria-hidden="true">Hết bài</div>
+''' + source_review_html + r'''
 <p class="source-note">Bản trình bày giữ nội dung bài học AI, không bổ sung công thức hoặc ví dụ mẫu. Cần giáo viên duyệt tính đúng đắn học thuật trước khi sử dụng chính thức. Nội dung dài được in thành nhiều trang.</p></main>
 <script type="application/json" id="lesson-context">''' + metadata + r'''</script>
 <script>''' + js + r'''</script><script>
