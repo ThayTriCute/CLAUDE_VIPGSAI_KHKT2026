@@ -15,6 +15,8 @@ LEVELS = {
 }
 LEVEL_GUIDANCE = """
 MỨC ĐỘ NHẬN THỨC — PHẢI CÓ CĂN CỨ:
+- Khi sinh câu, bám yêu cầu cần đạt CT2018 của đúng môn/lớp và trục bài KNTT; chỉ dùng căn cứ văn bản/nguồn đã cung cấp và còn áp dụng trong phạm vi đó. Không bịa mã yêu cầu cần đạt, trang sách hoặc tình trạng hiệu lực để lấp chỗ thiếu. Ngữ liệu bổ sung phải ghi rõ vai trò và nguồn, không gán thành nguyên văn KNTT.
+- Trước khi trả câu, tự giải, kiểm đáp án và đối chiếu thao tác tư duy với mức đề xuất; nếu chưa đủ căn cứ phải để mức rỗng và nêu phần thiếu. Việc tự kiểm này chỉ hỗ trợ chất lượng đầu vào: mọi câu vẫn phải qua bộ thẩm định độc lập sau sinh, không tự cấp trạng thái đã duyệt hoặc dùng chính nhãn AI làm bằng chứng xác nhận.
 - Tham chiếu phụ lục CV 7991: Biết, Hiểu, Vận dụng trong từng dạng câu. Phạm vi kiểm tra định kì thực hiện theo hướng dẫn Sở/nhà trường; không áp cứng cho mọi bài luyện tập hoặc đề tốt nghiệp.
 - NB: nhận ra/nhớ lại tri thức, khái niệm, dữ kiện đã học. TH: giải thích, diễn giải, phân loại hoặc liên hệ ý nghĩa trong nội dung đã học. VD: lựa chọn và sử dụng kiến thức/kĩ năng để giải quyết nhiệm vụ. Đối chiếu yêu cầu cần đạt của đúng môn/lớp, không chỉ nhìn động từ.
 - VDC là nhãn phân hóa mở rộng trong app; khi đối chiếu khung ba mức có thể xếp trong VD, không tự tuyên bố Bộ bắt buộc một cột VDC riêng.
