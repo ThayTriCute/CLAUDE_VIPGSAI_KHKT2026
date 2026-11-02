@@ -13,8 +13,10 @@ class PublisherDownloadScopeTests(unittest.TestCase):
         self.assertFalse(row['full_book_archived'])
 
     def test_absent_or_disabled_setting_never_means_full_permission(self):
-        for text in ('','download_book_pages:false, download_book_pages_count:4, download_book_pages_urls:[1,2,3,4],'):
-            self.assertEqual(capability(text)['download_scope'],'unverified')
+        self.assertEqual(capability('')['download_scope'],'unverified')
+        disabled=capability('download_book_pages:false, download_book_pages_count:4, download_book_pages_urls:[1,2,3,4],')
+        self.assertEqual(disabled['download_scope'],'download_disabled')
+        self.assertFalse(disabled['full_book_archived'])
 
     def test_full_declared_does_not_mean_downloaded_or_reviewed(self):
         row=capability('download_book_pages:true, download_book_pages_count:2, download_book_pages_urls:["a","b"],')

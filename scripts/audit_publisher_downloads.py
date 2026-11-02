@@ -20,7 +20,8 @@ def capability(source):
     total=len(urls) if isinstance(urls,list) else None
     return dict(download_enabled=allowed, declared_download_pages=count,
                 declared_reader_pages=total,
-                download_scope=('sample_subset' if allowed and count is not None and total and count<total
+                download_scope=('download_disabled' if allowed is False
+                                else 'sample_subset' if allowed and count is not None and total and count<total
                                 else 'full_declared' if allowed and count is not None and total and count>=total
                                 else 'unverified'),
                 full_book_archived=False)

@@ -15,7 +15,7 @@ from audit_publisher_downloads import capability
 from trusted_source_session import source_session
 
 
-def archive(source_url, directory, recheck_memory_indices=()):
+def archive(source_url, directory, recheck_memory_indices=(), recheck_network_indices=()):
     root=Path(directory).resolve()
     repository=Path(__file__).resolve().parents[1]
     if root==repository or repository in root.parents:
@@ -43,6 +43,20 @@ def archive(source_url, directory, recheck_memory_indices=()):
             raise ValueError('A repaired page requires investigation instead of repeated retries')
         repair_history.append(dict(row,repair='disk-streaming/single-worker patch verification'))
         del pages[index]
+    if recheck_network_indices:
+        with source_session() as probe:
+            for index in recheck_network_indices:
+                row=pages.get(index)
+                if not row or row.get('status')!='failed' or row.get('error_type')!='ConnectionError':
+                    raise ValueError('Network recovery verification must target a recorded ConnectionError')
+                if any(r.get('index')==index for r in repair_history):
+                    raise ValueError('Do not repeatedly retry a repaired page')
+                response=probe.head(row['source_url'],timeout=(10,20),allow_redirects=False)
+                if response.status_code!=200 or not response.headers.get('Content-Type','').startswith('image/'):
+                    raise ValueError('Page source has not recovered; preserve failure')
+                repair_history.append(dict(row,repair='Explicit recovery check after HEAD200; pooled single-worker download',
+                                           recovery_status=response.status_code,recovery_content_type=response.headers.get('Content-Type')))
+                del pages[index]
     for row in pages.values():
         if row.get('status')=='archived':
             p=folder/row['path']
@@ -57,15 +71,14 @@ def archive(source_url, directory, recheck_memory_indices=()):
         pending=None
         try:
             digest=hashlib.sha256();size=0
-            with source_session() as session:
-                with session.get(url,stream=True,timeout=(10,40)) as response:
-                    response.raise_for_status()
-                    with tempfile.NamedTemporaryFile(dir=folder,suffix='.pending',delete=False) as out:
-                        pending=Path(out.name)
-                        for chunk in response.iter_content(65536):
-                            size+=len(chunk)
-                            if size>20*1024*1024:raise ValueError('Page exceeds limit')
-                            digest.update(chunk);out.write(chunk)
+            with page_session.get(url,stream=True,timeout=(10,40)) as response:
+                response.raise_for_status()
+                with tempfile.NamedTemporaryFile(dir=folder,suffix='.pending',delete=False) as out:
+                    pending=Path(out.name)
+                    for chunk in response.iter_content(65536):
+                        size+=len(chunk)
+                        if size>20*1024*1024:raise ValueError('Page exceeds limit')
+                        digest.update(chunk);out.write(chunk)
             with Image.open(pending) as image:
                 image.verify()
             sha=digest.hexdigest();name=f'page-{index:04d}__{sha[:16]}.png'
@@ -75,8 +88,12 @@ def archive(source_url, directory, recheck_memory_indices=()):
         finally:
             if pending is not None:pending.unlink(missing_ok=True)
         return row
-    with ThreadPoolExecutor(max_workers=1) as workers:
-        for job in as_completed([workers.submit(fetch,i,u) for i,u in enumerate(urls,1) if i not in pages]):
+    pending_pages=[(i,u) for i,u in enumerate(urls,1) if i not in pages]
+    if not pending_pages:
+        return dict(expected=len(urls),archived=sum(r['status']=='archived' for r in pages.values()),manifest=str(manifest))
+    # Exactly one worker owns the pooled connection; no concurrent Session use.
+    with source_session() as page_session, ThreadPoolExecutor(max_workers=1) as workers:
+        for job in as_completed([workers.submit(fetch,i,u) for i,u in pending_pages]):
             row=job.result();pages[row['index']]=row
             atomic_json(manifest,dict(source_url=source_url,download_scope=scope,
                         expected_pages=len(urls),pages=sorted(pages.values(),key=lambda r:r['index']),
@@ -89,4 +106,5 @@ def archive(source_url, directory, recheck_memory_indices=()):
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--url',required=True);parser.add_argument('--directory',required=True)
     parser.add_argument('--verify-memory-fix-indices',type=int,nargs='*',default=[])
-    args=parser.parse_args();print(json.dumps(archive(args.url,args.directory,args.verify_memory_fix_indices)))
+    parser.add_argument('--verify-network-recovery-indices',type=int,nargs='*',default=[])
+    args=parser.parse_args();print(json.dumps(archive(args.url,args.directory,args.verify_memory_fix_indices,args.verify_network_recovery_indices)))
