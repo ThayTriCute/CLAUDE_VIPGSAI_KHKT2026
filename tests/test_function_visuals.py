@@ -9,6 +9,14 @@ from services.lesson_export import build_lesson_html
 
 
 class FunctionVisualsTests(unittest.TestCase):
+    def test_root_equation_legend_uses_katex_fraction_and_powers(self):
+        graph = graph_svg(function_model('x^3-3*x^2-3/2'))
+        root = ET.fromstring(graph)
+        spans = [e for e in root.iter() if e.attrib.get('class') == 'lesson-math']
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0].attrib['data-tex'], r'x^{3} - 3 x^{2} - \frac{3}{2} = 0')
+        self.assertIn('nghiệm thực phân biệt', ''.join(root.itertext()))
+
     def test_irrational_coordinates_are_exact_in_graph_and_all_exports(self):
         for source in ('x^3-2x', '(x*x+2)/x', 'x^3-3x+1'):
             with self.subTest(source=source):
@@ -131,6 +139,30 @@ class FunctionVisualsTests(unittest.TestCase):
             self.assertIn('<svg', explicit_function_visuals('y='+source+'.'))
         self.assertIn('data-function-rejected', explicit_function_visuals('Hàm 2/1 y=(0*x^2+2x+1)/(x-1).'))
         self.assertIn('data-function-rejected', explicit_function_visuals('Hàm 1/1 y=(x^2+1)/(x-1).'))
+
+    def test_exact_root_equation_has_native_typesetting_without_javascript(self):
+        graph = graph_svg(function_model('x^3-3x^2-3/2', strict=True))
+        self.assertIn('<math xmlns="http://www.w3.org/1998/Math/MathML">', graph)
+        self.assertIn('<mfrac>', graph)
+        self.assertIn('<msup>', graph)
+        self.assertIn('class="lesson-math"', graph)
+        self.assertIn('data-tex=', graph)
+
+    def test_variation_extremum_values_are_simplified_before_layout(self):
+        from services.function_visuals import variation_svg
+        table = variation_svg(function_model('(x^2+2)/(x-1)', strict=True))
+        self.assertIn('2 − 2·√(3)', table)
+        self.assertIn('2 + 2·√(3)', table)
+        self.assertNotIn('(1 − √(3))^2', table)
+
+    def test_svg_numeric_math_labels_have_native_radicals_and_fractions(self):
+        from services.function_visuals import _label
+        radical = _label(100, 100, 'I(1 − √(3); 2 − 2·√(3))')
+        self.assertIn('<msqrt>', radical)
+        self.assertIn('data-math-label="true"', radical)
+        fraction = _label(100, 100, '−2/3')
+        self.assertIn('<mfrac>', fraction)
+        self.assertNotIn('<math', _label(100,100,'not a mathematical expression'))
 
     def test_all_styles_share_bbt_and_graph_and_do_not_change_original_text(self):
         lesson = "Nội dung giữ nguyên.\n\n| x | -∞ | 1 | +∞ |\n|---|---|---|---|\n| y′ | - | || | - |\n| y | 2 | sai | 2 |"

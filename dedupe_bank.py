@@ -11,13 +11,12 @@ Dùng trong app (thay MỌI hàm get_q_fingerprint cũ):
     from dedupe_bank import q_fingerprint, q_family_fingerprint
 
 Quy ước:
-  - TRÙNG HẲN (exact): cùng nội dung sau chuẩn hóa (bỏ "Câu n", $, \\, khoảng trắng,
-    \\dfrac->\\frac, ...). CHỮ SỐ ĐƯỢC GIỮ NGUYÊN, nên 2 câu chỉ khác số liệu là KHÁC NHAU.
-    Thứ tự phương án A/B/C/D không ảnh hưởng (đảo đáp án vẫn bị coi là trùng).
-  - GẦN TRÙNG (near): chung họ số liệu, độ giống n-gram >= NEAR_THRESHOLD.
+  - TRÙNG HẲN (exact): NFC, giữ ký hiệu, khoảng trắng mã, đáp án, hình và thứ tự phương án.
+    Đảo phương án được giữ riêng khi chưa có bộ đối chiếu đáp án an toàn.
+  - GẦN TRÙNG (near): chỉ tham khảo; không tự động gộp/xóa.
   - HỌ MẪU (family): cùng văn bản nhưng khác số -> KHÔNG xóa, chỉ thống kê độ đa dạng.
 """
-import sys, os, re, json, lzma, gzip, csv, hashlib, collections, unicodedata
+import sys, os, re, json, lzma, gzip, csv, hashlib, collections, unicodedata, tempfile
 
 NEAR_THRESHOLD = 0.90
 
@@ -64,11 +63,27 @@ def _stmts(q):
 
 
 def q_fingerprint(q):
-    """Dấu vân tay chính xác. Chữ số được giữ. Phương án/mệnh đề không phụ thuộc thứ tự."""
+    """Conservative exact identity, including answers, visuals and code layout.
+
+    Never erase powers/brackets/case or reorder options without remapping keys.
+    Similarity fingerprints below are for diversity reports, not deletion.
+    """
     if not isinstance(q, dict):
         return ""
-    payload = "§".join([_norm(q.get("q", "")), "¦".join(_opts(q)), "¦".join(_stmts(q))])
-    return hashlib.sha1(payload.encode("utf-8")).hexdigest()
+    metadata = {'qid', 'source', 'school', 'portal', 'exam_code', 'year', 'orig_pos',
+                'orig_exam_code', 'audit_id', 'level', 'topic', 'cognitive_audit',
+                'content_adn', 'legacy_qids', 'identity_revision'}
+    def preserve(value):
+        if isinstance(value, str):
+            return unicodedata.normalize('NFC', value.replace('\r\n', '\n'))
+        if isinstance(value, list):
+            return [preserve(v) for v in value]
+        if isinstance(value, dict):
+            return {k: preserve(v) for k, v in value.items()}
+        return value
+    payload = json.dumps(preserve({k: v for k, v in q.items() if k not in metadata}),
+                         ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+    return hashlib.sha256(payload.encode('utf-8')).hexdigest()
 
 
 def q_family_fingerprint(q):
@@ -116,10 +131,27 @@ def run(path, out_dir):
     groups = collections.OrderedDict()     # key -> list[(exam_idx, part, pos, q)]
     total = 0
     for ei, e in enumerate(exams):
-        for part in ("p1", "p2", "p3"):
-            for pos, q in enumerate(e.get(part, []) or []):
+        root_context = {k: v for k, v in e.items() if k not in {
+            'p1', 'p2', 'p3', 'part_doc_hieu', 'part_viet', 'code', 'subject', 'grade',
+            'year', 'school', 'title', 'portal', 'url', 'pdf_url', 'source',
+            'is_blended_real', 'exam_type', 'exam_session', 'audit_trail'}}
+        for part in ("p1", "p2", "p3", "part_doc_hieu", "part_viet"):
+            group = e.get(part, []) or []
+            shared = dict(root_context)
+            if isinstance(group, dict):
+                shared['part_context'] = {k: v for k, v in group.items() if k != 'questions'}
+                group = group.get('questions', [])
+            if not isinstance(group, list):
+                continue
+            for pos, q in enumerate(group):
+                if not isinstance(q, dict):
+                    continue
                 total += 1
-                key = (str(e.get("subject", "")), str(e.get("grade", "")), part, q_fingerprint(q))
+                # Source metadata is excluded only at the question's top level.
+                # Bind shared passages separately so provenance-only duplicates
+                # still merge while differing reading/listening material does not.
+                key = (str(e.get('subject', '')), str(e.get('grade', '')), part,
+                       q_fingerprint(q) + ':' + q_fingerprint(shared))
                 groups.setdefault(key, []).append((ei, part, pos, q))
     exact_unique = len(groups)
 
@@ -128,27 +160,10 @@ def run(path, out_dir):
     for key, mem in groups.items():
         best = max(mem, key=lambda m: _quality(m[3]))[3]
         reps.append([key, best, list(mem)])
-    buckets = collections.defaultdict(list)
-    for r in reps:
-        buckets[(r[0][0], r[0][1], r[0][2], _digits(r[1]))].append(r)
-    merged = []
+    # Do not spend quadratic time on near comparisons that cannot authorize
+    # merging. Keep all exact representatives; family stats remain below.
+    merged = [[r[0], r[1], r[2], None] for r in reps]
     near_removed = 0
-    for _, lst in buckets.items():
-        kept = []
-        for r in lst:
-            g = _grams(r[1])
-            hit = None
-            for k in kept:
-                gk = k[3]
-                inter = len(g & gk)
-                if inter / max(1, len(g | gk)) >= NEAR_THRESHOLD:
-                    hit = k; break
-            if hit:
-                hit[2].extend(r[2]); near_removed += 1
-                if _quality(r[1]) > _quality(hit[1]): hit[1] = r[1]
-            else:
-                kept.append([r[0], r[1], list(r[2]), g])
-        merged.extend(kept)
 
     uniq = []
     fam = collections.Counter()
@@ -159,6 +174,19 @@ def run(path, out_dir):
         q["uid"] = f"U{i:06d}"
         q["seen_in_exams"] = len({m[0] for m in mem})
         q["dup_count"] = len(mem)
+        origin = exams[mem[0][0]]
+        q['shared_context'] = {k: v for k, v in origin.items() if k not in {
+            'p1', 'p2', 'p3', 'part_doc_hieu', 'part_viet', 'code', 'subject', 'grade',
+            'year', 'school', 'title', 'portal', 'url', 'pdf_url', 'source',
+            'is_blended_real', 'exam_type', 'exam_session', 'audit_trail'}}
+        original_group = origin.get(key[2])
+        if isinstance(original_group, dict):
+            q['shared_context']['part_context'] = {k: v for k, v in original_group.items() if k != 'questions'}
+        q['provenance_occurrences'] = [
+            {'exam_code': exams[ei].get('code', ''), 'source_url': exams[ei].get('url') or exams[ei].get('pdf_url', ''),
+             'school': exams[ei].get('school', ''), 'year': exams[ei].get('year', ''),
+             'part': part, 'position': pos + 1, 'question_source': member.get('source', '')}
+            for ei, part, pos, member in mem]
         uniq.append((key, q))
         fam[(key[0], key[1], key[2], q_family_fingerprint(best))] += 1
         per_pool[key[:3]] += 1
@@ -171,8 +199,20 @@ def run(path, out_dir):
         out[key[0]][key[1]].append({**q, "_part": key[2]})
     bank = {"version": "UNIQUE-" + str(len(uniq)), "total": len(uniq),
             "questions": {s: dict(g) for s, g in out.items()}}
-    with lzma.open(os.path.join(out_dir, "unique_questions.json.xz"), "wt", encoding="utf-8", preset=9) as f:
-        json.dump(bank, f, ensure_ascii=False)
+    target = os.path.join(out_dir, 'unique_questions.json.xz')
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=out_dir, suffix='.pending.xz', delete=False) as handle:
+            temporary = handle.name
+        with lzma.open(temporary, 'wt', encoding='utf-8', preset=6) as f:
+            json.dump(bank, f, ensure_ascii=False)
+        with lzma.open(temporary, 'rt', encoding='utf-8') as f:
+            if json.load(f) != bank:
+                raise ValueError('XZ roundtrip mismatch; previous bank kept intact')
+        os.replace(temporary, target)
+    finally:
+        if temporary and os.path.exists(temporary):
+            os.unlink(temporary)
     rows.sort(key=lambda r: -r[4])
     with open(os.path.join(out_dir, "dedupe_report.csv"), "w", encoding="utf-8-sig", newline="") as f:
         w = csv.writer(f); w.writerow(["uid", "mon", "lop", "phan", "so_lan_lap", "so_de_chua", "trich_doan"]); w.writerows(rows)
@@ -186,7 +226,8 @@ def run(path, out_dir):
     for k, v in sorted(per_pool.items()):
         lines.append(f"  {k[0]} | lớp {k[1]} | {k[2]} : {v}")
     summary = "\n".join(lines)
-    open(os.path.join(out_dir, "dedupe_summary.txt"), "w", encoding="utf-8").write(summary)
+    with open(os.path.join(out_dir, 'dedupe_summary.txt'), 'w', encoding='utf-8') as stream:
+        stream.write(summary)
     print(summary)
     return bank
 

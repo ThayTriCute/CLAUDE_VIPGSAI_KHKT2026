@@ -4,7 +4,45 @@ import math
 
 from services.academic_context import academic_context, canonical_subject
 
-T1_CONTEXT_REVISION = 2026110105
+T1_CONTEXT_REVISION = 2026110202
+
+
+def is_proposition_request(command, subject):
+    from services.academic_context import folded
+    return canonical_subject(subject) == 'Toán học' and 'menh de' in folded(command)
+
+
+def proposition_lab_request(command, subject):
+    """Route a supported explicit predicate task by intent, not polynomial shape.
+
+    Parse a limited numeric quadratic equality, never arbitrary Python/code.
+    Unknown expressions are left unsupported rather than replaced by a sample.
+    """
+    from fractions import Fraction
+    if not is_proposition_request(command, subject):
+        return None
+    compact = re.sub(r'\s+', ' ', str(command)).replace('−', '-').replace('²', '^2')
+    compact = re.sub(r'\s*([+*/^=\-])\s*', r'\1', compact)
+    number = r'\d+(?:\.\d+)?'
+    match = re.search(r'(?<![\w./*^+\-])(?P<a>[+-]?(?:' + number + r'\*?)?)x\^2'
+                      r'(?P<b>[+-](?:' + number + r'\*?)?)x'
+                      r'(?P<c>[+-]' + number + r')=0', compact)
+    if not match:
+        return None
+    def coefficient(value):
+        value = value.replace('*', '')
+        return str(Fraction({'': '1', '+': '1', '-': '-1'}.get(value, value)))
+    return dict(type='proposition_quadratic', **{k: coefficient(match[k]) for k in ('a', 'b', 'c')})
+
+
+def evaluate_proposition(data, value):
+    """Exact rational substitution; a false proposition remains a proposition."""
+    from fractions import Fraction
+    if not re.fullmatch(r'[+-]?\d+(?:\.\d+|/\d+)?', str(value).strip()):
+        raise ValueError('Nhập số nguyên, số thập phân hoặc phân số, ví dụ 1/2.')
+    x = Fraction(str(value).strip())
+    result = Fraction(data['a']) * x*x + Fraction(data['b']) * x + Fraction(data['c'])
+    return result, result == 0
 
 
 def function_formula_latex(numerator, denominator=None):

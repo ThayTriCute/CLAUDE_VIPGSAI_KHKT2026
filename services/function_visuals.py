@@ -9,7 +9,7 @@ from functools import lru_cache
 import sympy as sp
 
 X = sp.Symbol('x', real=True)
-RENDER_REVISION = 2026110102
+RENDER_REVISION = 2026110204
 
 
 class NonStandardFunction(ValueError):
@@ -100,6 +100,10 @@ def function_model(source, strict=False):
 
 
 def _text(value):
+    # Limits at algebraic stationary points can retain nested substitutions.
+    # Simplify before measuring/placing labels, for every function family.
+    if isinstance(value, sp.Basic):
+        value = sp.simplify(value)
     return str(value).replace('-oo', '−∞').replace('oo', '+∞').replace('sqrt', '√').replace('**', '^').replace('*', '·').replace('-', '−')
 
 
@@ -110,6 +114,30 @@ def _svg(width, height, label, content):
 
 
 def _label(x, y, text, size=18):
+    if '√' in str(text) or re.search(r'\d/\d', str(text)):
+        raw = str(text)
+        point = re.fullmatch(r'(I)?\((.*); (.*)\)', raw)
+        parts = (point[2], point[3]) if point else (raw,)
+        rendered = []
+        try:
+            for part in parts:
+                normalized = part.replace('√', 'sqrt').replace('·', '*').replace('−', '-')
+                if not re.fullmatch(r'[0-9sqrt()\s+*/.\-^]+', normalized):
+                    raise ValueError('Not a numeric expression')
+                value = sp.sympify(normalized.replace('^', '**'), locals={'sqrt': sp.sqrt})
+                rendered.append(html.unescape(sp.mathml(value, printer='presentation')))
+            content = rendered[0] if not point else (
+                '<mrow>' + ('<mi>I</mi>' if point[1] else '')
+                + '<mo>(</mo>' + rendered[0] + '<mo>;</mo>' + rendered[1] + '<mo>)</mo></mrow>')
+            width = max(60, min(370, len(raw)*size*.64+18))
+            height = max(38, size*2.6)
+            return (f'<foreignObject x="{x-width/2:.3f}" y="{y-height/2:.3f}" width="{width:.3f}" height="{height:.3f}" '
+                    f'data-math-label="true" aria-label="{html.escape(raw, quote=True)}">'
+                    '<div xmlns="http://www.w3.org/1999/xhtml" style="height:100%;display:flex;align-items:center;justify-content:center;'
+                    f'font-size:{max(size,17)}px;color:#111"><math xmlns="http://www.w3.org/1998/Math/MathML">'
+                    + content + '</math></div></foreignObject>')
+        except (ValueError, TypeError, SyntaxError):
+            pass
     return f'<text x="{x:.3f}" y="{y:.3f}" text-anchor="middle" dominant-baseline="middle" fill="#111" font-size="{size}">{html.escape(str(text))}</text>'
 
 
@@ -149,7 +177,9 @@ def variation_svg(model):
             body += _label(xs[i], level(limits[i][0]), _text(limits[i][0]), 17)
     for i, sign in enumerate(signs):
         body += _label((xs[i]+xs[i+1])/2, 77, '+' if sign > 0 else '−' if sign < 0 else '0')
-        x1, x2 = xs[i]+42, xs[i+1]-42
+        clearance_left = max(42, min(80, len(_text(limits[i][1]))*4.5))
+        clearance_right = max(42, min(80, len(_text(limits[i+1][0]))*4.5))
+        x1, x2 = xs[i]+clearance_left, xs[i+1]-clearance_right
         y1, y2 = level(limits[i][1]), level(limits[i+1][0])
         body += _line(x1, y1, x2, y2)
         angle = math.atan2(y2-y1, x2-x1)
@@ -259,8 +289,11 @@ def graph_svg(model):
         return any(rect[0]-3 < cx < rect[2]+3 and rect[1]-3 < cy < rect[3]+3 for cx, cy in curve_ink)
 
     def box(lx, ly, text, size=13):
+        if '√' in text or re.search(r'\d/\d', text):
+            size = max(17, size)
         half = max(size, len(text)*size*.62)/2 + 4
-        return (lx-half, ly-size*.65-3, lx+half, ly+size*.65+3)
+        vertical = max(size*.65+3, 22 if '√' in text or '/' in text else 0)
+        return (lx-half, ly-vertical, lx+half, ly+vertical)
 
     def overlaps(rect):
         return any(rect[0] < b[2] and rect[2] > b[0] and rect[1] < b[3] and rect[3] > b[1] for b in occupied)
@@ -272,7 +305,9 @@ def graph_svg(model):
         # ending on the axis never runs through its exact coordinate.
         background = f'<rect x="{rect[0]:.3f}" y="{rect[1]:.3f}" width="{rect[2]-rect[0]:.3f}" height="{rect[3]-rect[1]:.3f}" fill="white"/>'
         attrs = 'data-graph-label="'+kind+'"' + (' data-axis-coordinate="'+axis+'"' if axis else '')
-        label_layer.append(background + _label(lx, ly, text, size).replace('<text ', '<text '+attrs+' ', 1))
+        label = _label(lx, ly, text, size)
+        label = label.replace('<text ', '<text '+attrs+' ', 1).replace('<foreignObject ', '<foreignObject '+attrs+' ', 1)
+        label_layer.append(background + label)
         return ''
 
     occupied.extend((box(px(0)-12, py(0)+15, 'O', 15),
@@ -371,6 +406,23 @@ def graph_svg(model):
         body += _label(410, 469, 'Tiệm cận: ' + caption, 15)
     legend_y = 500
     for item in legend:
+        if root_names and item == legend[0] and 'nghiệm thực phân biệt' in item:
+            prefix = ' < '.join(root_names.values()) + ' là tất cả nghiệm thực phân biệt của '
+            tex = sp.latex(numerator) + ' = 0'
+            # Streamlit Markdown does not execute the exported page's KaTeX
+            # initializer. Native MathML provides the same exact equation there;
+            # exports still enhance this span using its unchanged data-tex.
+            fallback = ('<math xmlns="http://www.w3.org/1998/Math/MathML">'
+                        + html.unescape(sp.mathml(sp.Eq(numerator, 0, evaluate=False), printer='presentation'))
+                        + '</math>')
+            body += ('<foreignObject x="20" y="480" width="780" height="74" '
+                     'data-exact-coordinate-key="true"><div xmlns="http://www.w3.org/1999/xhtml" '
+                     'style="font-family:Times New Roman,serif;font-size:15px;text-align:center;line-height:1.8">'
+                     + html.escape(prefix) + '<span class="lesson-math" data-display="false" data-tex="'
+                     + html.escape(tex, quote=True) + '">' + fallback + '</span>.'
+                     '</div></foreignObject>')
+            legend_y = 554
+            continue
         for line in textwrap.wrap(item, width=96, break_long_words=True, break_on_hyphens=False):
             body += _label(410, legend_y, line, 15).replace('<text ', '<text data-exact-coordinate-key="true" ', 1)
             legend_y += 23

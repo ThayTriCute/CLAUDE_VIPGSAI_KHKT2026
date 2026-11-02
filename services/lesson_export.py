@@ -11,7 +11,7 @@ from markdown_it import MarkdownIt
 from services.academic_context import academic_context
 
 ROOT = Path(__file__).resolve().parents[1]
-T1_CONTEXT_REVISION = 2026110106
+T1_CONTEXT_REVISION = 2026110201
 _TOKENS = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$)")
 
 
@@ -37,8 +37,8 @@ def renderer_assets():
 
 def lesson_body_html(lesson):
     """Protect math/code separately; never convert formulas to approximate Unicode."""
-    from services.text_boundaries import wrap_naked_chemistry
-    lesson = wrap_naked_chemistry(lesson)
+    from services.text_boundaries import wrap_naked_chemistry, polya_display_markdown
+    lesson = polya_display_markdown(wrap_naked_chemistry(lesson))
     replacements = {}
     nonce = hashlib.sha256(lesson.encode()).hexdigest()[:12]
 
