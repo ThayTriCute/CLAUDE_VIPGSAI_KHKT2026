@@ -2068,6 +2068,11 @@ def build_multi_dimensional_index(subject: str = None, force: bool = False):
         
         for part in ["p1", "p2", "p3"]:
             for q in ex.get(part, []):
+                # Legacy random IDs may collide; never let one silently replace
+                # another question in the shared index. Keep aliases traceable.
+                from services.bank_storage import content_identity
+                q = content_identity(q, subject=norm_subj, grade=grade, part=part,
+                    shared_context={k: ex[k] for k in ('passage', 'reading', 'audio', 'shared_context') if k in ex})
                 qid = q.get("qid")
                 if qid:
                     q_store[qid] = q
@@ -2154,15 +2159,16 @@ def get_raw_baseline_data():
 _SHARD_CACHE = BoundedCache(2)
 
 @_serialized_bank
-def get_shard_exams(subject: str) -> list:
+def get_shard_exams(subject: str, grade=None) -> list:
     """Nạp dữ liệu đề thi theo từng môn học (Sharded Lazy Loader).
-    Giảm tiêu thụ RAM từ 1.2 GB xuống còn ~30 MB (tiết kiệm 97% RAM),
-    triệt tiêu 100% hiện tượng Out Of Memory (OOM) trên Streamlit Cloud!
+    Khi có lớp, loại đề khác lớp ngay trong luồng giải nén, trước khi giữ
+    danh sách trong RAM. Không cam kết mức RAM cố định cho mọi kho dữ liệu.
     """
     global _SHARD_CACHE
     norm_subj = normalize_subject_name(subject)
-    if norm_subj in _SHARD_CACHE:
-        return _SHARD_CACHE[norm_subj]
+    shard_key = norm_subj if grade is None else (norm_subj, str(grade))
+    if shard_key in _SHARD_CACHE:
+        return _SHARD_CACHE[shard_key]
         
     # Release derived references before loading a third subject; otherwise an
     # evicted shard remains alive in question pools and multi-dimensional indices.
@@ -2210,18 +2216,18 @@ def get_shard_exams(subject: str) -> list:
     try:
         from services.bank_storage import read_exam_shard
         if os.path.exists(shard_xz):
-            loaded_exams = read_exam_shard(shard_xz)
+            loaded_exams = read_exam_shard(shard_xz, grade=grade)
         elif os.path.exists(shard_gz):
-            loaded_exams = read_exam_shard(shard_gz)
+            loaded_exams = read_exam_shard(shard_gz, grade=grade)
         elif os.path.exists(shard_raw):
-            loaded_exams = read_exam_shard(shard_raw)
+            loaded_exams = read_exam_shard(shard_raw, grade=grade)
         else:
             logging.warning("Không có shard cho môn %s; không nạp kho master lớn hoặc mượn môn khác.", norm_subj)
     except Exception as exc:
         logging.warning("Không thể nạp shard cho môn %s: %s", norm_subj, exc)
         loaded_exams = []
 
-    _SHARD_CACHE[norm_subj] = loaded_exams
+    _SHARD_CACHE[shard_key] = loaded_exams
     return loaded_exams
 
 def enrich_exam_visuals_jit(exam, subject="Toán học", grade=12):
@@ -2262,7 +2268,7 @@ def get_baseline_full_exams(subject: str, grade, enrich_visuals: bool = False):
     results = []
     # 1. Đọc kho đề từ Shard của môn học (đã lưu sẵn trong _SHARD_CACHE)
     try:
-        shard_data = get_shard_exams(subject)
+        shard_data = get_shard_exams(subject, grade=None if grade_key == 'all' else grade_key)
         for ex in shard_data:
             ex_subj = normalize_subject_name(ex.get("subject", "")).lower()
             if ex_subj == norm_subj and (grade is None or grade_key == "all" or str(ex.get("grade")) == grade_key):
@@ -2314,6 +2320,8 @@ def get_baseline_full_exams(subject: str, grade, enrich_visuals: bool = False):
                     if c_subj == norm_subj and (grade is None or grade_key == "all" or c_grade == grade_key):
                         ex_ai = c_item.get("data", c_item)
                         if isinstance(ex_ai, dict) and ex_ai.get("code") not in existing_codes:
+                            from services.bank_storage import mark_ai_exam_provenance
+                            ex_ai = mark_ai_exam_provenance(ex_ai)
                             ex_ai["school"] = ex_ai.get("school") or "Hệ Thống Gia Sư AI (Độc Bản Tự Sinh)"
                             ex_ai["portal"] = ex_ai.get("portal") or "GSAI Autonomous Bank 2026"
                             ex_ai["is_ai_harvested"] = True
@@ -2344,8 +2352,10 @@ def ingest_ai_generated_exam_to_bank(exam_data: dict, subject: str, grade):
     exam_copy["code"] = exam_code
     exam_copy["school"] = school_name
     exam_copy["portal"] = portal_name
-    exam_copy["is_real_bank_question"] = True
+    exam_copy["is_real_bank_question"] = False
     exam_copy["is_ai_harvested"] = True
+    exam_copy['provenance_kind'] = 'ai_generated'
+    exam_copy['source_verification'] = 'not_official_exam'
 
     # Gắn siêu dữ liệu vân tay cho từng phần
     for p_key in ("p1", "p2", "p3"):
@@ -2354,6 +2364,8 @@ def ingest_ai_generated_exam_to_bank(exam_data: dict, subject: str, grade):
         for q_idx, q in enumerate(exam_copy.get(p_key, [])):
             if not isinstance(q, dict): continue
             q_c = dict(q)
+            q_c.update(is_ai_generated=True, is_real_bank_question=False,
+                       provenance_kind='ai_generated', source_verification='not_official_exam')
             q_c["school"] = school_name
             q_c["portal"] = portal_name
             q_c["orig_pos"] = f"{p_name} - Câu {q_idx + 1}"
@@ -2423,6 +2435,44 @@ def shuffle_question_options(q: dict) -> dict:
 
 _QUESTIONS_POOL_CACHE = BoundedCache(4)
 
+
+def get_verified_calibration_questions_pool(subject: str, grade):
+    """Only independent source-reviewed anchors may calibrate level judgements.
+
+    Ordinary practice pools stay separate. Missing/malformed review records fail
+    closed rather than promoting old ADN/is_real or AI-supplied review fields.
+    """
+    from services.bank_storage import calibration_eligibility, content_identity
+    registry_path = os.path.join(BASE_DIR, 'data', 'exam_reference_reviews.json')
+    try:
+        with open(registry_path, encoding='utf-8') as stream:
+            registry = json.load(stream)
+        if registry.get('schema_version') != 1 or not isinstance(registry.get('reviews'), dict):
+            raise ValueError('Invalid independent review registry')
+        reviews = registry['reviews']
+    except (OSError, ValueError, TypeError, AttributeError):
+        reviews = {}
+    result = {'p1': [], 'p2': [], 'p3': [], 'audit': {'eligible': 0, 'excluded': 0,
+        'status': 'no_verified_anchors', 'scope': 'source_review_not_ministry_cognitive_certification'}}
+    canonical = canonical_subject(subject)
+    normalized_grade = normalize_grade(grade)
+    pool = get_baseline_questions_pool(subject, normalized_grade)
+    for part in ('p1', 'p2', 'p3'):
+        for question in pool.get(part, []):
+            identity = content_identity(question, subject=canonical, grade=normalized_grade,
+                part=part, shared_context=question.get('shared_context'))
+            review = reviews.get(identity['content_adn'])
+            decision = calibration_eligibility(question, review, subject=canonical,
+                grade=normalized_grade, part=part)
+            if decision['eligible']:
+                result[part].append({**identity, 'reference_review': deepcopy(review)})
+                result['audit']['eligible'] += 1
+            else:
+                result['audit']['excluded'] += 1
+    if result['audit']['eligible']:
+        result['audit']['status'] = 'verified_source_anchors_available'
+    return result
+
 @_serialized_bank
 def get_baseline_questions_pool(subject: str, grade):
     """
@@ -2443,11 +2493,11 @@ def get_baseline_questions_pool(subject: str, grade):
     pool = {"p1": [], "p2": [], "p3": []}
     exams_list = list(get_baseline_full_exams(subject, grade, enrich_visuals=False))
     for ex in exams_list:
-        school = ex.get("school", "THPT Chuyên / Điểm Toàn Quốc")
-        portal = ex.get("portal", "TOANMATH.com")
-        year = ex.get("year", "2025 - 2026")
-        exam_type = ex.get("exam_type", "Cuối học kỳ 1")
-        exam_code = ex.get("code", "2501")
+        school = ex.get('school') or 'Chưa xác minh đơn vị ra đề'
+        portal = ex.get('portal') or 'Chưa xác minh nơi công bố'
+        year = ex.get('year') or 'Chưa xác minh năm học'
+        exam_type = ex.get('exam_type') or 'Chưa xác minh loại kiểm tra'
+        exam_code = ex.get('code') or 'Chưa xác minh mã đề'
         exam_title = ex.get("title", f"Đề thi thật - {school}")
 
         exam_session = ex.get("session") or ex.get("exam_session")
@@ -2475,8 +2525,12 @@ def get_baseline_questions_pool(subject: str, grade):
 
                 q_copy["subject"] = canonical_subject(ex.get("subject", subject))
                 q_copy["grade"] = normalize_grade(ex.get("grade", grade))
-                q_copy["is_real_bank_question"] = True
-                q_copy["is_ai_generated"] = False
+                is_generated = bool(ex.get('is_ai_harvested') or ex.get('provenance_kind') == 'ai_generated'
+                                    or q.get('is_ai_generated') or q.get('provenance_kind') == 'ai_generated')
+                q_copy['is_real_bank_question'] = not is_generated
+                q_copy['is_ai_generated'] = is_generated
+                q_copy['provenance_kind'] = 'ai_generated' if is_generated else ex.get('provenance_kind', 'unverified_bank_source')
+                q_copy['source_verification'] = 'not_official_exam' if is_generated else ex.get('source_verification', 'unverified')
                 q_copy["school"] = school
                 q_copy["portal"] = portal
                 q_copy["year"] = year

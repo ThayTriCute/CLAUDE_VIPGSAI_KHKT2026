@@ -2,9 +2,9 @@ def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
-    for module, revision in ((lesson_sources, 2026110105), (curriculum_policy, 2026110120),
-                             (lab_scope, 2026110105), (lesson_export, 2026110106),
-                             (text_boundaries, 2026110103), (socratic_context, 2026110102)):
+    for module, revision in ((lesson_sources, 2026110205), (curriculum_policy, 2026110219),
+                             (lab_scope, 2026110202), (lesson_export, 2026110201),
+                             (text_boundaries, 2026110201), (socratic_context, 2026110204)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
@@ -15,11 +15,11 @@ _refresh_t1_context_services()
 
 from services.context_recovery import repair_exam_context, recover_visual
 from services.cognitive_levels import annotate_question, level_caption
-from services.curriculum_policy import (T1_CONTEXT_REVISION as CURRICULUM_POLICY_REVISION, assessment_profile, legal_references, matrix_html, prepare_exam_for_delivery, validate_exam_structure, validate_lesson_policy, correct_khtn8_lime_soil_confusion, lesson_generation_request as build_curriculum_lesson_request, exam_generation_request as build_curriculum_exam_request)
+from services.curriculum_policy import (T1_CONTEXT_REVISION as CURRICULUM_POLICY_REVISION, assessment_profile, legal_references, upcoming_legal_references, policy_evaluation_date, matrix_html, prepare_exam_for_delivery, validate_exam_structure, validate_lesson_policy, correct_khtn8_lime_soil_confusion, lesson_generation_request as build_curriculum_lesson_request, exam_generation_request as build_curriculum_exam_request)
 from copy import deepcopy
 from services.academic_context import canonical_subject, academic_context, validate_exam_context
 from services.lesson_export import build_lesson_html, handwritten_prompt
-from services.lesson_sources import books_for, lesson_references, PUBLISHER_PORTAL, PUBLISHER_DIGITAL_LIBRARY, textbook_update_notice
+from services.lesson_sources import books_for, lesson_references, PUBLISHER_PORTAL, PUBLISHER_DIGITAL_LIBRARY, NATIONAL_SCHOOL_TEXTBOOK_LIBRARY, textbook_update_notice
 from services.lab_scope import lesson_context_examples, function_formula_latex
 from services.text_boundaries import option_markdown_label, chemical_display_markdown
 from qa_runtime import (split_api_keys, admin_password_matches, normalize_bool, display_frame,
@@ -1766,9 +1766,8 @@ with st.sidebar.expander("⚖️ Căn Cứ Pháp Quy Bộ GD&ĐT Hiện Hành", 
     st.caption("Nguồn pháp lý đã rà soát ngày 24/10/2026; cần đọc đúng phạm vi và các sửa đổi. Không phải xác nhận Bộ đã duyệt nội dung AI.")
     for legal_ref in legal_references():
         st.markdown(f"- [{legal_ref['code']}]({legal_ref['url']}): {legal_ref['note']}")
-    for upcoming_ref in legal_references(include_upcoming=True):
-        if upcoming_ref["status"] == "upcoming":
-            st.caption(f"Đã ban hành, hiệu lực từ {upcoming_ref['effective_from']}: {upcoming_ref['code']}. Chưa áp tại mốc rà soát 24/10/2026.")
+    for upcoming_ref in upcoming_legal_references():
+        st.caption(f"Đã ban hành, hiệu lực từ {upcoming_ref['effective_from']}: {upcoming_ref['code']}. Chưa áp tại ngày {policy_evaluation_date()}.")
 
 
 
@@ -1854,10 +1853,66 @@ Công thức dùng $...$/$$...$$, hóa học có thể dùng \ce{...}; không đ
 CROSS_STATION_PHILOSOPHY_BANK = {
     1: [
         {
+            'author': 'Epictetus', 'origin': 'Phương Tây',
+            'quote': 'Có những việc thuộc quyền chủ động của ta, và những việc không thuộc quyền chủ động của ta.',
+            'lesson': 'Khi kết quả chưa như mong muốn, tập trung vào việc mình có thể làm: chuẩn bị, luyện tập và nhờ giúp đỡ; không tự trách vì hoàn cảnh ngoài khả năng.',
+            'source_verified': True,
+            'source_url': 'https://classics.mit.edu/Epictetus/epicench.html',
+            'source_locator': 'Enchiridion, mục 1; bản dịch Elizabeth Carter',
+            'translation_note': 'Diễn nghĩa tiếng Việt từ bản dịch tiếng Anh, không phải nguyên văn tiếng Việt.',
+            'themes': ['lo lắng', 'kết quả', 'cố gắng', 'áp lực', 'chuẩn bị'],
+        },
+        {
+            'author': 'Epictetus', 'origin': 'Phương Tây',
+            'quote': 'Trước mỗi tình huống, hãy tự hỏi mình có khả năng nào để ứng xử cho tốt.',
+            'lesson': 'Tập dừng lại trước khi phản ứng: kiên nhẫn khi bất đồng, can đảm khi gặp khó và biết tìm người hỗ trợ; không cam chịu việc bị gây hại.',
+            'source_verified': True,
+            'source_url': 'https://classics.mit.edu/Epictetus/epicench.html',
+            'source_locator': 'Enchiridion, mục 10; bản dịch Elizabeth Carter',
+            'translation_note': 'Diễn nghĩa tiếng Việt, không phải trích nguyên văn tiếng Việt.',
+            'themes': ['kiên nhẫn', 'khó khăn', 'bất đồng', 'ứng xử', 'bình tĩnh'],
+        },
+        {
+            'author': 'Tăng Tử', 'origin': 'Phương Đông',
+            'quote': 'Mỗi ngày tôi xét lại mình: làm việc cho người đã hết lòng chưa, giao tiếp với bạn đã chân thành chưa, điều được dạy đã thực hành chưa.',
+            'lesson': 'Cuối ngày chọn một việc cụ thể để tự nhìn lại, giữ lời hứa với bạn và thực hành điều tốt đã học thay vì chỉ nói hay.',
+            'source_verified': True,
+            'source_url': 'https://classics.mit.edu/Confucius/analects.1.1.html',
+            'source_locator': 'Luận ngữ, Học nhi 1.4; lời Tăng Tử (philosopher Tsang), không gán cho Khổng Tử',
+            'translation_note': 'Diễn nghĩa tiếng Việt từ bản dịch tiếng Anh.',
+            'themes': ['trách nhiệm', 'giữ lời', 'thực hành', 'tự đánh giá', 'bạn'],
+        },
+        {
+            'author': 'Khổng Tử', 'origin': 'Phương Đông',
+            'quote': 'Học rồi bền bỉ thực hành điều đã học, chẳng phải là điều vui sao?',
+            'lesson': 'Nuôi niềm vui học tập bằng thói quen nhỏ và đều đặn, đem điều học được giúp người khác; không chỉ học để hơn thua điểm số.',
+            'source_verified': True,
+            'source_url': 'https://classics.mit.edu/Confucius/analects.1.1.html',
+            'source_locator': 'Luận ngữ, Học nhi 1.1',
+            'translation_note': 'Diễn nghĩa tiếng Việt, không phải nguyên văn tiếng Việt của tác giả.',
+            'themes': ['niềm vui', 'luyện tập', 'thói quen', 'kiên trì', 'ôn'],
+        },
+        {
             "author": "Khổng Tử",
             "origin": "Phương Đông",
+            "source_verified": True,
+            "source_url": "https://classics.mit.edu/Confucius/analects.1.1.html",
+            "source_locator": "Luận ngữ, Vi chính 2.17; Internet Classics Archive, Part 2",
+            "translation_note": "Phần tiếng Việt là diễn nghĩa, không phải nguyên văn tiếng Việt của tác giả.",
+            "themes": ["chưa biết", "chưa hiểu", "trung thực", "thắc mắc", "tự nhận"],
             "quote": "Tri chi vi tri chi, bất tri vi bất tri, thị tri dã (Biết thì nói là biết, chưa biết thì nhận là chưa biết, ấy mới là sự hiểu biết chân chính).",
             "lesson": "Người học trò chân chính không giấu dốt, luôn giữ tâm thế khiêm cung, lấy sự thành thật với chính mình làm gốc rễ để dựng xây nền móng tri thức vững bền."
+        },
+        {
+            "author": "Marcus Aurelius",
+            "origin": "Phương Tây",
+            "quote": "Tôi tìm kiếm sự thật, điều chưa từng làm hại ai.",
+            "lesson": "Biết lắng nghe bằng chứng và sẵn lòng sửa sai giúp ta sống trung thực, có trách nhiệm với mình và người khác.",
+            "source_verified": True,
+            "source_url": "https://classics.mit.edu/Antoninus/meditations.6.six.html",
+            "source_locator": "Meditations, quyển VI, đoạn 21; bản dịch George Long",
+            "translation_note": "Bản dịch nghĩa tiếng Việt của trích đoạn: I seek the truth by which no man was ever injured.",
+            "themes": ["sửa", "sai", "kiểm", "bằng chứng", "thử"],
         },
         {
             "author": "Socrates",
@@ -1999,26 +2054,43 @@ def get_cross_station_pedagogical_context(current_station: int) -> str:
     return "\n".join(ctx_parts)
 
 
-def get_unique_philosophical_lesson(station_id: int, subject: str = "") -> dict:
+def get_unique_philosophical_lesson(station_id: int, subject: str = "", context: str = "") -> dict:
     """
     Lấy một bài học triết lý nhân cách kèm danh ngôn Á - Âu độc bản chưa từng xuất hiện trong phiên.
     """
     used = st.session_state.get('used_philosophical_quotes', [])
     candidates = CROSS_STATION_PHILOSOPHY_BANK.get(station_id, CROSS_STATION_PHILOSOPHY_BANK[1])
+    if station_id == 1:
+        verified = [c for c in candidates if c.get('source_verified') is True and c.get('source_url')]
+        if verified:
+            candidates = verified
 
     # Lọc bỏ những câu đã từng sử dụng
     available = [c for c in candidates if c["quote"] not in used and c["author"] not in used]
     if not available:
         # Nếu đã dùng hết danh sách của trạm hiện tại, lấy từ trạm khác chưa dùng
         all_candidates = []
-        for s in [1, 2, 3]:
-            all_candidates.extend(CROSS_STATION_PHILOSOPHY_BANK.get(s, []))
-        available = [c for c in all_candidates if c["quote"] not in used and c["author"] not in used]
+        if station_id == 1:
+            all_candidates = list(candidates)
+        else:
+            for s in [1, 2, 3]:
+                all_candidates.extend(CROSS_STATION_PHILOSOPHY_BANK.get(s, []))
+        # Prefer a new philosopher, but do not discard a different verified
+        # teaching merely because its author has appeared before.
+        available = [c for c in all_candidates if c["quote"] not in used]
 
     if available:
+        if station_id == 1 and context:
+            scores = [sum(term in context.casefold() for term in c.get('themes', [])) for c in available]
+            best = max(scores)
+            available = [c for c, score in zip(available, scores) if score == best]
         chosen = random.choice(available)
     else:
-        chosen = candidates[0]
+        # Never silently recycle the first quote after exhausting the verified
+        # bank. Expanding verified sources is separate from inventing citations.
+        chosen = dict(candidates[0])
+        chosen.update(quote='', author='', source_url='', source_verified=False,
+                      lesson='Rút ra một hành động sống tốt khác từ chính tình huống học sinh vừa trao đổi; không lặp bài học cũ.')
 
     return chosen
 
@@ -2088,6 +2160,12 @@ def register_station_closure(station_id: int, quote_data: dict):
     st.session_state[f"tram{station_id}_understood"] = True
     if quote_data:
         st.session_state[f"tram{station_id}_closure_info"] = quote_data
+        # Survive changing lesson/subject within this learning session. Store
+        # only public teaching metadata, never student dialogue or identifiers.
+        history = st.session_state.setdefault('philosophical_teaching_history', [])
+        entry = {key: str(quote_data.get(key, '')) for key in ('quote', 'author', 'lesson')}
+        if entry not in history:
+            history.append(entry)
         if "used_philosophical_quotes" not in st.session_state:
             st.session_state.used_philosophical_quotes = []
         if quote_data.get("quote") and quote_data["quote"] not in st.session_state.used_philosophical_quotes:
@@ -5137,6 +5215,64 @@ def render_mermaid(code: str):
 
 
 
+def render_exact_function_plotly(fig):
+    """Typeset exact labels in the same document as the interactive plot.
+
+    Restricted to the three function renderers; other Labs and WebGL retain
+    their existing Streamlit renderer. Expressions here are generated locally.
+    """
+    import sympy as sp
+    import streamlit.components.v1 as function_components
+
+    def formula_label(value):
+        if value is None:
+            return None
+        value = re.sub(r'<[^>]+>', '', str(value))
+        if value.startswith('$'):
+            return value
+        if not re.fullmatch(r'[0-9α₀₁₂₃₄₅₆₇₈₉sqrtCĐTI()\s;,+*/.−\-]+', value):
+            return value
+        def coordinate(part):
+            part = part.strip().replace('−', '-')
+            if part.startswith('α'):
+                digits = part[1:].translate(str.maketrans('₀₁₂₃₄₅₆₇₈₉','0123456789'))
+                return r'\alpha_{' + digits + '}'
+            if not re.fullmatch(r'[0-9sqrt()\s+*/.\-]+', part):
+                raise ValueError('Unsupported coordinate label')
+            return sp.latex(sp.sympify(part, locals={'sqrt': sp.sqrt}))
+        point = re.fullmatch(r'(CĐ|CT|I)?\((.*);(.*)\)', value)
+        try:
+            if point:
+                prefix = {'CĐ':r'\mathrm{CĐ}', 'CT':r'\mathrm{CT}', 'I':'I', None:''}[point[1]]
+                return '$' + prefix + r'\left(' + coordinate(point[2]) + ';' + coordinate(point[3]) + r'\right)$'
+            return '$' + coordinate(value) + '$'
+        except (ValueError, TypeError, SyntaxError):
+            return value
+
+    for trace in fig.data:
+        if trace.text is not None and not isinstance(trace.text, str):
+            trace.text = [formula_label(text) for text in trace.text]
+            if 'markers' in str(trace.mode) and len(trace.text) == 1:
+                shifts = {'Cực đại (CĐ)':(-30,42),'Cực tiểu (CT)':(28,-42),
+                          'Tâm đối xứng I':(36,24),'Tâm ĐX / Điểm uốn I':(36,24),
+                          'Giao Oy':(-38,-26),'Giao trục Oy':(-38,-26)}
+                dx,dy = shifts.get(trace.name,(0,-30))
+                fig.add_annotation(x=trace.x[0],y=trace.y[0],text=trace.text[0],
+                                   showarrow=False,xshift=dx,yshift=dy,font=dict(size=14),
+                                   bgcolor='rgba(15,23,42,0.88)',borderpad=3)
+                trace.mode = 'markers'
+                trace.text = None
+    for annotation in fig.layout.annotations or []:
+        annotation.text = formula_label(annotation.text)
+    # Keep the title and legend out of the plotting area on narrow screens.
+    fig.update_layout(title=None, height=580, margin=dict(l=75,r=25,t=35,b=110),
+                      legend=dict(orientation='h',y=-0.18,x=0))
+    document = fig.to_html(include_plotlyjs='cdn', include_mathjax='cdn',
+                           config={'responsive':True,'displaylogo':False},
+                           default_width='100%', default_height='580px')
+    function_components.html(document, height=610, scrolling=False)
+
+
 def setup_pedagogical_oxy(fig, x_range, y_range):
 
     x_min, x_max = x_range
@@ -5319,6 +5455,28 @@ def render_smart_lab(data, current_subject=""):
         return f"{name}__{control_scope}"
 
     dtype = data.get("type")
+
+    if dtype == 'proposition_quadratic':
+        from services.lab_scope import evaluate_proposition
+        import sympy as sp
+        x_symbol = sp.Symbol('x')
+        expression = sum(sp.Rational(data[k]) * x_symbol**p for k, p in (('a', 2), ('b', 1), ('c', 0)))
+        st.markdown('### Mệnh đề chứa biến — gán giá trị và kiểm tra đúng/sai')
+        st.latex('P(x): ' + sp.latex(expression) + '=0')
+        value = st.text_input('Giá trị x (để trống khi chưa gán):', key=lab_key('proposition_x'))
+        if not value.strip():
+            st.info('Chưa gán giá trị x: câu chứa biến chưa có giá trị đúng/sai xác định.')
+        else:
+            try:
+                result, truth = evaluate_proposition(data, value)
+                st.latex('P(' + sp.latex(sp.Rational(value.strip())) + '): ' + sp.latex(sp.Rational(result.numerator, result.denominator)) + '=0')
+                if truth:
+                    st.success('Mệnh đề đúng.')
+                else:
+                    st.warning('Mệnh đề sai; đây vẫn là một mệnh đề sau khi gán x.')
+            except (ValueError, ZeroDivisionError):
+                st.warning('Nhập số nguyên, số thập phân hoặc phân số có mẫu khác 0.')
+        return
 
     if (current_subject in ('Hóa học', 'Khoa học tự nhiên') and dtype == 'func_log'
             and data.get('base') == 10 and data.get('k') == -1 and data.get('c') == 7):
@@ -6405,6 +6563,17 @@ def render_smart_lab(data, current_subject=""):
             fd = st.slider("Hệ số d:", -5.0, 5.0, float(data.get("d", 2.0)), 0.5, key=lab_key("lab_f3_d"))
             st.latex(function_formula_latex([fa, fb, fc, fd]))
 
+            import sympy as sp
+            exact_var = sp.Symbol('x', real=True)
+            exact_cubic = sum(sp.Rational(str(v))*exact_var**power for v, power in zip((fa,fb,fc,fd),(3,2,1,0)))
+            exact_center_x = -sp.Rational(str(fb))/(3*sp.Rational(str(fa)))
+            exact_center_y = sp.simplify(exact_cubic.subs(exact_var, exact_center_x))
+            exact_critical = sp.solve(sp.diff(exact_cubic, exact_var), exact_var)
+            def exact_plot_coordinate(x_value, y_value, center=False):
+                root = exact_center_x if center else min(exact_critical, key=lambda r: abs(float(sp.re(r.evalf()))-x_value))
+                ordinate = exact_center_y if center else sp.simplify(exact_cubic.subs(exact_var, root))
+                return sp.sstr(root) + '; ' + sp.sstr(ordinate)
+
             # Tính toán Điểm uốn / Tâm đối xứng
             x_uon = -fb / (3.0 * fa)
             y_uon = fa * (x_uon**3) + fb * (x_uon**2) + fc * x_uon + fd
@@ -6445,7 +6614,7 @@ def render_smart_lab(data, current_subject=""):
                 st.markdown(sanitize_svg_for_markdown(variation_svg(exact_model)), unsafe_allow_html=True)
                 st.markdown(sanitize_svg_for_markdown(graph_svg(exact_model)), unsafe_allow_html=True)
             else:
-                st.caption("Luồng Plotly để đối chiếu tương tác; nhãn tọa độ của bản cũ có thể đang hiển thị gần đúng.")
+                st.caption("Đồ thị tương tác với nhãn tọa độ chính xác, dựng công thức LaTeX.")
     
                 # Thuật toán căn chỉnh co giãn tối ưu (Auto-zoom bounds)
                 if has_extrema and x_cd is not None and x_ct is not None:
@@ -6477,39 +6646,46 @@ def render_smart_lab(data, current_subject=""):
                 if has_extrema and x_cd is not None and x_ct is not None:
                     # Cực đại
                     fig.add_trace(go.Scatter(x=[x_cd], y=[y_cd], mode='markers+text', marker=dict(size=10, color='#f43f5e', symbol='diamond'),
-                                             text=[f'CĐ({x_cd:.1f}; {y_cd:.1f})'], textposition="top center", name='Cực đại (CĐ)'))
+                                             text=['CĐ(' + exact_plot_coordinate(x_cd, y_cd) + ')'], textposition="top center", name='Cực đại (CĐ)'))
                     fig.add_trace(go.Scatter(x=[x_cd, x_cd, 0], y=[0, y_cd, y_cd], mode='lines', line=dict(color='#f43f5e', width=1.4, dash='dash'), hoverinfo='skip', showlegend=False))
     
                     # Cực tiểu
                     fig.add_trace(go.Scatter(x=[x_ct], y=[y_ct], mode='markers+text', marker=dict(size=10, color='#f59e0b', symbol='diamond'),
-                                             text=[f'CT({x_ct:.1f}; {y_ct:.1f})'], textposition="bottom center", name='Cực tiểu (CT)'))
+                                             text=['CT(' + exact_plot_coordinate(x_ct, y_ct) + ')'], textposition="bottom center", name='Cực tiểu (CT)'))
                     fig.add_trace(go.Scatter(x=[x_ct, x_ct, 0], y=[0, y_ct, y_ct], mode='lines', line=dict(color='#f59e0b', width=1.4, dash='dash'), hoverinfo='skip', showlegend=False))
     
                 # Marker Điểm uốn / Tâm đối xứng
                 fig.add_trace(go.Scatter(x=[x_uon], y=[y_uon], mode='markers+text', marker=dict(size=9, color='#a855f7', symbol='circle'),
-                                         text=[f'I({x_uon:.1f}; {y_uon:.1f})'], textposition="top right", name='Tâm ĐX / Điểm uốn I'))
+                                         text=['I(' + exact_plot_coordinate(x_uon, y_uon, center=True) + ')'], textposition="top right", name='Tâm ĐX / Điểm uốn I'))
                 fig.add_trace(go.Scatter(x=[x_uon, x_uon, 0], y=[0, y_uon, y_uon], mode='lines', line=dict(color='#a855f7', width=1.2, dash='dot'), hoverinfo='skip', showlegend=False))
     
                 # Marker Giao điểm trục tung Oy
                 if y_min <= fd <= y_max:
                     fig.add_trace(go.Scatter(x=[0], y=[fd], mode='markers+text', marker=dict(size=8, color='#10b981', symbol='cross'),
-                                             text=[f'(0; {fd:.1f})'], textposition="middle right", name='Giao trục Oy'))
+                                             text=['(0; ' + str(sp.Rational(str(fd))) + ')'], textposition="middle right", name='Giao trục Oy'))
     
                 # Marker Giao điểm trục hoành Ox (các nghiệm thực)
                 try:
-                    roots = np.roots([fa, fb, fc, fd])
-                    for r in roots:
-                        if np.isreal(r):
-                            rx = float(np.real(r))
-                            if x_min <= rx <= x_max and abs(rx) > 0.15:
-                                fig.add_trace(go.Scatter(x=[rx], y=[0], mode='markers+text', marker=dict(size=7, color='#06b6d4', symbol='circle-open'),
-                                                         text=[f'({rx:.1f}; 0)'], textposition="bottom left", name='Giao trục Ox', showlegend=False))
+                    import sympy as sp
+                    exact_x = sp.Symbol('x', real=True)
+                    exact_poly = sum(sp.Rational(str(v)) * exact_x**power
+                                     for v, power in zip((fa, fb, fc, fd), (3, 2, 1, 0)))
+                    exact_roots = sp.Poly(exact_poly, exact_x).real_roots(multiple=False)
+                    for root_index, (root, multiplicity) in enumerate(exact_roots, 1):
+                        rx = float(root.evalf())
+                        if x_min <= rx <= x_max:
+                            label = str(root) if root.is_Rational else 'α' + str(root_index).translate(str.maketrans('0123456789', '₀₁₂₃₄₅₆₇₈₉'))
+                            fig.add_trace(go.Scatter(x=[rx], y=[0], mode='markers+text', marker=dict(size=7, color='#06b6d4', symbol='circle-open'),
+                                                     text=[f'({label}; 0)'], textposition="bottom left", name='Giao trục Ox', showlegend=False))
+                    if any(not root.is_Rational for root, _ in exact_roots):
+                        st.caption('Các αᵢ được đánh số theo thứ tự nghiệm thực tăng dần của phương trình dưới đây; tọa độ vẽ dùng số gần đúng, nhãn không làm tròn nghiệm.')
+                        st.latex(sp.latex(exact_poly) + '=0')
                 except Exception:
                     pass
     
                 setup_pedagogical_oxy(fig, [x_min, x_max], [y_min, y_max])
                 fig.update_layout(title="Đồ thị Hàm số Bậc 3 (Tối ưu co giãn • Kèm CĐ, CT, Tâm ĐX & Giao trục)", height=520, showlegend=True)
-                st.plotly_chart(fig, width="stretch")
+                render_exact_function_plotly(fig)
     
 
     elif dtype == "func_1_1":
@@ -6527,6 +6703,12 @@ def render_smart_lab(data, current_subject=""):
             if abs(fa * fd - fb * fc) < 1e-12:
                 st.error("Hàm phân thức 1/1 đang suy biến: ad - bc phải khác 0. Hãy chọn lại hệ số.")
                 return
+            import sympy as sp
+            qa, qb, qc, qd = (sp.Rational(str(v)) for v in (fa, fb, fc, fd))
+            exact_vertical = str(-qd/qc)
+            exact_horizontal = str(qa/qc)
+            exact_oy = str(qb/qd) if qd else None
+            exact_ox = str(-qb/qa) if qa else None
             x_tc_dung = -fd / fc
             y_tc_ngang = fa / fc
             y_oy = (fb / fd) if fd != 0 else None
@@ -6553,7 +6735,7 @@ def render_smart_lab(data, current_subject=""):
                 st.markdown(sanitize_svg_for_markdown(variation_svg(exact_model)), unsafe_allow_html=True)
                 st.markdown(sanitize_svg_for_markdown(graph_svg(exact_model)), unsafe_allow_html=True)
             else:
-                st.caption("Luồng Plotly để đối chiếu tương tác; nhãn tọa độ của bản cũ có thể đang hiển thị gần đúng.")
+                st.caption("Đồ thị tương tác với nhãn tọa độ chính xác, dựng công thức LaTeX.")
     
                 # Thuật toán căn chỉnh co giãn tự động tối ưu (Auto-zoom bám sát tâm I và giao điểm)
                 dx = max(4.5, abs(x_tc_dung) + 2.2, (abs(x_ox - x_tc_dung) + 1.8) if x_ox is not None else 4.5)
@@ -6582,23 +6764,24 @@ def render_smart_lab(data, current_subject=""):
     
                 # Marker Tâm đối xứng I (Giao điểm 2 tiệm cận)
                 fig.add_trace(go.Scatter(x=[x_tc_dung], y=[y_tc_ngang], mode='markers+text', marker=dict(size=11, color='#facc15', symbol='star'),
-                                         text=[f'I({x_tc_dung:.1f}; {y_tc_ngang:.1f})'], textposition="top right", name='Tâm đối xứng I'))
+                                         text=[f'I({exact_vertical}; {exact_horizontal})'], textposition="top right", name='Tâm đối xứng I'))
+                fig.add_trace(go.Scatter(x=[x_tc_dung, x_tc_dung, 0], y=[0, y_tc_ngang, y_tc_ngang], mode='lines', line=dict(color='#facc15', width=1.2, dash='dot'), hoverinfo='skip', showlegend=False))
     
                 # Marker Giao điểm trục tung Oy
                 if y_oy is not None and y_min <= y_oy <= y_max:
                     fig.add_trace(go.Scatter(x=[0], y=[y_oy], mode='markers+text', marker=dict(size=8, color='#34d399', symbol='cross'),
-                                             text=[f'(0; {y_oy:.1f})'], textposition="middle right", name='Giao Oy'))
+                                             text=[f'(0; {exact_oy})'], textposition="middle right", name='Giao Oy'))
                     fig.add_trace(go.Scatter(x=[0, x_tc_dung], y=[y_oy, y_oy], mode='lines', line=dict(color='#34d399', width=1.0, dash='dot'), hoverinfo='skip', showlegend=False))
     
                 # Marker Giao điểm trục hoành Ox
                 if x_ox is not None and x_min <= x_ox <= x_max:
                     fig.add_trace(go.Scatter(x=[x_ox], y=[0], mode='markers+text', marker=dict(size=8, color='#38bdf8', symbol='cross'),
-                                             text=[f'({x_ox:.1f}; 0)'], textposition="bottom center", name='Giao Ox'))
+                                             text=[f'({exact_ox}; 0)'], textposition="bottom center", name='Giao Ox'))
                     fig.add_trace(go.Scatter(x=[x_ox, x_ox], y=[0, y_tc_ngang], mode='lines', line=dict(color='#38bdf8', width=1.0, dash='dot'), hoverinfo='skip', showlegend=False))
     
                 setup_pedagogical_oxy(fig, [x_min, x_max], [y_min, y_max])
                 fig.update_layout(title="Đồ thị Hàm phân thức Bậc 1 / Bậc 1 (Tối ưu co giãn • Kèm Tâm ĐX & Giao trục)", height=520, showlegend=True)
-                st.plotly_chart(fig, width="stretch")
+                render_exact_function_plotly(fig)
     
 
     elif dtype == "func_2_1":
@@ -6620,6 +6803,19 @@ def render_smart_lab(data, current_subject=""):
             if abs(fa * fe**2 - fb * fe * fd + fc * fd**2) < 1e-12:
                 st.error("Hàm phân thức 2/1 đang suy biến do tử và mẫu có nhân tử chung. Hãy chọn lại hệ số.")
                 return
+            import sympy as sp
+            exact_var21 = sp.Symbol('x', real=True)
+            qa21,qb21,qc21,qd21,qe21 = (sp.Rational(str(v)) for v in (fa,fb,fc,fd,fe))
+            numerator21 = qa21*exact_var21**2 + qb21*exact_var21 + qc21
+            rational21 = numerator21/(qd21*exact_var21+qe21)
+            center_x21 = -qe21/qd21
+            slope21 = qa21/qd21
+            intercept21 = (qb21-slope21*qe21)/qd21
+            center_y21 = sp.simplify(slope21*center_x21+intercept21)
+            critical21 = sp.solve(sp.together(sp.diff(rational21,exact_var21)).as_numer_denom()[0],exact_var21)
+            def exact_point21(x_value):
+                root = min(critical21,key=lambda r:abs(float(sp.re(r.evalf()))-x_value))
+                return sp.sstr(root),sp.sstr(sp.simplify(rational21.subs(exact_var21,root)))
             x_tc_dung = -fe / fd
             m_slope = fa / fd
             n_intercept = (fb - m_slope * fe) / fd
@@ -6646,87 +6842,19 @@ def render_smart_lab(data, current_subject=""):
             x_cd_21, y_cd_21, x_ct_21, y_ct_21 = None, None, None, None
             lbl_x_cd, lbl_y_cd, lbl_x_ct, lbl_y_ct = "", "", "", ""
             if has_extrema_21:
-                # 1. Tính toán giá trị xấp xỉ số thực cho tọa độ đồ thị
-                sq_d21 = math.sqrt(delta_der)
-                xc1 = (-B_der - sq_d21) / (2.0 * A_der)
-                xc2 = (-B_der + sq_d21) / (2.0 * A_der)
-                yc1 = (fa * xc1**2 + fb * xc1 + fc) / (fd * xc1 + fe)
-                yc2 = (fa * xc2**2 + fb * xc2 + fc) / (fd * xc2 + fe)
-
-                # 2. Tính toán tọa độ đại số chính xác (phân số tối giản hoặc căn thức vô tỷ chuẩn SGK GDPT 2018)
-                def _calc_exact_roots(A, B, C):
-                    D = B**2 - 4*A*C
-                    if D <= 0: return None
-                    sq_d = int(round(math.isqrt(int(round(D)))))
-                    if sq_d * sq_d == int(round(D)):
-                        f1, f2 = Fraction(-B - sq_d, 2*A), Fraction(-B + sq_d, 2*A)
-                        f_min, f_max = min(f1, f2), max(f1, f2)
-                        t1 = str(f_min.numerator) if f_min.denominator == 1 else f"{f_min.numerator}/{f_min.denominator}"
-                        t2 = str(f_max.numerator) if f_max.denominator == 1 else f"{f_max.numerator}/{f_max.denominator}"
-                        return {"x1_val": float(f_min), "x2_val": float(f_max), "x1_tex": t1, "x2_tex": t2, "is_irrat": False}
-                    d_int = int(round(D))
-                    k, d_c = 1, d_int
-                    for i in range(int(math.isqrt(d_int)), 1, -1):
-                        if d_int % (i*i) == 0:
-                            k, d_c = i, d_int // (i*i)
-                            break
-                    nb, den = -B, 2*A
-                    g = math.gcd(math.gcd(int(abs(nb)), k), int(abs(den)))
-                    if den < 0: nb, den = -nb, -den
-                    nb //= g; k //= g; den //= g
-                    k_str = "" if k == 1 else str(k)
-                    sqrt_u = f"√{d_c}"
-                    if den == 1:
-                        t1 = f"-{k_str}{sqrt_u}" if nb == 0 else f"{nb} - {k_str}{sqrt_u}"
-                        t2 = f"{k_str}{sqrt_u}" if nb == 0 else f"{nb} + {k_str}{sqrt_u}"
-                    else:
-                        t1 = f"-{k_str}{sqrt_u}/{den}" if nb == 0 else f"({nb} - {k_str}{sqrt_u})/{den}"
-                        t2 = f"{k_str}{sqrt_u}/{den}" if nb == 0 else f"({nb} + {k_str}{sqrt_u})/{den}"
-                    v1, v2 = (-B - math.sqrt(D))/(2*A), (-B + math.sqrt(D))/(2*A)
-                    if v1 > v2: v1, v2 = v2, v1; t1, t2 = t2, t1
-                    return {"x1_val": v1, "x2_val": v2, "x1_tex": t1, "x2_tex": t2, "is_irrat": True, "nb": nb, "k": k, "den": den, "d_c": d_c}
-
-                def _eval_exact_lin(m_val, n_val, r_info, is_x2=False):
-                    sgn = 1 if is_x2 else -1
-                    if not r_info or not r_info.get("is_irrat"):
-                        f_x = Fraction(str(r_info["x2_val"] if is_x2 else r_info["x1_val"])) if r_info else Fraction(0)
-                        f_y = Fraction(str(m_val)) * f_x + Fraction(str(n_val))
-                        return str(f_y.numerator) if f_y.denominator == 1 else f"{f_y.numerator}/{f_y.denominator}"
-                    fm, fn = Fraction(str(m_val)), Fraction(str(n_val))
-                    c_den = fm.denominator * r_info["den"] * fn.denominator
-                    t_rat = (fm.numerator * r_info["nb"] * fn.denominator) + (fn.numerator * fm.denominator * r_info["den"])
-                    t_sq = fm.numerator * r_info["k"] * fn.denominator * sgn
-                    g = math.gcd(math.gcd(abs(t_rat), abs(t_sq)), abs(c_den))
-                    if c_den < 0: t_rat, t_sq, c_den = -t_rat, -t_sq, -c_den
-                    t_rat //= g; t_sq //= g; c_den //= g
-                    kr = abs(t_sq); k_str = "" if kr == 1 else str(kr)
-                    sg = " + " if t_sq >= 0 else " - "
-                    sq_u = f"√{r_info['d_c']}"
-                    if c_den == 1:
-                        return f"{k_str}{sq_u}" if (t_sq >= 0 and t_rat == 0) else (f"-{k_str}{sq_u}" if t_rat == 0 else f"{t_rat}{sg}{k_str}{sq_u}")
-                    return f"({k_str}{sq_u})/{c_den}" if (t_sq >= 0 and t_rat == 0) else (f"(-{k_str}{sq_u})/{c_den}" if t_rat == 0 else f"({t_rat}{sg}{k_str}{sq_u})/{c_den}")
-
-                sc = 1000
-                r_exact = _calc_exact_roots(int(round(A_der * sc)), int(round(B_der * sc)), int(round(C_der * sc)))
-                m_eff = Fraction(int(round(2 * fa * 100)), int(round(fd * 100)))
-                n_eff = Fraction(int(round(fb * 100)), int(round(fd * 100)))
-                y1_tex = _eval_exact_lin(m_eff, n_eff, r_exact, is_x2=False)
-                y2_tex = _eval_exact_lin(m_eff, n_eff, r_exact, is_x2=True)
-
-                if m_slope > 0:
-                    x_cd_21, y_cd_21 = min(xc1, xc2), (yc1 if xc1 < xc2 else yc2)
-                    x_ct_21, y_ct_21 = max(xc1, xc2), (yc2 if xc1 < xc2 else yc1)
-                    lbl_x_cd, lbl_y_cd = (r_exact['x1_tex'] if r_exact else f"{x_cd_21:.2f}"), y1_tex
-                    lbl_x_ct, lbl_y_ct = (r_exact['x2_tex'] if r_exact else f"{x_ct_21:.2f}"), y2_tex
-                else:
-                    x_ct_21, y_ct_21 = min(xc1, xc2), (yc1 if xc1 < xc2 else yc2)
-                    x_cd_21, y_cd_21 = max(xc1, xc2), (yc2 if xc1 < xc2 else yc1)
-                    lbl_x_ct, lbl_y_ct = (r_exact['x1_tex'] if r_exact else f"{x_ct_21:.2f}"), y1_tex
-                    lbl_x_cd, lbl_y_cd = (r_exact['x2_tex'] if r_exact else f"{x_cd_21:.2f}"), y2_tex
-
-                info_lines_21.append(f"🔴 **Điểm cực đại:** $CĐ({lbl_x_cd}; {lbl_y_cd}) \\approx ({x_cd_21:.2f}; {y_cd_21:.2f})$")
-                info_lines_21.append(f"🟠 **Điểm cực tiểu:** $CT({lbl_x_ct}; {lbl_y_ct}) \\approx ({x_ct_21:.2f}; {y_ct_21:.2f})$")
-
+                # Use one symbolic source for every coefficient, including halves
+                # and either sign of the denominator; never round a discriminant.
+                for exact_root21 in critical21:
+                    if exact_root21.is_real is not True or exact_root21 == center_x21:
+                        continue
+                    exact_y21 = sp.simplify(rational21.subs(exact_var21, exact_root21))
+                    second21 = sp.simplify(sp.diff(rational21,exact_var21,2).subs(exact_var21,exact_root21))
+                    if second21 < 0:
+                        x_cd_21,y_cd_21 = float(exact_root21),float(exact_y21)
+                        lbl_x_cd,lbl_y_cd = sp.sstr(exact_root21),sp.sstr(exact_y21)
+                    elif second21 > 0:
+                        x_ct_21,y_ct_21 = float(exact_root21),float(exact_y21)
+                        lbl_x_ct,lbl_y_ct = sp.sstr(exact_root21),sp.sstr(exact_y21)
             st.caption("Tọa độ chính xác, đường gióng và giao trục được thể hiện trong hình bên cạnh.")
 
         with c2:
@@ -6737,7 +6865,7 @@ def render_smart_lab(data, current_subject=""):
                 st.markdown(sanitize_svg_for_markdown(variation_svg(exact_model)), unsafe_allow_html=True)
                 st.markdown(sanitize_svg_for_markdown(graph_svg(exact_model)), unsafe_allow_html=True)
             else:
-                st.caption("Luồng Plotly để đối chiếu tương tác; nhãn tọa độ của bản cũ có thể đang hiển thị gần đúng.")
+                st.caption("Đồ thị tương tác với nhãn tọa độ chính xác, dựng công thức LaTeX.")
     
                 # Thuật toán co giãn tự động tối ưu
                 dx = max(4.5, abs(x_tc_dung) + 2.5)
@@ -6772,7 +6900,8 @@ def render_smart_lab(data, current_subject=""):
     
                 # Marker Tâm đối xứng I
                 fig.add_trace(go.Scatter(x=[x_tam_dx], y=[y_tam_dx], mode='markers+text', marker=dict(size=11, color='#facc15', symbol='star'),
-                                         text=[f'I({x_tam_dx:.1f}; {y_tam_dx:.1f})'], textposition="top right", name='Tâm đối xứng I'))
+                                         text=[f'I({center_x21}; {center_y21})'], textposition="top right", name='Tâm đối xứng I'))
+                fig.add_trace(go.Scatter(x=[x_tam_dx,x_tam_dx,0],y=[0,y_tam_dx,y_tam_dx],mode='lines',line=dict(color='#facc15',width=1.2,dash='dot'),hoverinfo='skip',showlegend=False))
     
                 # Marker Cực trị & Đường gióng vuông góc xuống Ox, Oy chuẩn mực SGK GDPT 2018
                 if has_extrema_21 and x_cd_21 is not None and x_ct_21 is not None:
@@ -6799,11 +6928,15 @@ def render_smart_lab(data, current_subject=""):
                 # Marker Giao trục Oy
                 if y_oy is not None and y_min <= y_oy <= y_max:
                     fig.add_trace(go.Scatter(x=[0], y=[y_oy], mode='markers+text', marker=dict(size=8, color='#34d399', symbol='cross'),
-                                             text=[f'(0; {y_oy:.1f})'], textposition="middle right", name='Giao Oy'))
+                                             text=[f'(0; {qc21/qe21})'], textposition="middle right", name='Giao Oy'))
     
+                for root, multiplicity in sp.Poly(numerator21,exact_var21).real_roots(multiple=False):
+                    rx=float(root.evalf())
+                    if root != center_x21 and x_min <= rx <= x_max:
+                        fig.add_trace(go.Scatter(x=[rx],y=[0],mode='markers+text',marker=dict(size=8,color='#38bdf8'),text=['('+sp.sstr(root)+'; 0)'],textposition='bottom center',name='Giao Ox',showlegend=False))
                 setup_pedagogical_oxy(fig, [x_min, x_max], [y_min, y_max])
                 fig.update_layout(title="Đồ thị Hàm phân thức Bậc 2 / Bậc 1 (Tối ưu co giãn • Kèm CĐ, CT, Tâm ĐX & TC Xiên)", height=520, showlegend=True)
-                st.plotly_chart(fig, width="stretch")
+                render_exact_function_plotly(fig)
     
 
     elif dtype in ["parabola", "func_2"]:
@@ -7062,6 +7195,9 @@ def parse_quiz_questions(text):
         for line in lines[1:]:
             # Formatting on reserved fields is presentation, not part of a key.
             field_line = re.sub(r'\*\*|__', '', line)
+            # Markdown list markers on internal fields are presentation only.
+            # Keep the original option/stem line untouched.
+            field_line = re.sub(r'^(?:[-*+]|\d+[.)])\s+', '', field_line)
             evidence_match = re.match(r'^(OUTCOME|COGNITIVE_REASON|COGNITIVE_STEPS):\s*(.*)', field_line, re.I)
             if evidence_match:
                 field = {"OUTCOME": "learning_outcome", "COGNITIVE_REASON": "cognitive_rationale", "COGNITIVE_STEPS": "solution_steps"}[evidence_match[1].upper()]
@@ -7250,7 +7386,20 @@ def generate_pedagogical_tts_audio_bytes(clean_text: str, lang: str = "vi") -> b
 
         return b""
 
-    sentences = [s.strip() for s in re.split(r'[\n.!?]+', clean_text) if s.strip()]
+    sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+|\n+', clean_text) if s.strip()]
+    # A paragraph/list may contain no sentence terminator for hundreds of
+    # characters. Bound every request, not only joins between sentences.
+    bounded = []
+    for sentence in sentences:
+        while len(sentence) > 160:
+            cut = sentence.rfind(' ', 0, 161)
+            if cut <= 0:
+                cut = 160
+            bounded.append(sentence[:cut])
+            sentence = sentence[cut:].lstrip()
+        if sentence:
+            bounded.append(sentence)
+    sentences = bounded
 
     chunks = []
 
@@ -7292,9 +7441,10 @@ def generate_pedagogical_tts_audio_bytes(clean_text: str, lang: str = "vi") -> b
         return b""
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as tts_exec:
-        parts = [p for p in tts_exec.map(_fetch_tts_chunk, chunks[:18]) if p]
+        parts = list(tts_exec.map(_fetch_tts_chunk, chunks))
 
-    if parts:
+    # Never label a silently truncated or partially failed lecture as complete.
+    if parts and all(parts):
 
         return b"".join(parts)
 
@@ -7656,16 +7806,33 @@ def create_pedagogical_tts_component(raw_text: str, subject_name: str, comp_key:
     audio_data = generate_pedagogical_tts_audio_bytes(clean_speech, lang=lang_code)
 
     # Render giao diện Thuyết minh chuẩn sư phạm Nam Bộ: Có cả Nút giọng Nam Bộ trực tiếp và Player MP3
-    safe_clean_speech = clean_speech[:2500].replace('</script>', '').replace('<script>', '')
+    safe_clean_speech = clean_speech.replace('</script>', '').replace('<script>', '')
     escaped_speech_js = json.dumps(safe_clean_speech, ensure_ascii=False)
 
-    player_title = "ENGLISH PEDAGOGICAL AUDIO (NATIVE PRONUNCIATION)" if subject_name == "Tiếng Anh" else "THUYẾT MINH BÀI GIẢNG (GIỌNG THẦY NAM BỘ - CHUẨN SƯ PHẠM)"
-    sub_title = "Chuẩn phát âm bản ngữ US/UK • 2 luồng Anh - Việt" if subject_name == "Tiếng Anh" else "Giọng Nam Bộ trầm ấm (Microsoft Nam Minh) • Ngắt nghỉ chuẩn ngữ pháp mô phạm"
+    player_title = "ENGLISH LESSON AUDIO" if subject_name == "Tiếng Anh" else "THUYẾT MINH BÀI GIẢNG"
+    sub_title = "Google TTS • English audio" if subject_name == "Tiếng Anh" else "Chọn giọng đọc • Dùng chung một thanh điều khiển"
+    current_voice_label = "Nghe bài học" if lang_code == "en" else "Nghe giọng nữ hiện tại"
+    voice_toggle_display = "flex" if lang_code == "en" else "none"
+    pending_voice_controls = "" if lang_code == "en" else '''
+        <div style="width:100%;min-width:0">
+        <div style="display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;max-width:100%;padding-bottom:4px" aria-label="Chọn giọng đọc">
+            <button type="button" data-selfhost-voice="female" title="Giọng tổng hợp hiện tại"
+                style="flex:0 0 auto;white-space:nowrap;padding:6px 16px;border-radius:20px;border:1px solid #38bdf8;color:#cbd5e1;background:#334155">▶ Giọng nữ</button>
+            <button type="button" data-selfhost-voice="thay_tri" disabled title="Giọng Thầy Trí: đang thiết lập bộ giọng miễn phí, tự chạy"
+                style="flex:0 0 auto;white-space:nowrap;padding:6px 16px;border-radius:20px;border:1px solid #38bdf8;color:#cbd5e1;background:#334155">▶ Giọng Thầy Trí</button>
+            <button type="button" data-selfhost-voice="nam_bo" disabled title="Giọng nam tổng hợp"
+                style="flex:0 0 auto;white-space:nowrap;padding:6px 16px;border-radius:20px;border:1px solid #38bdf8;color:#cbd5e1;background:#334155">▶ Giọng nam</button>
+        </div>
+            <div id="selfhost_voice_status" role="status" style="color:#94a3b8;font-size:11px;margin-top:4px">Hai giọng đang hiệu chỉnh</div>
+        </div>'''
 
     b64_source = ""
     if audio_data:
         b64_audio = base64.b64encode(audio_data).decode('ascii')
         b64_source = f'<audio id="audio_player_{comp_key}" controls style="width: 100%; height: 38px; border-radius: 20px; outline: none; margin-top: 8px;"><source src="data:audio/mp3;base64,{b64_audio}" type="audio/mp3"></audio>'
+
+    if lang_code == "vi" and not b64_source:
+        b64_source = f'<audio id="audio_player_{comp_key}" controls preload="none" style="width:100%;height:38px;margin-top:8px"></audio>'
 
     tts_ui_html = f"""
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 4px 0 10px 0; background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95)); border: 1.5px solid #0284c7; border-radius: 12px; padding: 12px 16px; box-shadow: 0 4px 14px rgba(2,132,199,0.25);">
@@ -7677,6 +7844,7 @@ def create_pedagogical_tts_component(raw_text: str, subject_name: str, comp_key:
                     <div style="color: #94a3b8; font-size: 11px;">{sub_title}</div>
                 </div>
             </div>
+            {pending_voice_controls}
             <button id="btn_tts_direct_{comp_key}" type="button" style="
                 background: linear-gradient(135deg, #0284c7, #0369a1);
                 color: #ffffff;
@@ -7686,12 +7854,12 @@ def create_pedagogical_tts_component(raw_text: str, subject_name: str, comp_key:
                 font-size: 12px;
                 font-weight: 700;
                 cursor: pointer;
-                display: flex;
+                display: {voice_toggle_display};
                 align-items: center;
                 gap: 6px;
                 box-shadow: 0 2px 10px rgba(56, 189, 248, 0.3);
             ">
-                <span id="btn_tts_icon_{comp_key}">▶️</span> <span id="btn_tts_txt_{comp_key}">Nghe Giọng Thầy Nam Bộ</span>
+                <span id="btn_tts_icon_{comp_key}">▶️</span> <span id="btn_tts_txt_{comp_key}">{current_voice_label}</span>
             </button>
         </div>
         {b64_source}
@@ -7725,19 +7893,19 @@ def create_pedagogical_tts_component(raw_text: str, subject_name: str, comp_key:
                         }});
                     }}
                     aud.onended = function() {{
-                        if (btnTxt) btnTxt.innerText = 'Nghe Giọng Thầy Nam Bộ';
+                        if (btnTxt) btnTxt.innerText = 'Nghe bài học';
                         if (btnIcon) btnIcon.innerText = '▶️';
                     }};
                 }} else {{
                     aud.pause();
-                    if (btnTxt) btnTxt.innerText = 'Nghe Giọng Thầy Nam Bộ';
+                    if (btnTxt) btnTxt.innerText = 'Nghe bài học';
                     if (btnIcon) btnIcon.innerText = '▶️';
                 }}
             }} else if (window.speechSynthesis) {{
                 if (isSpeaking || window.speechSynthesis.speaking) {{
                     window.speechSynthesis.cancel();
                     isSpeaking = false;
-                    if (btnTxt) btnTxt.innerText = 'Nghe Giọng Thầy Nam Bộ';
+                    if (btnTxt) btnTxt.innerText = 'Nghe bài học';
                     if (btnIcon) btnIcon.innerText = '▶️';
                 }} else {{
                     isSpeaking = true;
@@ -7748,7 +7916,7 @@ def create_pedagogical_tts_component(raw_text: str, subject_name: str, comp_key:
                     u.rate = 0.88;
                     u.onend = function() {{
                         isSpeaking = false;
-                        if (btnTxt) btnTxt.innerText = 'Nghe Giọng Thầy Nam Bộ';
+                        if (btnTxt) btnTxt.innerText = 'Nghe bài học';
                         if (btnIcon) btnIcon.innerText = '▶️';
                     }};
                     window.speechSynthesis.speak(u);
@@ -7758,7 +7926,109 @@ def create_pedagogical_tts_component(raw_text: str, subject_name: str, comp_key:
     }})();
     </script>
     """
-    comp_height = 135 if audio_data else 85
+    if lang_code == "vi":
+        # This worker is optional. Cloud must use a configured HTTPS proxy;
+        # never point a remote learner at their own localhost.
+        reader_path = os.path.join(os.path.dirname(__file__), "assets", "scientific_speech_reader.js")
+        with open(reader_path, encoding="utf-8") as reader_file:
+            scientific_reader = reader_file.read()
+        voice_config = json.dumps({
+            "raw": raw_text, "subject": subject_name,
+            "endpoint": os.environ.get("GSAI_VOICE_PUBLIC_URL", ""),
+        }, ensure_ascii=False).replace("</", "<\\/")
+        selfhost_script = r"""
+        <script>
+        (function(config) {
+            const status = document.getElementById('selfhost_voice_status');
+            const buttons = [...document.querySelectorAll('[data-selfhost-voice]')];
+            // Streamlit uses srcdoc iframes, whose location has no hostname.
+            let host = location.hostname;
+            try { host = host || window.parent.location.hostname; } catch (_) {}
+            const local = ['127.0.0.1', 'localhost'].includes(host);
+            const endpoint = config.endpoint || (local ? 'http://127.0.0.1:8510' : '');
+            const player = document.querySelector('audio');
+            if (!player) return;
+            const femaleSource = player.querySelector('source')?.src || '';
+            const sources = new Map(femaleSource ? [['female', femaleSource]] : []);
+            let selected = femaleSource ? 'female' : null;
+            let available = femaleSource ? ['female'] : [];
+            // Keep ready voices usable while CPU synthesis is pending. A late
+            // response must never replace a newer choice or start playback.
+            const pending = new Map();
+            let choice = 0;
+            const sync = () => buttons.forEach(b => {
+                const voice = b.dataset.selfhostVoice;
+                b.disabled = !available.includes(voice);
+                b.setAttribute('aria-busy', String(pending.has(voice)));
+                b.setAttribute('aria-pressed', String(voice === selected));
+                b.style.background = voice === selected ? '#0369a1' : '#334155';
+                if (voice !== 'female') b.title = available.includes(voice) ? 'Bản thử cần thẩm định' : 'Giọng này chưa đạt thẩm định, đang hiệu chỉnh';
+            });
+            const play = () => player.play().catch(() => {
+                status.textContent = 'Âm thanh đã sẵn sàng; nhấn phát trên thanh bên dưới';
+            });
+            player.addEventListener('play', () => {
+                if (window.speechSynthesis) window.speechSynthesis.cancel();
+            });
+            buttons.forEach(button => button.addEventListener('click', async () => {
+                if (button.disabled) return;
+                const voice = button.dataset.selfhostVoice;
+                const ticket = ++choice;
+                if (selected === voice && (player.src || femaleSource)) {
+                    if (player.paused) play(); else player.pause();
+                    return;
+                }
+                player.pause();
+                const previous = selected;
+                status.textContent = 'Đang chuẩn bị ' + button.textContent.trim() + '… Có thể chọn giọng khác đã sẵn sàng.';
+                try {
+                    if (!sources.has(voice)) {
+                        if (!pending.has(voice)) {
+                            pending.set(voice, (async () => {
+                                const text = window.GSAIScienceReader.prepareText(config.raw, 'vi', config.subject);
+                                const response = await fetch(endpoint.replace(/\/$/, '') + '/speech', {
+                                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                                    body: JSON.stringify({text, voice, reader_revision: window.GSAIScienceReader.VERSION})
+                                });
+                                if (!response.ok) throw Error('Chưa tạo được giọng này; vẫn có thể chọn giọng khác.');
+                                const blob = await response.blob();
+                                if (!blob.size) throw Error('Âm thanh rỗng; hãy chọn giọng khác.');
+                                sources.set(voice, URL.createObjectURL(blob));
+                            })().finally(() => { pending.delete(voice); sync(); }));
+                        }
+                        sync();
+                        await pending.get(voice);
+                    }
+                    if (ticket !== choice) return;
+                    player.src = sources.get(voice); selected = voice;
+                    status.textContent = voice === 'female' ? 'Giọng tổng hợp hiện tại' : button.textContent.trim() + ' • Bản thử cần thẩm định';
+                    await play();
+                } catch (error) {
+                    if (ticket !== choice) return;
+                    selected = previous;
+                    status.textContent = error.message || 'Không kết nối được giọng đọc';
+                } finally { sync(); }
+            }));
+            sync();
+            if (endpoint) {
+                fetch(endpoint.replace(/\/$/, '') + '/health').then(r => {
+                    if (!r.ok) throw Error();
+                    return r.json();
+                }).then(info => {
+                    available = [...(femaleSource ? ['female'] : []), ...(info.available_voices || [])];
+                    sync();
+                    status.textContent = info.owner_voice_state === 'preview_B' ? 'Chọn Giọng nữ, Giọng Thầy Trí (mẫu B) hoặc Giọng nam' : (available.length > (femaleSource ? 1 : 0) ? 'Chọn giọng đọc • Bản thử cần thẩm định' : 'Hai giọng nam đang hiệu chỉnh sau thẩm định');
+                }).catch(() => { status.textContent = 'Hai giọng nam chưa kết nối; giữ giọng hiện tại'; });
+            } else status.textContent = 'Hai giọng nam chưa kết nối; giữ giọng hiện tại';
+            window.addEventListener('pagehide', () => {
+                player.pause(); sources.forEach(url => {if(url.startsWith('blob:')) URL.revokeObjectURL(url)});
+            });
+        })(GSAI_VOICE_CONFIG);
+        </script>
+        """.replace("GSAI_VOICE_CONFIG", voice_config)
+        tts_ui_html += "<script>" + scientific_reader + "</script>" + selfhost_script
+    # One shared audio bar; the ordered voice row scrolls horizontally on phones.
+    comp_height = 230 if lang_code == "vi" else (135 if audio_data else 85)
     components.html(tts_ui_html, height=comp_height)
 
 
@@ -10233,6 +10503,17 @@ def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán h�
 
     # Correct only the reviewed KHTN 8 lime/soil misconception pattern.
     t = correct_khtn8_lime_soil_confusion(t, subject, grade, topic)
+    from services.curriculum_policy import correct_reviewed_html_guidance
+    t = correct_reviewed_html_guidance(t, subject, grade, topic)
+    from services.curriculum_policy import label_declared_paraphrases, correct_reviewed_myth_guidance
+    t = label_declared_paraphrases(t)
+    t = correct_reviewed_myth_guidance(t, subject, grade, topic)
+    from services.curriculum_policy import correct_reviewed_proposition_guidance
+    t = correct_reviewed_proposition_guidance(t, subject, grade, topic)
+    from services.curriculum_policy import correct_reviewed_cubic_production_context
+    t = correct_reviewed_cubic_production_context(t, subject, grade, topic)
+    from services.curriculum_policy import correct_reviewed_cubic_prior_knowledge
+    t = correct_reviewed_cubic_prior_knowledge(t, subject, grade, topic)
 
     # 2. Quét & chuẩn hóa KaTeX
     t = sanitize_katex_latex(t)
@@ -10438,10 +10719,10 @@ def _normalize_moet_bbt_grid(x_cells: list, yp_cells: list, y_cells: list) -> di
 def _t1_with_function_visuals(body, topic, lesson=''):
     """Load this release's math renderer if a long-lived worker retained it."""
     from services import function_visuals
-    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026110102:
+    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026110204:
         from importlib import reload
         function_visuals = reload(function_visuals)
-    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026110102:
+    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026110204:
         raise RuntimeError('Bộ dựng đồ thị chưa đồng bộ bản phát hành; cần nạp lại ứng dụng.')
     return function_visuals.with_function_visuals(body, topic, lesson)
 
@@ -10974,15 +11255,15 @@ if selected_station == station_labels[0]:
     curr_t1_books = get_kntt_books_for(subject, grade_num)
 
     curr_t1_books_nxbgd = get_nxbgd_books_for(subject, grade_num)
-    curr_vniteach_books = [b for b in curr_t1_books if b.get('kind') != 'publisher_book_page']
+    curr_vniteach_books = [b for b in curr_t1_books if b.get('kind') != 'publisher_book_page' and not b['url'].startswith((NATIONAL_SCHOOL_TEXTBOOK_LIBRARY, PUBLISHER_DIGITAL_LIBRARY))]
     curr_publisher_books = [b for b in curr_t1_books if b.get('kind') == 'publisher_book_page']
     current_book_update = textbook_update_notice(subject, grade_num)
 
 
 
-    with st.expander(f"📚 Sách Giáo Khoa Điện Tử Kết Nối Tri Thức - {subject} Lớp {grade_num} (Nguồn: VniTeach & NXBGD)", expanded=False):
+    with st.expander(f"📚 Sách Giáo Khoa Điện Tử Kết Nối Tri Thức - {subject} Lớp {grade_num} (Nguồn: VniTeach, NXBGD & THSQG)", expanded=False):
 
-        c_kntt1, c_kntt2 = st.columns([1, 1])
+        c_kntt1, c_kntt2, c_kntt3 = st.columns([1, 1, 1])
 
         with c_kntt1:
 
@@ -11023,6 +11304,15 @@ if selected_station == station_labels[0]:
                 st.image(generate_local_qr_base64(curr_t1_books_nxbgd[0]['url']), width=150)
 
 
+
+        with c_kntt3:
+            st.markdown("**📖 Trường Học Số Quốc Gia**")
+            national_grade_url = f"{NATIONAL_SCHOOL_TEXTBOOK_LIBRARY}?lop={grade_num}"
+            st.link_button(f"📚 Chỉ mục sách lớp {grade_num}", national_grade_url, width="stretch")
+            st.link_button("🌐 Danh mục sách lớp 1–12", NATIONAL_SCHOOL_TEXTBOOK_LIBRARY, width="stretch")
+            st.caption("Chọn bộ sách, môn và cuốn sách; mở mục lục trong trình đọc để chọn bài.")
+            st.caption(f"📱 Quét QR để mở chỉ mục lớp {grade_num}:")
+            st.image(generate_local_qr_base64(national_grade_url), width=150)
 
     if current_book_update:
         st.warning(current_book_update['note'])
@@ -11240,9 +11530,9 @@ if selected_station == station_labels[0]:
                 export_html = build_lesson_html(subject, grade_num, current_topic_name, cleaned_p1, export_style)
                 export_html = _sync_t1_function_export(export_html, subject, current_topic_name, cleaned_p1)
                 components.html(export_html, height=790, scrolling=True)
-                st.download_button("📥 Tải phiếu HTML để xem / In PDF", export_html.encode("utf-8"), file_name=f"Bai_hoc_{t1_indexing_data['index_code']}_{export_style}.html", mime="text/html", key="download_lesson_html")
-                st.download_button("📄 Tải nội dung gốc Markdown", cleaned_p1.encode("utf-8"), file_name=f"Bai_hoc_{t1_indexing_data['index_code']}.md", mime="text/markdown", key="download_lesson_source")
-                st.download_button("🖋️ Tải prompt phong cách chữ viết tay", handwritten_prompt(subject, grade_num, current_topic_name, cleaned_p1).encode("utf-8"), file_name=f"Prompt_{t1_indexing_data['index_code']}.json", mime="application/json", key="download_handwritten_prompt")
+                st.download_button("📥 Tải phiếu HTML để xem / In PDF", export_html.encode("utf-8"), file_name=f"Bai_hoc_{t1_indexing_data['index_code']}_{export_style}.html", mime="text/html", key="download_lesson_html", on_click="ignore")
+                st.download_button("📄 Tải nội dung gốc Markdown", cleaned_p1.encode("utf-8"), file_name=f"Bai_hoc_{t1_indexing_data['index_code']}.md", mime="text/markdown", key="download_lesson_source", on_click="ignore")
+                st.download_button("🖋️ Tải prompt phong cách chữ viết tay", handwritten_prompt(subject, grade_num, current_topic_name, cleaned_p1).encode("utf-8"), file_name=f"Prompt_{t1_indexing_data['index_code']}.json", mime="application/json", key="download_handwritten_prompt", on_click="ignore")
 
             # --- NÚT ĐỌC BÀI GIẢNG TTS SƯ PHẠM CHUẨN GDPT 2018 & TIẾNG ANH BẢN NGỮ ---
             create_pedagogical_tts_component(cleaned_p1, subject, "tram1_lesson")
@@ -11285,11 +11575,25 @@ if selected_station == station_labels[0]:
 
                 with chat_container:
 
-                    for t1_msg in st.session_state.tram1_chat_history:
+                    for t1_msg_index, t1_msg in enumerate(st.session_state.tram1_chat_history):
 
                         with st.chat_message(t1_msg["role"]):
 
-                            st.markdown(chemical_display_markdown(t1_msg["content"]))
+                            from services.curriculum_policy import correct_reviewed_html_guidance
+                            chat_display = t1_msg["content"]
+                            if t1_msg["role"] == "assistant":
+                                chat_display = correct_reviewed_html_guidance(
+                                    chat_display, subject, grade_num, st.session_state.get('current_topic', ''))
+                                from services.curriculum_policy import correct_reviewed_myth_guidance
+                                chat_display = correct_reviewed_myth_guidance(
+                                    chat_display, subject, grade_num, st.session_state.get('current_topic', ''))
+                                if t1_msg_index and st.session_state.tram1_chat_history[t1_msg_index-1]['role'] == 'user':
+                                    from services.socratic_context import repair_reviewed_station1_closing
+                                    chat_display = repair_reviewed_station1_closing(
+                                        chat_display, st.session_state.tram1_chat_history[t1_msg_index-1]['content'],
+                                        subject, grade_num, closing=True)
+                                    t1_msg["content"] = chat_display
+                            st.markdown(chemical_display_markdown(chat_display))
 
 
 
@@ -11328,8 +11632,14 @@ if selected_station == station_labels[0]:
                             )
                         with st.chat_message("assistant"):
                             try:
-                                is_t1_understood = detect_student_concluded_intent(t1_input, st.session_state.tram1_chat_history)
-                                t1_quote_data = get_unique_philosophical_lesson(1, subject)
+                                from services.socratic_context import is_post_closure_thanks
+                                is_t1_farewell = is_post_closure_thanks(
+                                    t1_input, st.session_state.get('tram1_understood', False),
+                                    st.session_state.tram1_chat_history)
+                                is_t1_understood = (not is_t1_farewell and
+                                    detect_student_concluded_intent(t1_input, st.session_state.tram1_chat_history))
+                                t1_quote_data = get_unique_philosophical_lesson(
+                                    1, subject, t1_hist_ctx + ' ' + t1_input + ' ' + st.session_state.get('current_topic', ''))
                                 t1_cross_ctx = get_cross_station_pedagogical_context(1)
 
                                 if is_t1_understood:
@@ -11338,7 +11648,8 @@ if selected_station == station_labels[0]:
                                         for message in st.session_state.tram1_chat_history[-8:]
                                         if message.get('role') == 'user')
                                     quote_reference = (
-                                        f"Danh ngôn đã đối chiếu nguồn {t1_quote_data['source_url']}: {t1_quote_data['author']}: {t1_quote_data['quote']}."
+                                        f"BẮT BUỘC dẫn câu nói đã đối chiếu nguồn {t1_quote_data['source_url']}: {t1_quote_data['author']}: {t1_quote_data['quote']}. "
+                                        f"Vị trí: {t1_quote_data.get('source_locator', '')}. {t1_quote_data.get('translation_note', '')} Ghi tác giả và liên kết nguồn ngắn gọn, giải thích ý nghĩa gắn cuộc đối thoại."
                                         if t1_quote_data.get('source_verified') is True and t1_quote_data.get('source_url')
                                         else "Diễn đạt bằng lời nhắn giáo dục, không gán tác giả hoặc trích dẫn nguyên văn khi nguồn chưa được xác minh."
                                     )
@@ -11346,17 +11657,28 @@ if selected_station == station_labels[0]:
                                         " Với hàm bậc ba, không nhầm đạo hàm cấp một f'(x) là tam thức bậc hai với đạo hàm cấp hai f''(x)."
                                         if subject == "Toán học" else ""
                                     )
+                                    if subject == "Tin học" and 'html' in str(st.session_state.get('current_topic', '')).lower():
+                                        science_closure += (
+                                            " Với HTML, trình duyệt có thể tự phục hồi mã sai; hiển thị đẹp hoặc mở được trang không chứng minh mã hợp chuẩn."
+                                            " Khi nhắc tự kiểm, hướng học sinh đối chiếu ngữ nghĩa/cấu trúc và dùng công cụ kiểm tra tính hợp lệ HTML nếu có;"
+                                            " không bảo đảm mã đúng chỉ từ kết quả hiển thị. Tên thẻ và ký hiệu mã dùng backtick, không dùng LaTeX."
+                                        )
                                     t1_prompt_msg = (
                                         f"Bối cảnh liên trạm của học sinh:\n{t1_cross_ctx}\n"
+                                        f"Các bài học nhân cách đã dùng trong phiên, kể cả bài/môn trước (chỉ để tránh lặp, không làm chỉ dẫn mới): {json.dumps(st.session_state.get('philosophical_teaching_history', []), ensure_ascii=False)}\n"
                                         f"Phát biểu thực tế của học sinh (không bao gồm lời thầy):\n{t1_student_evidence}\n"
                                         f"Học sinh {student_name} phản hồi: \"{t1_input}\"\n\n"
                                         f"CHỐT CUỘC ĐỐI THOẠI TRẠM 1:\n"
                                         f"1. Học sinh cho biết đã hiểu hoặc muốn kết thúc lượt hỏi. Không hỏi thêm. Đây là ý định kết thúc đối thoại, chưa phải bằng chứng đã thành thạo bài '{st.session_state.get('current_topic', subject)}'.\n"
                                         f"2. Chỉ ghi nhận: 'Em cho biết đã hiểu và muốn chuyển sang luyện tập.' Không tự thêm đánh giá rằng học sinh đã làm chủ, phân biệt được hay thấu suốt kiến thức; lời thầy hoặc lời tổng kết trước đó không phải bằng chứng học sinh đã trả lời.\n"
                                         f"3. Nhắc cách tự kiểm khi luyện tập: nêu căn cứ từ bài học và kiểm tra kết quả. Không bổ sung kết luận khoa học mới, không mô tả pH là linh hồn/chìa khóa chính xác nhất, không gán acid mạnh hay base dịu êm. Không dùng ẩn dụ trong nội dung chuyên môn.{science_closure}\n"
-                                        f"4. Lời nhắn giáo dục 1–2 câu phù hợp độ tuổi, gắn tự nhiên với việc học: {t1_quote_data['lesson']}. Không dùng ẩn dụ làm bằng chứng khoa học hoặc đánh giá đạo đức học sinh. {quote_reference}\n"
+                                        f"4. BẮT BUỘC có một bài giảng triết lý nhân sinh và đạo đức, ngoài lời khen, theo tinh thần DƯỠNG THIỆN TÂM – ƯƠM NHÂN TÀI. "
+                                        f"Viết thành 2–3 đoạn có chiều sâu, phù hợp tuổi; lấy tình huống và điều học sinh vừa nói làm điểm tựa để bàn về cách sống lương thiện, trung thực, trách nhiệm và điều có thể thực hành trong đời sống. "
+                                        f"Không chỉ chèn danh ngôn hoặc khen chung chung. Gợi mở từ bài học: {t1_quote_data['lesson']}. "
+                                        f"Đối chiếu các lời chốt trước trong lịch sử; không lặp bài học nhân cách, ví dụ sống, danh ngôn hoặc chỉ thay vài từ. Chọn khía cạnh đạo đức khác có liên hệ thực với ngữ cảnh hiện tại; không ép đổi triết gia khi không có nguồn xác minh. "
+                                        f"Chọn triết gia trong kho Á–Âu theo ngữ cảnh, không ép mỗi lượt trích cả hai truyền thống. Không dùng ẩn dụ làm bằng chứng khoa học hoặc phán xét nhân phẩm học sinh. {quote_reference}\n"
                                         f"5. LỜI CHÚC ÂN CẦN: Lời chúc yêu thương của Người Thầy khích lệ {student_name} tự tin tiến sang Trạm 2 (Giải bài tập & Check VAR trực tiếp)!"
-                                        f" Học sinh đang học lớp {grade_num}; không tự gọi học sinh lớp 6–9 là học sinh THPT, không tự gán tên trường. Toàn bộ lời chốt tối đa 160 từ, không dùng các tiêu đề hành chính như 'Đóng gói bản chất'."
+                                        f" Học sinh đang học lớp {grade_num}; không tự gọi học sinh lớp 6–9 là học sinh THPT, không tự gán tên trường. Diễn đạt mạch lạc, vừa sức theo lớp, không dùng các tiêu đề hành chính như 'Đóng gói bản chất'; không rút phần giáo dục nhân cách còn vài lời khen."
                                     )
                                 else:
                                     t1_prompt_msg = (
@@ -11368,14 +11690,29 @@ if selected_station == station_labels[0]:
                                         f"TUYỆT ĐỐI CHƯA đưa bài học triết lý đạo đức ở bước này khi học sinh vẫn còn đang trong tiến trình tìm hiểu."
                                     )
 
-                                stream_gen = stream_gemini_with_fallback(
-                                    t1_prompt_msg,
-                                    system_instruction=t1_sys_inst
-                                )
                                 t1_reply_slot = st.empty()
-                                with t1_reply_slot.container():
-                                    t1_ans = st.write_stream(stream_gen)
+                                if is_t1_farewell:
+                                    t1_ans = "Thầy cảm ơn em. Chúc em học tốt và vận dụng điều đã học vào những việc tốt mỗi ngày nhé!"
+                                else:
+                                    from services.lesson_sources import reviewed_tutor_source_context
+                                    t1_prompt_msg = reviewed_tutor_source_context(
+                                        subject, grade_num, st.session_state.get('current_topic', '')) + '\n' + t1_prompt_msg
+                                    stream_gen = stream_gemini_with_fallback(
+                                        t1_prompt_msg,
+                                        system_instruction=t1_sys_inst
+                                    )
+                                    with t1_reply_slot.container():
+                                        t1_ans = st.write_stream(stream_gen)
                                 t1_ans_clean = sanitize_katex_latex(t1_ans)
+                                from services.curriculum_policy import correct_reviewed_html_guidance
+                                t1_ans_clean = correct_reviewed_html_guidance(
+                                    t1_ans_clean, subject, grade_num, st.session_state.get('current_topic', ''))
+                                from services.curriculum_policy import correct_reviewed_myth_guidance
+                                t1_ans_clean = correct_reviewed_myth_guidance(
+                                    t1_ans_clean, subject, grade_num, st.session_state.get('current_topic', ''))
+                                from services.socratic_context import repair_reviewed_station1_closing
+                                t1_ans_clean = repair_reviewed_station1_closing(
+                                    t1_ans_clean, t1_input, subject, grade_num, closing=is_t1_understood)
                                 t1_reply_slot.markdown(chemical_display_markdown(t1_ans_clean))
                                 st.session_state.tram1_chat_history.append({"role": "assistant", "content": t1_ans_clean})
                                 if is_t1_understood and isinstance(t1_ans_clean, str) and t1_ans_clean.strip():
@@ -11390,7 +11727,10 @@ if selected_station == station_labels[0]:
         # In Phần 2 (Trắc nghiệm tương tác)
 
         quiz_list = st.session_state.get("parsed_quiz", [])
-        quiz_recovery_key = (st.session_state.get('current_lesson', ''), 2026110101)
+        from services.curriculum_policy import repair_reviewed_cubic_question
+        quiz_list = [repair_reviewed_cubic_question(q, subject, grade_num) for q in quiz_list]
+        st.session_state.parsed_quiz = quiz_list
+        quiz_recovery_key = (st.session_state.get('current_lesson', ''), 2026110202)
         if (quiz_list and any(q.get('correct') not in ('A', 'B', 'C', 'D') for q in quiz_list)
                 and st.session_state.get('quiz_key_recovery_checked') != quiz_recovery_key):
             quiz_list = recover_missing_quiz_keys(quiz_list, parse_quiz_questions(quiz_recovery_key[0]))
@@ -11423,6 +11763,12 @@ if selected_station == station_labels[0]:
 
                 # 2. Tách sạch sẽ văn bản câu hỏi và khử hoàn toàn rác bảng markdown dính liền:
                 clean_q_display = clean_question_bbt_text(q['question'])
+                from services.curriculum_policy import correct_reviewed_html_guidance
+                clean_q_display = correct_reviewed_html_guidance(
+                    clean_q_display, subject, grade_num, st.session_state.get('current_topic', ''))
+                from services.curriculum_policy import correct_reviewed_myth_guidance
+                clean_q_display = correct_reviewed_myth_guidance(
+                    clean_q_display, subject, grade_num, st.session_state.get('current_topic', ''))
                 clean_q_display = sanitize_katex_latex(clean_q_display)
                 st.markdown(chemical_display_markdown(f"**Câu {idx+1}:** `[{level_caption(q)}]`\n\n{clean_q_display}"))
 
@@ -11960,6 +12306,7 @@ if selected_station == station_labels[0]:
     st.caption(preset_lab_note(subject, grade_num))
 
     if st.button("Mở mô phỏng có sẵn", disabled=manual_lab is None):
+        st.session_state[f'lab_intent_command_{current_context_key}'] = ''
         st.session_state.lab_request_revision = st.session_state.get("lab_request_revision", 0) + 1
 
         st.session_state.lab_data = resolve_preset_lab(subject, manual_lab, available_labs[manual_lab])
@@ -11969,6 +12316,7 @@ if selected_station == station_labels[0]:
 
 
     if st.button("✨ Khởi chạy Phòng Lab", key=f"btn_lab_{current_context_key}") and lab_command.strip():
+        st.session_state[f'lab_intent_command_{current_context_key}'] = lab_command
         st.session_state.lab_request_revision = st.session_state.get("lab_request_revision", 0) + 1
 
         st.session_state.tram1_count += 1
@@ -11981,7 +12329,10 @@ if selected_station == station_labels[0]:
 
             if st.session_state.get("current_lesson"):
 
-                full_context_blocks.append("=== TOÀN BỘ NỘI DUNG BÀI HỌC VỪA SINH RA TRÊN MÀN HÌNH ===\n" + st.session_state.current_lesson)
+                reviewed_lesson_text = station1_master_sovereign_brain_gate(
+                    st.session_state.current_lesson, subject=subject, grade=grade_num,
+                    topic=st.session_state.get('current_topic', ''), policy_revision=CURRICULUM_POLICY_REVISION)
+                full_context_blocks.append("=== TOÀN BỘ NỘI DUNG BÀI HỌC VỪA SINH RA TRÊN MÀN HÌNH ===\n" + reviewed_lesson_text)
 
             if st.session_state.get("parsed_quiz"):
 
@@ -11989,7 +12340,10 @@ if selected_station == station_labels[0]:
 
                 for q_i, q_val in enumerate(st.session_state.parsed_quiz):
 
-                    q_text += f"Câu {q_i+1}: {q_val.get('question')} | Đáp án: {q_val.get('correct')} | Gợi ý: {q_val.get('explain')}\n"
+                    from services.curriculum_policy import correct_reviewed_myth_guidance
+                    lab_question_text = correct_reviewed_myth_guidance(
+                        q_val.get('question', ''), subject, grade_num, st.session_state.get('current_topic', ''))
+                    q_text += f"Câu {q_i+1}: {lab_question_text} | Đáp án: {q_val.get('correct')} | Gợi ý: {q_val.get('explain')}\n"
 
                 full_context_blocks.append(q_text)
 
@@ -12011,6 +12365,9 @@ Chỉ dựng nội dung phù hợp môn/lớp và dữ kiện đã có. Khi chư
 
 
 
+            from services.lesson_sources import reviewed_tutor_source_context
+            full_context_blocks.insert(0, reviewed_tutor_source_context(
+                subject, grade_num, st.session_state.get('current_topic', '') or lab_command.strip()))
             context_text = "\n\n".join(full_context_blocks)
 
 
@@ -12182,6 +12539,13 @@ QUY TẮC PHÂN LOẠI MÔ HÌNH:
                     else:
                         st.session_state.lab_data = parsed_d
 
+                if (subject == "Tin học" and re.search(r'\bhtml\b', lab_command, re.I)
+                        and (not isinstance(st.session_state.lab_data, dict)
+                             or st.session_state.lab_data.get('type') != 'mermaid'
+                             or not isinstance(st.session_state.lab_data.get('code'), str)
+                             or not st.session_state.lab_data['code'].strip())):
+                    raise ValueError("Phản hồi không phải sơ đồ cho yêu cầu HTML.")
+
             except Exception as e:
 
                 # BẪY CỨU HỘ ĐA TẦNG THÔNG MINH (KẾ THỪA ƯU ĐIỂM LINK 2 & NÂNG CẤP TOÀN DIỆN CHO LINK 1):
@@ -12200,7 +12564,12 @@ QUY TẮC PHÂN LOẠI MÔ HÌNH:
 
 
 
-                if is_mindmap_req or is_social_subject:
+                if subject == "Tin học" and re.search(r'\bhtml\b',
+                        f"{lab_command} {st.session_state.get('current_topic', '')}", re.I):
+                    st.session_state.lab_data = None
+                    st.warning("Chưa dựng được Lab HTML theo yêu cầu. Em có thể làm rõ lệnh và thử lại; mô hình mẫu có sẵn vẫn dùng riêng trong thư viện.")
+
+                elif is_mindmap_req or is_social_subject:
 
                     if is_social_subject and not is_mindmap_req:
 
@@ -12271,10 +12640,20 @@ QUY TẮC PHÂN LOẠI MÔ HÌNH:
     if st.session_state.get("lab_data"):
 
         data = st.session_state.lab_data
+        from services.lab_scope import proposition_lab_request, is_proposition_request
+        intent_key = f'lab_intent_command_{current_context_key}'
+        # Bind legacy live requests once; later text edits are not new requests.
+        if intent_key not in st.session_state:
+            st.session_state[intent_key] = lab_command
+        predicate_data = proposition_lab_request(st.session_state[intent_key], subject)
+        if predicate_data is not None:
+            data = predicate_data
 
-        st.success("✨ Đã khởi tạo mô phỏng Phòng Lab liên môn thành công!")
-
-        render_smart_lab(data, subject)
+        if is_proposition_request(st.session_state[intent_key], subject) and predicate_data is None:
+            st.warning('Chưa dựng được phép gán biến theo biểu thức này. Không thay bằng đồ thị hoặc mô hình mẫu khác bài.')
+        else:
+            st.success("✨ Đã khởi tạo mô phỏng Phòng Lab liên môn thành công!")
+            render_smart_lab(data, subject)
 
 
 

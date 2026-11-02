@@ -3,6 +3,7 @@ from collections import Counter
 from copy import deepcopy
 import hashlib
 import json
+from datetime import date
 
 from services.academic_context import folded
 
@@ -25,6 +26,118 @@ MỨC ĐỘ NHẬN THỨC — PHẢI CÓ CĂN CỨ:
 
 def normalize_level(value):
     return LEVELS.get(folded(str(value or "")).strip(), "")
+
+
+def assessment_content_hash(question):
+    """Bind a review to the entire task, answer, rubric and evidence fields."""
+    content = {k: v for k, v in question.items()
+               if k not in ('cognitive_audit', 'level_claimed')}
+    return hashlib.sha256(json.dumps(content, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+
+
+def validate_reference_item(item, *, subject, grade, outcome_id):
+    """School/department exams are reference evidence, not national law.
+
+    In particular an entrance-to-grade-10 paper is not grade-10 curriculum.
+    Use the independently mapped outcome/grade, not the title of the exam.
+    """
+    issues = []
+    if not isinstance(item, dict):
+        item = {}
+    if item.get('issuer_type') not in ('ministry', 'department', 'school'):
+        issues.append('unknown_issuer')
+    for field in ('issuer', 'source_url', 'school_year', 'exam_type',
+                  'paper_sha256', 'answer_sha256', 'source_locator'):
+        if not isinstance(item.get(field), str) or not item[field].strip():
+            issues.append('missing_' + field)
+    if item.get('curriculum') != 'CT2018':
+        issues.append('wrong_or_unverified_curriculum')
+    grades = item.get('mapped_grades')
+    outcomes = item.get('mapped_outcomes')
+    if item.get('subject') != subject or not isinstance(grades, list) or grade not in grades:
+        issues.append('context_mismatch')
+    if not isinstance(outcomes, list) or outcome_id not in outcomes or not outcome_id:
+        issues.append('outcome_not_mapped')
+    if item.get('independent_answer_check') != 'passed':
+        issues.append('answer_not_independently_checked')
+    if item.get('known_error'):
+        issues.append('source_has_unresolved_error')
+    return {'eligible': not issues, 'issues': sorted(set(issues)),
+            'role': 'comparison_reference_not_legal_authority',
+            'official_level_claim': item.get('published_level', '')
+                if item.get('published_level_locator') else ''}
+
+
+def validate_cognitive_review(question, review, *, subject, grade, topic, as_of):
+    """Validate an independently maintained review, never AI's self approval.
+
+    Caller must obtain review from the local reviewed registry, not the generated
+    question. Passing this gate checks provenance/completeness, not all subject
+    knowledge. A changed solution/rubric requires a new review.
+    """
+    issues = []
+    try:
+        today = date.fromisoformat(as_of)
+    except (ValueError, TypeError):
+        return {'status': 'blocked', 'verified': False, 'issues': ['invalid_evaluation_date']}
+    if not isinstance(review, dict):
+        review = {}
+    try:
+        if date.fromisoformat(review['recheck_after']) < today:
+            issues.append('review_due_for_recheck')
+    except (KeyError, ValueError, TypeError):
+        issues.append('missing_review_recheck_date')
+    if (review.get('subject'), review.get('grade'), review.get('topic')) != (subject, grade, topic):
+        issues.append('context_mismatch')
+    if review.get('content_sha256') != assessment_content_hash(question):
+        issues.append('content_changed_or_unreviewed')
+    level = normalize_level(review.get('reviewed_level'))
+    if not level:
+        issues.append('missing_reviewed_level')
+    for field in ('reviewer', 'learning_outcome', 'solution_rubric', 'cognitive_reason'):
+        if not isinstance(review.get(field), str) or not review[field].strip():
+            issues.append('missing_' + field)
+    operations = review.get('cognitive_operations')
+    if not isinstance(operations, list) or not operations or not all(isinstance(s, str) and s.strip() for s in operations):
+        issues.append('missing_cognitive_operations')
+    for field in ('curriculum_source', 'textbook_source'):
+        source = review.get(field)
+        if not isinstance(source, dict) or not all(source.get(k) for k in ('url', 'locator', 'read_on')):
+            issues.append('missing_' + field)
+        else:
+            if source.get('document_status') != 'final':
+                issues.append('non_final_or_unverified_' + field)
+            try:
+                if date.fromisoformat(source['read_on']) > today:
+                    issues.append('invalid_' + field + '_read_date')
+            except (ValueError, TypeError):
+                issues.append('invalid_' + field + '_read_date')
+    legal = review.get('legal_basis')
+    if not isinstance(legal, list) or not legal:
+        issues.append('missing_legal_basis')
+    else:
+        for document in legal:
+            try:
+                if not all(document.get(k) for k in ('code', 'url', 'locator', 'checked_on')):
+                    raise ValueError()
+                start = date.fromisoformat(document['effective_from'])
+                end = date.fromisoformat(document['effective_until']) if document.get('effective_until') else None
+                checked = date.fromisoformat(document['checked_on'])
+                if start > today or (end and today >= end) or checked > today:
+                    raise ValueError()
+                # Review must explicitly state the applicable purpose; periodic
+                # assessment guidance is not a universal graduation-exam rule.
+                if document.get('applicable_purpose') != review.get('assessment_purpose') or not review.get('assessment_purpose'):
+                    raise ValueError()
+            except (ValueError, KeyError, TypeError, AttributeError):
+                issues.append('invalid_or_inapplicable_legal_basis')
+    if level == 'VDC' and not str(review.get('advanced_transfer_reason') or '').strip():
+        issues.append('missing_advanced_transfer_reason')
+    return {'status': 'review_record_valid' if not issues else 'blocked',
+            'verified': not issues, 'issues': sorted(set(issues)),
+            'reviewed_level': level if not issues else '',
+            'reference_bucket': {'NB': 'Biết', 'TH': 'Hiểu', 'VD': 'Vận dụng', 'VDC': 'Vận dụng'}.get(level, ''),
+            'scope': 'independent_review_record_validation_not_ministry_certification'}
 
 
 def annotate_question(question):

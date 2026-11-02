@@ -14,6 +14,28 @@ TOPIC = 'Viết bài văn kể lại một trải nghiệm của em — Ngữ v�
 
 
 class LessonSourceReviewTests(unittest.TestCase):
+    def test_owner_confirmed_national_catalog_is_available_for_all_supported_pairs(self):
+        from services.academic_context import subjects_for_grade
+        count = 0
+        for grade in range(6, 13):
+            for subject in subjects_for_grade(grade):
+                books = sources.books_for(subject, grade)
+                portal = next(b for b in books if b['url'] == f'https://www.thsqg.vn/sach?lop={grade}')
+                self.assertEqual(portal['kind'], 'portal')
+                publisher = next(b for b in books if b['url'] == 'https://truonghocsoquocgia.nxbgd.vn/books')
+                self.assertEqual(publisher['kind'], 'portal')
+                self.assertIn('Tra cứu', portal['title'])
+                count += 1
+        self.assertEqual(count, 65)
+    def test_tutor_receives_exact_review_without_cross_lesson_facts(self):
+        context = sources.reviewed_tutor_source_context('Ngữ văn', 6, TOPIC)
+        self.assertIn('ĐỐI CHIẾU CHO ĐÚNG BÀI', context)
+        self.assertIn('SGV Ngữ văn 6', context)
+        self.assertIn('ngoài văn bản', context)
+        missing = sources.reviewed_tutor_source_context('Toán học', 6, TOPIC)
+        self.assertIn('Chưa có hồ sơ', missing)
+        self.assertNotIn('SGV Ngữ văn 6', missing)
+
     def setUp(self):
         sources._review_registry.cache_clear()
 

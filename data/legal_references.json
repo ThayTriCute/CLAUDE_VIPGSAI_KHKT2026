@@ -9,9 +9,28 @@
       "status": "partially_amended",
       "url": "https://vbpl.vn/van-ban/chi-tiet/thong-tu-so-32-2018-tt-bgddt-ban-hanh-chuong-trinh-giao-duc-pho-thong--146721",
       "note": "Chương trình GDPT 2018; đọc cùng văn bản sửa đổi, không dùng bản gốc đơn lẻ.",
-      "checked_at": "2026-10-30",
-      "verification_scope": "document_identity_status_history_only; subject appendices not yet mapped",
-      "amendments_observed": ["20/2021/TT-BGDĐT", "13/2022/TT-BGDĐT", "17/2025/TT-BGDĐT"]
+      "checked_at": "2026-11-02",
+      "verification_scope": "document_identity_status_history; mathematics_grade12_derivative_graph_appendix_pp105_106_mapped_only; not_all_subjects_or_consolidated_legal_certificate",
+      "amendments_observed": [
+        "20/2021/TT-BGDĐT",
+        "13/2022/TT-BGDĐT",
+        "17/2025/TT-BGDĐT"
+      ],
+      "subject_mapping": {
+        "mathematics_grade12": {
+          "topics": [
+            "derivative sign and monotonicity",
+            "extrema and variation table",
+            "cubic and nondegenerate rational function graphs and symmetry"
+          ],
+          "appendix_pages": [
+            105,
+            106
+          ],
+          "copy_url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/3-CT-Toan.pdf",
+          "checked_at": "2026-11-02"
+        }
+      }
     },
     {
       "code": "20/2021/TT-BGDĐT",
@@ -36,10 +55,10 @@
       "effective_from": "2025-09-12",
       "scope": "curriculum",
       "status": "active",
-      "url": "https://vbpl.vn/van-ban/chi-tiet/thong-tu-so-17-2025-tt-bgddt-sua-doi-bo-sung-mot-so-noi-dung-trong-chuong-trinh-giao-duc-pho-thong-ban-hanh-kem-theo-thong-tu-so-32-2018-tt-bgddt-ngay-26-thang-12-nam-2018-cua-bo-truong-bo-giao-duc-va-dao-tao--183284?tabs=toan-van",
+      "url": "https://congbao.chinhphu.vn/van-ban/thong-tu-so-17-2025-tt-bgddt-46255.htm",
       "note": "Phụ lục sửa Lịch sử và Địa lí, Lịch sử 10, Địa lí, GDCD; cần áp đúng phụ lục/lớp.",
-      "checked_at": "2026-10-30",
-      "verification_scope": "document_identity_status_articles_1_2_only; appendix contents not yet mapped"
+      "checked_at": "2026-11-02",
+      "verification_scope": "official_metadata_effective_date_and_Article1_five_amended_subject_scopes_read; mathematics_not_listed; not_a_current_consolidated_status_certificate"
     },
     {
       "code": "22/2021/TT-BGDĐT",
@@ -88,9 +107,11 @@
       "effective_from": "2026-04-24",
       "scope": "graduation",
       "status": "active",
-      "url": "https://chinhphu.vn/?classid=1&docid=217189&orggroupid=4&pageid=27160",
+      "url": "https://vanban.chinhphu.vn/?docid=206343&pageid=27160",
       "note": "Sửa Quy chế thi tốt nghiệp THPT; ban hành 09/03/2026.",
-      "checked_at": "2026-10-24"
+      "checked_at": "2026-11-02",
+      "original_copy_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2022/08/13-bgddt.signed.pdf",
+      "verification_scope": "signed_original_pages1_3_read; Article1_general_upper_secondary_plan_and_Article2_History; no_replacement_of_mathematics_subject_appendix_in_these_articles"
     },
     {
       "code": "764/QĐ-BGDĐT",
@@ -147,6 +168,18 @@
       "url": "https://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID=179375",
       "note": "Phân định thẩm quyền quản lý trong mô hình chính quyền địa phương hai cấp; không thay ma trận câu hỏi. Lưu ý điều khoản hết hiệu lực khi có quy định thay thế tương ứng.",
       "checked_at": "2026-10-24"
+    },
+    {
+      "code": "5208/BGDĐT-GDPT",
+      "issued_on": "2026-08-07",
+      "effective_from": "2026-08-07",
+      "scope": "school_year_guidance",
+      "status": "guidance",
+      "url": "https://xaydungchinhsach.chinhphu.vn/cong-van-so-5208-bgddt-gdpt-huong-dan-thuc-hien-nhiem-vu-giao-duc-pho-thong-nam-hoc-2026-2027-119260808110247193.htm",
+      "original_copy_url": "https://xdcs.cdnchinhphu.vn/446259493575335936/2026/8/8/5208-bgddt-gdpt-signed-07709-1786161283154837945767.pdf",
+      "note": "Hướng dẫn nhiệm vụ GDPT năm học 2026–2027; trang1 chú thích2 dẫn CT2018 cùng TT20/2021,13/2022,17/2025; trang2 yêu cầu phát triển tự học và đánh giá đúng yêu cầu cần đạt. Ngày dùng để lọc là ngày ban hành hướng dẫn, không phải điều khoản hiệu lực của thông tư. Không chứng nhận học liệu AI.",
+      "checked_at": "2026-11-02",
+      "verification_scope": "signed_original_pages1_2_read; year2026_2027_implementation_reference_chain; not_comprehensive_current_legal_status_certificate"
     }
   ]
 }

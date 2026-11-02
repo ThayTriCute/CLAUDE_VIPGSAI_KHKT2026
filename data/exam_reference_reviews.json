@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "scope": "Independently reviewed question anchors for T1/T3. Empty reviews means no approved anchors; never fall back to legacy flags or AI claims.",
+  "reviews": {}
+}

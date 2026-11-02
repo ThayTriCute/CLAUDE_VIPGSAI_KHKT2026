@@ -5,6 +5,16 @@ from services.academic_context import subjects_for_grade
 
 
 class TestComputingContextHints(unittest.TestCase):
+    def test_live_html_body_question_gets_task_specific_fallback_without_tag_answer(self):
+        question = 'Trong cấu trúc của một trang HTML, toàn bộ nội dung mà người dùng nhìn thấy trên trình duyệt phải đặt ở đâu?'
+        generic = 'Em cần xác định đầu vào, đầu ra hoặc quy tắc hoạt động nào trong tình huống được nêu?'
+        fixed = sanitize_socratic_hint(generic, q_text=question, subject='Tin học', grade_num=12)
+        self.assertIn('thông tin về tài liệu', fixed)
+        self.assertNotEqual(fixed, generic)
+        self.assertNotIn('body', fixed.lower())
+        self.assertNotIn('head', fixed.lower())
+        valid = 'Em sẽ phân loại vai trò của các thành phần trong tài liệu như thế nào?'
+        self.assertEqual(sanitize_socratic_hint(valid, q_text=question, subject='Tin học'), valid)
     def test_archived_html_order_cue_is_repaired_without_naming_the_answer(self):
         question = 'Thẻ HTML nào dùng để tạo danh sách có thứ tự?'
         options = ['A. `<ul>`', 'B. `<ol>`', 'C. `<li>`', 'D. `<p>`']

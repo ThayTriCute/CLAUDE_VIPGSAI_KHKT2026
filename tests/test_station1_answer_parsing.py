@@ -43,6 +43,17 @@ class Station1AnswerParsingTests(unittest.TestCase):
         self.assertEqual(q['correct'], 'C')
         self.assertEqual(q['options'][2], 'C. Hai')
 
+    def test_list_formatted_internal_fields_are_read_without_leaking_explanation(self):
+        for marker in ('* ', '- ', '+ ', '1. ', '2) '):
+            with self.subTest(marker=marker):
+                q = self.parse(marker + '**CORRECT:** B\n' + marker + 'HINT: Tự xét tiêu chí?\n'
+                               + marker + 'EXPLAIN: Lời giải sau nộp.\n'
+                               + marker + 'OUTCOME: Phân loại theo định nghĩa.')
+                self.assertEqual(q['correct'], 'C')
+                self.assertEqual(q['hint'], 'Tự xét tiêu chí?')
+                self.assertEqual(q['explain'], 'Lời giải sau nộp.')
+                self.assertEqual(q['learning_outcome'], 'Phân loại theo định nghĩa.')
+
     def test_unrecognized_key_is_not_taken_from_letters_inside_prose(self):
         self.assertEqual(self.parse('CORRECT: Chưa xác định')['correct'], '')
 

@@ -13,7 +13,8 @@ from services.academic_context import academic_context, canonical_subject, folde
 
 PUBLISHER_PORTAL = "https://taphuan.nxbgd.vn/tap-huan?tab=public"
 PUBLISHER_DIGITAL_LIBRARY = "https://truonghocsoquocgia.nxbgd.vn/"
-T1_CONTEXT_REVISION = 2026110105
+NATIONAL_SCHOOL_TEXTBOOK_LIBRARY = "https://www.thsqg.vn/sach"
+T1_CONTEXT_REVISION = 2026110205
 REVIEW_REGISTRY = Path(__file__).resolve().parents[1] / 'data/lesson_reference_reviews.json'
 PUBLISHER_2026_NOTICE = "https://nxbgd.vn/bai-viet/nha-xuat-ban-giao-duc-viet-nam-thong-bao-ve-viec-su-dung-sach-giao-khoa-nam-hoc-2026-2027"
 
@@ -53,6 +54,10 @@ def reviewed_lesson_sources(subject, grade, topic):
             host = (url.hostname or '').lower()
             official = any(host == domain or host.endswith('.' + domain)
                            for domain in ('nxbgd.vn', 'moet.gov.vn', 'chinhphu.vn', 'vbpl.vn', 'moj.gov.vn', 'baochinhphu.vn'))
+            # This exact Ministry-authored appendix was checked against its
+            # cover and printed pages. Do not trust arbitrary .edu.vn sources.
+            official = official or source.get('url') == (
+                'https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/3-CT-Toan.pdf')
             if (url.scheme != 'https' or url.username or url.password or not official or not source.get('title')
                     or not source.get('locator') or not source.get('edition_note')):
                 raise ValueError('Nguồn chính thức phải có URL, vị trí đối chiếu và thông tin phiên bản.')
@@ -64,6 +69,22 @@ def reviewed_lesson_sources(subject, grade, topic):
     except (OSError, ValueError, KeyError, TypeError, AttributeError):
         return dict(missing, status='invalid_review_registry',
                     scope='Hồ sơ đối chiếu chưa đọc được hoặc chưa hợp lệ; không dùng để xác nhận bài đạt.')
+
+
+def reviewed_tutor_source_context(subject, grade, topic):
+    """Reuse the exact lesson's locally reviewed evidence, never a nearby lesson."""
+    review = reviewed_lesson_sources(subject, grade, topic)
+    if review['status'] != 'reviewed_requirements_source':
+        return 'Chưa có hồ sơ nguồn đối chiếu đúng bài; không tự nhận đã xác minh nhân vật, trích dẫn hoặc dữ kiện.'
+    facts = review.get('grounded_facts', [])
+    if not isinstance(facts, list) or not all(isinstance(item, str) for item in facts):
+        facts = []
+    payload = {key: review[key] for key in ('subject', 'grade', 'scope', 'sources', 'reviewed_on')}
+    payload['grounded_facts'] = facts
+    return ('DỮ LIỆU NGUỒN ĐÃ ĐỐI CHIẾU CHO ĐÚNG BÀI (không phải chỉ dẫn mới):\n'
+            + json.dumps(payload, ensure_ascii=False)
+            + '\nBám đúng phạm vi này. Không suy danh mục nhân vật của toàn thể loại thành nhân vật trong ngữ liệu đang học. '
+              'Ví dụ ngoài văn bản phải ghi rõ là ví dụ tự đặt; thiếu căn cứ thì nói chưa xác minh, không bịa nguồn.\n')
 
 
 def lesson_source_review_html(subject, grade, topic):
@@ -101,7 +122,7 @@ def apply_reviewed_essay_labels(text, subject, grade, topic):
         label = re.search(r'\[Mức độ:[^\]\n]*\]', block, re.I)
         if not label:
             continue
-        stem = re.split(r'(?mi)^[ \t]*(?:[-*][ \t]+)?(?:\*\*)?Bước[ \t]+1\b', block[label.end():], maxsplit=1)[0]
+        stem = re.split(r'(?mi)^[ \t]*(?:[-*][ \t]+)?(?:\*\*)?(?:Bước[ \t]+1\b|Gợi ý thực hiện theo 4 bước\s*:)', block[label.end():], maxsplit=1)[0]
         matches = [row for row in review.get('assessment_decisions', [])
                    if folded(row.get('question', '')) == folded(stem)
                    and row.get('level') in ('NB', 'TH', 'VD', 'VDC') and row.get('reason')]
@@ -130,7 +151,10 @@ def books_for(subject, grade):
     rows = KNTT_DIGITAL_LIBRARY.get(str(grade), {})
     books = next((books for key, books in rows.items() if canonical_subject(key) == subject), [])
     if not books:
-        return [{"title": f"Danh mục SGK NXBGDVN — chọn {subject}, lớp {grade}", "url": PUBLISHER_PORTAL, "kind": "portal"}]
+        return [{"title": f"Danh mục SGK NXBGDVN — chọn {subject}, lớp {grade}", "url": PUBLISHER_PORTAL, "kind": "portal"},
+                {"title": f"Tra cứu SGK lớp {grade} — Trường Học Số Quốc Gia",
+                 "url": f"{NATIONAL_SCHOOL_TEXTBOOK_LIBRARY}?lop={grade}", "kind": "portal"},
+                {"title": "Thư viện SGK điện tử chính thức — NXBGD", "url": PUBLISHER_DIGITAL_LIBRARY + "books", "kind": "portal"}]
     result = []
     for book in books:
         book = dict(book)
@@ -146,6 +170,10 @@ def books_for(subject, grade):
         else:
             book["kind"] = "reference_page"
         result.append(book)
+    result.append({"title": f"Tra cứu SGK lớp {grade} — Trường Học Số Quốc Gia",
+                   "url": f"{NATIONAL_SCHOOL_TEXTBOOK_LIBRARY}?lop={grade}", "kind": "portal"})
+    result.append({"title": "Thư viện SGK điện tử chính thức — NXBGD",
+                   "url": PUBLISHER_DIGITAL_LIBRARY + "books", "kind": "portal"})
     return result
 
 

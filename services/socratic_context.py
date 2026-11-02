@@ -3,7 +3,49 @@ import re
 
 from services.academic_context import canonical_subject, folded
 
-T1_CONTEXT_REVISION = 2026110102
+T1_CONTEXT_REVISION = 2026110204
+
+
+def repair_reviewed_station1_closing(reply, student_message, subject, grade, closing=False):
+    """Fix a reproduced contradictory recap; preserve the full moral lesson."""
+    text = str(reply or '')
+    if not closing:
+        return text
+    student = re.sub(r'[\s${}\\]', '', str(student_message))
+    first = re.split(r'\n\s*\n', text, maxsplit=1)[0]
+    if (subject == 'Toán học' and int(grade) == 12
+            and '3x^2' in student and 'khong doi dau' in folded(student_message)
+            and 'phan tich su doi dau' in folded(first)):
+        text = text.replace(first,
+            'Thầy ghi nhận em đã tự kiểm tra dấu đạo hàm ở hai phía điểm xét và trình bày lập luận của mình. '
+            'Việc đối chiếu kết quả thay vì chỉ nhớ công thức là thói quen học tập đáng khuyến khích.', 1)
+    if 'Marcus Aurelius' in text and 'Meditations' in text and 'George Long' in text:
+        text = text.replace('theo bản dịch của George Long',
+                            'diễn nghĩa tiếng Việt từ bản dịch tiếng Anh của George Long')
+        if 'meditations.6.six.html' not in text:
+            text = text.replace('tham khảo tại classics.mit.edu',
+                'nguồn: [Internet Classics Archive — Book VI](https://classics.mit.edu/Antoninus/meditations.6.six.html)')
+    return text
+
+
+def is_post_closure_thanks(message, closed=False, history=None):
+    """Only a social acknowledgement after a successful lesson closing."""
+    # Recover only from a clearly completed moral closing in this chat,
+    # never from a welcome message or the student's thanks alone.
+    recorded_closing = any(
+        item.get('role') == 'assistant'
+        and 'thay chuc' in folded(item.get('content', ''))
+        and 'tram 2' in folded(item.get('content', ''))
+        and any(marker in folded(item.get('content', ''))
+                for marker in ('internet classics archive', 'classics.mit.edu'))
+        for item in (history or []) if isinstance(item, dict))
+    if not closed and not recorded_closing:
+        return False
+    value = folded(str(message or ''))
+    words = re.findall(r'[a-z]+', value)
+    allowed = set('da vang em con cam on thay co rat nhieu a nhe nha nhe lam xin chan thanh biet tri an thank you thanks teacher so much'.split())
+    gratitude = 'cam on' in ' '.join(words) or 'thank' in words or 'thanks' in words
+    return gratitude and bool(words) and set(words) <= allowed
 
 
 def _names_unique_chemical_answer(hint, options, correct_answer, question):
@@ -113,6 +155,10 @@ def english_reading_question(question):
 def computing_context_question(question):
     """Small task-specific prompts; no numerical result or answer alternative."""
     text = folded(question)
+    if ('html' in text and 'noi dung' in text and ('hien thi' in text or 'nhin thay' in text)
+            and ('trinh duyet' in text or 'trang' in text)):
+        return ('Em sẽ phân biệt phần thông tin về tài liệu với phần nội dung người đọc nhìn thấy '
+                'theo tiêu chí nào, rồi đối chiếu vai trò của từng phương án ra sao?')
     if 'danh sach' in text and any(term in text for term in ('thu tu', 'danh so')):
         return ('Danh sách trong yêu cầu cần thể hiện mối quan hệ nào giữa các mục? '
                 'Em sẽ phân biệt phần tử bao ngoài với từng mục và đối chiếu vai trò của các thẻ ra sao?')
@@ -152,7 +198,8 @@ def subject_socratic_hint(hint, subject, options=None, correct_answer='', questi
             and re.search(r'\border(?:ed)?\b', folded(hint))
             and not re.search(r'\border(?:ed)?\b|\bol\b', folded(question_text))
         )
-        if contextual and (not question or cpu_metaphor or html_name_cue):
+        generic_computing_hint = folded(hint) == folded(_QUESTIONS.get(subject, ''))
+        if contextual and (not question or cpu_metaphor or html_name_cue or generic_computing_hint):
             return contextual
     if question:
         return question

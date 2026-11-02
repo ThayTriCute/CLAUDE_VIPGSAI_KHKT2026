@@ -35,7 +35,9 @@ class TestAcademicContext(unittest.TestCase):
             refs = lesson_references(subject, grade, 'Chủ đề đang kiểm', {}, lambda _: '')
             self.assertIn('Thông báo cập nhật của NXBGD', refs['badge_html'])
             self.assertIn('chưa xác minh là bản chỉnh sửa 2026', refs['badge_html'])
-            self.assertTrue(all(row['kind'] == 'publisher_book_page' for row in books_for(subject, grade)))
+            rows = books_for(subject, grade)
+            self.assertTrue(any(row['kind'] == 'publisher_book_page' for row in rows))
+            self.assertTrue(all(row['kind'] in ('publisher_book_page', 'portal') for row in rows))
 
     def test_aliases_accents_and_case_are_one_identity(self):
         for alias, expected in [("TOÁN", "Toán học"), ("Địa lí", "Địa lý"), ("dia ly", "Địa lý"),
@@ -57,13 +59,13 @@ class TestAcademicContext(unittest.TestCase):
                 self.assertEqual(academic_context(subject, f"Lớp {grade}"), (subject, grade))
                 rows = books_for(subject, grade)
                 self.assertTrue(rows)
-                self.assertTrue(all(str(grade) in row["title"] for row in rows))
+                self.assertTrue(all(str(grade) in row["title"] for row in rows if row['kind'] != 'portal'))
                 count += 1
         self.assertEqual(count, 65)
 
     def test_technology_textbook_references_link_to_official_grade_and_pathway_pages(self):
         for grade in range(6, 13):
-            rows = books_for("Công nghệ", grade)
+            rows = [r for r in books_for("Công nghệ", grade) if r['kind'] != 'portal']
             self.assertTrue(rows)
             self.assertTrue(all(row["kind"] == "publisher_book_page" for row in rows), grade)
             self.assertTrue(all("taphuan.nxbgd.vn/tap-huan/chi-tiet-sach/" in row["url"] for row in rows), grade)

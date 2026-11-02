@@ -29,14 +29,16 @@ class TestLabScope(unittest.TestCase):
         node=next(n for n in ast.walk(tree) if isinstance(n,ast.If) and 'Mở mô phỏng có sẵn' in ast.dump(n.test))
         label='Sơ đồ thuật toán & Cây nhị phân'
         original={label:{'type':'oxyz','x':2,'y':2,'z':2}}
-        state=State()
+        state=State(lab_intent_command_Tin10='Lệnh mô phỏng của yêu cầu trước')
         ns=dict(st=SimpleNamespace(button=lambda *a,**kw:True,session_state=state),available_labs=original,
-            manual_lab=label,subject='Tin học',resolve_preset_lab=getattr(lab_scope,'resolve_preset_lab',lambda *a:dict(a[-1])))
+            manual_lab=label,subject='Tin học',current_context_key='Tin10',
+            resolve_preset_lab=getattr(lab_scope,'resolve_preset_lab',lambda *a:dict(a[-1])))
         exec(compile(ast.Module(body=[node],type_ignores=[]),'actual-lab-button','exec'),ns)
         self.assertEqual(state.lab_data['type'],'mermaid')
         self.assertIn('nhị phân',state.lab_data['code'])
         self.assertEqual(original[label]['type'],'oxyz')
         self.assertEqual(state.lab_request_revision,1)
+        self.assertEqual(state['lab_intent_command_Tin10'], '')
 
     def test_higher_grade_preset_is_explicitly_an_extension(self):
         for grade in range(6, 12):

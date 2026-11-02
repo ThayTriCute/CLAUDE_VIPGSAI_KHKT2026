@@ -11,8 +11,196 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110120
+T1_CONTEXT_REVISION = 2026110219
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
+
+
+def label_declared_paraphrases(text):
+    """A self-declared paraphrase is not an authenticated textbook quotation.
+
+    Applies to every subject; never rewrites verified quotations or code.
+    It labels provenance only and does not certify the paraphrase's facts.
+    """
+    from services.text_boundaries import preserve_math_and_code
+    return preserve_math_and_code(str(text), lambda prose: re.sub(
+        r'Ngữ liệu tham khảo\s*\(trích tinh thần[^\n]*?\)\s*:',
+        'Đoạn diễn ý minh họa do AI biên soạn (không phải trích dẫn nguyên văn SGK):',
+        prose, flags=re.I))
+
+
+def correct_reviewed_myth_guidance(text, subject, grade, topic=""):
+    """Source-reviewed corrections for the observed mythology lesson only."""
+    if (canonical_subject(subject) != 'Ngữ văn' or normalize_grade(grade) != 10
+            or 'than sang tao the gioi' not in folded(topic)):
+        return text
+    from services.text_boundaries import preserve_math_and_code
+    def repair(prose):
+        prose = prose.replace('SGK Ngữ thuật', 'SGK Ngữ văn')
+        prose = prose.replace('các vị thần quen thuộc như thần Trời, thần Đất, thần Mưa, thần Nắng, thần Sét, thần Gió,...',
+                              'ba vị thần trong nhóm văn bản đang học: thần Trụ Trời, thần Sét và thần Gió.')
+        prose = re.sub(r'thần\s*\*{0,2}["“]ngẩng đầu lên đội trời lên cho khỏi đạp xuống đất["”]\*{0,2}\s*rồi đắp cột đá chống trời',
+                       'thần tách trời và đất, đắp cột chống trời (diễn ý, không trích nguyên văn)', prose)
+        prose = prose.replace('đội trời lên để đoạt lại đất trời từ vùng hỗn độn',
+                              'tách trời và đất từ vùng hỗn độn')
+        prose = prose.replace('Sắp xếp ý: Ý 1: Trân trọng trí tưởng tượng và nỗ lực lí giải thế giới của người xưa; Ý 2: Vai trò chính xác, khách quan của khoa học hiện đại; Ý 3: Kết luận về ý nghĩa của cả hai trong đời sống tinh thần và trí tuệ con người.',
+                              'Em tự lựa chọn luận điểm, dẫn chứng và cách sắp xếp ý; phân biệt giá trị văn hóa của tưởng tượng thần thoại với yêu cầu bằng chứng của khoa học, rồi tự rút ra kết luận có căn cứ.')
+        return prose
+    return preserve_math_and_code(str(text), repair)
+
+
+def correct_reviewed_proposition_guidance(text, subject, grade, topic=""):
+    """Remove a reproduced answer-giving classification plan, not examples.
+
+    Shared lesson preprocessing also supplies exports. This is a scoped content
+    repair, not a claim that arbitrary hints in every subject are now verified.
+    """
+    if (canonical_subject(subject) != 'Toán học' or normalize_grade(grade) != 10
+            or 'menh de' not in folded(topic)):
+        return text
+    chunks = re.split(r'(```[\s\S]*?```|~~~[\s\S]*?~~~)', str(text))
+    for i in range(0, len(chunks), 2):
+        chunks[i] = re.sub(
+            r'(?i)Xét từng câu:\s*Câu a là khẳng định toán học về số\s*\$?15\$?;\s*'
+            r'Câu b là câu cầu khiến;\s*Câu c là khẳng định về nghiệm của phương trình trên tập số thực\.',
+            'Xét từng câu: Em tự nhận diện mục đích của câu, xác định câu có khẳng định điều gì '
+            'và có thể xét đúng hoặc sai hay không; ghi lí do trước khi phân loại.', chunks[i])
+    return ''.join(chunks)
+
+
+def correct_reviewed_cubic_prior_knowledge(text, subject, grade, topic=""):
+    """Correct a reproduced grade-placement error without rewriting the lesson."""
+    if subject != "Toán học" or int(grade) != 12 or "bac ba" not in folded(topic):
+        return text
+    text = str(text).replace(
+        "Nhớ lại cách tính đạo hàm và tìm cực trị của hàm số đã học ở lớp 11.",
+        "Ôn lại cách tính đạo hàm đã học ở lớp 11; vận dụng dấu đạo hàm để xác định cực trị theo kiến thức lớp 12."
+    ).replace(
+        "phân tích sự tăng trưởng có chu kỳ của một đại lượng kinh tế trong ngắn hạn",
+        "mô hình hóa sự biến động của một đại lượng kinh tế trong một khoảng thời gian khảo sát"
+    )
+    if 'x^3-3x+1' in re.sub(r'[\s${}\\]', '', text):
+        text = re.sub(
+            r'Kiểm tra lại các trường hợp\s+\$m\s*>\s*3\$\s*,\s*\$m\s*<\s*-1\$ và các giá trị biên[^\n]*?để kết luận chính xác\.',
+            'Tự xác định các mức tới hạn từ bảng biến thiên, kiểm tra riêng từng mức biên rồi đối chiếu số giao điểm trên mỗi miền để kết luận chính xác.',
+            text)
+    return text
+
+
+def repair_reviewed_cubic_question(question, subject, grade):
+    """Repair the independently reviewed x^3-3x+1 maximum question only.
+
+    Preserve option labels and selection state; do not shuffle on reruns.
+    Unknown functions or non-numeric alternatives are left for review.
+    """
+    if subject != "Toán học" or int(grade) != 12:
+        return question
+    stem = str(question.get("question", ""))
+    formula = re.sub(r"[\s${}\\]", "", stem)
+    if "x^3-3x+1" not in formula:
+        return question
+    result = deepcopy(question)
+    if "gia tri cuc dai" in folded(stem):
+        values = []
+        for option in question.get("options", []):
+            value = re.sub(r"^[A-D][.):]\s*", "", str(option)).strip()
+            value = re.sub(r"[\s${}\\]", "", value).replace("−", "-")
+            if not re.fullmatch(r"[+-]?\d+", value):
+                return question
+            values.append(int(value))
+        if len(values) != 4 or 3 not in values:
+            return question
+        correct_index = values.index(3)  # f(-1)=3, with + to - derivative sign.
+        used = set()
+        for index, value in enumerate(values):
+            if value in used:
+                value = next(n for n in (0, 1, -1, 2, -2) if n not in values and n not in used)
+                result["options"][index] = f"{chr(65 + index)}. ${value}$"
+            used.add(value)
+        result["correct"] = chr(65 + correct_index)
+    result["question"] = result["question"].replace(
+        "đồng biến trên khoảng nào dưới đây", "đồng biến trên các khoảng nào dưới đây")
+    if "ba nghiem phan biet" in folded(stem):
+        # f has local minimum -1 and maximum 3; horizontal levels strictly
+        # between them meet the cubic three times. Require one exact option.
+        matches = []
+        for index, option in enumerate(question.get("options", [])):
+            value = re.sub(r"^[A-D][.):]\s*", "", str(option))
+            value = re.sub(r"[\s${}\\]", "", value).replace("−", "-")
+            if value == "-1<m<3":
+                matches.append(index)
+        if len(matches) == 1:
+            result["correct"] = chr(65 + matches[0])
+    if "dong bien tren" in folded(stem):
+        matches = []
+        for index, option in enumerate(question.get("options", [])):
+            value = re.sub(r"^[A-D][.):]\s*", "", str(option))
+            value = re.sub(r"[\s${}\\]", "", value.lower()).replace("−", "-").replace("và", "va")
+            value = value.replace("left", "").replace("right", "")
+            if value == "(-infty;-1)va(1;+infty)":
+                matches.append(index)
+        if len(matches) == 1:
+            result["correct"] = chr(65 + matches[0])
+    return result
+
+
+def correct_reviewed_cubic_production_context(text, subject, grade, topic=""):
+    """Clarify the observed production model without inventing physical units."""
+    value = str(text or "")
+    if (canonical_subject(subject) != 'Toán học' or normalize_grade(grade) != 12
+            or 'bac ba' not in folded(topic) or 'loi nhuan' not in folded(value)):
+        return value
+    from services.text_boundaries import preserve_math_and_code
+    return preserve_math_and_code(value, lambda prose: prose.replace(
+        'là đơn vị sản lượng',
+        'là lượng sản phẩm; giả sử xét sản lượng không âm trong mô hình liên tục; '
+        'đề chưa quy định đơn vị đo sản lượng và lợi nhuận'))
+
+
+def correct_reviewed_html_guidance(text, subject, grade, topic=""):
+    """Repair observed prose only; leave HTML examples and answer keys intact."""
+    if (canonical_subject(subject) != 'Tin học' or normalize_grade(grade) != 12
+            or not re.search(r'\bhtml\b', folded(topic))):
+        return text
+    replacements = {
+        'trình duyệt sẽ hiển thị tất cả chữ trên cùng một dòng, không có tiêu đề to, không có xuống dòng.':
+            'trình duyệt không tự suy ra đâu là tiêu đề hay đoạn văn; cách xuống dòng còn phụ thuộc kiểu tệp và chiều rộng vùng hiển thị.',
+        'Có 6 cấp độ từ `<h1>` (lớn nhất) đến `<h6>` (nhỏ nhất).':
+            'Có 6 cấp tiêu đề từ `<h1>` đến `<h6>`, thể hiện cấp bậc nội dung. Kích thước chữ phụ thuộc CSS; khi dùng định dạng mặc định, các cấp thường có cỡ chữ khác nhau.',
+        'Chọn thẻ `<h1>` cho tên sách, `<h2>` hoặc `<h3>` cho tác giả. Dùng thẻ `<p>` kết hợp `<br>` cho phần tóm tắt. Dùng thẻ `<ul>` cho danh sách chương.':
+            'Em xác định vai trò của từng phần nội dung rồi tự chọn phần tử phù hợp; giải thích lựa chọn dựa trên ý nghĩa và yêu cầu trình bày.',
+        'lớn và đậm nhất': 'ở cấp tiêu đề 1; kích thước và độ đậm phụ thuộc CSS (thường lớn, đậm khi dùng định dạng mặc định)',
+        'Kiểm tra xem các thẻ đã có đủ thẻ đóng chưa?':
+            'Kiểm tra cặp thẻ của các phần tử thông thường; phân biệt phần tử rỗng như br không có thẻ đóng.',
+        'Hướng dẫn bạn thay thế đoạn mã sai bằng các thẻ đúng: thêm thẻ `<title>`, sửa lại dấu `< >` cho `<h1>`, và bao quanh các thẻ `<li>` bằng thẻ danh sách phù hợp.':
+            'Em tự đề xuất từng chỉnh sửa, giải thích quy tắc được áp dụng rồi thử trên trình duyệt; so sánh kết quả trước và sau sửa.',
+        'Tìm các quy tắc bị vi phạm: (1) Nội dung tiêu đề trang phải nằm trong thẻ nào bên trong `<head>`? (2) Cú pháp đóng/mở thẻ `<h1>` đúng là gì? (3) Thẻ `<li>` có thể đứng độc lập mà không có thẻ cha (`<ul>` hoặc `<ol>`) không?':
+            'Em lập bảng đối chiếu yêu cầu, đoạn mã hiện có và quy tắc HTML liên quan; tự xác định vị trí cần sửa và thứ tự kiểm tra.',
+        'Sự khác biệt chính giữa việc sử dụng thẻ `<br>` và thẻ `<p>` khi trình bày văn bản là gì?':
+            'Khi trình duyệt dùng định dạng mặc định, chưa tùy chỉnh CSS, sự khác biệt giữa `<br>` và `<p>` khi trình bày văn bản là gì?',
+    }
+    # Protect fenced code. Inline literals in the reviewed sentences are matched
+    # as a whole, never interpreted or rewritten as executable markup.
+    chunks = re.split(r'(```[\s\S]*?```|~~~[\s\S]*?~~~)', str(text))
+    for i in range(0, len(chunks), 2):
+        chunks[i] = re.sub(r'\(Học sinh tự liệt kê các lỗi như:[^\n]*\)',
+                          'Em tự tìm lỗi, nêu quy tắc liên quan và đề xuất bản sửa; chưa xem lời giải mẫu.', chunks[i])
+        inline = re.split(r'(`+[^\n]*?`+)', chunks[i])
+        tag = r'(<\s*/?\s*(?:html|head|body|title|h[1-6]|p|br|ol|ul|li)\s*>|/|<>)'
+        for j in range(0, len(inline), 2):
+            inline[j] = re.sub(r'(?<!\$)\$(?!\$)\s*' + tag + r'\s*\$(?!\$)',
+                               lambda m: '`' + re.sub(r'\s+', '', m[1]) + '`', inline[j], flags=re.I)
+            inline[j] = re.sub(r'\\\(\s*' + tag + r'\s*\\\)',
+                               lambda m: '`' + re.sub(r'\s+', '', m[1]) + '`', inline[j], flags=re.I)
+        chunks[i] = ''.join(inline)
+        for before, after in replacements.items():
+            if '`' in before:
+                chunks[i] = chunks[i].replace(before, after)
+            else:
+                inline = re.split(r'(`+[^\n]*?`+)', chunks[i])
+                for j in range(0, len(inline), 2):
+                    inline[j] = inline[j].replace(before, after)
+                chunks[i] = ''.join(inline)
+    return ''.join(chunks)
 
 
 def policy_evaluation_date():
@@ -26,6 +214,13 @@ def legal_references(on_date=None, include_upcoming=False):
     return [r for r in rows if r.get("status") != "draft"
             and (include_upcoming or date.fromisoformat(r["effective_from"]) <= today)
             and (not r.get("effective_until") or today < date.fromisoformat(r["effective_until"]))]
+
+
+def upcoming_legal_references(on_date=None):
+    """Future effective dates, independent of a stale registry status label."""
+    today = on_date or policy_evaluation_date()
+    return [r for r in legal_references(today, include_upcoming=True)
+            if r["effective_from"] > today]
 
 
 def assessment_profile(subject, grade):
@@ -74,9 +269,11 @@ Trạm {station}; môn {subject}; lớp {grade}; chủ đề {topic}; định h�
 {hint_guidance}
 Chương trình GDPT 2018 đọc cùng các sửa đổi còn áp dụng: {codes}.
 Sử dụng Kết nối tri thức với cuộc sống, đối chiếu đính chính/cập nhật NXBGD; bộ sách thống nhất toàn quốc từ năm học 2026–2027 theo QĐ 3588/2025 và danh mục bổ sung tại QĐ 185/2026. Phải kiểm đúng tên sách/lớp trong phụ lục và bản cập nhật năm 2026; không suy ra nội dung bài đã được thẩm định.
+CT2018 là chuẩn yêu cầu cần đạt; KNTT là trục bài học, không phải giới hạn mọi học liệu. Được dùng ngữ liệu bổ sung đã xác minh từ Cánh Diều, Chân trời sáng tạo hoặc tài liệu khác phù hợp môn/lớp, lứa tuổi và mục tiêu bài học. Ghi riêng “Ngữ liệu bổ sung”, tên tác phẩm/tác giả, sách/nguồn và vị trí thực sự đối chiếu; không gán ngữ liệu ngoài sách thành nguyên văn hoặc nội dung của KNTT, không tự đổi bộ sách chính hay chuẩn đầu ra. Tên bộ/tài liệu chưa xác minh thì không tự nhận là SGK đã được phê duyệt.
 {edition_guidance}
 {profile['label']}. {profile['note']}
 Không có nội dung SGK hoặc văn bản gốc trong ngữ cảnh thì KHÔNG tuyên bố đã đọc/đối chiếu từng trang, không bịa số trang, trích dẫn, tác giả, URL hay xác nhận của Bộ.
+Đoạn diễn ý hoặc minh họa do AI biên soạn phải ghi rõ không phải trích dẫn nguyên văn. Không dùng nhãn “trích tinh thần” để gán đoạn tự viết cho SGK hoặc tác giả; chỉ đặt trong dấu trích dẫn với tư cách nguyên văn khi đã có nguồn đối chiếu chính xác.
 Chỉ dùng nội dung đúng yêu cầu cần đạt của môn/lớp; danh sách chủ đề gợi ý của app không phải mục lục SGK đã kiểm định. Yêu cầu tùy biến không được đổi môn/lớp hoặc tự miễn kiểm tra chương trình.
 Ngữ văn: dạy học có thể dùng văn bản KNTT đã học; đánh giá cuối học kì/cuối năm/cuối cấp tránh dùng lại văn bản đã học trong SGK theo CV 3175. Không được bịa tác giả/trích đoạn rồi gán cho tác phẩm có thật. Không áp yêu cầu này thành lệnh cấm mọi ngữ liệu SGK ở Trạm 1.
 TT 17/2025 cập nhật Lịch sử và Địa lí, Lịch sử 10, Địa lí và GDCD/GDKT&PL theo phụ lục tương ứng. Số liệu hiện hành phải có mốc năm và nguồn; không trình bày 63/64 tỉnh thành như cơ cấu hiện tại, không tự sửa số liệu lịch sử thành số liệu hiện tại.
@@ -216,6 +413,25 @@ def correct_khtn8_lime_soil_confusion(text, subject, grade, topic=""):
     value = str(text or "")
     if canonical_subject(subject) == "Khoa học tự nhiên" and normalize_grade(grade) == 8:
         if 'base' in folded(topic) and 'ph' in folded(topic):
+            # Do not present the observed sparingly soluble example as a
+            # uniformly highly soluble list. Keep its identity and basic solution.
+            def clarify_observed_calcium_line(match):
+                line = match.group(0)
+                line = line.replace('Base tan (Kiềm):', 'Độ tan của một số base:')
+                line = line.replace('Tan tốt trong nước. Ví dụ:',
+                                    'NaOH, KOH và Ba(OH)₂ là các ví dụ kiềm trong bài. Cần phân biệt:')
+                return line.replace('tan ít nhưng vẫn xếp vào nhóm kiềm',
+                                    'ít tan; phần hòa tan tạo dung dịch nước vôi trong có tính base')
+            value = re.sub(r'(?m)^.*Base tan \(Kiềm\):.*tan ít nhưng vẫn xếp vào nhóm kiềm[^\n]*',
+                           clarify_observed_calcium_line, value)
+            # Observed recognition exercise: retain the task, but let the pupil
+            # infer each solution's behaviour instead of supplying the mapping.
+            value = re.sub(
+                r'Đặc điểm hóa học của mỗi dung dịch \((?:\$\\ce\{)?NaOH(?:\}\$)? là base, '
+                r'(?:\$\\ce\{)?HCl(?:\}\$)? là acid, '
+                r'(?:\$\\ce\{)?NaCl(?:\}\$)? là muối trung tính\) khi gặp quỳ tím sẽ như thế nào\?',
+                'Em cần tra lại tính chất nào của chất chỉ thị để dự đoán hiện tượng? '
+                'Hãy tự lập bảng dự đoán cho từng mẫu và nêu căn cứ.', value)
             def complete_base_knowledge(match):
                 knowledge = match.group(2)
                 normalized = folded(knowledge)

@@ -5,6 +5,35 @@ from services.lesson_export import build_lesson_html
 
 
 class TeacherChemicalDisplayTests(unittest.TestCase):
+    def test_observed_calcium_list_does_not_imply_every_base_is_highly_soluble(self):
+        from services.curriculum_policy import correct_khtn8_lime_soil_confusion as repair
+        source = ('*Base tan (Kiềm):* Tan tốt trong nước. Ví dụ: $\\ce{NaOH}$, '
+                  '$\\ce{Ca(OH)2}$ (Calcium hydroxide - tan ít nhưng vẫn xếp vào nhóm kiềm).')
+        fixed = repair(source, 'Khoa học tự nhiên', 8, 'Base. Thang pH')
+        self.assertNotIn('Tan tốt trong nước', fixed)
+        self.assertNotIn('tan ít nhưng vẫn xếp', fixed)
+        self.assertIn('nước vôi trong có tính base', fixed)
+        self.assertIn(r'$\ce{Ca(OH)2}$', fixed)
+        self.assertEqual(repair(fixed, 'Khoa học tự nhiên', 8, 'Base. Thang pH'), fixed)
+        self.assertEqual(repair(source, 'Khoa học tự nhiên', 7, 'Base. Thang pH'), source)
+
+    def test_recognition_hint_leaves_solution_classification_to_pupil(self):
+        from services.curriculum_policy import correct_khtn8_lime_soil_confusion as repair
+        for formula in (lambda x: x, lambda x: r'$\ce{' + x + '}$'):
+            task = 'Câu 5. Nhận biết ba dung dịch bằng quỳ tím.\n'
+            hint = ('Bước 1: Tìm hiểu đề: Đặc điểm hóa học của mỗi dung dịch ('
+                    + formula('NaOH') + ' là base, ' + formula('HCl') + ' là acid, '
+                    + formula('NaCl') + ' là muối trung tính) khi gặp quỳ tím sẽ như thế nào?')
+            source = task + hint + '\nBước 2: Trích mẫu thử.'
+            fixed = repair(source, 'Khoa học tự nhiên', 8, 'Base. Thang pH')
+            self.assertIn(task, fixed)
+            self.assertNotIn('là muối trung tính', fixed)
+            self.assertIn('tự lập bảng dự đoán', fixed)
+            self.assertIn('Bước 2: Trích mẫu thử.', fixed)
+            self.assertEqual(repair(fixed, 'Khoa học tự nhiên', 8, 'Base. Thang pH'), fixed)
+            self.assertEqual(repair(source, 'Khoa học tự nhiên', 7, 'Base. Thang pH'), source)
+            self.assertEqual(repair(source, 'Khoa học tự nhiên', 8, 'Áp suất'), source)
+
     def test_reviewed_base_lesson_completes_missing_properties_only_in_knowledge_section(self):
         from services.curriculum_policy import correct_khtn8_lime_soil_confusion
         source = ('### PHẦN 1: BÀI HỌC\n#### 2. Hình thành kiến thức\n'

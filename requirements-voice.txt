@@ -1,0 +1,5 @@
+# Optional, separate CPU worker. Do not add these to the Streamlit environment.
+vieneu==3.8.3
+fastapi==0.162.0
+uvicorn==0.54.0
+imageio-ffmpeg==0.7.0

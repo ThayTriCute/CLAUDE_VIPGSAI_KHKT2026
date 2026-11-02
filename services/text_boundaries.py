@@ -5,7 +5,7 @@ import re
 
 from services.lesson_export import _TOKENS
 
-T1_CONTEXT_REVISION = 2026110103
+T1_CONTEXT_REVISION = 2026110201
 
 
 def _chemical_macros(text, convert):
@@ -149,6 +149,25 @@ def option_markdown_label(option):
     return preserve_math_and_code(option, normalize_prose)
 
 
+def polya_display_markdown(text):
+    """Put recognized Polya stages in separate paragraphs without editing tasks."""
+    def format_prose(value):
+        value = re.sub(r'(?m)^[ \t]*[-*][ \t]+(?=(?:\*\*|__)?Bước[ \t]+[1-4]\s*:)', '', value)
+        heading = re.compile(
+            r'(?:\*\*|__)?Bước[ \t]+([1-4])[ \t]*:[ \t]*(?:\*\*|__)?[ \t]*'
+            r'(Tìm hiểu đề|Lập kế hoạch|Thực hiện kế hoạch|Kiểm tra và nhìn lại)'
+            r'[ \t]*:?(?:\*\*|__)?[ \t]*', re.I)
+        titles = {'1': 'Tìm hiểu đề', '2': 'Lập kế hoạch',
+                  '3': 'Thực hiện kế hoạch', '4': 'Kiểm tra và nhìn lại'}
+        def separate(match):
+            if match[2].casefold() != titles[match[1]].casefold():
+                return match[0]
+            return '\n\n**Bước ' + match[1] + ': ' + titles[match[1]] + ':** '
+        value = heading.sub(separate, value)
+        return re.sub(r'\n{3,}', '\n\n', value)
+    return preserve_math_and_code(text, format_prose).strip()
+
+
 def student_essay_text(text):
     """Hide reserved author metadata, retaining the question and Polya prompts.
 
@@ -173,4 +192,4 @@ def student_essay_text(text):
         spans.append((match.start(), end))
     for start, end in reversed(spans):
         value = value[:start] + value[end:]
-    return value.strip()
+    return polya_display_markdown(value)

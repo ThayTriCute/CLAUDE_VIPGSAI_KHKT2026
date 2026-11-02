@@ -12,6 +12,19 @@ from services.curriculum_policy import (assessment_profile, check_current_facts,
 
 
 class TestCurriculumPolicy(unittest.TestCase):
+    def test_supplemental_material_does_not_replace_primary_book_or_change_context(self):
+        from services.curriculum_policy import validate_lesson_policy, policy_prompt
+        from services.academic_context import subjects_for_grade
+        for grade in range(6, 13):
+            for subject in subjects_for_grade(grade):
+                with self.subTest(subject=subject, grade=grade):
+                    prompt = policy_prompt(subject, grade, 1)
+                    self.assertIn('ngữ liệu bổ sung đã xác minh', prompt)
+                    self.assertIn('không tự đổi bộ sách chính', prompt)
+                    text = (f'Môn: {subject}\nLớp: {grade}\nBộ sách: KNTT\n'
+                            'Ngữ liệu bổ sung: tài liệu Cánh Diều; nguồn đã ghi riêng.')
+                    self.assertEqual(validate_lesson_policy(text, subject, grade), text)
+
     def test_observed_lime_note_and_sting_repair_are_idempotent(self):
         source = ('Base tan (kiềm): Ca(OH)2; CaO và đất.\n'
                   'Vận dụng: Khi bị ong đốt, người ta thường bôi nước vôi hoặc kem đánh răng vào vết đốt?\n')
