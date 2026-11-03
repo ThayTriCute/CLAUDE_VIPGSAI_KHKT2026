@@ -20,6 +20,14 @@ def atomic_json(path, payload):
     os.replace(temporary, path)
 
 
+def file_sha256(path):
+    digest = hashlib.sha256()
+    with path.open('rb') as stream:
+        for block in iter(lambda: stream.read(65536), b''):
+            digest.update(block)
+    return digest.hexdigest()
+
+
 def collect(discovery, directory, manifest_path):
     directory.mkdir(parents=True, exist_ok=True)
     previous = json.loads(manifest_path.read_text(encoding='utf-8')) if manifest_path.exists() else {'items': []}
@@ -61,7 +69,7 @@ def collect(discovery, directory, manifest_path):
         old = items.get(url, {})
         if old.get('status') == 'archived_not_item_reviewed':
             path = Path(old['local_file'])
-            if path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest() == old['sha256']:
+            if path.is_file() and file_sha256(path) == old['sha256']:
                 continue
         # A previous failed download needs an explicit reviewed retry decision.
         if old.get('status') == 'download_failed_no_retry':

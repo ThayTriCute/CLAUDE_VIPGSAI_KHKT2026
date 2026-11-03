@@ -27,7 +27,8 @@ class SourceCollectionTests(unittest.TestCase):
             root = Path(directory)
             with patch.object(collector.requests, 'get', return_value=self.response(b'%PDF-test')) as get:
                 first = collector.collect(self.discovery(), root, root/'manifest.json')
-                second = collector.collect(self.discovery(), root, root/'manifest.json')
+                with patch.object(Path, 'read_bytes', side_effect=AssertionError('Whole source must not be loaded into RAM')):
+                    second = collector.collect(self.discovery(), root, root/'manifest.json')
                 self.assertEqual(get.call_count, 1)
                 self.assertEqual(first, second)
 
