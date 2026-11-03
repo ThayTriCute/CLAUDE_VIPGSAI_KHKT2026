@@ -19,3 +19,13 @@ class CachedExamLabelTests(unittest.TestCase):
     def test_missing_and_malformed_fields_do_not_invent_metadata(self):
         for row in (None, {}, {'code': None, 'topic': [], 'saved_at': {'bad': 'value'}}):
             self.assertEqual(cached_exam_label(row), 'Mã đề Chưa rõ - Chuyên đề ôn tập ()')
+
+    def test_selection_identity_changes_with_context_and_catalogue(self):
+        from services.cache_metadata import cached_exam_widget_key
+        baseline = cached_exam_widget_key('Tin học', 12, ['A', 'B'])
+        self.assertEqual(baseline, cached_exam_widget_key('Tin học', 12, ['A', 'B']))
+        for subject, grade, labels in [('Toán học', 12, ['A', 'B']),
+                                      ('Tin học', 11, ['A', 'B']),
+                                      ('Tin học', 12, ['B', 'A']),
+                                      ('Tin học', 12, ['A', 'C'])]:
+            self.assertNotEqual(baseline, cached_exam_widget_key(subject, grade, labels))

@@ -15309,12 +15309,14 @@ if selected_station == station_labels[2]:
                     c_opts = [cached_exam_label(item) for item in cached_list]
 
                     from services.widget_state import valid_option_index
-                    cached_index = st.session_state.get("sel_cached_exam_t3", 0)
+                    import hashlib as _cache_key_hash
+                    cache_widget_key = "sel_cached_exam_t3_" + _cache_key_hash.sha256(json.dumps([str(subject), str(grade_num), c_opts], ensure_ascii=False).encode()).hexdigest()[:20]
+                    cached_index = st.session_state.get(cache_widget_key, 0)
                     safe_index = valid_option_index(cached_index, len(c_opts))
                     if type(cached_index) is not int or cached_index != safe_index:
-                        st.session_state.sel_cached_exam_t3 = safe_index
+                        st.session_state[cache_widget_key] = safe_index
 
-                    chosen_cache_idx = st.selectbox("Chọn đề từ ngân hàng:", range(len(c_opts)), format_func=lambda i: c_opts[i], key="sel_cached_exam_t3")
+                    chosen_cache_idx = st.selectbox("Chọn đề từ ngân hàng:", range(len(c_opts)), format_func=lambda i: c_opts[i], key=cache_widget_key)
 
                     col_cb1, col_cb2 = st.columns([1, 1.2])
 
