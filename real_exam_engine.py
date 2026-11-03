@@ -567,6 +567,11 @@ def sanitize_question_visuals(q: dict, subject: str = "") -> dict:
 
     return q
 
+def has_unresolved_source_review(question):
+    """Explicit source-review holds block delivery, not erase the archive."""
+    return isinstance(question, dict) and bool(question.get('source_review_issues'))
+
+
 def is_toxic_defective_question(q: dict) -> bool:
     """
     CHỐT CHẶN THANH TRỌC TRIỆT ĐỂ (BLACK-LIST PURGE):
@@ -576,6 +581,8 @@ def is_toxic_defective_question(q: dict) -> bool:
     3. Mọi câu hỏi vi phạm tính logic toán học không thể chữa lành.
     """
     if not isinstance(q, dict): return False
+    if has_unresolved_source_review(q):
+        return True
     q_txt = str(q.get("q", "") or q.get("question", "")).lower()
 
     # 1. Câu hỏi đạo hàm đại số thuần túy (như Hình 2 & Hình mới của Thầy Trí)
@@ -791,6 +798,7 @@ def save_teacher_uploaded_exam(exam: dict) -> bool:
         logging.error("Lỗi khi lưu đề giáo viên: %s", exc)
         return False
 
+@_serialized_bank
 def append_exam_to_national_shard(exam: dict) -> bool:
     """Nạp đề thi đã bóc tách vào Kho Ngân Hàng Đề Thi Quốc Gia (Shard .json.xz)
     Áp dụng 5 TẦNG KIỂM ĐỊNH CHẤT LƯỢNG (5-Layer Quality Gate):
@@ -849,17 +857,14 @@ def append_exam_to_national_shard(exam: dict) -> bool:
         shard_base = SUBJECT_SHARD_MAP.get(norm_subj.lower(), f"exams_{norm_subj}.json")
         shard_xz = os.path.join(REAL_EXAM_DIR, shard_base + ".xz")
         
-        current_shard_exams = get_shard_exams(subject)
-        current_shard_exams.insert(0, exam)
-
-        # Ghi đè file .xz
-        import lzma
-        out_obj = {"exams": current_shard_exams, "total": len(current_shard_exams), "version": "2026-LIVE-UPDATED"}
-        with lzma.open(shard_xz, "wt", encoding="utf-8") as f:
-            json.dump(out_obj, f, ensure_ascii=False)
-            
-        # Cập nhật index O(1) bộ nhớ
-        build_multi_dimensional_index(subject)
+        from services.bank_storage import append_exam_atomic
+        changed = append_exam_atomic(shard_xz, exam)
+        if changed:
+            # Drop every derived view before the next consumer reads the new shard.
+            for name in ('_SHARD_CACHE', '_FAST_EXAM_LIST_CACHE', '_QUESTIONS_POOL_CACHE',
+                         '_MULTI_INDEX_BY_TOPIC_LEVEL', '_MULTI_INDEX_BY_TOPIC',
+                         '_MULTI_INDEX_BY_PART', '_QUESTION_STORE_BY_QID', '_INDEXED_SUBJECTS'):
+                globals().get(name, {}).clear()
         logging.info("Đã nạp đề thi '%s' vào Kho Shard Quốc Gia thành công!", exam.get("title"))
         return True
     except Exception as err:
@@ -2240,7 +2245,7 @@ def enrich_exam_visuals_jit(exam, subject="Toán học", grade=12):
 
 
 @_serialized_bank
-def get_baseline_full_exams(subject: str, grade, enrich_visuals: bool = False):
+def get_baseline_full_exams(subject: str, grade, enrich_visuals: bool = False, *, _question_pool=False):
     """
     Lấy danh sách các đề thi thật hoàn chỉnh từ kho 2025-2026, 2026-2027
     VÀ KHO ĐỀ CỦA GIÁO VIÊN TẢI LÊN (Nạp tức thì 0.0005s nhờ In-Memory Tuple Cache).
@@ -2255,7 +2260,7 @@ def get_baseline_full_exams(subject: str, grade, enrich_visuals: bool = False):
 
     norm_subj = normalize_subject_name(subject).lower()
     grade_key = str(grade) if grade is not None else "all"
-    cache_key = (norm_subj, grade_key, bool(enrich_visuals))
+    cache_key = (norm_subj, grade_key, bool(enrich_visuals), bool(_question_pool))
 
     t_mtime = os.path.getmtime(TEACHER_EXAMS_FILE) if os.path.exists(TEACHER_EXAMS_FILE) else 0
     c_dir = os.path.join(BASE_DIR, "data", "exam_cache")
@@ -2270,6 +2275,10 @@ def get_baseline_full_exams(subject: str, grade, enrich_visuals: bool = False):
     try:
         shard_data = get_shard_exams(subject, grade=None if grade_key == 'all' else grade_key)
         for ex in shard_data:
+            if ex.get('source_review_issues') or (not _question_pool and any(
+                    has_unresolved_source_review(q)
+                    for part in ('p1', 'p2', 'p3') for q in ex.get(part, []))):
+                continue
             ex_subj = normalize_subject_name(ex.get("subject", "")).lower()
             if ex_subj == norm_subj and (grade is None or grade_key == "all" or str(ex.get("grade")) == grade_key):
                 if enrich_visuals:
@@ -2330,6 +2339,11 @@ def get_baseline_full_exams(subject: str, grade, enrich_visuals: bool = False):
     except Exception as exc:
         logging.warning("Không thể đọc AI harvested exams: %s", exc)
 
+    # Do not silently shorten an original paper or change its scoring/numbering.
+    # Keep the source in the shard; hold the complete paper from student delivery.
+    results = [ex for ex in results if not ex.get('source_review_issues') and (_question_pool or not any(
+        has_unresolved_source_review(q)
+        for part in ('p1', 'p2', 'p3') for q in ex.get(part, [])))]
     _FAST_EXAM_LIST_CACHE[cache_key] = ((t_mtime, c_mtime), results)
     return results
 
@@ -2491,7 +2505,7 @@ def get_baseline_questions_pool(subject: str, grade):
         }
 
     pool = {"p1": [], "p2": [], "p3": []}
-    exams_list = list(get_baseline_full_exams(subject, grade, enrich_visuals=False))
+    exams_list = list(get_baseline_full_exams(subject, grade, enrich_visuals=False, _question_pool=True))
     for ex in exams_list:
         school = ex.get('school') or 'Chưa xác minh đơn vị ra đề'
         portal = ex.get('portal') or 'Chưa xác minh nơi công bố'
