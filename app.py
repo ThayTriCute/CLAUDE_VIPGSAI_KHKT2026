@@ -15305,7 +15305,7 @@ if selected_station == station_labels[2]:
 
                 with st.expander(f"⚡ Mở Đề Thi Có Sẵn Từ Ngân Hàng Offline ({len(cached_list)} đề đã lưu - Nạp tức thì 0.1s)", expanded=False):
 
-                    from services.widget_state import cached_exam_label
+                    from services.cache_metadata import cached_exam_label
                     c_opts = [cached_exam_label(item) for item in cached_list]
 
                     from services.widget_state import valid_option_index

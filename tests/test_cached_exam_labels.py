@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime
-from services.widget_state import cached_exam_label
+from services.cache_metadata import cached_exam_label
 from services.academic_context import subjects_for_grade
 
 
