@@ -3,7 +3,7 @@ def _refresh_t1_context_services():
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
     for module, revision in ((lesson_sources, 2026110205), (curriculum_policy, 2026110219),
-                             (lab_scope, 2026110202), (lesson_export, 2026110201),
+                             (lab_scope, 2026110202), (lesson_export, 2026110302),
                              (text_boundaries, 2026110201), (socratic_context, 2026110204)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
@@ -11498,6 +11498,26 @@ if selected_station == station_labels[0]:
                                    saved['text'], file_name=f"bai_cho_doi_chieu_{index}.md",
                                    mime="text/markdown", key=f"t1_orphaned_archive_{identity}")
 
+    if not st.session_state.get("current_lesson"):
+        with st.expander("📂 Mở lại phiếu bài học đã lưu (.md)"):
+            st.caption("Chọn đúng môn/lớp và nhập tên bài ở trên, rồi mở bản Markdown đã tải. "
+                       "Chỉ dựng lại phiếu từ nội dung đã lưu; không gọi AI hoặc khôi phục điểm và hội thoại.")
+            saved_lesson_file = st.file_uploader("Chọn bản bài học Markdown đã lưu", type=["md"], key="t1_saved_markdown")
+            if saved_lesson_file is not None:
+                saved_style_label = st.selectbox("Kiểu phiếu từ bản lưu", ["Chữ viết tay", "Bản màu", "Trắng đen"],
+                                                 key="t1_saved_export_style")
+                saved_style = {"Chữ viết tay": "handwritten", "Bản màu": "color", "Trắng đen": "monochrome"}[saved_style_label]
+                if st.button("Mở phiếu từ bản lưu", key="t1_open_saved_export"):
+                    try:
+                        from services.lesson_export import saved_markdown_html
+                        saved_html = saved_markdown_html(saved_lesson_file.getvalue(), subject, grade_num,
+                                                         topic_input.strip(), saved_style)
+                        components.html(saved_html, height=790, scrolling=True)
+                        st.download_button("📥 Tải lại phiếu HTML", saved_html.encode("utf-8"),
+                                           file_name=f"Bai_hoc_da_luu_{saved_style}.html", mime="text/html",
+                                           key="t1_download_saved_export", on_click="ignore")
+                    except ValueError as error:
+                        st.error(str(error))
     if st.session_state.get("current_lesson"):
         lesson_text = station1_master_sovereign_brain_gate(st.session_state.current_lesson, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''), policy_revision=CURRICULUM_POLICY_REVISION)
         part2_split = re.split(r'(?i)(?:###\s*)?PHẦN 2[\:\.]?', lesson_text)
