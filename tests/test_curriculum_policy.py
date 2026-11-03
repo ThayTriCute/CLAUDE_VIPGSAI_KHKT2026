@@ -38,7 +38,9 @@ class TestCurriculumPolicy(unittest.TestCase):
     def test_lesson_activities_define_student_tasks_without_math_only_template(self):
         for subject, grade in [('Khoa học tự nhiên', 8), ('Ngữ văn', 6), ('Tiếng Anh', 7)]:
             request = lesson_prompt(subject, grade, 'Bài đang kiểm')
-            self.assertIn('câu hỏi tự kiểm hoặc tiêu chí sản phẩm', request)
+            self.assertIn('Câu hỏi tự kiểm ngắn', request)
+            self.assertIn('tóm tắt rõ kiến thức cốt lõi và cách dùng', request)
+            self.assertIn('không viết thành giáo án dành cho giáo viên', request)
             self.assertIn('không ép thành bài toán tính số', request)
             self.assertIn('không giao tự pha trộn hóa chất tại nhà', request)
 
