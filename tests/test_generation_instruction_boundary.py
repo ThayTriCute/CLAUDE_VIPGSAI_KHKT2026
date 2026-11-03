@@ -21,11 +21,14 @@ class TestGenerationInstructionBoundary(unittest.TestCase):
                         topic, custom, pathway = "Chủ đề kiểm thử", "Yêu cầu riêng", "Định hướng riêng"
                         if station == 1:
                             system, user = lesson_generation_request(subject, grade, topic)
+                            self.assertIn("BẢN TÓM TẮT BÀI HỌC CHO HỌC SINH TỰ HỌC", system)
+                            self.assertIn("không viết thành giáo án dành cho giáo viên", system)
                             full = lesson_prompt(subject, grade, topic)
                             old_prefix = policy_prompt(subject, grade, 1, topic) + LEVEL_GUIDANCE
                             self.assertEqual(json.loads(user.split("\n", 1)[0])["lesson_topic"], topic)
                         else:
                             system, user = exam_generation_request(subject, grade, [topic], (3, 1, 1), "QA", custom, pathway)
+                            self.assertNotIn("BẢN TÓM TẮT BÀI HỌC CHO HỌC SINH TỰ HỌC", system)
                             full = exam_prompt(subject, grade, [topic], (3, 1, 1), "QA", custom, pathway)
                             old_prefix = policy_prompt(subject, grade, 3, topic, pathway) + LEVEL_GUIDANCE
                             self.assertIn(custom, user)

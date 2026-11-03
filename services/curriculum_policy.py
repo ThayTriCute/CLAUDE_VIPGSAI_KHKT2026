@@ -264,9 +264,18 @@ def policy_prompt(subject, grade, station, topic="", pathway=""):
                      "mục đích, quan hệ nghĩa hoặc dấu hiệu trong câu trước khi so sánh các lựa chọn. "
                      "Định nghĩa/dịch nghĩa và kết luận đáp án chỉ đặt trong explain sau nộp bài."
                      if subject == "Tiếng Anh" else "")
+    self_study_guidance = (
+        "TRẠM 1 — BẢN TÓM TẮT BÀI HỌC CHO HỌC SINH TỰ HỌC: Gia sư trực tiếp giải thích "
+        "kiến thức cốt lõi, rõ ràng, cô đọng, vừa sức; giữ khái niệm, quy tắc/công thức và điều kiện "
+        "áp dụng khi phù hợp, ví dụ ngắn có hướng dẫn và câu tự kiểm tra. Viết cho học sinh đọc và "
+        "tự thực hiện; không viết thành giáo án dành cho giáo viên, không thay kiến thức bằng kế hoạch "
+        "GV tổ chức hoạt động, chia nhóm hoặc tiêu chí sản phẩm. Không rút mất điều kiện khoa học "
+        "để làm ngắn. Giữ các phần luyện tập, gia sư/Lab và lời chốt nhân sinh theo yêu cầu riêng."
+        if str(station) == "1" else "")
     return f"""\n[NGỮ CẢNH CHƯƠNG TRÌNH — ngày áp dụng {evaluation_day}; ngày rà soát nguồn {POLICY_DATE}]
 Trạm {station}; môn {subject}; lớp {grade}; chủ đề {topic}; định hướng {pathway or 'chưa khai báo'}.
 {hint_guidance}
+{self_study_guidance}
 Chương trình GDPT 2018 đọc cùng các sửa đổi còn áp dụng: {codes}.
 Sử dụng Kết nối tri thức với cuộc sống, đối chiếu đính chính/cập nhật NXBGD; bộ sách thống nhất toàn quốc từ năm học 2026–2027 theo QĐ 3588/2025 và danh mục bổ sung tại QĐ 185/2026. Phải kiểm đúng tên sách/lớp trong phụ lục và bản cập nhật năm 2026; không suy ra nội dung bài đã được thẩm định.
 CT2018 là chuẩn yêu cầu cần đạt; KNTT là trục bài học, không phải giới hạn mọi học liệu. Được dùng ngữ liệu bổ sung đã xác minh từ Cánh Diều, Chân trời sáng tạo hoặc tài liệu khác phù hợp môn/lớp, lứa tuổi và mục tiêu bài học. Ghi riêng “Ngữ liệu bổ sung”, tên tác phẩm/tác giả, sách/nguồn và vị trí thực sự đối chiếu; không gán ngữ liệu ngoài sách thành nguyên văn hoặc nội dung của KNTT, không tự đổi bộ sách chính hay chuẩn đầu ra. Tên bộ/tài liệu chưa xác minh thì không tự nhận là SGK đã được phê duyệt.
@@ -604,7 +613,7 @@ def lesson_prompt(subject, grade, topic):
     return policy_prompt(subject, grade, 1, topic) + LEVEL_GUIDANCE + visual_guidance + r"""
 Soạn bài học với ba tiêu đề chính: '### PHẦN 1: BÀI HỌC', '### PHẦN 2: TRẮC NGHIỆM KHÁCH QUAN SOCRATIC', '### PHẦN 3: BÀI TẬP TỰ LUẬN'.
 Phần 1: khởi động, hình thành kiến thức, ví dụ có lời giải phù hợp lớp, luyện tập và vận dụng; đặc trưng thể loại/môn học phải được giữ.
-Trình bày rõ năm mục của Phần 1: Khởi động; Hình thành kiến thức; Ví dụ có lời giải; Luyện tập; Vận dụng. Mỗi mục hoạt động phải có việc học sinh thực hiện và câu hỏi tự kiểm hoặc tiêu chí sản phẩm. Khởi động dùng tình huống gần gũi gắn đúng bài; luyện tập kiểm tra kiến thức vừa học; vận dụng cho nhiệm vụ khả thi, phù hợp tuổi, không đòi dữ kiện chưa cung cấp. Ví dụ có lời giải phải giải thích cách làm. Với môn đọc hiểu, ngoại ngữ và xã hội, chọn hoạt động đặc trưng môn, không ép thành bài toán tính số. Với thí nghiệm hoặc hóa chất, ưu tiên dữ liệu/mô phỏng và chỉ quan sát thí nghiệm do giáo viên tổ chức; không giao tự pha trộn hóa chất tại nhà.
+Trình bày rõ năm mục của Phần 1: Khởi động; Hình thành kiến thức; Ví dụ có lời giải; Luyện tập; Vận dụng. Nội dung mỗi mục hướng trực tiếp tới học sinh tự học; Hình thành kiến thức phải tóm tắt rõ kiến thức cốt lõi và cách dùng, không chỉ ghi mục tiêu hay hoạt động. Câu hỏi tự kiểm ngắn giúp học sinh nhận ra phần chưa hiểu; không dùng các khung “Mục tiêu – Hoạt động thực hiện – Tiêu chí sản phẩm” thay cho lời giảng. Khởi động dùng tình huống gần gũi gắn đúng bài; luyện tập kiểm tra kiến thức vừa học; vận dụng cho nhiệm vụ khả thi, phù hợp tuổi, không đòi dữ kiện chưa cung cấp. Ví dụ có lời giải phải giải thích cách làm. Với môn đọc hiểu, ngoại ngữ và xã hội, chọn hoạt động đặc trưng môn, không ép thành bài toán tính số. Với thí nghiệm hoặc hóa chất, ưu tiên dữ liệu/mô phỏng và chỉ quan sát thí nghiệm do giáo viên tổ chức; không giao tự pha trộn hóa chất tại nhà.
 Phần 2: đúng 3 câu trắc nghiệm, mỗi câu có 4 phương án A/B/C/D và duy nhất một đáp án. Ghi CORRECT: cho đáp án nội bộ, EXPLAIN: cho giải thích nội bộ, HINT: cho gợi mở Socratic theo riêng ngữ cảnh câu hỏi. HINT chỉ dẫn dắt học sinh tự nghĩ; không giải hộ hoặc tiết lộ đáp án. Không dùng EXPLAIN thay HINT.
 Phần 3: đúng 2 câu tự luận, mỗi câu hướng dẫn đủ bốn bước Pólya bằng tiếng Việt: Bước 1: Tìm hiểu đề; Bước 2: Lập kế hoạch; Bước 3: Thực hiện kế hoạch; Bước 4: Kiểm tra và nhìn lại. Chỉ đặt câu hỏi hoặc hướng dẫn để học sinh tự thực hiện, không giải hộ, không đưa đáp án. Phần 1 vẫn được giải thích lý thuyết và có ví dụ minh họa; không áp quy tắc giấu lời giải của Socratic sang Phần 1.
 Mỗi câu Phần 2 và Phần 3 mở đầu 'Câu n. [Mức độ: NB/TH/VD/VDC]' (chọn một nhãn, hoặc để rỗng nếu chưa đủ căn cứ). Tiếp theo là nội dung câu, các dòng OUTCOME: yêu cầu cần đạt; COGNITIVE_REASON: căn cứ phân loại; COGNITIVE_STEPS: ["thao tác tư duy 1", "thao tác tư duy 2"]. Đây là đề xuất cần giáo viên duyệt, không mặc định tất cả câu là vận dụng.
