@@ -115,6 +115,10 @@ def validate_cognitive_review(question, review, *, subject, grade, topic, as_of)
         else:
             if source.get('document_status') != 'final':
                 issues.append('non_final_or_unverified_' + field)
+            # A catalog/contents locator establishes where a lesson is, not
+            # that its requirements or actual rule text have been reviewed.
+            if source.get('read_scope') != 'relevant_content':
+                issues.append('relevant_content_not_read_' + field)
             try:
                 if date.fromisoformat(source['read_on']) > today:
                     issues.append('invalid_' + field + '_read_date')
