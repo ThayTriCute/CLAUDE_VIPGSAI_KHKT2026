@@ -11,7 +11,7 @@ from markdown_it import MarkdownIt
 from services.academic_context import academic_context
 
 ROOT = Path(__file__).resolve().parents[1]
-T1_CONTEXT_REVISION = 2026110201
+T1_CONTEXT_REVISION = 2026110301
 _TOKENS = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$)")
 
 
@@ -94,7 +94,7 @@ def build_lesson_html(subject, grade, topic, lesson, style="handwritten"):
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>''' + title + r'''</title>
 <style>''' + css + r'''
 @font-face{font-family:GSAIHand;src:url(data:font/ttf;base64,''' + font + r''') format('truetype');font-style:normal;font-weight:400;font-display:swap}
-*{box-sizing:border-box}body{margin:0;background:#e8e3d8;color:#182c73;font-family:Georgia,'Times New Roman',serif}
+*{box-sizing:border-box}body{margin:0;background:#e8e3d8;color:#182c73;font-family:Arial,'Segoe UI',sans-serif}
 .toolbar{padding:12px;background:#fff;position:sticky;top:0;z-index:5;font:14px system-ui;color:#334155}.toolbar button{padding:8px 18px;margin-right:12px;cursor:pointer}
 .paper{max-width:820px;margin:20px auto;padding:32px 35px 40px 66px;background:#f5eedc;min-height:1120px;overflow-wrap:anywhere;position:relative}
 .handwritten .paper{padding:30px 34px 40px 76px;background-color:#f5eedc;background-image:linear-gradient(#aea18a30 1px,transparent 1px),linear-gradient(90deg,#aea18a30 1px,transparent 1px),linear-gradient(90deg,#e1d3b9,transparent 10%,#fff5 55%,transparent);background-size:24px 24px,24px 24px,100% 100%;box-shadow:0 6px 24px #36280c26;border-radius:2px}
