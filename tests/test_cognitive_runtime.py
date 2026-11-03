@@ -125,3 +125,37 @@ class RuntimeReviewTests(unittest.TestCase):
             state['current_lesson']='changed lesson'
             exec(code, env)
             self.assertFalse(state['t1_independent_cognitive_audit'][0]['verified'])
+
+    def test_same_question_review_cannot_cross_assessment_context(self):
+        from unittest.mock import patch
+        from tests.test_cognitive_review_gate import CognitiveReviewGateTests
+        fixture = CognitiveReviewGateTests(); fixture.setUp()
+        context = {'exam_type':'graduation_reference_practice', 'curriculum':'CT2018'}
+        exam = dict(context, topic='Bài 1', p1=[fixture.q])
+        review = copy.deepcopy(fixture.review)
+        review.update(content_sha256=assessment_content_hash(review_binding(fixture.q,
+            {'assessment_context':context})), assessment_purpose='station3_assessment')
+        for basis in review['legal_basis']: basis['applicable_purpose']='station3_assessment'
+        with patch('services.cognitive_runtime._load_reviews', return_value={review['content_sha256']:review}):
+            self.assertTrue(independent_exam_audit(exam,'Toán học',10,as_of='2026-11-02')['rows'][0]['verified'])
+            for key,value in [('exam_type','periodic_assessment'),('curriculum','CT2006'),
+                              ('assessment_purpose','other_use'),('textbook','other_book')]:
+                changed = copy.deepcopy(exam); changed[key]=value
+                self.assertFalse(independent_exam_audit(changed,'Toán học',10,
+                    as_of='2026-11-02')['rows'][0]['verified'])
+            stripped = copy.deepcopy(exam); stripped.pop('exam_type')
+            self.assertFalse(independent_exam_audit(stripped,'Toán học',10,
+                as_of='2026-11-02')['rows'][0]['verified'])
+
+    def test_assessment_context_binds_tf_parent_and_reading_rows(self):
+        exam = {'exam_type':'practice','p2':[{'q':'Context','stmts':[{'t':'A','a':True}]}],
+                'part_doc_hieu':{'passage':'Read this','questions':[{'q':'Explain','ans':'A'}]}}
+        original = copy.deepcopy(exam)
+        first = independent_exam_audit(exam,'Ngữ văn',9)
+        exam['exam_type']='periodic_assessment'
+        other = independent_exam_audit(exam,'Ngữ văn',9)
+        self.assertEqual(len(first['rows']),3)
+        self.assertTrue(all(a['content_sha256'] != b['content_sha256']
+            for a,b in zip(first['rows'],other['rows'])))
+        self.assertEqual(original['p2'],exam['p2'])
+        self.assertEqual(original['part_doc_hieu'],exam['part_doc_hieu'])

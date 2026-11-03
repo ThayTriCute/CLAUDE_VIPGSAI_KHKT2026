@@ -46,6 +46,10 @@ def independent_question_audit(question, *, subject, grade, topic, purpose,
 def independent_exam_audit(exam, subject, grade, *, as_of=None, registry_path=None):
     rows = []
     reviews = _load_reviews(registry_path)
+    # A question reviewed in one assessment context cannot authorize another.
+    assessment_context = {key: exam[key] for key in (
+        'exam_type', 'assessment_purpose', 'exam_session', 'curriculum',
+        'textbook', 'textbook_series') if key in exam}
     groups = [(p, exam.get(p, [])) for p in ('p1', 'p2', 'p3', 'part_viet')]
     reading = exam.get('part_doc_hieu')
     if isinstance(reading, (dict, list)):
@@ -56,7 +60,9 @@ def independent_exam_audit(exam, subject, grade, *, as_of=None, registry_path=No
         for index, question in enumerate(questions):
             if not isinstance(question, dict):
                 continue
-            shared = {'reading': reading} if part == 'part_doc_hieu' else {}
+            shared = {'assessment_context': assessment_context} if assessment_context else {}
+            if part == 'part_doc_hieu':
+                shared['reading'] = reading
             kwargs = dict(subject=subject, grade=grade, topic=question.get('topic', exam.get('topic', '')),
                           purpose='station3_assessment', as_of=as_of, _reviews=reviews)
             rows.append(dict(part=part, question=index + 1,
