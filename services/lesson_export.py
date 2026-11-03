@@ -11,7 +11,7 @@ from markdown_it import MarkdownIt
 from services.academic_context import academic_context
 
 ROOT = Path(__file__).resolve().parents[1]
-T1_CONTEXT_REVISION = 2026110301
+T1_CONTEXT_REVISION = 2026110302
 _TOKENS = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$)")
 
 
@@ -67,6 +67,19 @@ def lesson_body_html(lesson):
     if naked_math:
         body = '<p class="notice" data-source-issue="math-delimiter">Có lệnh công thức chưa nằm trong dấu phân cách toán học; cần sửa nội dung trước khi in.</p>' + body
     return body
+
+
+def saved_markdown_html(payload, subject, grade, topic, style="handwritten"):
+    """Reopen an explicitly uploaded saved lesson, without AI or session replay."""
+    if not isinstance(payload, bytes) or len(payload) > 1_000_000:
+        raise ValueError("Bản lưu phải là tệp Markdown UTF-8 không quá 1 MB.")
+    try:
+        lesson = payload.decode("utf-8-sig")
+    except UnicodeDecodeError as error:
+        raise ValueError("Không đọc được bản lưu UTF-8; hãy chọn đúng tệp Markdown đã tải.") from error
+    if not str(topic or "").strip():
+        raise ValueError("Nhập đúng tên bài của bản lưu trước khi mở phiếu.")
+    return build_lesson_html(subject, grade, topic, lesson, style)
 
 
 def build_lesson_html(subject, grade, topic, lesson, style="handwritten"):
