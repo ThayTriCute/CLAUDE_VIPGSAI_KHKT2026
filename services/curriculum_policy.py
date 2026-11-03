@@ -364,6 +364,8 @@ def prepare_exam_for_delivery(exam, subject, grade, duration=45, custom_request=
         "source_sha256": hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode()).hexdigest(),
         "note": "Đã kiểm tra ngữ cảnh khai báo và một số mâu thuẫn xác định; chưa xác minh từng yêu cầu cần đạt/trang SGK/nguồn gốc."}
     from services.cognitive_levels import audit_exam_levels
+    from services.cognitive_runtime import independent_exam_audit
+    result['independent_cognitive_audit'] = independent_exam_audit(result, subject, grade)
     return audit_exam_levels(result)
 
 

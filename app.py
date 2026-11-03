@@ -11762,6 +11762,10 @@ if selected_station == station_labels[0]:
             st.session_state.quiz_key_recovery_checked = quiz_recovery_key
 
         if quiz_list:
+            from services.cognitive_runtime import independent_lesson_quiz_audit
+            st.session_state["t1_independent_cognitive_audit"] = independent_lesson_quiz_audit(
+                quiz_list, subject, grade_num, st.session_state.get("current_topic", ""),
+                st.session_state.get("current_lesson", ""))
 
             st.markdown("<br>", unsafe_allow_html=True)
 
