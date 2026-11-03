@@ -144,3 +144,35 @@ def iter_exam_shard(path, grade=None):
 def read_exam_shard(path, grade=None):
     """Compatibility list API; streaming consumers should use iter_exam_shard."""
     return list(iter_exam_shard(path, grade=grade))
+
+
+def append_exam_atomic(path, exam):
+    """Idempotent exact import; reject conflicting identity and concurrent writes."""
+    import os
+    import tempfile
+    path = Path(path)
+    before = hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else None
+    rows = list(iter_exam_shard(path)) if path.exists() else []
+    fields = ('subject', 'grade', 'year', 'code', 'school', 'exam_type')
+    identity = lambda row: tuple(str(row.get(k, '')) for k in fields)
+    def payload(row):
+        return {k: v for k, v in row.items() if k != 'added_at'}
+    for row in rows:
+        if identity(row) == identity(exam):
+            if payload(row) == payload(exam):
+                return False
+            raise ValueError('Conflicting existing exam identity; review before replacement')
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle, temporary = tempfile.mkstemp(prefix=path.name + '.', suffix='.tmp', dir=path.parent)
+    os.close(handle)
+    try:
+        with lzma.open(temporary, 'wt', encoding='utf-8', preset=6) as stream:
+            json.dump({'exams': [exam] + rows, 'total': len(rows) + 1}, stream, ensure_ascii=False)
+        current = hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else None
+        if current != before:
+            raise RuntimeError('Shard changed during import; no overwrite performed')
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+    return True

@@ -29,6 +29,14 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
+    - name: Install optional voice test dependencies
+      run: python -m pip install -r requirements-test.txt
+
+    - name: Require all voice worker contract tests
+      run: |
+        python -c "from tests.test_local_voice_server import TestClient; assert TestClient is not None, 'Voice test dependencies unavailable'"
+        python -m unittest tests.test_local_voice_server -v
+
     - name: Step 1 - Syntax & Compilation Integrity Check
       run: |
         python -m py_compile app.py precision_visual_engine.py real_exam_engine.py database.py lesson_infographic_engine.py
