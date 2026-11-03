@@ -18,7 +18,9 @@ class Tin0525CognitiveRegistryTests(unittest.TestCase):
         original=deepcopy(self.exam)
         audit=independent_exam_audit(self.exam,self.exam['subject'],12,as_of='2026-11-03')
         self.assertEqual(audit['verified_records'],47)
-        self.assertEqual(audit['pending_records'],7)
+        self.assertEqual(audit['pending_records'],1)
+        self.assertEqual(audit['response_units'],48)
+        self.assertEqual(audit['context_containers'],6)
         prerequisites=[r for r in audit['rows'] if r['verified']
             and r['curriculum_relationship']=='explicit_prerequisite']
         self.assertEqual(len(prerequisites),16)
