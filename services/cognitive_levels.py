@@ -163,14 +163,13 @@ def annotate_question(question):
                         and bool(str(result.get("cognitive_rationale") or "").strip())
                         and isinstance(steps, list) and bool(steps)
                         and all(isinstance(s, str) and s.strip() for s in steps))
-    payload = {k: result.get(k) for k in ("q", "question", "t", "opt", "options", "ans", "correct", "a", "explain")}
     result["cognitive_audit"] = {
         "level": result["level"],
         "reference_bucket": {"NB": "Biết", "TH": "Hiểu", "VD": "Vận dụng", "VDC": "Vận dụng"}.get(result["level"], "Chưa xác định"),
         "status": "needs_teacher_review", "verified": False,
         "self_reported_evidence_present": evidence_present,
         "issue": "missing_or_ambiguous_level" if not result["level"] else "unreviewed_claim",
-        "content_sha256": hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode()).hexdigest(),
+        "content_sha256": assessment_content_hash(question),
     }
     if isinstance(result.get("stmts"), list):
         result["stmts"] = [annotate_question(s) if isinstance(s, dict) else s for s in result["stmts"]]
