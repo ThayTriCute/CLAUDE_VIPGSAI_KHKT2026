@@ -33,12 +33,32 @@ def independent_question_audit(question, *, subject, grade, topic, purpose,
     review = reviews.get(digest, {})
     if not isinstance(review, dict):
         review = {}
-    result = validate_cognitive_review(bound, review, subject=subject, grade=grade,
+    outcome_grade = review.get('grade')
+    mapped = question.get('mapped_outcome_grades')
+    if not isinstance(mapped, list) and isinstance(shared_context, dict):
+        parent = shared_context.get('question')
+        mapped = parent.get('mapped_outcome_grades') if isinstance(parent, dict) else None
+    # Preserve the curriculum grade; explicit independent evidence may justify
+    # using an earlier-grade prerequisite in a later-grade assessment.
+    prerequisite = (type(outcome_grade) is int and outcome_grade < grade
+        and review.get('assessment_grade') == grade
+        and review.get('outcome_grade') == outcome_grade
+        and isinstance(mapped, list) and outcome_grade in mapped
+        and isinstance(review.get('prerequisite_use_reason'), str)
+        and bool(review['prerequisite_use_reason'].strip())
+        and bool(shared_context))
+    result = validate_cognitive_review(bound, review, subject=subject,
+                                       grade=outcome_grade if prerequisite else grade,
                                        topic=str(topic or ''), as_of=today)
+    if 'assessment_grade' in review and review['assessment_grade'] != grade:
+        result = dict(result, verified=False, status='blocked', reviewed_level='',
+                      issues=sorted(set(result['issues'] + ['assessment_grade_mismatch'])))
     if review.get('assessment_purpose') != purpose:
         result = dict(result, verified=False, status='blocked', reviewed_level='',
                       issues=sorted(set(result['issues'] + ['review_purpose_mismatch'])))
-    return dict(result, content_sha256=digest,
+    return dict(result, content_sha256=digest, assessment_grade=grade,
+                mapped_outcome_grade=outcome_grade,
+                curriculum_relationship='explicit_prerequisite' if prerequisite else 'same_grade_or_unverified',
                 approval_scope='Independent record validity only; not Ministry certification',
                 delivery_status='review_record_valid' if result['verified'] else 'needs_teacher_review')
 

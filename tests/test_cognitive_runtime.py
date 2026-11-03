@@ -159,3 +159,28 @@ class RuntimeReviewTests(unittest.TestCase):
             for a,b in zip(first['rows'],other['rows'])))
         self.assertEqual(original['p2'],exam['p2'])
         self.assertEqual(original['part_doc_hieu'],exam['part_doc_hieu'])
+
+    def test_explicit_prerequisite_retains_outcome_grade_and_requires_evidence(self):
+        from unittest.mock import patch
+        from tests.test_cognitive_review_gate import CognitiveReviewGateTests
+        fixture=CognitiveReviewGateTests(); fixture.setUp()
+        q=copy.deepcopy(fixture.q); q['mapped_outcome_grades']=[10]
+        shared={'assessment_context':{'exam_type':'practice'}}
+        review=copy.deepcopy(fixture.review)
+        review.update(content_sha256=assessment_content_hash(review_binding(q,shared)),
+            assessment_grade=12,outcome_grade=10,prerequisite_use_reason='Explicit earlier-grade prerequisite review')
+        def check(r=review, question=q, grade=12, context=shared):
+            with patch('services.cognitive_runtime._load_reviews',return_value={review['content_sha256']:r}):
+                return independent_question_audit(question,subject='Toán học',grade=grade,
+                    topic='Bài 1',purpose='practice',shared_context=context,as_of='2026-11-02')
+        good=check(); self.assertTrue(good['verified'])
+        self.assertEqual(good['mapped_outcome_grade'],10)
+        self.assertEqual(good['assessment_grade'],12)
+        for key in ('assessment_grade','outcome_grade','prerequisite_use_reason'):
+            changed=copy.deepcopy(review);changed.pop(key)
+            self.assertFalse(check(changed)['verified'])
+        changed=copy.deepcopy(q);changed['mapped_outcome_grades']=[11]
+        self.assertFalse(check(question=changed)['verified'])
+        self.assertFalse(check(grade=11)['verified'])
+        self.assertFalse(check(grade=10)['verified'])
+        self.assertFalse(check(context={})['verified'])
