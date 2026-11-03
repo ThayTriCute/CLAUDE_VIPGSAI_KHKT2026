@@ -11,6 +11,26 @@ from services.context_recovery import repair_exam_context
 
 
 class TestCognitiveLevels(unittest.TestCase):
+    def test_audit_fingerprint_covers_code_visuals_context_and_rubric(self):
+        from services.cognitive_levels import assessment_content_hash
+        question = {"q": "Predict output", "ans": "C", "level": "TH",
+                    "code": "#heading {color:red}", "element": '<h2 id="heading">X</h2>',
+                    "image": "diagram-a.svg", "table": [[1, 2]],
+                    "source_locator": "0525/page1/Q1", "solution_steps": ["Resolve priority"],
+                    "stmts": [{"t": "statement", "ans": True}]}
+        original = deepcopy(question)
+        digest = annotate_question(question)["cognitive_audit"]["content_sha256"]
+        self.assertEqual(digest, assessment_content_hash(question))
+        self.assertEqual(question, original)
+        for field in ("code", "element", "image", "table", "source_locator", "solution_steps", "stmts"):
+            with self.subTest(field=field):
+                changed = deepcopy(question)
+                changed[field] = "changed evidence"
+                self.assertNotEqual(digest, annotate_question(changed)["cognitive_audit"]["content_sha256"])
+        question["cognitive_audit"] = {"verified": True, "content_sha256": "forged"}
+        self.assertEqual(digest, annotate_question(question)["cognitive_audit"]["content_sha256"])
+        self.assertFalse(annotate_question(question)["cognitive_audit"]["verified"])
+
     def test_aliases_do_not_collapse_ambiguous_or_empty_claims(self):
         for raw, expected in [("Nhận biết", "NB"), ("Hiểu", "TH"), ("Vận dụng cao", "VDC"),
                               ("NB-TH", ""), ("TH-VD", ""), (None, ""), ("NB/TH/VD/VDC", "")]:
