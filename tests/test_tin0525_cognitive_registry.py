@@ -21,6 +21,8 @@ class Tin0525CognitiveRegistryTests(unittest.TestCase):
         self.assertEqual(audit['pending_records'],1)
         self.assertEqual(audit['response_units'],48)
         self.assertEqual(audit['context_containers'],6)
+        self.assertEqual(audit['held_source_records'],1)
+        self.assertEqual(audit['needs_review_records'],0)
         prerequisites=[r for r in audit['rows'] if r['verified']
             and r['curriculum_relationship']=='explicit_prerequisite']
         self.assertEqual(len(prerequisites),16)

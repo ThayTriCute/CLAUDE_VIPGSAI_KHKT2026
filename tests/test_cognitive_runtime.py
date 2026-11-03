@@ -197,3 +197,32 @@ class RuntimeReviewTests(unittest.TestCase):
         self.assertFalse(parent['verified'])
         self.assertNotIn('reviewed_level',parent)
         self.assertEqual(parent['status'],'context_bound_only')
+
+    def test_valid_record_cannot_override_known_source_or_shared_context_hold(self):
+        from unittest.mock import patch
+        from tests.test_cognitive_review_gate import CognitiveReviewGateTests
+        fixture=CognitiveReviewGateTests();fixture.setUp()
+        for location in ('question','parent','reading'):
+            q=copy.deepcopy(fixture.q);shared={}
+            if location=='question':q['source_review_issues']=['Missing premise']
+            if location=='parent':shared={'question':{'q':'Shared','source_review_issues':['Missing premise']}}
+            if location=='reading':shared={'reading':{'passage':'Text','source_review_issues':['Unverified attribution']}}
+            review=copy.deepcopy(fixture.review)
+            digest=assessment_content_hash(review_binding(q,shared));review['content_sha256']=digest
+            with patch('services.cognitive_runtime._load_reviews',return_value={digest:review}):
+                result=independent_question_audit(q,subject='Toán học',grade=10,topic='Bài 1',
+                    purpose='practice',shared_context=shared,as_of='2026-11-02')
+            self.assertFalse(result['verified'])
+            self.assertEqual(result['delivery_status'],'held_source_issue')
+            self.assertIn('unresolved_source_review_hold',result['issues'])
+            self.assertEqual(result['reviewed_level'],'')
+
+    def test_one_held_statement_does_not_hold_unflagged_sibling(self):
+        exam={'p2':[{'q':'Shared','stmts':[
+            {'t':'Held','a':True,'source_review_issues':['Missing premise']},
+            {'t':'Other','a':False}]}]}
+        audit=independent_exam_audit(exam,'Toán học',10)
+        self.assertEqual(audit['held_source_records'],1)
+        self.assertEqual(audit['needs_review_records'],1)
+        self.assertEqual(audit['pending_records'],2)
+        self.assertEqual(audit['rows'][2]['delivery_status'],'needs_teacher_review')

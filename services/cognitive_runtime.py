@@ -23,6 +23,18 @@ def _load_reviews(registry_path=None):
         return {}
 
 
+def _source_review_held(question, shared_context):
+    contexts = [question]
+    shared = shared_context
+    while isinstance(shared, dict):
+        contexts.append(shared)
+        for key in ('question', 'reading'):
+            if isinstance(shared.get(key), dict):
+                contexts.append(shared[key])
+        shared = shared.get('shared_context')
+    return any(context.get('source_review_issues') for context in contexts)
+
+
 def independent_question_audit(question, *, subject, grade, topic, purpose,
                                shared_context=None, as_of=None, registry_path=None, _reviews=None):
     subject, grade = academic_context(subject, grade)
@@ -56,11 +68,16 @@ def independent_question_audit(question, *, subject, grade, topic, purpose,
     if review.get('assessment_purpose') != purpose:
         result = dict(result, verified=False, status='blocked', reviewed_level='',
                       issues=sorted(set(result['issues'] + ['review_purpose_mismatch'])))
+    source_held = _source_review_held(question, shared_context)
+    if source_held:
+        result = dict(result, verified=False, status='blocked', reviewed_level='',
+                      issues=sorted(set(result['issues'] + ['unresolved_source_review_hold'])))
     return dict(result, content_sha256=digest, assessment_grade=grade,
                 mapped_outcome_grade=outcome_grade,
                 curriculum_relationship='explicit_prerequisite' if prerequisite else 'same_grade_or_unverified',
                 approval_scope='Independent record validity only; not Ministry certification',
-                delivery_status='review_record_valid' if result['verified'] else 'needs_teacher_review')
+                delivery_status=('held_source_issue' if source_held else
+                    'review_record_valid' if result['verified'] else 'needs_teacher_review'))
 
 
 def independent_exam_audit(exam, subject, grade, *, as_of=None, registry_path=None):
@@ -106,6 +123,8 @@ def independent_exam_audit(exam, subject, grade, *, as_of=None, registry_path=No
             'context_containers': len(rows) - len(units),
             'verified_records': sum(r['verified'] for r in units),
             'pending_records': sum(not r['verified'] for r in units),
+            'held_source_records': sum(r['delivery_status'] == 'held_source_issue' for r in units),
+            'needs_review_records': sum(not r['verified'] and r['delivery_status'] != 'held_source_issue' for r in units),
             'scope': 'Per-response-unit review; containers bind context without aggregate approval; no whole-exam semantic approval'}
 
 
