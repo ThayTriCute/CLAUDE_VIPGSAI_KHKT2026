@@ -184,3 +184,16 @@ class RuntimeReviewTests(unittest.TestCase):
         self.assertFalse(check(grade=11)['verified'])
         self.assertFalse(check(grade=10)['verified'])
         self.assertFalse(check(context={})['verified'])
+
+    def test_tf_containers_do_not_claim_aggregate_level_or_count_as_pending_answers(self):
+        exam={'p2':[{'q':'Shared task','level':'VDC','stmts':[
+            {'t':'Recall','a':True,'level':'NB'},{'t':'Interpret','a':False,'level':'TH'}]}]}
+        audit=independent_exam_audit(exam,'Toán học',10,as_of='2026-11-02')
+        self.assertEqual(audit['response_units'],2)
+        self.assertEqual(audit['context_containers'],1)
+        self.assertEqual(audit['pending_records'],2)
+        parent=audit['rows'][0]
+        self.assertEqual(parent['record_role'],'statement_container')
+        self.assertFalse(parent['verified'])
+        self.assertNotIn('reviewed_level',parent)
+        self.assertEqual(parent['status'],'context_bound_only')

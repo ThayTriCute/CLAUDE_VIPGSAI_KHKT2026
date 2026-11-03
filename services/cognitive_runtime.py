@@ -85,16 +85,28 @@ def independent_exam_audit(exam, subject, grade, *, as_of=None, registry_path=No
                 shared['reading'] = reading
             kwargs = dict(subject=subject, grade=grade, topic=question.get('topic', exam.get('topic', '')),
                           purpose='station3_assessment', as_of=as_of, _reviews=reviews)
-            rows.append(dict(part=part, question=index + 1,
-                             **independent_question_audit(question, shared_context=shared, **kwargs)))
-            for si, statement in enumerate(question.get('stmts', []) or []):
+            statements = question.get('stmts', [])
+            is_container = (isinstance(statements, list) and bool(statements)
+                            and all(isinstance(statement, dict) for statement in statements))
+            if is_container:
+                rows.append(dict(part=part, question=index + 1, record_role='statement_container',
+                    content_sha256=assessment_content_hash(review_binding(question, shared)),
+                    status='context_bound_only', verified=False, issues=[],
+                    approval_scope='Shared context binding only; no aggregate cognitive level or question approval'))
+            else:
+                rows.append(dict(part=part, question=index + 1, record_role='response_unit',
+                                 **independent_question_audit(question, shared_context=shared, **kwargs)))
+            for si, statement in enumerate(statements or []):
                 if isinstance(statement, dict):
                     parent = review_binding(question, shared)
-                    rows.append(dict(part=part, question=index + 1, statement=si + 1,
+                    rows.append(dict(part=part, question=index + 1, statement=si + 1, record_role='response_unit',
                                      **independent_question_audit(statement, shared_context=parent, **kwargs)))
-    return {'rows': rows, 'verified_records': sum(r['verified'] for r in rows),
-            'pending_records': sum(not r['verified'] for r in rows),
-            'scope': 'Per-item independent review lookup; no whole-exam semantic approval'}
+    units = [row for row in rows if row['record_role'] == 'response_unit']
+    return {'rows': rows, 'response_units': len(units),
+            'context_containers': len(rows) - len(units),
+            'verified_records': sum(r['verified'] for r in units),
+            'pending_records': sum(not r['verified'] for r in units),
+            'scope': 'Per-response-unit review; containers bind context without aggregate approval; no whole-exam semantic approval'}
 
 
 def independent_lesson_quiz_audit(questions, subject, grade, topic, lesson, *, as_of=None,
