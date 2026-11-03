@@ -21,7 +21,23 @@ class CachedExamLabelTests(unittest.TestCase):
             self.assertEqual(cached_exam_label(row), 'Mã đề Chưa rõ - Chuyên đề ôn tập ()')
 
     def test_selection_identity_changes_with_context_and_catalogue(self):
-        from services.cache_metadata import cached_exam_widget_key
+        import ast
+        import hashlib
+        import json
+        from pathlib import Path
+        tree = ast.parse((Path(__file__).parents[1] / 'app.py').read_text(encoding='utf-8-sig'))
+        nodes = [n for n in ast.walk(tree) if isinstance(n, ast.Assign)
+                 and any(isinstance(t, ast.Name) and t.id == 'cache_widget_key' for t in n.targets)]
+        self.assertEqual(len(nodes), 1)
+        expression = compile(ast.Expression(nodes[0].value), '<actual-app-key>', 'eval')
+        def cached_exam_widget_key(subject, grade, labels):
+            return eval(expression, {'_cache_key_hash': hashlib, 'json': json,
+                                     'subject': subject, 'grade_num': grade, 'c_opts': labels})
+        selectors = [n for n in ast.walk(tree) if isinstance(n, ast.Call)
+                     and isinstance(n.func, ast.Attribute) and n.func.attr == 'selectbox'
+                     and any(k.arg == 'key' and isinstance(k.value, ast.Name)
+                             and k.value.id == 'cache_widget_key' for k in n.keywords)]
+        self.assertEqual(len(selectors), 1)
         baseline = cached_exam_widget_key('Tin học', 12, ['A', 'B'])
         self.assertEqual(baseline, cached_exam_widget_key('Tin học', 12, ['A', 'B']))
         for subject, grade, labels in [('Toán học', 12, ['A', 'B']),
