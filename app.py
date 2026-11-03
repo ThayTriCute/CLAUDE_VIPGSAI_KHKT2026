@@ -8428,6 +8428,8 @@ def get_cached_exams(subject_name, grade_level):
 
     """Lấy danh sách đề thi đã lưu trong ngân hàng đệm cho môn và khối lớp (kết hợp cache và kho đề thật 2025-2026)."""
 
+    from services.exam_delivery import exam_delivery_held
+
     results = []
 
     # 1. Nạp các đề thi thật đã kiểm định từ kho nền 2025-2026 (0.1s tức thì)
@@ -8439,6 +8441,8 @@ def get_cached_exams(subject_name, grade_level):
             baseline_exams = ree.get_baseline_full_exams(subject_name, grade_level)
 
             for bex in baseline_exams:
+                if exam_delivery_held(bex):
+                    continue
 
                 results.append({
 
@@ -8500,7 +8504,7 @@ def get_cached_exams(subject_name, grade_level):
 
                             obj = json.load(f_in)
 
-                            if isinstance(obj, dict) and "data" in obj:
+                            if isinstance(obj, dict) and "data" in obj and not exam_delivery_held(obj):
 
                                 results.append(obj)
 
