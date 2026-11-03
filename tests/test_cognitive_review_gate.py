@@ -32,8 +32,8 @@ class CognitiveReviewGateTests(unittest.TestCase):
             learning_outcome='Yêu cầu cần đạt đã đối chiếu', solution_rubric='Lời giải kiểm độc lập',
             cognitive_reason='Nhớ lại dữ kiện đã học', cognitive_operations=['Nhớ lại'],
             assessment_purpose='practice', recheck_after='2026-11-30',
-            curriculum_source={'url':'https://example.org/ct','locator':'Mục đã đọc','read_on':'2026-11-02','document_status':'final'},
-            textbook_source={'url':'https://example.org/kntt','locator':'Bài đã đọc','read_on':'2026-11-02','document_status':'final'},
+            curriculum_source={'url':'https://example.org/ct','locator':'Mục đã đọc','read_on':'2026-11-02','document_status':'final','read_scope':'relevant_content'},
+            textbook_source={'url':'https://example.org/kntt','locator':'Bài đã đọc','read_on':'2026-11-02','document_status':'final','read_scope':'relevant_content'},
             legal_basis=[{'code':'fixture-only','url':'https://example.org/law','locator':'Điều đã đọc',
                 'checked_on':'2026-11-02','effective_from':'2021-09-05','applicable_purpose':'practice'}])
 
@@ -67,3 +67,12 @@ class CognitiveReviewGateTests(unittest.TestCase):
         for status in ('sample', 'draft', None):
             r = deepcopy(self.review); r['textbook_source']['document_status'] = status
             self.assertIn('non_final_or_unverified_textbook_source', self.check(r)['issues'])
+
+    def test_contents_or_catalog_cannot_stand_in_for_reading_actual_content(self):
+        for field in ('curriculum_source', 'textbook_source'):
+            for scope in ('contents_only', 'catalog_only', 'title_only', None):
+                with self.subTest(field=field, scope=scope):
+                    r = deepcopy(self.review); r[field]['read_scope'] = scope
+                    result = self.check(r)
+                    self.assertFalse(result['verified'])
+                    self.assertIn('relevant_content_not_read_' + field, result['issues'])
