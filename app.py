@@ -2,7 +2,7 @@ def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
-    for module, revision in ((lesson_sources, 2026110205), (curriculum_policy, 2026110219),
+    for module, revision in ((lesson_sources, 2026110205), (curriculum_policy, 2026110402),
                              (lab_scope, 2026110202), (lesson_export, 2026110401),
                              (text_boundaries, 2026110201), (socratic_context, 2026110204)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
@@ -10518,6 +10518,8 @@ def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán h�
     t = correct_reviewed_cubic_production_context(t, subject, grade, topic)
     from services.curriculum_policy import correct_reviewed_cubic_prior_knowledge
     t = correct_reviewed_cubic_prior_knowledge(t, subject, grade, topic)
+    from services.curriculum_policy import correct_reviewed_english_family_guidance
+    t = correct_reviewed_english_family_guidance(t, subject, grade, topic)
 
     # 2. Quét & chuẩn hóa KaTeX
     t = sanitize_katex_latex(t)

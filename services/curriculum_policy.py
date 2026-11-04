@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110219
+T1_CONTEXT_REVISION = 2026110402
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -26,6 +26,29 @@ def label_declared_paraphrases(text):
         r'Ngữ liệu tham khảo\s*\(trích tinh thần[^\n]*?\)\s*:',
         'Đoạn diễn ý minh họa do AI biên soạn (không phải trích dẫn nguyên văn SGK):',
         prose, flags=re.I))
+
+
+def correct_reviewed_english_family_guidance(text, subject, grade, topic=""):
+    """Apply reviewed prose repairs only to the reproduced Family Life items.
+
+    Preserve answer order/keys and code; this is not general semantic approval.
+    """
+    if (canonical_subject(subject) != 'Tiếng Anh' or normalize_grade(grade) != 10
+            or 'family' not in folded(topic)):
+        return text
+    from services.text_boundaries import preserve_math_and_code
+    def repair(prose):
+        prose = prose.replace(
+            'In my family, my father usually __________ the heavy lifting, but today he __________ a rest.',
+            'My father usually __________ the heavy lifting. Right now, he __________ a rest instead of working.')
+        prose = prose.replace(
+            'My sister is cleaning her room every Sunday morning.',
+            'My sister is clean her room every Sunday morning.')
+        prose = prose.replace('go to the market / visit her grandmother',
+                              "go to the market / visit her own mother (Lan’s grandmother)")
+        prose = prose.replace('Tiêu chí sản phẩm:', 'Tự kiểm tra:')
+        return prose
+    return preserve_math_and_code(str(text), repair)
 
 
 def correct_reviewed_myth_guidance(text, subject, grade, topic=""):
