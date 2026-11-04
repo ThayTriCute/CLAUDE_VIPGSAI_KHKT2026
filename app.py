@@ -11433,9 +11433,9 @@ if selected_station == station_labels[0]:
 
         st.warning(f"📖 **Lưu ý sư phạm đối chiếu SGK (Trang {p_num}):**\n"
 
-                   f"Do các đợt in và tái bản SGK của NXBGD (2024, 2025, 2026) có thể chênh lệch số trang giữa các năm, "
+                   f"Số trang có thể khác giữa các phiên bản sách; cần đối chiếu đúng bản đang học. "
 
-                   f"để chiếm lĩnh kiến thức chính xác 100%, em nên nhập kèm **Tên bài học** (Ví dụ: *Khảo sát hàm số, Ứng dụng đạo hàm...*) "
+                   f"Em nên nhập kèm **Tên bài học**, môn, lớp và phiên bản sách "
 
                    f"hoặc mở mục **'📚 SGK Điện Tử'** ở menu bên trái, hoặc chụp trực tiếp trang sách nộp vào **Trạm 2** để Thầy AI hướng dẫn từng dòng nhé!")
 
