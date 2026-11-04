@@ -23,7 +23,14 @@ def aligned_bbt_rows(raw):
     if len(rows) != 3:
         return None
     clean = lambda s: s.replace('$', '').strip().replace('−', '-')
-    if clean(rows[0][0]) != 'x' or clean(rows[1][0]) not in ("y'", "f'(x)", 'y’', 'f’(x)') or clean(rows[2][0]) not in ('y', 'f(x)'):
+    def label(value):
+        value = clean(value).replace(r'\prime', "'").replace('′', "'").replace('’', "'")
+        return re.sub(r'[{}^\s]', '', value)
+    variable, derivative, function = [label(row[0]) for row in rows]
+    if (not variable or not re.search(r'[^\W\d_]', variable)
+            or "'" not in derivative
+            or not (derivative.replace("'", '') == function
+                    or (function == 'y' and derivative == "f'(x)"))):
         return None
     points = [clean(s) for s in rows[0][1:] if clean(s)]
     n = len(points)
@@ -51,4 +58,4 @@ def aligned_bbt_rows(raw):
         y.append(norm(value))
         if i < n-1:
             y.append('↗' if tokens[2*i] == '+' else '↘')
-    return [['x'] + [norm(v) for v in points], [rows[1][0]] + [''] + tokens + [''], [rows[2][0]] + y]
+    return [[rows[0][0]] + [norm(v) for v in points], [rows[1][0]] + [''] + tokens + [''], [rows[2][0]] + y]
