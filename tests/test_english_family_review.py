@@ -16,6 +16,19 @@ class ReviewedEnglishFamilyTests(unittest.TestCase):
         self.assertIn('A. does / is taking\nD. does / takes\nCORRECT: A', result)
         self.assertEqual(result, repair(result, 'Tiếng Anh', 10, 'Unit 1 Family life'))
 
+    def test_time_words_do_not_substitute_for_explicit_example_context(self):
+        source = (
+            "Today, my mother (not/go) __________ to work; she (stay) __________ at home to celebrate my sister's birthday.\n"
+            'I (take) __________ out the rubbish every night, but tonight my brother (do) __________ it for me.\n'
+            '**Dấu hiệu nhận biết**'
+        )
+        result = repair(source, 'Tiếng Anh', 10, 'Unit 1 Family life')
+        self.assertIn('My mother usually goes to work in the morning. Right now', result)
+        self.assertIn('every night. Right now, my brother', result)
+        self.assertNotIn('**Dấu hiệu nhận biết**', result)
+        self.assertEqual(source, repair(source, 'Tiếng Anh', 11, 'Family life'))
+        self.assertEqual(result, repair(result, 'Tiếng Anh', 10, 'Family life'))
+
     def test_quoted_code_and_other_contexts_stay_unchanged(self):
         source = '```text\nMy sister is cleaning her room every Sunday morning.\n```'
         self.assertEqual(source, repair(source, 'Tiếng Anh', 10, 'Family life'))

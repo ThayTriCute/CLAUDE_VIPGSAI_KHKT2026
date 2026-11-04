@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110502
+T1_CONTEXT_REVISION = 2026110503
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -46,6 +46,19 @@ def correct_reviewed_english_family_guidance(text, subject, grade, topic=""):
             'My sister is clean her room every Sunday morning.')
         prose = prose.replace('go to the market / visit her grandmother',
                               "go to the market / visit her own mother (Lan’s grandmother)")
+        prose = prose.replace(
+            "Today, my mother (not/go) __________ to work; she (stay) __________ at home to celebrate my sister's birthday.",
+            "My mother usually goes to work in the morning. Right now, she (not/go) __________ to work; she (stay) __________ at home to celebrate my sister's birthday.")
+        prose = prose.replace(
+            'Cụm từ "Today" và ngữ cảnh tổ chức sinh nhật cho thấy đây là một tình huống tạm thời, khác với lịch trình làm việc thông thường, do đó ta dùng thì hiện tại tiếp diễn.',
+            'Lịch làm việc thường lệ được nêu rõ, còn "Right now" xác định hành động đang diễn ra trong tình huống ngoại lệ. Vì vậy dùng is not going / is staying; riêng từ today không quyết định thì.')
+        prose = prose.replace(
+            'I (take) __________ out the rubbish every night, but tonight my brother (do) __________ it for me.',
+            'I (take) __________ out the rubbish every night. Right now, my brother (do) __________ it for me.')
+        prose = prose.replace(
+            'Xác định đúng "mỗi tối" (thói quen) và "tối nay" (tình huống cụ thể) để chia động từ.',
+            'Phân biệt thói quen mỗi tối với hành động người anh/em đang làm ngay lúc nói: take / is doing. Trạng từ chỉ là gợi ý; phải xét nghĩa và ngữ cảnh.')
+        prose = prose.replace('**Dấu hiệu nhận biết**', '**Trạng từ gợi ý, cần xét ngữ cảnh**')
         prose = prose.replace('Tiêu chí sản phẩm:', 'Tự kiểm tra:')
         return prose
     return preserve_math_and_code(str(text), repair)
