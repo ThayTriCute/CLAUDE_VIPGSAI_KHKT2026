@@ -3,7 +3,7 @@ def _refresh_t1_context_services():
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
     for module, revision in ((lesson_sources, 2026110205), (curriculum_policy, 2026110503),
-                             (lab_scope, 2026110202), (lesson_export, 2026110501),
+                             (lab_scope, 2026110202), (lesson_export, 2026110504),
                              (text_boundaries, 2026110201), (socratic_context, 2026110204)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
@@ -10927,10 +10927,10 @@ def render_pedagogical_lesson_visuals(markdown_text: str, subject: str = "", gra
             return match.group(0)
 
         def _clean_head(cell_str: str) -> str:
-            return re.sub(r'[\$\s\\*`\(\)]', '', cell_str).lower()
+            return re.sub(r'[\$\s\\*`\(\){}^]', '', cell_str.replace(r'\prime', "'")).lower()
 
         first_head = _clean_head(data_rows[0][0])
-        if first_head not in ('x', 't'):
+        if not first_head or re.fullmatch(r'[-+0-9.,]+', first_head):
             return match.group(0)
 
         try:
@@ -10938,9 +10938,12 @@ def render_pedagogical_lesson_visuals(markdown_text: str, subject: str = "", gra
             if len(data_rows) >= 3:
                 second_head = _clean_head(data_rows[1][0])
                 third_head = _clean_head(data_rows[2][0])
-                if ("'" in second_head or "’" in second_head or "đạo" in second_head or "dao" in second_head or "f'" in second_head or "y'" in second_head) and (
-                    third_head in ('y', 'f(x)', 'g(x)', 'h(x)', 's(t)', 'v(t)', 'f', 'g', 'h')
-                ):
+                # Recognize the derivative relationship, not a list of function names.
+                prime_head = second_head.replace('′', "'").replace('’', "'")
+                derivative_row = "'" in prime_head
+                same_function = prime_head.replace("'", '') == third_head
+                # y is also commonly used for an explicitly named function f(x).
+                if derivative_row and (same_function or third_head == 'y'):
                     return "\n\n" + _build_svg_bbt_from_rows(data_rows[0], data_rows[1], data_rows[2]) + "\n\n"
 
             # Trường hợp 2: BBT 2 hàng (Hàm bậc hai Lớp 10: x và y) hoặc Bảng xét dấu 2 hàng (x và f(x))
@@ -10949,7 +10952,7 @@ def render_pedagogical_lesson_visuals(markdown_text: str, subject: str = "", gra
                 row2_joined = " ".join(data_rows[1][1:])
                 if re.search(r'(\\nearrow|\\searrow|↗|↘)', row2_joined):
                     return "\n\n" + _build_svg_bbt_from_rows(data_rows[0], [], data_rows[1]) + "\n\n"
-                elif second_head in ('f(x)', 'y', "y'", "f'(x)", 'g(x)', 'dấu', 'dauxet', 'dau', 'f') and re.search(r'[+\-−]', row2_joined):
+                elif (all(re.fullmatch(r'[+$0\s|−-]*', cell) for cell in data_rows[1][1:]) and re.search(r'[+\-−]', row2_joined)):
                     return "\n\n" + _build_svg_bbt_from_rows(data_rows[0], [], data_rows[1], is_sign_table=True) + "\n\n"
         except Exception:
             pass
