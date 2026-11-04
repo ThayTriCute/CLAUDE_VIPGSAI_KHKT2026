@@ -11,7 +11,7 @@ from markdown_it import MarkdownIt
 from services.academic_context import academic_context
 
 ROOT = Path(__file__).resolve().parents[1]
-T1_CONTEXT_REVISION = 2026110401
+T1_CONTEXT_REVISION = 2026110501
 _TOKENS = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$)")
 
 
@@ -79,6 +79,8 @@ def saved_markdown_html(payload, subject, grade, topic, style="handwritten"):
         raise ValueError("Không đọc được bản lưu UTF-8; hãy chọn đúng tệp Markdown đã tải.") from error
     if not str(topic or "").strip():
         raise ValueError("Nhập đúng tên bài của bản lưu trước khi mở phiếu.")
+    from services.curriculum_policy import correct_reviewed_english_family_guidance
+    lesson = correct_reviewed_english_family_guidance(lesson, subject, grade, topic)
     return build_lesson_html(subject, grade, topic, lesson, style)
 
 
