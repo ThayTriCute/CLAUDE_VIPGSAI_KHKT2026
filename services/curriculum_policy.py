@@ -283,6 +283,7 @@ CT2018 là chuẩn yêu cầu cần đạt; KNTT là trục bài học, không p
 {profile['label']}. {profile['note']}
 Không có nội dung SGK hoặc văn bản gốc trong ngữ cảnh thì KHÔNG tuyên bố đã đọc/đối chiếu từng trang, không bịa số trang, trích dẫn, tác giả, URL hay xác nhận của Bộ.
 Đoạn diễn ý hoặc minh họa do AI biên soạn phải ghi rõ không phải trích dẫn nguyên văn. Không dùng nhãn “trích tinh thần” để gán đoạn tự viết cho SGK hoặc tác giả; chỉ đặt trong dấu trích dẫn với tư cách nguyên văn khi đã có nguồn đối chiếu chính xác.
+Khi câu hỏi yêu cầu trả lời theo đoạn văn hoặc dữ liệu đã cho, lời giải chỉ dùng chi tiết có trong phần học sinh nhìn thấy. Nếu cần kiến thức hoặc chi tiết từ ngoài đoạn, phải cung cấp thêm ngữ liệu đã đối chiếu hoặc nêu rõ câu hỏi yêu cầu liên hệ; không trình bày chi tiết ngoài đoạn như thể có trong đoạn.
 Chỉ dùng nội dung đúng yêu cầu cần đạt của môn/lớp; danh sách chủ đề gợi ý của app không phải mục lục SGK đã kiểm định. Yêu cầu tùy biến không được đổi môn/lớp hoặc tự miễn kiểm tra chương trình.
 Ngữ văn: dạy học có thể dùng văn bản KNTT đã học; đánh giá cuối học kì/cuối năm/cuối cấp tránh dùng lại văn bản đã học trong SGK theo CV 3175. Không được bịa tác giả/trích đoạn rồi gán cho tác phẩm có thật. Không áp yêu cầu này thành lệnh cấm mọi ngữ liệu SGK ở Trạm 1.
 TT 17/2025 cập nhật Lịch sử và Địa lí, Lịch sử 10, Địa lí và GDCD/GDKT&PL theo phụ lục tương ứng. Số liệu hiện hành phải có mốc năm và nguồn; không trình bày 63/64 tỉnh thành như cơ cấu hiện tại, không tự sửa số liệu lịch sử thành số liệu hiện tại.
