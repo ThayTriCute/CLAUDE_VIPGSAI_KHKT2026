@@ -11,7 +11,7 @@ from markdown_it import MarkdownIt
 from services.academic_context import academic_context
 
 ROOT = Path(__file__).resolve().parents[1]
-T1_CONTEXT_REVISION = 2026110302
+T1_CONTEXT_REVISION = 2026110401
 _TOKENS = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$)")
 
 
@@ -126,7 +126,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#ffffff80;padding:10p
 .formula-error{outline:2px solid #b91c1c;color:#991b1b;white-space:pre-wrap;font-family:monospace}.monochrome,.monochrome h1,.monochrome h2,.monochrome h3,.monochrome h4{color:#111}.monochrome .paper{background:#fff}
 .color .paper{background:#fff}.color h2{border-left:4px solid #0891b2;padding-left:10px}.notice{color:#b91c1c}
 .monochrome .verified-function-visuals polyline{stroke:#111}
-.lesson-source-review{margin-top:18px;padding-top:12px;border-top:1px solid #94a3b8;font:14px/1.5 Georgia,'Times New Roman',serif;color:#334155}.monochrome .lesson-source-review{color:#111}
+.lesson-source-review{margin-top:18px;padding-top:12px;border-top:1px solid #94a3b8;font:14px/1.5 Arial,'Segoe UI',sans-serif;color:#334155}.monochrome .lesson-source-review{color:#111}
 .handwritten .lesson-source-review{font-family:GSAIHand,cursive;font-size:18px;line-height:1.4}
 @media(max-width:600px){.paper{margin:10px 8px;padding:20px}.handwritten .paper{padding:24px 18px 28px 48px}.handwritten article{font-size:22px}.handwritten .notebook-header{grid-template-columns:1fr;gap:14px}.notebook-identity span{margin-top:2px}.notebook-heading h1{font-size:28px}}
 @page{size:A4;margin:10mm}@media print{body{background:#fff}.toolbar{display:none}.paper{margin:0;max-width:none;min-height:0;padding:10mm 7mm 10mm 12mm;box-shadow:none}.handwritten .paper{padding:5mm 5mm 7mm 16mm;box-shadow:none;print-color-adjust:exact;-webkit-print-color-adjust:exact;box-decoration-break:clone;-webkit-box-decoration-break:clone}.handwritten .notebook-header{grid-template-columns:minmax(120px,1fr) minmax(0,2fr);break-inside:avoid}.handwritten article{font-size:23px}.handwritten .source-note{font-size:16px}article{orphans:3;widows:3}p,li{break-inside:avoid}pre{break-inside:auto}thead{display:table-header-group}tr{break-inside:avoid}.katex-display{overflow:visible}a{color:inherit;text-decoration:none}}
