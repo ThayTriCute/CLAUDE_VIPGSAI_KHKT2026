@@ -252,6 +252,41 @@
         "Ông Sáu Sấm không phải nhân vật của ngữ liệu đang học. Nếu dùng làm ví dụ tự đặt phải nói rõ nguồn gốc minh họa.",
         "Cách giải thích thần thoại phản ánh tư duy văn hóa cổ, không thay bằng chứng khoa học hiện đại."
       ]
+    },
+    {
+      "id": "english10-family-life-grammar-source-20261104",
+      "subject": "Tiếng Anh",
+      "grade": 10,
+      "topics": [
+        "Unit 1 Family life: Present simple vs present continuous — Tiếng Anh 10 Global Success. Tóm tắt tự học cho HS, ngữ cảnh chia sẻ việc nhà, thói quen và hành động đang diễn ra. Đối chiếu SGK trang8–9, SGV13–14; ví dụ mới do ứng dụng biên tập, không chép hội thoại. Giải thích theo ngữ cảnh, không suy thì chỉ từ từ khóa; MCQ đủ dữ kiện và chỉ một đáp án đúng.",
+        "Unit 1 Family life: Present simple vs present continuous"
+      ],
+      "reviewed_on": "2026-11-04",
+      "scope": "Đối chiếu nội dung ngữ pháp và ngữ cảnh việc nhà của Unit1; không chứng nhận toàn bài AI, câu hỏi, kỹ năng nghe/nói hoặc toàn bộ chương trình.",
+      "sources": [
+        {
+          "title": "SGK Tiếng Anh10 Global Success — NXBGDVN",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tieng-anh-10-global-sucess.4879778228",
+          "locator": "Unit1 Family life, trang in8–9: Household chores và câu chia động từ",
+          "page": "8–9",
+          "edition_note": "Đọc trực tiếp ảnh nguồn04/11/2026; chưa xác minh quyết định in cuối. Thông báo cập nhật do cổng sách liên kết chỉ liệt kê trang48/110/116.",
+          "criteria": [
+            "Phân biệt việc làm thường xuyên với hành động đang diễn ra trong đối thoại về việc nhà.",
+            "Ngữ liệu mới do ứng dụng biên tập phải được phân biệt với hội thoại SGK."
+          ]
+        },
+        {
+          "title": "SGV Tiếng Anh10 Global Success — NXBGDVN",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgv-tieng-anh-10-global-sucess.5149416522",
+          "locator": "Trang in13–14: Grammar, Present simple vs present continuous, Activity1–2 và khóa đáp án",
+          "page": "13–14",
+          "edition_note": "Đọc trực tiếp ảnh nguồn04/11/2026; chưa xác minh năm tái bản/quyết định in.",
+          "criteria": [
+            "Dựa nghĩa và ngữ cảnh trước khi sử dụng dấu hiệu thời gian.",
+            "Thói quen ổn định cần phân biệt với hoạt động lặp lại tạm thời; giữ đúng quan hệ đại từ."
+          ]
+        }
+      ]
     }
   ]
 }
