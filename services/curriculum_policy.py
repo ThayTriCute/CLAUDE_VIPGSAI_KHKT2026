@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110219
+T1_CONTEXT_REVISION = 2026110402
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -26,6 +26,29 @@ def label_declared_paraphrases(text):
         r'Ngữ liệu tham khảo\s*\(trích tinh thần[^\n]*?\)\s*:',
         'Đoạn diễn ý minh họa do AI biên soạn (không phải trích dẫn nguyên văn SGK):',
         prose, flags=re.I))
+
+
+def correct_reviewed_english_family_guidance(text, subject, grade, topic=""):
+    """Apply reviewed prose repairs only to the reproduced Family Life items.
+
+    Preserve answer order/keys and code; this is not general semantic approval.
+    """
+    if (canonical_subject(subject) != 'Tiếng Anh' or normalize_grade(grade) != 10
+            or 'family' not in folded(topic)):
+        return text
+    from services.text_boundaries import preserve_math_and_code
+    def repair(prose):
+        prose = prose.replace(
+            'In my family, my father usually __________ the heavy lifting, but today he __________ a rest.',
+            'My father usually __________ the heavy lifting. Right now, he __________ a rest instead of working.')
+        prose = prose.replace(
+            'My sister is cleaning her room every Sunday morning.',
+            'My sister is clean her room every Sunday morning.')
+        prose = prose.replace('go to the market / visit her grandmother',
+                              "go to the market / visit her own mother (Lan’s grandmother)")
+        prose = prose.replace('Tiêu chí sản phẩm:', 'Tự kiểm tra:')
+        return prose
+    return preserve_math_and_code(str(text), repair)
 
 
 def correct_reviewed_myth_guidance(text, subject, grade, topic=""):
@@ -617,6 +640,7 @@ def lesson_prompt(subject, grade, topic):
 Soạn bài học với ba tiêu đề chính: '### PHẦN 1: BÀI HỌC', '### PHẦN 2: TRẮC NGHIỆM KHÁCH QUAN SOCRATIC', '### PHẦN 3: BÀI TẬP TỰ LUẬN'.
 Phần 1: khởi động, hình thành kiến thức, ví dụ có lời giải phù hợp lớp, luyện tập và vận dụng; đặc trưng thể loại/môn học phải được giữ.
 Trình bày rõ năm mục của Phần 1: Khởi động; Hình thành kiến thức; Ví dụ có lời giải; Luyện tập; Vận dụng. Nội dung mỗi mục hướng trực tiếp tới học sinh tự học; Hình thành kiến thức phải tóm tắt rõ kiến thức cốt lõi và cách dùng, không chỉ ghi mục tiêu hay hoạt động. Câu hỏi tự kiểm ngắn giúp học sinh nhận ra phần chưa hiểu; không dùng các khung “Mục tiêu – Hoạt động thực hiện – Tiêu chí sản phẩm” thay cho lời giảng. Khởi động dùng tình huống gần gũi gắn đúng bài; luyện tập kiểm tra kiến thức vừa học; vận dụng cho nhiệm vụ khả thi, phù hợp tuổi, không đòi dữ kiện chưa cung cấp. Ví dụ có lời giải phải giải thích cách làm. Với môn đọc hiểu, ngoại ngữ và xã hội, chọn hoạt động đặc trưng môn, không ép thành bài toán tính số. Với thí nghiệm hoặc hóa chất, ưu tiên dữ liệu/mô phỏng và chỉ quan sát thí nghiệm do giáo viên tổ chức; không giao tự pha trộn hóa chất tại nhà.
+Với ngoại ngữ, chọn dạng ngữ pháp theo ý nghĩa và ngữ cảnh đủ rõ; trạng từ thời gian không tự quyết định duy nhất một thì. Khi kiểm tra thói quen, phân biệt rõ thói quen ổn định với hoạt động lặp lại tạm thời để không loại một phương án vẫn đúng ngữ pháp. Giữ đúng quan hệ đại từ, người nói và quan hệ gia đình khi chuyển ngữ; không đổi bà của nhân vật thành bà của mẹ nhân vật. Chỉ nhận diện dạng động từ hoặc hòa hợp chủ vị không tự động là vận dụng.
 Phần 2: đúng 3 câu trắc nghiệm, mỗi câu có 4 phương án A/B/C/D và duy nhất một đáp án. Ghi CORRECT: cho đáp án nội bộ, EXPLAIN: cho giải thích nội bộ, HINT: cho gợi mở Socratic theo riêng ngữ cảnh câu hỏi. HINT chỉ dẫn dắt học sinh tự nghĩ; không giải hộ hoặc tiết lộ đáp án. Không dùng EXPLAIN thay HINT.
 Phần 3: đúng 2 câu tự luận, mỗi câu hướng dẫn đủ bốn bước Pólya bằng tiếng Việt: Bước 1: Tìm hiểu đề; Bước 2: Lập kế hoạch; Bước 3: Thực hiện kế hoạch; Bước 4: Kiểm tra và nhìn lại. Chỉ đặt câu hỏi hoặc hướng dẫn để học sinh tự thực hiện, không giải hộ, không đưa đáp án. Phần 1 vẫn được giải thích lý thuyết và có ví dụ minh họa; không áp quy tắc giấu lời giải của Socratic sang Phần 1.
 Mỗi câu Phần 2 và Phần 3 mở đầu 'Câu n. [Mức độ: NB/TH/VD/VDC]' (chọn một nhãn, hoặc để rỗng nếu chưa đủ căn cứ). Tiếp theo là nội dung câu, các dòng OUTCOME: yêu cầu cần đạt; COGNITIVE_REASON: căn cứ phân loại; COGNITIVE_STEPS: ["thao tác tư duy 1", "thao tác tư duy 2"]. Đây là đề xuất cần giáo viên duyệt, không mặc định tất cả câu là vận dụng.
