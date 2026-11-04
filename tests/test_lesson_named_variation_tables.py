@@ -28,10 +28,10 @@ class NamedVariationTableTests(unittest.TestCase):
         cls.render = staticmethod(actual_renderer())
 
     def test_names_variables_and_prime_notation_do_not_limit_math_tables(self):
-        for grade in (10, 11, 12):
+        for grade in range(6, 13):
             for variable, function in (('x', 'V'), ('t', 'Revenue'),
                                        ('h', 'S'), ('u', 'P'), ('θ', 'Φ')):
-                for prime in ("'", '′', r'\prime'):
+                for prime in ("'", '′', r'\prime', r'^{\prime}'):
                     with self.subTest(grade=grade, variable=variable,
                                       function=function, prime=prime):
                         result = self.render(table(variable, function, prime), 'Toán học', grade)

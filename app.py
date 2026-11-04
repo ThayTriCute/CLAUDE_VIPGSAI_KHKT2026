@@ -10927,7 +10927,7 @@ def render_pedagogical_lesson_visuals(markdown_text: str, subject: str = "", gra
             return match.group(0)
 
         def _clean_head(cell_str: str) -> str:
-            return re.sub(r'[\$\s\\*`\(\)]', '', cell_str).lower()
+            return re.sub(r'[\$\s\\*`\(\){}^]', '', cell_str.replace(r'\prime', "'")).lower()
 
         first_head = _clean_head(data_rows[0][0])
         if not first_head or re.fullmatch(r'[-+0-9.,]+', first_head):
@@ -10939,7 +10939,7 @@ def render_pedagogical_lesson_visuals(markdown_text: str, subject: str = "", gra
                 second_head = _clean_head(data_rows[1][0])
                 third_head = _clean_head(data_rows[2][0])
                 # Recognize the derivative relationship, not a list of function names.
-                prime_head = second_head.replace('′', "'").replace('’', "'").replace('prime', "'")
+                prime_head = second_head.replace('′', "'").replace('’', "'")
                 derivative_row = "'" in prime_head
                 same_function = prime_head.replace("'", '') == third_head
                 # y is also commonly used for an explicitly named function f(x).

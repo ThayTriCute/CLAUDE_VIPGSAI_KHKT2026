@@ -159,7 +159,7 @@ for(const table of document.querySelectorAll('article table')){
  const plain=cell=>{const c=cell.cloneNode(true);for(const m of c.querySelectorAll('.lesson-math'))m.replaceWith(m.dataset.tex);return c.textContent.trim().replace(/\\prime/g,'′').replace(/\\(?:infty)/g,'∞').replace(/[$ {}]/g,'').replace(/−/g,'-');};
  if(rows.length!==3)continue;
  const data=rows.map(r=>Array.from(r.cells).map(plain));
- if(!data[0][0]||!/[′']/.test(data[1][0])||data[1][0].replace(/[′']/g,'')!==data[2][0])continue;
+ if(!data[0][0]||!/[′']/.test(data[1][0])||data[1][0].replace(/\^?[′']/g,'')!==data[2][0])continue;
  if(!data.every(r=>r.length===data[0].length)||data.some(r=>r.some(v=>v.includes('||'))))continue;
  const points=[];for(let i=1;i<data[0].length;i++)if(data[0][i])points.push(i);
  if(points.length<2||points.length>8)continue;
