@@ -11,7 +11,7 @@ from markdown_it import MarkdownIt
 from services.academic_context import academic_context
 
 ROOT = Path(__file__).resolve().parents[1]
-T1_CONTEXT_REVISION = 2026110501
+T1_CONTEXT_REVISION = 2026110504
 _TOKENS = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$)")
 
 
@@ -39,6 +39,15 @@ def lesson_body_html(lesson):
     """Protect math/code separately; never convert formulas to approximate Unicode."""
     from services.text_boundaries import wrap_naked_chemistry, polya_display_markdown
     lesson = polya_display_markdown(wrap_naked_chemistry(lesson))
+    # A table emitted directly after a numbered-list item is otherwise parsed
+    # as literal pipes by CommonMark. Separate real pipe-row blocks from prose,
+    # while preserving code examples and every source cell.
+    def separate_tables(prose):
+        return re.sub(r"(?m)(?:^[ \t]{0,3}\|[^\n]+\|[ \t]*(?:\r?\n|$))+",
+                      lambda match: "\n\n" + match[0].strip() + "\n\n", prose)
+    blocks = re.split(r"(```[\s\S]*?```|~~~[\s\S]*?~~~)", lesson)
+    lesson = ''.join(block if index % 2 else separate_tables(block)
+                     for index, block in enumerate(blocks))
     replacements = {}
     nonce = hashlib.sha256(lesson.encode()).hexdigest()[:12]
 
@@ -147,10 +156,10 @@ for(const el of document.querySelectorAll('.lesson-math')){try{katex.render(el.d
 // Variation tables: keep source values, draw continuous interval arrows.
 for(const table of document.querySelectorAll('article table')){
  const rows=Array.from(table.rows);
- const plain=cell=>{const c=cell.cloneNode(true);for(const m of c.querySelectorAll('.lesson-math'))m.replaceWith(m.dataset.tex);return c.textContent.trim().replace(/\\(?:infty)/g,'∞').replace(/[$ {}]/g,'').replace(/−/g,'-');};
+ const plain=cell=>{const c=cell.cloneNode(true);for(const m of c.querySelectorAll('.lesson-math'))m.replaceWith(m.dataset.tex);return c.textContent.trim().replace(/\\prime/g,'′').replace(/\\(?:infty)/g,'∞').replace(/[$ {}]/g,'').replace(/−/g,'-');};
  if(rows.length!==3)continue;
  const data=rows.map(r=>Array.from(r.cells).map(plain));
- if(data[0][0]!=='x'||!/^y[′']$/.test(data[1][0])||data[2][0]!=='y')continue;
+ if(!data[0][0]||!/[′']/.test(data[1][0])||data[1][0].replace(/[′']/g,'')!==data[2][0])continue;
  if(!data.every(r=>r.length===data[0].length)||data.some(r=>r.some(v=>v.includes('||'))))continue;
  const points=[];for(let i=1;i<data[0].length;i++)if(data[0][i])points.push(i);
  if(points.length<2||points.length>8)continue;
@@ -163,7 +172,7 @@ for(const table of document.querySelectorAll('article table')){
  for(const y of [52,100])add('line',{x1:1,y1:y,x2:819,y2:y,stroke:'#111','stroke-width':1.5});
  add('line',{x1:82,y1:1,x2:82,y2:219,stroke:'#111','stroke-width':1.5});
  const label=(x,y,t)=>add('text',{x,y,fill:'#111','text-anchor':'middle','dominant-baseline':'middle'},t.replace(/-/g,'−'));
- label(42,28,'x');label(42,77,'y′');label(42,160,'y');
+ label(42,28,data[0][0]);label(42,77,data[1][0]);label(42,160,data[2][0]);
  const xs=points.map((_,k)=>130+k*640/(points.length-1));
  const ys=points.map((i,k)=>{const v=data[2][i];if(v.includes('∞'))return v.startsWith('-')?196:124;return (dirs[k]==='down'||dirs[k-1]==='up')?145:178;});
  points.forEach((i,k)=>{label(xs[k],28,data[0][i]);label(xs[k],77,data[1][i]);label(xs[k],ys[k],data[2][i]);});
