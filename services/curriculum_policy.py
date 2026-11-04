@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110402
+T1_CONTEXT_REVISION = 2026110502
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -49,6 +49,23 @@ def correct_reviewed_english_family_guidance(text, subject, grade, topic=""):
         prose = prose.replace('Tiêu chí sản phẩm:', 'Tự kiểm tra:')
         return prose
     return preserve_math_and_code(str(text), repair)
+
+
+def repair_reviewed_english_family_question(question, subject, grade, topic=""):
+    """Apply the same reviewed prose repairs to an already parsed live quiz.
+
+    Keep keys, order, cognitive metadata and the caller's original unchanged.
+    """
+    result = deepcopy(question)
+    for field in ('question', 'explain', 'hint'):
+        if isinstance(result.get(field), str):
+            result[field] = correct_reviewed_english_family_guidance(
+                result[field], subject, grade, topic)
+    if isinstance(result.get('options'), list):
+        result['options'] = [correct_reviewed_english_family_guidance(
+            option, subject, grade, topic) if isinstance(option, str) else option
+            for option in result['options']]
+    return result
 
 
 def correct_reviewed_myth_guidance(text, subject, grade, topic=""):

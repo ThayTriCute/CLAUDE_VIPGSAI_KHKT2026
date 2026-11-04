@@ -26,5 +26,26 @@ class ReviewedEnglishFamilyTests(unittest.TestCase):
             self.assertEqual(prose, repair(prose, subject, grade, topic))
 
 
+class ParsedEnglishFamilyTests(unittest.TestCase):
+    def test_existing_parsed_quiz_is_repaired_without_mutating_key_or_source(self):
+        from copy import deepcopy
+        from services.curriculum_policy import repair_reviewed_english_family_question
+        original = {'question': 'Which sentence describes a household routine?',
+                    'options': ['A. My sister clean her room.',
+                                'B. My sister is cleaning her room every Sunday morning.',
+                                'C. My sister are cleaning her room.',
+                                'D. My sister cleans her room every Sunday morning.'],
+                    'correct': 'D', 'level': 'VD', 'cognitive_evidence': {'review': 'pending'}}
+        before = deepcopy(original)
+        fixed = repair_reviewed_english_family_question(original, 'Tiếng Anh', 10, 'Family life')
+        self.assertEqual(original, before)
+        self.assertEqual(fixed['options'][1], 'B. My sister is clean her room every Sunday morning.')
+        self.assertEqual(fixed['correct'], 'D')
+        self.assertEqual(fixed['level'], 'VD')  # Never self-certify cognitive level.
+        self.assertEqual(fixed['cognitive_evidence'], original['cognitive_evidence'])
+        self.assertEqual(fixed, repair_reviewed_english_family_question(fixed, 'Tiếng Anh', 10, 'Family life'))
+        self.assertEqual(original, repair_reviewed_english_family_question(original, 'Ngữ văn', 10, 'Family life'))
+
+
 if __name__ == '__main__':
     unittest.main()
