@@ -13963,7 +13963,7 @@ if selected_station == station_labels[2]:
                 st.caption(f"📌 **Đã chọn ({len(chosen_topics)} chuyên đề):** {', '.join(chosen_topics[:2])}{'...' if len(chosen_topics) > 2 else ''}")
                 st.session_state.policy_selected_topics = list(chosen_topics)
                 st.checkbox("Cho phép AI sinh nguyên câu thay thế khi thiếu dữ liệu", value=True, key="enable_ai_context_recovery")
-                st.caption("Ưu tiên dữ liệu gốc và câu cùng môn/lớp/chủ đề; tối đa 2 lần gọi AI bổ sung mỗi lượt tạo đề. Câu thay mới được ghi dấu vết, không giả là câu nguồn.")
+                st.caption("Tùy chọn này chỉ điều khiển AI sửa/thay câu chưa đạt; không tắt nút khởi tạo đề AI. Ưu tiên dữ kiện gốc rồi câu cùng ngữ cảnh trong kho; nếu vẫn thiếu và đã bật tùy chọn, tối đa 2 lượt AI bổ sung cho cả đề. Câu thay được ghi dấu vết và kiểm tra lại.")
 
 
 
@@ -14591,7 +14591,7 @@ if selected_station == station_labels[2]:
                             btn1_label,
                             type=btn1_type,
                             width="stretch",
-                            help=f"LUỒNG 2: Trích xuất câu hỏi thật từ kho 600+ đề thi chính thức/thi thử toàn quốc ({portal_name_ui}) bám sát yêu cầu tùy biến. Lọc sạch 100% câu hỏi lạc đề qua Bộ lọc 5 lớp và hiển thị Bảng đối chứng vân tay nguồn gốc!"
+                            help=f"Khởi tạo từ bản ghi trong kho ({portal_name_ui}) theo cấu hình đang chọn. Câu chưa đạt được đưa qua bước phục hồi/thay thế và kiểm tra lại; nhãn nguồn cần đối chiếu với tài liệu gốc."
                         )
 
                     with c_btn2:
@@ -14599,7 +14599,7 @@ if selected_station == station_labels[2]:
                             btn2_label,
                             type="primary",
                             width="stretch",
-                            help=f"LUỒNG 1: AI Gemini biên soạn 100% ngữ liệu độc bản mới tinh, không lấy bất kỳ câu nào trong ngân hàng, tự động chạy Bộ Lọc Giải Ngầm (Deep Solver Guard) để xác minh nghiệm và số liệu chuẩn xác tuyệt đối!"
+                            help=f"Khởi tạo đề bằng AI theo môn/lớp/chủ đề. Bản sinh đi qua các kiểm tra hiện có; nếu thiếu hoặc chưa đạt, cơ chế phục hồi phụ thuộc tùy chọn đã chọn. Không bảo đảm mọi câu, đáp án hoặc số liệu đều chính xác; cần giáo viên duyệt."
                         )
 
                     st.markdown(textwrap.dedent("""
