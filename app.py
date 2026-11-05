@@ -3886,9 +3886,13 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
         p1_len = len(p1)
         p2_len = len(p2)
         p3_len = len(p3)
+        p2_instruction = f"Thí sinh trả lời từ câu 1 đến câu {p2_len}."
+        if original_context:
+            numbers = ", ".join(str(original_question_number(exam, q, i)) for i, q in enumerate(p2, 1))
+            p2_instruction = f"Thí sinh trả lời các câu {numbers} theo định hướng đã chọn."
         sections = [
             (f"PHẦN I. Câu trắc nghiệm nhiều phương án lựa chọn (Thí sinh trả lời từ câu 1 đến câu {p1_len}. Mỗi câu hỏi thí sinh chỉ chọn một phương án).", p1),
-            (f"PHẦN II. Câu trắc nghiệm đúng sai (Thí sinh trả lời từ câu 1 đến câu {p2_len}. Trong mỗi ý a), b), c), d) ở mỗi câu, thí sinh chọn đúng hoặc sai).", p2),
+            (f"PHẦN II. Câu trắc nghiệm đúng sai ({p2_instruction} Trong mỗi ý a), b), c), d) ở mỗi câu, thí sinh chọn đúng hoặc sai).", p2),
             (f"PHẦN III. Câu trắc nghiệm trả lời ngắn (Thí sinh trả lời từ câu 1 đến câu {p3_len}. Thí sinh điền kết quả vào ô quy định).", p3)
         ]
 
@@ -4076,10 +4080,10 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
     # ==================== 3. BẢNG TỔNG HỢP ĐÁP ÁN CHUẨN BỘ (ANSWER KEY TABLE) ====================
     if include_answers and subject_name != "Ngữ văn":
         blocks.append("<div style='page-break-before: always; margin-top: 20px;' class='print-page-break'>")
-        blocks.append("<h2 style='text-align: center; font-size: 15px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; font-family: \"Times New Roman\", Times, serif;'>BẢNG ĐÁP ÁN VÀ MA TRẬN CHẤM ĐIỂM CHUẨN BỘ GD&ĐT</h2>")
+        blocks.append("<h2 style='text-align: center; font-size: 15px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; font-family: \"Times New Roman\", Times, serif;'>BẢNG KHÓA ĐÁP ÁN VÀ ĐIỂM LUYỆN TẬP</h2>")
 
         tex.append(r"\newpage")
-        tex.append(r"\begin{center}\textbf{\Large BẢNG ĐÁP ÁN VÀ MA TRẬN CHẤM ĐIỂM CHUẨN BỘ GD\&ĐT}\end{center}\vspace{0.3cm}")
+        tex.append(r"\begin{center}\textbf{\Large BẢNG KHÓA ĐÁP ÁN VÀ ĐIỂM LUYỆN TẬP}\end{center}\vspace{0.3cm}")
 
         p1_items = exam.get("p1") or exam.get("part_1") or []
         p2_items = exam.get("p2") or exam.get("part_2") or []
@@ -15844,7 +15848,7 @@ if selected_station == station_labels[2]:
         }} catch(e){{}}
         </script>""", height=0)
 
-        st.markdown(f"### 🎉 KẾT QUẢ KHẢO THÍ CHUẨN BỘ MÔN {subject.upper()} (LỚP {grade_num})!")
+        st.markdown(f"### 🎉 KẾT QUẢ LUYỆN TẬP MÔN {subject.upper()} (LỚP {grade_num})!")
 
 
 
