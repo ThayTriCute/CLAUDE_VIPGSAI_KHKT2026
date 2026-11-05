@@ -396,6 +396,14 @@ APP_URL = get_secret("APP_URL", "https://vip-demo-gsai-khkt2026.streamlit.app")
 from kntt_sgk_library import KNTT_DIGITAL_LIBRARY
 
 
+def get_voice_public_url():
+    """Support deployed Streamlit Secrets as well as process environment."""
+    for value in (os.environ.get("GSAI_VOICE_PUBLIC_URL"), get_secret("GSAI_VOICE_PUBLIC_URL", "")):
+        if isinstance(value, str) and value.strip():
+            return value.strip().rstrip('/')
+    return ""
+
+
 def get_kntt_books_for(subject_name, grade_lvl):
     return books_for(subject_name, grade_lvl)
 
@@ -7934,7 +7942,7 @@ def create_pedagogical_tts_component(raw_text: str, subject_name: str, comp_key:
             scientific_reader = reader_file.read()
         voice_config = json.dumps({
             "raw": raw_text, "subject": subject_name,
-            "endpoint": os.environ.get("GSAI_VOICE_PUBLIC_URL", ""),
+            "endpoint": get_voice_public_url(),
         }, ensure_ascii=False).replace("</", "<\\/")
         selfhost_script = r"""
         <script>
@@ -7952,6 +7960,7 @@ def create_pedagogical_tts_component(raw_text: str, subject_name: str, comp_key:
             const sources = new Map(femaleSource ? [['female', femaleSource]] : []);
             let selected = femaleSource ? 'female' : null;
             let available = femaleSource ? ['female'] : [];
+            let voiceServiceReady = false;
             // Keep ready voices usable while CPU synthesis is pending. A late
             // response must never replace a newer choice or start playback.
             const pending = new Map();
@@ -7962,7 +7971,7 @@ def create_pedagogical_tts_component(raw_text: str, subject_name: str, comp_key:
                 b.setAttribute('aria-busy', String(pending.has(voice)));
                 b.setAttribute('aria-pressed', String(voice === selected));
                 b.style.background = voice === selected ? '#0369a1' : '#334155';
-                if (voice !== 'female') b.title = available.includes(voice) ? 'Bản thử cần thẩm định' : 'Giọng này chưa đạt thẩm định, đang hiệu chỉnh';
+                if (voice !== 'female') b.title = available.includes(voice) ? 'Bản thử cần thẩm định' : (!endpoint ? 'Chưa cấu hình dịch vụ giọng đọc HTTPS' : voiceServiceReady ? 'Dịch vụ chưa cung cấp giọng này' : 'Chưa kết nối được dịch vụ giọng đọc');
             });
             const play = () => player.play().catch(() => {
                 status.textContent = 'Âm thanh đã sẵn sàng; nhấn phát trên thanh bên dưới';
@@ -8015,11 +8024,12 @@ def create_pedagogical_tts_component(raw_text: str, subject_name: str, comp_key:
                     if (!r.ok) throw Error();
                     return r.json();
                 }).then(info => {
-                    available = [...(femaleSource ? ['female'] : []), ...(info.available_voices || [])];
+                    voiceServiceReady = true;
+                    available = [...(femaleSource ? ['female'] : []), ...(info.available_voices || []).filter(v => ['thay_tri', 'nam_bo'].includes(v))];
                     sync();
                     status.textContent = info.owner_voice_state === 'preview_B' ? 'Chọn Giọng nữ, Giọng Thầy Trí (mẫu B) hoặc Giọng nam' : (available.length > (femaleSource ? 1 : 0) ? 'Chọn giọng đọc • Bản thử cần thẩm định' : 'Hai giọng nam đang hiệu chỉnh sau thẩm định');
                 }).catch(() => { status.textContent = 'Hai giọng nam chưa kết nối; giữ giọng hiện tại'; });
-            } else status.textContent = 'Hai giọng nam chưa kết nối; giữ giọng hiện tại';
+            } else status.textContent = 'Chưa cấu hình dịch vụ giọng Thầy Trí/giọng nam; giọng nữ vẫn dùng được';
             window.addEventListener('pagehide', () => {
                 player.pause(); sources.forEach(url => {if(url.startsWith('blob:')) URL.revokeObjectURL(url)});
             });
