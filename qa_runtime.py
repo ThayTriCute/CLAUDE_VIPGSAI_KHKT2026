@@ -211,3 +211,16 @@ def observed_item_matrix(logs):
     if len(rows) < 3:
         return np.empty((0, 0)), []
     return np.asarray(rows, dtype=float), list(keys)
+
+
+def mcq_key_option(question):
+    """Use the same positional key as scoring, including unprefixed source options."""
+    key = str(question.get('ans') or '').strip().upper()
+    options = question.get('opt') or []
+    if key not in 'ABCD' or len(key) != 1 or not isinstance(options, list):
+        return 'Chưa xác định'
+    index = ord(key) - ord('A')
+    if index >= len(options):
+        return key + ' (chưa có nội dung phương án để đối chiếu)'
+    text = re.sub(r'^' + key + r'[.)]\s*', '', str(options[index]).strip())
+    return key + '. ' + text
