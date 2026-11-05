@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110503
+T1_CONTEXT_REVISION = 2026110505
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -594,6 +594,41 @@ def correct_khtn8_lime_soil_confusion(text, subject, grade, topic=""):
     return value
 
 
+def validate_explicit_survey_coverage(text, subject, grade, topic):
+    """Presence check for a narrowly explicit request, not semantic approval.
+
+    Reuse the bounded arithmetic parser; never repair text or request more AI.
+    Only Part 1 counts, so exercises cannot stand in for worked examples.
+    """
+    subject, grade = academic_context(subject, grade)
+    context = folded(topic)
+    if not (subject == 'Toán học' and grade == 12 and 'khao sat' in context
+            and re.search(r'\b(?:ba|3)\s+(?:dang\s+)?ham(?:\s+so)?\s+co\s+ban\b|\b(?:ba|3)\s+dang\s+ham\b', context)):
+        return text
+    theory = re.split(r'(?im)^\s*#{0,6}\s*\*{0,2}PHẦN\s*[23]\b', str(text), maxsplit=1)[0]
+    theory = re.sub(r'```[\s\S]*?```|~~~[\s\S]*?~~~', '', theory)
+    from services.function_visuals import parse_function, X
+    import sympy as sp
+    found = set()
+    # Match only explicit numeric definitions, including y=f(x)=... .
+    for match in re.finditer(r"(?<![\w'])\b(?:y\s*=\s*)?(?:f\s*\(\s*x\s*\)|y)\s*=\s*([^$\n;]+)", theory):
+        source = re.split(r'\\(?:quad|qquad|text)\b|\\[)\]]', match[1])[0].strip().rstrip('.,')
+        source = source.translate(str.maketrans({'²': '^2', '³': '^3', '−': '-'}))
+        try:
+            expression, excluded = parse_function(source, strict=True)
+            numerator, denominator = sp.fraction(expression)
+            degrees = (sp.degree(numerator, X), sp.degree(denominator, X))
+            if degrees in {(3, 0), (1, 1), (2, 1)}:
+                found.add(degrees)
+        except (ValueError, SyntaxError, TypeError, NotImplementedError):
+            continue
+    missing = [name for degree, name in (((3, 0), 'bậc ba'), ((1, 1), 'phân thức 1/1'), ((2, 1), 'phân thức 2/1')) if degree not in found]
+    if missing:
+        raise ValueError('Yêu cầu khảo sát cả ba dạng nhưng Phần 1 chưa có ví dụ số tường minh cho: '
+                         + ', '.join(missing) + '. Cần bổ sung và thẩm định lời giải; không dùng bài tự làm thay ví dụ.')
+    return text
+
+
 def lesson_prompt(subject, grade, topic):
     from services.cognitive_levels import LEVEL_GUIDANCE
     visual_guidance = ""
@@ -604,6 +639,7 @@ def lesson_prompt(subject, grade, topic):
             "đủ mốc, dấu đạo hàm, giá trị hoặc giới hạn và mũi tên theo đúng hàm đang xét; "
             "không thay bảng bằng đoạn văn xét dấu. Giữ các cột tương ứng để công cụ dựng bảng hiện có xử lý. "
             "Không tự bịa giới hạn, điểm gián đoạn hoặc thêm bảng giải tích cho bài không cần.\n"
+            "Nếu yêu cầu rõ cả ba dạng hàm, Phần 1 cần ba ví dụ số có hướng dẫn riêng; không chỉ liệt kê tên hoặc chuyển ví dụ sang bài tự làm. "
             "Khi khảo sát ba dạng SGK, phải giữ đúng dạng không suy biến: bậc ba có a≠0; "
             "y=(ax+b)/(cx+d) có c≠0 và ad−bc≠0; "
             "y=(ax²+bx+c)/(dx+e) có a≠0, d≠0 và ae²−bde+cd²≠0. "

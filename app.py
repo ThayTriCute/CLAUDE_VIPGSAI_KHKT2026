@@ -2,7 +2,7 @@ def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
-    for module, revision in ((lesson_sources, 2026110205), (curriculum_policy, 2026110503),
+    for module, revision in ((lesson_sources, 2026110205), (curriculum_policy, 2026110505),
                              (lab_scope, 2026110202), (lesson_export, 2026110504),
                              (text_boundaries, 2026110201), (socratic_context, 2026110204)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
@@ -10532,6 +10532,8 @@ def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán h�
         # Khử \searrow và \nearrow nằm trơ trọi trong bảng markdown, cách chữ để không dính chùm
         t = re.sub(r'(?<!\$)\\(?:searrow|nearrow|downarrow|uparrow)(?!\$)', lambda m: ' ↘ ' if 'se' in m.group(0) else (' ↗ ' if 'ne' in m.group(0) else (' ↑ ' if 'up' in m.group(0) else ' ↓ ')), t)
 
+    from services.curriculum_policy import validate_explicit_survey_coverage
+    validate_explicit_survey_coverage(t, subject, grade, topic)
     return validate_lesson_policy(t, subject, grade)
 
 
