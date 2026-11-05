@@ -9,7 +9,7 @@ from functools import lru_cache
 import sympy as sp
 
 X = sp.Symbol('x', real=True)
-RENDER_REVISION = 2026110509
+RENDER_REVISION = 2026110510
 
 
 class NonStandardFunction(ValueError):
@@ -496,8 +496,22 @@ def with_function_visuals(body, topic, lesson=''):
             if figure and 'data-function-rejected' not in figure:
                 figures.add(figure)
         if len(figures) > 1:
-            # Keep every source table: no guessed table-to-function association.
-            return body + "".join(sorted(figures))
+            # Associate only with the nearest explicit preceding function.
+            # Never leave a malformed source BBT alongside its verified model.
+            used = set()
+            def scoped_table(match):
+                prefix = body[:match.start()]
+                functions = list(re.finditer(r'data-tex="(y=[^"]+)"', prefix))
+                plain = html.unescape(re.sub(r'<[^>]+>', '', match[0]))
+                if not functions or not re.search(r"x[\s\S]*y[′'][\s\S]*y", plain):
+                    return match[0]
+                figure = explicit_function_visuals(html.unescape(functions[-1][1]))
+                if figure not in figures:
+                    return match[0]
+                used.add(figure)
+                return figure
+            result = re.sub(r'<table\b[^>]*>[\s\S]*?</table>', scoped_table, body)
+            return result + "".join(sorted(figures - used))
         if len(figures) == 1:
             visuals = figures.pop()
     if not visuals:
