@@ -3575,6 +3575,10 @@ def latex_text(value):
     if not value: return ""
 
     value = str(value)
+    from services.exam_code_text import FENCES, code_text_latex
+    if FENCES.search(value):
+        return ''.join(code_text_latex(chunk) if index % 2 else latex_text(chunk)
+                       for index, chunk in enumerate(FENCES.split(value)))
 
     value = value.replace("↗", r"$\nearrow$").replace("↘", r"$\searrow$").replace("∞", r"\infty")
 
@@ -3593,6 +3597,10 @@ def latex_text(value):
 def sanitize_print_math_text(text: str) -> str:
     """CHUẨN HÓA CÔNG THỨC TOÁN CHO BẢN IN PDF (MATHJAX 3): KHỬ SẠCH LỆNH LỆCH NGOẶC TẬP HỢP & DÍNH CHỮ."""
     if not text: return ""
+    from services.exam_code_text import FENCES
+    if FENCES.search(str(text)):
+        return ''.join(chunk if index % 2 else sanitize_print_math_text(chunk)
+                       for index, chunk in enumerate(FENCES.split(str(text))))
     s = str(text).replace(r'\$', '$').replace('$$', '$')
 
     # Khắc phục lỗi chữ tiếng Việt có dấu và khoảng trắng bị bọc trong $...$ làm dính chữ trong MathJax
@@ -3644,6 +3652,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
                        quote_author="THẦY PHAN MINH TRÍ",
                        show_support_qr=True):
     import datetime
+    from services.exam_code_text import source_text_html
     # CHỐT CHẶN CUỐI CÙNG: Thẩm định ngữ nghĩa, khử đa đáp án và chuẩn hóa Socratic trước khi xuất bản
     exam = audit_and_heal_exam_semantics(exam, subject_name=subject_name, grade_name=grade_name)
     current_year = datetime.datetime.now().year
@@ -3900,9 +3909,9 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
 
             src_html = f"<div style='font-size: 11px; color: #0284c7; font-style: italic; margin-bottom: 2px;'>🏛️ [Nguồn: {html.escape(str(q['source']))}]</div>" if show_src_in_print else ""
             if template_style == "form2":
-                p_text_html = f"{src_html}<p style='margin: 0 0 4px 0; line-height: 1.45;'><span style='display: inline-block; background: #0284c7; color: #fff; font-size: 12px; font-weight: bold; padding: 1px 7px; border-radius: 4px; margin-right: 6px;'>Câu {index}</span>{html.escape(raw_q_text)}</p>"
+                p_text_html = f"{src_html}<p style='margin: 0 0 4px 0; line-height: 1.45;'><span style='display: inline-block; background: #0284c7; color: #fff; font-size: 12px; font-weight: bold; padding: 1px 7px; border-radius: 4px; margin-right: 6px;'>Câu {index}</span>{source_text_html(raw_q_text)}</p>"
             else:
-                p_text_html = f"{src_html}<p style='margin: 0 0 4px 0; line-height: 1.42;'><b>Câu {index}.</b> {html.escape(raw_q_text)}</p>"
+                p_text_html = f"{src_html}<p style='margin: 0 0 4px 0; line-height: 1.42;'><b>Câu {index}.</b> {source_text_html(raw_q_text)}</p>"
 
             # 2. Trực quan hóa hình ảnh
             vis_html = question_visual_html(q)
@@ -3954,7 +3963,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
                 stmts_html = "<div style='margin: 4px 0 6px 10px;'>"
                 for i, statement in enumerate(q.get("stmts", [])):
                     stmt_t = sanitize_print_math_text(str(statement.get('t', statement.get('s', ''))))
-                    stmts_html += f"<div style='font-size: 13.5px; margin-bottom: 2px;'><b>{chr(97+i)})</b> {html.escape(stmt_t)}</div>"
+                    stmts_html += f"<div style='font-size: 13.5px; margin-bottom: 2px;'><b>{chr(97+i)})</b> {source_text_html(stmt_t)}</div>"
                     tex.append(rf"\par\quad\textbf{{{chr(97+i)})}} " + latex_text(stmt_t) + r"\par")
                 stmts_html += "</div>"
 
