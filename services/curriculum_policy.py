@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110509
+T1_CONTEXT_REVISION = 2026110510
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 

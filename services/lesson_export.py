@@ -11,7 +11,7 @@ from markdown_it import MarkdownIt
 from services.academic_context import academic_context
 
 ROOT = Path(__file__).resolve().parents[1]
-T1_CONTEXT_REVISION = 2026110509
+T1_CONTEXT_REVISION = 2026110510
 _TOKENS = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$)")
 
 
@@ -39,6 +39,14 @@ def lesson_body_html(lesson):
     """Protect math/code separately; never convert formulas to approximate Unicode."""
     from services.text_boundaries import wrap_naked_chemistry, polya_display_markdown
     lesson = polya_display_markdown(wrap_naked_chemistry(lesson))
+    # Separate explicit teaching steps and inline bullets; protect formulas/code.
+    from services.text_boundaries import preserve_math_and_code
+    def teaching_lines(value):
+        value = re.sub(r"(?<!\n)[ \t]+(?=(?:\*\*)?Bước[ \t]+\d+[ \t]*:)", "\n\n", value)
+        value = re.sub(r"(?<=\S)[ \t]+\*[ \t]+(?=[A-ZĐÀ-Ỹ])", "\n\n- ", value)
+        value = re.sub(r"(?<=\S)[ \t]+(?=[a-d]\)[ \t]+[A-ZĐÀ-Ỹ])", "\n\n", value)
+        return value
+    lesson = preserve_math_and_code(lesson, teaching_lines)
     # A table emitted directly after a numbered-list item is otherwise parsed
     # as literal pipes by CommonMark. Separate real pipe-row blocks from prose,
     # while preserving code examples and every source cell.
