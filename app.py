@@ -11776,6 +11776,7 @@ if selected_station == station_labels[0]:
             st.session_state["t1_independent_cognitive_audit"] = independent_lesson_quiz_audit(
                 quiz_list, subject, grade_num, st.session_state.get("current_topic", ""),
                 st.session_state.get("current_lesson", ""))
+            quiz_cognitive_audits = st.session_state["t1_independent_cognitive_audit"]
 
             st.markdown("<br>", unsafe_allow_html=True)
 
@@ -11808,7 +11809,7 @@ if selected_station == station_labels[0]:
                 clean_q_display = correct_reviewed_myth_guidance(
                     clean_q_display, subject, grade_num, st.session_state.get('current_topic', ''))
                 clean_q_display = sanitize_katex_latex(clean_q_display)
-                st.markdown(chemical_display_markdown(f"**Câu {idx+1}:** `[{level_caption(q)}]`\n\n{clean_q_display}"))
+                st.markdown(chemical_display_markdown(f"**Câu {idx+1}:** `[{level_caption(q, quiz_cognitive_audits[idx] if idx < len(quiz_cognitive_audits) else None)}]`\n\n{clean_q_display}"))
 
                 # 3. Hiển thị Bảng Biến Thiên (BBT) WebP siêu nét chuẩn Bộ GD&ĐT (Trạm 3 Master Quality):
                 raw_bbt_content = q_dict_vis.get("bbt") or q.get("bbt")

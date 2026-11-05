@@ -205,6 +205,11 @@ def audit_exam_levels(exam):
     return result
 
 
-def level_caption(question):
+def level_caption(question, independent_audit=None):
+    audit = independent_audit if isinstance(independent_audit, dict) else {}
+    reviewed = normalize_level(audit.get("reviewed_level"))
+    if (audit.get("verified") is True and audit.get("delivery_status") == "review_record_valid"
+            and reviewed and not audit.get("issues")):
+        return f"{reviewed} — đã thẩm định trong hệ thống"
     level = normalize_level(question.get("level"))
     return f"{level} — nhãn đề xuất, chưa duyệt" if level else "Chưa xác định mức độ"
