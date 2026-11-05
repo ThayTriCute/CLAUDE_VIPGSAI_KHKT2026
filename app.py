@@ -3653,6 +3653,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
                        show_support_qr=True):
     import datetime
     from services.exam_code_text import source_text_html
+    from services.exam_delivery import question_solution_text
     from services.official_paper import original_print_context, original_question_number
     original_context = original_print_context(exam)
     if original_context:
@@ -3911,9 +3912,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
             index = original_question_number(exam, q, index)
             q = deepcopy(q)
             raw_q_text = sanitize_print_math_text(str(q.get("q", "")))
-            expl_q = sanitize_print_math_text(str(q.get("explain", q.get("expl", q.get("exp", "")))))
-            if not expl_q:
-                expl_q = f"Áp dụng trực tiếp định nghĩa và tính chất SGK Kết Nối Tri Thức. Phân tích loại trừ phương án nhiễu để chọn đáp án chuẩn {q.get('ans', '')}."
+            expl_q = sanitize_print_math_text(question_solution_text(q))
 
             # BẢO VỆ TÍNH BẢO MẬT & CHUẨN SƯ PHẠM BỘ GD&ĐT:
             # - Tuyệt đối KHÔNG in nguồn câu hỏi khi đề do AI sinh ra.
@@ -13510,6 +13509,8 @@ if selected_station == station_labels[2]:
     st.subheader(f"📝 Trạm 3: Khảo Thí Độc Lập - Môn {subject} (Lớp {grade_num})")
 
     from services.official_paper import original_question_number
+    from services.exam_delivery import question_solution_text, answer_source_label
+    from qa_runtime import mcq_key_option
     active_profile = assessment_profile(subject, grade_num)
     st.caption(active_profile["label"])
     st.warning("Ngữ liệu AI/kho đề chưa được xác minh toàn bộ theo từng yêu cầu cần đạt, phiên bản KNTT và nguồn gốc. Giáo viên cần duyệt trước khi dùng đánh giá chính thức.")
@@ -14754,7 +14755,7 @@ if selected_station == station_labels[2]:
                                         st.session_state.show_audit_badges_per_question = True
                                         st.toast("📚 ĐÃ TRÍCH XUẤT ĐỀ TÙY BIẾN TỪ KHO 600+ ĐỀ THẬT: Có đầy đủ chỉ dấu vân tay & Bảng đối chứng!", icon="✅")
                                     else:
-                                        st.toast("🔥 Đã trộn siêu đề thi mới lạ (Dynamic Seed) thành công trong 0.1 giây!", icon="✨")
+                                        st.toast("Đã mở đề gốc Tin học 2025 — mã 0530; giữ nguyên khóa nguồn." if original_paper_mode else "🔥 Đã trộn siêu đề thi mới lạ (Dynamic Seed) thành công trong 0.1 giây!", icon="✨")
 
                                     st.rerun()
 
@@ -16167,7 +16168,7 @@ if selected_station == station_labels[2]:
 
                         st.markdown(f'<div style="font-size: 11.5px; color: #38bdf8; background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 2px 8px; margin-bottom: 6px; border-radius: 3px;">🏛️ <b>Nguồn tham khảo:</b> {html.escape(str(q["source"]))}</div>', unsafe_allow_html=True)
 
-                    st.markdown(f"**Câu {idx+1}:** {q.get('q')}")
+                    st.markdown(f"**Câu {original_question_number(exam, q, idx+1)}:** {q.get('q')}")
 
                     render_fast_visual(q, f"sol_p1_{idx}")
 
@@ -16177,21 +16178,17 @@ if selected_station == station_labels[2]:
 
                     badge_p1 = "✅ Làm đúng" if is_p1_right else "❌ Làm sai"
 
-                    opt_match = next((o for o in q.get("opt", []) if o.strip().startswith(correct_a + ".")), "")
+                    opt_full = mcq_key_option(q)
 
-                    opt_full = opt_match if opt_match else f"{correct_a}. {correct_a}"
+                    st.markdown(f"- **Đáp án em chọn:** {html.escape(user_c)}")
 
-                    st.markdown(f"- **Đáp án em chọn:** {user_c}")
-
-                    st.markdown(f"- **Đáp án chuẩn của Bộ:** **{opt_full}** &nbsp;({badge_p1})")
+                    st.markdown(f"- **{answer_source_label(exam)}:** **{html.escape(opt_full)}** &nbsp;({badge_p1})")
 
 
 
                     # LỜI GIẢI CHI TIẾT & PHƯƠNG PHÁP LUẬN BỘ GD&ĐT
-                    expl = q.get('explain', '')
-                    if not expl or len(expl) < 15:
-                        expl = f"Áp dụng trực tiếp định nghĩa và tính chất cốt lõi trong SGK Kết Nối Tri Thức để xác định đáp án chuẩn {correct_a}."
-                    st.info(f"💡 **Lời giải chi tiết & Phương pháp luận chuẩn Bộ GD&ĐT câu {idx+1}:**\n\n{expl}")
+                    expl = question_solution_text(q)
+                    st.info(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl}")
                     st.markdown("---")
 
             if exam.get("p2"):
@@ -16199,17 +16196,17 @@ if selected_station == station_labels[2]:
                 for idx, q in enumerate(exam["p2"]):
                     if q.get("source"):
                         st.markdown(f'<div style="font-size: 11.5px; color: #38bdf8; background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 2px 8px; margin-bottom: 6px; border-radius: 3px;">🏛️ <b>Nguồn tham khảo:</b> {html.escape(str(q["source"]))}</div>', unsafe_allow_html=True)
-                    st.markdown(f"**Câu {idx+1}:** {q.get('q')}")
+                    st.markdown(f"**Câu {original_question_number(exam, q, idx+1)}:** {q.get('q')}")
                     render_fast_visual(q, f"sol_p2_{idx}")
                     for s_idx, stmt in enumerate(q.get("stmts", [])):
                         user_ans_s = st.session_state.exam_answers.get(f"p2_{idx}_{s_idx}", "Chưa chọn")
                         expected_bool_rev = normalize_bool(stmt["a"] if "a" in stmt else stmt.get("ans"))
                         expected_str = "Đúng" if expected_bool_rev is True else "Sai" if expected_bool_rev is False else "Chưa xác định"
                         mark_icon = "✅" if user_ans_s == expected_str else "❌"
-                        st.markdown(f"- Ý {chr(97+s_idx)}): *{stmt.get('t')}* -> Em chọn: **{user_ans_s}** | **Chuẩn Bộ:** **{expected_str}** {mark_icon}")
+                        st.markdown(f"- Ý {chr(97+s_idx)}): *{stmt.get('t')}* -> Em chọn: **{user_ans_s}** | **{answer_source_label(exam)}:** **{expected_str}** {mark_icon}")
 
-                    expl2 = q.get('explain', 'Xét từng mệnh đề theo định lý và điều kiện cần - đủ.')
-                    st.info(f"💡 **Lời giải chi tiết & Phương pháp luận chuẩn Bộ GD&ĐT câu {idx+1}:**\n\n{expl2}")
+                    expl2 = question_solution_text(q)
+                    st.info(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl2}")
                     st.markdown("---")
 
             if exam.get("p3"):
@@ -16219,12 +16216,12 @@ if selected_station == station_labels[2]:
                         st.markdown(f'<div style="font-size: 11.5px; color: #38bdf8; background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 2px 8px; margin-bottom: 6px; border-radius: 3px;">🏛️ <b>Nguồn tham khảo:</b> {html.escape(str(q["source"]))}</div>', unsafe_allow_html=True)
                     user_val = str(st.session_state.exam_answers.get(f"p3_{idx}", "Chưa điền")).strip()
                     correct_val = str(q.get("ans", "")).strip()
-                    st.markdown(f"**Câu {idx+1}:** {q.get('q')}")
+                    st.markdown(f"**Câu {original_question_number(exam, q, idx+1)}:** {q.get('q')}")
                     render_fast_visual(q, f"sol_p3_{idx}")
                     st.markdown(f"- **Đáp số em điền:** `{user_val}` &nbsp;|&nbsp; **Đáp số chuẩn:** `{correct_val}`")
 
-                    expl3 = q.get('explain', 'Tính toán theo công thức vi phân, tọa độ hoặc mô hình thực tiễn.')
-                    st.info(f"💡 **Lời giải chi tiết & Phương pháp luận chuẩn Bộ GD&ĐT câu {idx+1}:**\n\n{expl3}")
+                    expl3 = question_solution_text(q)
+                    st.info(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl3}")
                     st.markdown("---")
 
 

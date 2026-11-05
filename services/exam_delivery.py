@@ -25,3 +25,20 @@ def exam_delivery_held(exam):
                        for s in question.get('stmts', []) or []):
                     return True
     return False
+
+
+def question_solution_text(question):
+    for field in ('explain', 'expl', 'exp'):
+        text = str(question.get(field) or '').strip()
+        if text:
+            return text
+    return 'Chưa có lời giải độc lập trong dữ liệu hiện tại. Khóa đáp án không thay thế lời giải.'
+
+
+def answer_source_label(exam):
+    from services.official_paper import original_print_context
+    try:
+        context = original_print_context(exam)
+    except ValueError:
+        context = None
+    return 'Khóa Bộ (bản đăng lại đã đối chiếu)' if context else 'Khóa của bản đề (cần thẩm định)'
