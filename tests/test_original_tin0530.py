@@ -148,7 +148,11 @@ class OriginalTin0530Tests(unittest.TestCase):
                     self.assertNotIn('```',markup)
                     self.assertNotIn('```',tex)
                     self.assertIn('exam-source-code',markup)
+                    self.assertIn('BẢNG KHÓA ĐÁP ÁN VÀ ĐIỂM LUYỆN TẬP',markup)
+                    self.assertNotIn('MA TRẬN CHẤM ĐIỂM CHUẨN BỘ',markup)
                     if track == 'ICT':
+                        self.assertIn('trả lời các câu 1, 2, 5, 6',markup)
+                        self.assertIn('trả lời các câu 1, 2, 5, 6',tex)
                         self.assertIn("bold;'>Câu 5</td>",markup)
                         self.assertIn("bold;'>Câu 6</td>",markup)
                         self.assertIn(r'\textbf{Câu 5}',tex)
