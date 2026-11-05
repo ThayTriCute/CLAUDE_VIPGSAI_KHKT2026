@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "archive_sha256": "685700c87d4fcf11e30516e1a0567c6cc56a92c9e6660258eae65f597786bc0e",
+  "scope": "Application independent explanations of original MCQ; not Ministry-authored solutions or cognitive certification",
+  "evidence": [
+    "T3_TIN2025_0530_SOURCE_REVIEW_CURRENT.json",
+    "T3_TIN2025_0530_Q3_Q11_REVIEW_20261103.json",
+    "T3_TIN2025_0530_Q12_Q24_REVIEW_20261103.json",
+    "T3_TIN2025_KNTT_MAPPING_CLOSURE_20261103.json"
+  ],
+  "records": {
+    "I.1": {
+      "answer": "B",
+      "explanation": "Thẻ <img> chèn ảnh; <a> tạo liên kết, <p> tạo đoạn văn và <ol> tạo danh sách có thứ tự. Vì vậy chọn B."
+    },
+    "I.2": {
+      "answer": "A",
+      "explanation": "Dùng type=\"I\" để đánh số La Mã in hoa và start=\"2\" để bắt đầu ở II. start nhận số nguyên, không nhận chuỗi \"II\"; style/begin không thay hai thuộc tính này. Chọn A."
+    },
+    "I.3": {
+      "answer": "A",
+      "explanation": "Sản phẩm cuối của nhóm không cho biết đầy đủ đóng góp của từng thành viên. Vì thế đánh giá đóng góp cá nhân là việc khó trong các lựa chọn đã nêu. Điều này không có nghĩa AI không thể hỗ trợ đánh giá. Chọn A."
+    },
+    "I.4": {
+      "answer": "D",
+      "explanation": "Access Point cung cấp điểm truy cập mạng LAN không dây. Định tuyến giữa các mạng và kết nối có dây thông thường là những chức năng khác. Chọn D."
+    },
+    "I.5": {
+      "answer": "D",
+      "explanation": "Khi chưa nhận được hàng, liên hệ bộ phận chăm sóc khách hàng để kiểm tra và giải quyết là cách ứng xử phù hợp tình huống. Xúc phạm, kêu gọi tẩy chay hoặc đổ lỗi cho bên không liên quan không giải quyết trực tiếp việc này. Chọn D."
+    },
+    "I.6": {
+      "answer": "A",
+      "explanation": "Xây dựng phần mềm ứng dụng kinh doanh thuộc công việc phát triển phần mềm, không phải nhiệm vụ chính của sửa chữa/bảo trì trong cách phân nhóm nghề của câu hỏi. Không suy ra người sửa chữa không bao giờ lập trình. Chọn A."
+    },
+    "I.7": {
+      "answer": "B",
+      "explanation": "Khóa chính thức là B: display:block theo cách trình bày block/inline/none được học. Cần lưu ý A dùng display:flex cũng có kiểu hiển thị ngoài dạng khối; vì vậy không dùng câu này như một khẳng định duy nhất về mọi giá trị CSS khi tách khỏi nguyên đề và phạm vi đã dạy. Giữ khóa Bộ, không sửa đáp án để che điểm cần làm rõ."
+    },
+    "I.8": {
+      "answer": "C",
+      "explanation": "Có ba thẻ tr, mỗi hàng có hai ô và không có gộp hàng/cột: bảng gồm 3 hàng, 2 cột. Hàng đầu dùng th, hai hàng sau dùng td. width/height không làm thay đổi số hàng/cột. Chọn C."
+    },
+    "I.9": {
+      "answer": "B",
+      "explanation": "Ban đầu i=7, n=11. Thân lặp thực hiện với i=7 rồi i=9; sau đó i=11 nên điều kiện i<n sai. Có 2 lần lặp, không phải tổng S=16 hay giá trị cuối i=11. Chọn B."
+    },
+    "I.10": {
+      "answer": "D",
+      "explanation": "TCP cung cấp dịch vụ truyền luồng byte tin cậy, đúng thứ tự. Nó không có chức năng diệt mã độc hay cấp địa chỉ DHCP; tính tin cậy không đồng nghĩa mọi kết nối hỏng vẫn giao được dữ liệu. Chọn D."
+    },
+    "I.11": {
+      "answer": "A",
+      "explanation": "Khẳng định chẩn đoán chính xác tuyệt đối vượt quá điều AI bảo đảm. Hỗ trợ chẩn đoán khác với bảo đảm không sai; các tác vụ ngôn ngữ, nhận dạng chữ viết và gợi ý sản phẩm là những nhóm khả năng đã biết. Chọn A."
+    },
+    "I.12": {
+      "answer": "A",
+      "explanation": "Yêu cầu viền rộng 5px và nét liền được đáp ứng bởi 5px và solid. groove, dashed, double không phải kiểu nét liền được yêu cầu. Chọn A."
+    },
+    "I.13": {
+      "answer": "B",
+      "explanation": "Phần tử html là phần tử gốc của tài liệu HTML, chứa head và body cùng các phần tử bên trong. Các phần tử khác trong lựa chọn không có vai trò gốc này. Chọn B."
+    },
+    "I.14": {
+      "answer": "A",
+      "explanation": "Với i=5,6,7, giá trị x lần lượt đổi 6→3→9→4. Trong chuỗi DOI_MOI_SANG_TAO, chỉ số 4 tính từ 0 là M. Các phép chia số nguyên dương trong hai đoạn chương trình cho cùng kết quả này. Chọn A."
+    },
+    "I.15": {
+      "answer": "D",
+      "explanation": "Tóm tắt văn bản xử lý nội dung ngôn ngữ. Nhận diện khuôn mặt, dự báo thời tiết từ vệ tinh và phát hiện cháy qua ảnh thuộc những loại tác vụ khác trong các lựa chọn. Chọn D."
+    },
+    "I.16": {
+      "answer": "D",
+      "explanation": "Đoạn văn có class=\"mau\" nhưng không có id=\"mau\". Quy tắc lớp khớp nên chữ xanh và nghiêng; quy tắc ID không khớp nên không áp dụng đỏ/đậm. Chỉ so độ ưu tiên giữa các quy tắc thực sự khớp. Chọn D."
+    },
+    "I.17": {
+      "answer": "C",
+      "explanation": "Chia sẻ thông điệp bảo vệ môi trường một cách tích cực phù hợp mục tiêu giao tiếp nhân văn. Chế giễu, phủ nhận việc nhỏ hoặc áp đặt bạn không phù hợp tình huống. Không suy ra nghĩa vụ phải đăng lại mọi thông điệp. Chọn C."
+    },
+    "I.18": {
+      "answer": "C",
+      "explanation": "Email báo trúng thưởng bất ngờ cần được kiểm tra tính xác thực trước khi quyết định. Bấm ngay liên kết, chuyển tiếp hoặc dùng máy người khác không chứng minh email hợp lệ. Chọn C."
+    },
+    "I.19": {
+      "answer": "D",
+      "explanation": "font-family quy định họ phông chữ; font-weight quy định độ đậm, font-size quy định cỡ chữ và font-style quy định kiểu chữ. Chọn D, không lấy ghi chú viết tay làm khóa."
+    },
+    "I.20": {
+      "answer": "D",
+      "explanation": "Theo cách phân nhóm nghề được học trong câu hỏi, bảo mật hệ thống thông tin thuộc nhóm quản trị. Kiểm thử, thiết kế đồ họa và sửa chữa là các vai trò khác được liệt kê; đây không phải ranh giới tuyệt đối của mọi công việc thực tế. Chọn D."
+    },
+    "I.21": {
+      "answer": "B",
+      "explanation": "Chia sẻ thư mục chứa bộ cài trình điều khiển không phải điều kiện bắt buộc: máy khách có thể cài driver từ nguồn hỗ trợ khác. Cần phân biệt việc này với cấu hình chia sẻ và quyền truy cập máy in. Chọn B."
+    },
+    "I.22": {
+      "answer": "D",
+      "explanation": "Cập nhật hệ điều hành là bảo trì phần mềm. Thay linh kiện hỏng, tư vấn nâng cấp phần cứng và lắp thiết bị mạng là các công việc phần cứng/mạng trong lựa chọn. Chọn D."
+    },
+    "I.23": {
+      "answer": "B",
+      "explanation": "Switch thông thường kết nối các thiết bị và chuyển tiếp dữ liệu trong mạng LAN. Chuyển đổi tín hiệu, cung cấp truy cập không dây và định tuyến giữa các mạng là các chức năng khác trong câu hỏi; không mở rộng kết luận để phủ nhận switch đa lớp. Chọn B."
+    },
+    "I.24": {
+      "answer": "C",
+      "explanation": "Khả năng học và giải quyết mọi vấn đề tự nhiên, xã hội là khẳng định không giới hạn, chưa được chứng minh bởi các hệ thống AI chuyên biệt được xét. Học theo tác vụ hoặc gợi ý không suy ra khả năng phổ quát này. Chọn C."
+    }
+  }
+}
