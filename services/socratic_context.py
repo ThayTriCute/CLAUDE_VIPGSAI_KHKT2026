@@ -3,7 +3,7 @@ import re
 
 from services.academic_context import canonical_subject, folded
 
-T1_CONTEXT_REVISION = 2026110204
+T1_CONTEXT_REVISION = 2026110506
 
 
 def repair_reviewed_station1_closing(reply, student_message, subject, grade, closing=False):
@@ -112,7 +112,7 @@ _QUESTIONS = {
 }
 
 
-def guiding_question(hint, options=None, correct_answer=''):
+def guiding_question(hint, options=None, correct_answer='', question_text=''):
     """Prefer a separate guiding question; never substitute the EXPLAIN field.
 
     Explicit answer markers and verbatim alternatives are rejected here. This
@@ -121,7 +121,7 @@ def guiding_question(hint, options=None, correct_answer=''):
     """
     value = str(hint or '').strip()
     marked_answer = re.search(
-        r'(?i)(?:\b(?:chọn|đáp án|đáp số|answer|choose|option)\s*(?:là|is|:)?\s*[A-D]\b'
+        r'(?i)(?:\b(?:chọn|đáp án|đáp số|answer|choose|option)\s*(?:đúng\s*)?(?:là|is|:)?\s*[A-D]\b'
         r'|\b[A-D]\s*(?:là\s*)?(?:đúng|correct)\b)', value)
     alternatives = [re.sub(r'^[A-D][.):]\s*', '', str(o), flags=re.I).strip().casefold()
                     for o in options or []]
@@ -129,7 +129,13 @@ def guiding_question(hint, options=None, correct_answer=''):
     if len(answer) > 3:
         alternatives.append(answer)
     repeats_answer = any(len(o) > 3 and o in value.casefold() for o in alternatives)
-    if value and len(value) <= 800 and value.endswith('?') and not marked_answer and not repeats_answer:
+    # A standalone numeric equality can disclose a result. Preserve equations
+    # already supplied by the question, and coefficients in symbolic formulas.
+    numeric_equality = re.compile(r"\b(?:[a-zA-Z]|[fgh]\s*\(\s*x\s*\))\s*=\s*[+-]?\d+(?:[.,]\d+)?(?:\s*/\s*\d+)?(?![\d.,/])(?=\s*(?:[$,;?)}]|(?:có|co|đúng|dung)\b|$))")
+    normalize = lambda text: re.sub(r'[\s${}\\]', '', str(text)).casefold()
+    source = normalize(question_text)
+    new_result = any(normalize(match[0]) not in source for match in numeric_equality.finditer(value))
+    if value and len(value) <= 800 and value.endswith('?') and not marked_answer and not repeats_answer and not new_result:
         return value
     return None
 
@@ -184,7 +190,7 @@ def subject_socratic_hint(hint, subject, options=None, correct_answer='', questi
         if any(term in folded(question_text) for term in ('base tan', 'kiem', 'tinh tan')):
             return 'Em sẽ dùng tiêu chí nào và tra bảng tính tan ra sao để tự phân biệt từng chất trong các phương án?'
         return _QUESTIONS[subject]
-    question = guiding_question(hint, options, correct_answer)
+    question = guiding_question(hint, options, correct_answer, question_text)
     if subject == 'Tin học':
         contextual = computing_context_question(question_text)
         # Live CPU hint repeated the identifying metaphor from the correct option.
