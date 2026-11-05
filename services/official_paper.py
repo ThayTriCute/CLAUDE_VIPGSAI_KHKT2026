@@ -75,3 +75,30 @@ def original_tin0530(pathway, *, directory=None):
                 original_question_numbers_preserved=True)
     result = prepare_exam_for_delivery(exam, 'Tin học', 12, duration=50)
     return result
+
+
+def original_question_number(exam, question, fallback):
+    """Retain source numbering while answer widgets keep zero-based positions."""
+    if exam.get('delivery_mode') != 'original_official_paper':
+        return fallback
+    source_id = str(question.get('source_id', ''))
+    number = source_id.rsplit('.', 1)[-1]
+    return int(number) if number.isdigit() else fallback
+
+
+def original_print_context(exam):
+    if exam.get('delivery_mode') != 'original_official_paper':
+        return None
+    if (exam.get('original_source_archive_sha256') != TIN0530_SHA
+            or exam.get('year') != 2025 or exam.get('code') != '0530'
+            or exam.get('pathway') not in ('CS', 'ICT')):
+        raise ValueError('Không xác định đúng nguồn đề gốc để xuất bản.')
+    track = exam['pathway']
+    return {
+        'title': 'ĐỀ THI TỐT NGHIỆP THPT NĂM 2025 — MÔN TIN HỌC — MÃ 0530',
+        'track': 'Khoa học máy tính (CS)' if track == 'CS' else 'Tin học ứng dụng (ICT)',
+        'duration': 50,
+        'note': 'Bản chép lại, định dạng cho luyện tập; không phải bản PDF gốc. '
+                'Ảnh đề do Tuổi Trẻ đăng lại; khóa đáp án Bộ GDĐT do Cổng Chính phủ đăng lại. '
+                'Giữ số câu theo đề nguồn; chỉ gồm phần chung và định hướng đã chọn.'
+    }

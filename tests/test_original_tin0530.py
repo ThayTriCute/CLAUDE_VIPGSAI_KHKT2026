@@ -118,3 +118,39 @@ class OriginalTin0530Tests(unittest.TestCase):
                  and isinstance(c.func, ast.Name)]
         self.assertNotIn('enrich_exam_data', calls)
         self.assertNotIn('call_gemini_with_fallback', calls)
+
+    def test_original_numbering_preserves_ict_five_six_without_touching_scoring(self):
+        from services.official_paper import original_question_number, original_print_context
+        exam = original_tin0530('ICT')
+        self.assertEqual([original_question_number(exam,q,i) for i,q in enumerate(exam['p2'],1)], [1,2,5,6])
+        self.assertEqual(original_question_number({}, {'source_id':'II.6'}, 4), 4)
+        self.assertEqual(original_print_context(exam)['duration'],50)
+        forged = deepcopy(exam);forged['code']='9999'
+        with self.assertRaises(ValueError):
+            original_print_context(forged)
+
+    def test_actual_export_headers_keys_and_code_for_both_original_pathways(self):
+        import contextlib,io
+        with contextlib.redirect_stdout(io.StringIO()),contextlib.redirect_stderr(io.StringIO()):
+            import app
+            for track in ['CS','ICT']:
+                exam = original_tin0530(track)
+                before = deepcopy(exam)
+                for style in ['form1','form2']:
+                    markup,tex = app.build_exam_exports(exam,'Tin học','Lớp 12',45,
+                        include_answers=True,template_style=style,show_support_qr=False)
+                    self.assertIn('data-original-paper="2025-0530"',markup)
+                    self.assertIn('ĐỀ THI TỐT NGHIỆP THPT NĂM 2025',markup)
+                    self.assertIn('Thời gian: 50 phút',markup)
+                    self.assertNotIn('Kỳ thi KSCL',markup)
+                    self.assertNotIn('ĐỀ KHẢO SÁT CHẤT LƯỢNG',markup)
+                    self.assertIn('không phải bản PDF gốc',markup)
+                    self.assertNotIn('```',markup)
+                    self.assertNotIn('```',tex)
+                    self.assertIn('exam-source-code',markup)
+                    if track == 'ICT':
+                        self.assertIn("bold;'>Câu 5</td>",markup)
+                        self.assertIn("bold;'>Câu 6</td>",markup)
+                        self.assertIn(r'\textbf{Câu 5}',tex)
+                        self.assertIn(r'\textbf{Câu 6}',tex)
+                    self.assertEqual(exam,before)
