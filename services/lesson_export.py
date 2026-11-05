@@ -11,7 +11,7 @@ from markdown_it import MarkdownIt
 from services.academic_context import academic_context
 
 ROOT = Path(__file__).resolve().parents[1]
-T1_CONTEXT_REVISION = 2026110507
+T1_CONTEXT_REVISION = 2026110509
 _TOKENS = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$)")
 
 
@@ -142,6 +142,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#ffffff80;padding:10p
 .formula-error{outline:2px solid #b91c1c;color:#991b1b;white-space:pre-wrap;font-family:monospace}.monochrome,.monochrome h1,.monochrome h2,.monochrome h3,.monochrome h4{color:#111}.monochrome .paper{background:#fff}
 .color .paper{background:#fff}.color h2{border-left:4px solid #0891b2;padding-left:10px}.notice{color:#b91c1c}
 .monochrome .verified-function-visuals polyline{stroke:#111}
+article .verified-function-visuals svg{background:transparent!important}article .verified-function-visuals svg rect[fill="white"],article .verified-function-visuals svg circle[fill="white"]{fill:none}
 .lesson-source-review{margin-top:18px;padding-top:12px;border-top:1px solid #94a3b8;font:14px/1.5 Arial,'Segoe UI',sans-serif;color:#334155}.monochrome .lesson-source-review{color:#111}
 .handwritten .lesson-source-review{font-family:GSAIHand,cursive;font-size:18px;line-height:1.4}
 @media(max-width:600px){.paper{margin:10px 8px;padding:20px}.handwritten .paper{padding:24px 18px 28px 48px}.handwritten article{font-size:22px}.handwritten .notebook-header{grid-template-columns:1fr;gap:14px}.notebook-identity span{margin-top:2px}.notebook-heading h1{font-size:28px}}
@@ -208,7 +209,7 @@ def handwritten_prompt(subject, grade, topic, lesson):
                                  "handwriting": "legible Vietnamese cursive, slight right slant, complete diacritics",
                                  "layout": "notebook page; two-part header; red underlined section headings; blue body; black spiral loops and punched holes on left; fine square grid",
                                  "reference_scope": "Use the supplied notebook image for visual style only; no exam year, ministry identity, questions, or official certification"},
-                       "rules": ["Use only the supplied lesson content and context", "Never invent or alter formulas, facts, examples or figures",
+                       "rules": ["Use only the supplied lesson content and context", "Never invent or alter formulas, facts, examples or figures", "All graph and variation-table panels inside the infographic must have transparent backgrounds, including label backdrops, so the parent infographic paper/grid shows through; never put them on an opaque white rectangle", "When the supplied lesson calls for a graph, draw the actual graph of its stated function; include projections of extrema and symmetry centers to both coordinate axes, exact irrational coordinates and axis intercept coordinates, with collision-free labels; never replace exact coordinates with rounded decimals or a verbal description",
                                  "Preserve chemical, physical, mathematical and language notation for this subject",
                                  "Use multiple pages instead of cutting or shrinking content", "Render variation tables as transparent panels over the infographic background; use large green rising/red falling arrows, aligned critical values and split one-sided limits at vertical discontinuities; never substitute tiny Unicode arrows in a flat grid", "Do not copy any subject matter or identity from a style reference"]}, ensure_ascii=False, indent=2)
 

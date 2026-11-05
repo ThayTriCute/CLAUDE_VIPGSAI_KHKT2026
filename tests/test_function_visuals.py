@@ -113,6 +113,15 @@ class FunctionVisualsTests(unittest.TestCase):
         for lesson in [r'$y=x+1$ và $y=x-1$', '```python\ny=x+1\n```']:
             self.assertEqual(with_function_visuals('<p>Bài học</p>', 'Khảo sát', lesson), '<p>Bài học</p>')
 
+    def test_each_supported_worked_function_gets_its_own_graph(self):
+        body = '<p>Nội dung nguồn</p>'
+        result = with_function_visuals(body, 'Khảo sát',
+            r'Ví dụ $y=x^3-3x+1$. Ví dụ $y=(x^2+2)/(x-1)$.')
+        self.assertTrue(result.startswith(body))
+        self.assertEqual(result.count('class="verified-function-visuals"'), 2)
+        self.assertEqual(result.count('aria-label="Đồ thị y='), 2)
+        self.assertIn('data-projection="true"', result)
+
     def test_sgk_graph_shows_extrema_center_intercepts_and_projections(self):
         graph = graph_svg(function_model('x^3-3x+1', strict=True))
         self.assertEqual(graph.count('data-projection="true"'), 3)
