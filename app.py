@@ -3653,6 +3653,10 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
                        show_support_qr=True):
     import datetime
     from services.exam_code_text import source_text_html
+    from services.official_paper import original_print_context, original_question_number
+    original_context = original_print_context(exam)
+    if original_context:
+        duration = original_context['duration']
     # CHỐT CHẶN CUỐI CÙNG: Thẩm định ngữ nghĩa, khử đa đáp án và chuẩn hóa Socratic trước khi xuất bản
     exam = audit_and_heal_exam_semantics(exam, subject_name=subject_name, grade_name=grade_name)
     current_year = datetime.datetime.now().year
@@ -3661,6 +3665,8 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
     ex_code = str(exam.get('code', st.session_state.get('exam_code', '101')))
     title = f"Kỳ thi Khảo sát chất lượng lần thứ {exam_count} — Môn {subject_name} ({grade_name}) — Mã đề {ex_code}"
 
+    if original_context:
+        title = original_context['title']
     app_target_url = f"{APP_URL}?exam_code={ex_code}&subject={urllib.parse.quote(subject_name)}"
     qr_base64 = generate_local_qr_base64(app_target_url, fill_color="#0f172a", back_color="#ffffff")
     mb_qr_base64 = get_mb_bank_vietqr_base64()
@@ -3839,6 +3845,22 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
             latex_header
         ]
 
+    if original_context:
+        source_title = original_context['title']
+        source_track = original_context['track']
+        source_note = original_context['note']
+        blocks[0] = (
+            '<header data-original-paper="2025-0530" style="text-align:center;margin-bottom:16px">'
+            '<h2 style="font-size:17px">' + html.escape(source_title) + '</h2>'
+            '<p>Định hướng: ' + html.escape(source_track) + ' • Thời gian: 50 phút</p>'
+            '<p style="font-size:12px">' + html.escape(source_note) + '</p></header>')
+        # Replace the generic KSCL header and its running school-year attribution.
+        tex[-1] = (r"\lhead{TIN HỌC THPT 2025 — MÃ 0530}"
+                   + r"\begin{center}\textbf{" + latex_text(source_title)
+                   + r"}\par Định hướng: " + latex_text(source_track)
+                   + r"\par Thời gian: 50 phút\end{center}"
+                   + r"\noindent\textit{" + latex_text(source_note) + r"}\par")
+
     sections = []
     if subject_name == "Ngữ văn":
         passage = exam.get("part_doc_hieu", {}).get("text", "")
@@ -3886,6 +3908,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
             tex.append(r"\par\vspace{0.25cm}" + tex_header)
 
         for index, q in enumerate(questions, 1):
+            index = original_question_number(exam, q, index)
             q = deepcopy(q)
             raw_q_text = sanitize_print_math_text(str(q.get("q", "")))
             expl_q = sanitize_print_math_text(str(q.get("explain", q.get("expl", q.get("exp", "")))))
@@ -4087,6 +4110,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
             tex.append(r"\begin{tabularx}{\textwidth}{|c|X|X|X|X|}\hline")
             tex.append(r"\textbf{Câu} & \textbf{Ý a)} & \textbf{Ý b)} & \textbf{Ý c)} & \textbf{Ý d)} \\ \hline")
             for idx2, q2 in enumerate(p2_items, 1):
+                idx2 = original_question_number(exam, q2, idx2)
                 st_vals = [("Đúng" if normalize_bool((s.get("a") if "a" in s else s.get("ans"))) is True else "Sai" if normalize_bool((s.get("a") if "a" in s else s.get("ans"))) is False else "Chưa xác định") for s in q2.get("stmts", [])]
                 while len(st_vals) < 4: st_vals.append("-")
                 blocks.append(f"<tr><td style='font-weight: bold;'>Câu {idx2}</td>" + "".join(f"<td style='padding: 4px;'>{v}</td>" for v in st_vals) + "</tr>")
@@ -13485,6 +13509,7 @@ if selected_station == station_labels[2]:
 
     st.subheader(f"📝 Trạm 3: Khảo Thí Độc Lập - Môn {subject} (Lớp {grade_num})")
 
+    from services.official_paper import original_question_number
     active_profile = assessment_profile(subject, grade_num)
     st.caption(active_profile["label"])
     st.warning("Ngữ liệu AI/kho đề chưa được xác minh toàn bộ theo từng yêu cầu cần đạt, phiên bản KNTT và nguồn gốc. Giáo viên cần duyệt trước khi dùng đánh giá chính thức.")
@@ -15656,7 +15681,7 @@ if selected_station == station_labels[2]:
 
                     render_question_source_badge(q, idx)
 
-                    st.markdown(f"**Câu {idx+1}:** {clean_question_bbt_text(q.get('q'))}")
+                    st.markdown(f"**Câu {original_question_number(exam, q, idx+1)}:** {clean_question_bbt_text(q.get('q'))}")
 
                     render_fast_visual(q, f"test_p1_{idx}")
 
@@ -15696,7 +15721,7 @@ if selected_station == station_labels[2]:
 
                     render_question_source_badge(q, idx)
 
-                    st.markdown(f"**Câu {idx+1}:** {clean_question_bbt_text(q.get('q'))}")
+                    st.markdown(f"**Câu {original_question_number(exam, q, idx+1)}:** {clean_question_bbt_text(q.get('q'))}")
 
                     render_fast_visual(q, f"test_p2_{idx}")
 
@@ -15741,7 +15766,7 @@ if selected_station == station_labels[2]:
 
                     render_question_source_badge(q, idx)
 
-                    st.markdown(f"**Câu {idx+1}:** {clean_question_bbt_text(q.get('q'))}")
+                    st.markdown(f"**Câu {original_question_number(exam, q, idx+1)}:** {clean_question_bbt_text(q.get('q'))}")
 
                     render_fast_visual(q, f"test_p3_{idx}")
 
