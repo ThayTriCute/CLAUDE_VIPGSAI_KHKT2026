@@ -11773,10 +11773,10 @@ if selected_station == station_labels[0]:
 
         if quiz_list:
             from services.cognitive_runtime import independent_lesson_quiz_audit
-            quiz_cognitive_audits = independent_lesson_quiz_audit(
+            st.session_state["t1_independent_cognitive_audit"] = independent_lesson_quiz_audit(
                 quiz_list, subject, grade_num, st.session_state.get("current_topic", ""),
                 st.session_state.get("current_lesson", ""))
-            st.session_state["t1_independent_cognitive_audit"] = quiz_cognitive_audits
+            quiz_cognitive_audits = st.session_state["t1_independent_cognitive_audit"]
 
             st.markdown("<br>", unsafe_allow_html=True)
 
