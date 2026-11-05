@@ -208,7 +208,7 @@ def handwritten_prompt(subject, grade, topic, lesson):
                                  "handwriting": "legible Vietnamese cursive, slight right slant, complete diacritics",
                                  "layout": "notebook page; two-part header; red underlined section headings; blue body; black spiral loops and punched holes on left; fine square grid",
                                  "reference_scope": "Use the supplied notebook image for visual style only; no exam year, ministry identity, questions, or official certification"},
-                       "rules": ["Use only the supplied lesson content and context", "Never invent or alter formulas, facts, examples or figures",
+                       "rules": ["Use only the supplied lesson content and context", "Never invent or alter formulas, facts, examples or figures", "When the supplied lesson calls for a graph, draw the actual graph of its stated function; include projections of extrema and symmetry centers to both coordinate axes, exact irrational coordinates and axis intercept coordinates, with collision-free labels; never replace exact coordinates with rounded decimals or a verbal description",
                                  "Preserve chemical, physical, mathematical and language notation for this subject",
                                  "Use multiple pages instead of cutting or shrinking content", "Render variation tables as transparent panels over the infographic background; use large green rising/red falling arrows, aligned critical values and split one-sided limits at vertical discontinuities; never substitute tiny Unicode arrows in a flat grid", "Do not copy any subject matter or identity from a style reference"]}, ensure_ascii=False, indent=2)
 

@@ -9,7 +9,7 @@ from functools import lru_cache
 import sympy as sp
 
 X = sp.Symbol('x', real=True)
-RENDER_REVISION = 2026110204
+RENDER_REVISION = 2026110508
 
 
 class NonStandardFunction(ValueError):
@@ -480,6 +480,9 @@ def with_function_visuals(body, topic, lesson=''):
             figure = explicit_function_visuals('y=' + raw)
             if figure and 'data-function-rejected' not in figure:
                 figures.add(figure)
+        if len(figures) > 1:
+            # Keep every source table: no guessed table-to-function association.
+            return body + "".join(sorted(figures))
         if len(figures) == 1:
             visuals = figures.pop()
     if not visuals:
