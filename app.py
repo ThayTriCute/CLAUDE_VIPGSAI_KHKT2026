@@ -13989,10 +13989,8 @@ if selected_station == station_labels[2]:
 
                 c_cp1, c_cp2 = st.columns([1.5, 1])
                 with c_cp1:
-                    btn_confirm_cp = st.button("🔒 Khóa & Xác Nhận Ma Trận Tùy Biến", key="btn_confirm_cp_explicit")
-                    if btn_confirm_cp:
-                        handle_custom_prompt_commit()
-                        st.rerun()
+                    btn_confirm_cp = st.button("🔒 Khóa & Xác Nhận Ma Trận Tùy Biến", key="btn_confirm_cp_explicit",
+                                               on_click=handle_custom_prompt_commit)
 
                 if custom_matrix_prompt.strip():
                     st.markdown(textwrap.dedent(f"""
