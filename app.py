@@ -2,8 +2,8 @@ def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
-    for module, revision in ((lesson_sources, 2026110205), (curriculum_policy, 2026110508),
-                             (lab_scope, 2026110202), (lesson_export, 2026110508),
+    for module, revision in ((lesson_sources, 2026110205), (curriculum_policy, 2026110509),
+                             (lab_scope, 2026110202), (lesson_export, 2026110509),
                              (text_boundaries, 2026110201), (socratic_context, 2026110506)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
@@ -10727,10 +10727,10 @@ def _normalize_moet_bbt_grid(x_cells: list, yp_cells: list, y_cells: list) -> di
 def _t1_with_function_visuals(body, topic, lesson=''):
     """Load this release's math renderer if a long-lived worker retained it."""
     from services import function_visuals
-    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026110508:
+    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026110509:
         from importlib import reload
         function_visuals = reload(function_visuals)
-    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026110508:
+    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026110509:
         raise RuntimeError('Bộ dựng đồ thị chưa đồng bộ bản phát hành; cần nạp lại ứng dụng.')
     return function_visuals.with_function_visuals(body, topic, lesson)
 

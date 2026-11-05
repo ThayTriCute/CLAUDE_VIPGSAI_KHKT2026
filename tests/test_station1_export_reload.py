@@ -35,7 +35,7 @@ class Station1ExportReloadTests(unittest.TestCase):
         result = scope['_sync_t1_function_export'](old, 'Toán học', 'y=x^3-2x.', 'KEEP SOURCE')
         self.assertNotIn('≈1.414', result)
         self.assertEqual(result.count('<section class="verified-function-visuals"'), 1)
-        self.assertIn('data-function-renderer="2026110508"', result)
+        self.assertIn('data-function-renderer="2026110509"', result)
         self.assertIn('KEEP SOURCE', result)
 
     def test_old_module_is_refreshed_but_current_module_is_not_reloaded(self):
@@ -43,10 +43,10 @@ class Station1ExportReloadTests(unittest.TestCase):
         _, scope = self.namespace()
         render = scope['_t1_with_function_visuals']
         with patch('importlib.reload', side_effect=AssertionError('current renderer must not reload')):
-            self.assertIn('data-function-renderer="2026110508"', render('', 'y=x^3-2x.'))
+            self.assertIn('data-function-renderer="2026110509"', render('', 'y=x^3-2x.'))
         with patch.object(function_visuals, 'RENDER_REVISION', 0):
             with patch('importlib.reload', wraps=__import__('importlib').reload) as refresh:
-                self.assertIn('data-function-renderer="2026110508"', render('', 'y=x^3-2x.'))
+                self.assertIn('data-function-renderer="2026110509"', render('', 'y=x^3-2x.'))
                 refresh.assert_called_once_with(function_visuals)
 
     def test_actual_app_export_assignments_repair_a_cached_old_builder(self):

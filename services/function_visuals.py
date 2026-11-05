@@ -9,7 +9,7 @@ from functools import lru_cache
 import sympy as sp
 
 X = sp.Symbol('x', real=True)
-RENDER_REVISION = 2026110508
+RENDER_REVISION = 2026110509
 
 
 class NonStandardFunction(ValueError):
@@ -388,7 +388,9 @@ def graph_svg(model):
                 if touches_curve(rect):
                     continue
                 if abs(dx) > half+20 or abs(dy) > 35:
-                    body += f'<line x1="{xp:.3f}" y1="{yp:.3f}" x2="{lx:.3f}" y2="{ly:.3f}" stroke="#555" stroke-width="0.7"/>'
+                    target_x = min(max(xp, rect[0]), rect[2])
+                    target_y = min(max(yp, rect[1]), rect[3])
+                    body += f'<line x1="{xp:.3f}" y1="{yp:.3f}" x2="{target_x:.3f}" y2="{target_y:.3f}" stroke="#555" stroke-width="0.7"/>'
                 body += annotation(lx, ly, point_text, 'point')
                 placed = True
                 break
@@ -396,7 +398,20 @@ def graph_svg(model):
                 break
         if not placed:
             # Extremely crowded data keep exact coordinates in a separate key.
-            legend.append(text)
+            key = name or 'P' + str(len(legend)+1)
+            legend.append(key + ': ' + text)
+            for dy in (-22, 28, -48, 54, -74, 80):
+                if placed:
+                    break
+                for dx in (24, -24, 48, -48, 72, -72):
+                    lx, ly = xp+dx, yp+dy
+                    rect = box(lx, ly, key)
+                    if (rect[0] < 8 or rect[2] > 808 or rect[1] < 30 or rect[3] > 449
+                            or overlaps(rect) or touches_curve(rect)):
+                        continue
+                    body += annotation(lx, ly, key, 'point-key')
+                    placed = True
+                    break
     # Guides are clipped to the graph rectangle; point labels remain readable.
     body += '<g clip-path="url(#function-plot-clip)">' + guides + '</g>'
     body += ''.join(label_layer)

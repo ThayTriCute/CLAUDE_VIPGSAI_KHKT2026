@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110508
+T1_CONTEXT_REVISION = 2026110509
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -652,6 +652,7 @@ def lesson_prompt(subject, grade, topic):
             "mũi tên ↗ hoặc ↘ ở khoảng. Không chép các số -2, 0, 4, 1 từ ảnh mẫu. "
             "Khi bài có mục Đồ thị hoặc yêu cầu khảo sát/vẽ đồ thị, phải cung cấp biểu thức số tường minh của đúng hàm trong ví dụ để hệ thống dựng hình thực; không chỉ mô tả bằng chữ hoặc hứa học sinh tự vẽ. "
             "Mỗi ví dụ cần hình phải có đồ thị riêng theo đúng dữ kiện; không dùng một hình chung cho các hàm khác nhau. "
+            "Trong infographic, nền đồ thị/hình vẽ/BBT và nền nhãn phải trong suốt để dùng đúng nền infographic hiện tại, không đặt khung nền trắng riêng; giữ đường và chữ đủ tương phản. "
             "Đồ thị cần trục Ox/Oy, gốc O, khung nhìn chứa các đặc điểm quan trọng, "
             "tách nhánh tại điểm không xác định; tiệm cận nét đứt, nhãn không đè đường cong. "
             "Đồ thị và bảng phải cùng hàm số, cùng cực trị và giới hạn; "
