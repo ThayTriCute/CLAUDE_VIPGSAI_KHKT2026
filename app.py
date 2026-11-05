@@ -3,7 +3,7 @@ def _refresh_t1_context_services():
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
     for module, revision in ((lesson_sources, 2026110205), (curriculum_policy, 2026110505),
-                             (lab_scope, 2026110202), (lesson_export, 2026110504),
+                             (lab_scope, 2026110202), (lesson_export, 2026110507),
                              (text_boundaries, 2026110201), (socratic_context, 2026110506)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
