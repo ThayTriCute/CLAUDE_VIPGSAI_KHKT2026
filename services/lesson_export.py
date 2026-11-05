@@ -11,7 +11,7 @@ from markdown_it import MarkdownIt
 from services.academic_context import academic_context
 
 ROOT = Path(__file__).resolve().parents[1]
-T1_CONTEXT_REVISION = 2026110504
+T1_CONTEXT_REVISION = 2026110507
 _TOKENS = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$)")
 
 
@@ -70,6 +70,11 @@ def lesson_body_html(lesson):
     # Remote images are not evidence of the selected lesson. Preserve their alt
     # description, without loading arbitrary image hosts from generated text.
     md.renderer.rules["image"] = lambda tokens, idx, options, env: html.escape(tokens[idx].content)
+    # Preserve a discontinuity marker inside one Markdown cell.
+    code_blocks = re.split(r'(```[\s\S]*?```|~~~[\s\S]*?~~~)', protected)
+    protected = ''.join(block if index % 2 else re.sub(
+        r'(?m)^([ \t]*\|[^\n]+)$', lambda m: m[0].replace('||', r'\|\|'), block)
+        for index, block in enumerate(code_blocks))
     body = md.render(protected)
     for token, value in replacements.items():
         body = body.replace(token, value)
@@ -153,31 +158,41 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#ffffff80;padding:10p
 <script>''' + js + r'''</script><script>
 (async function(){let errors=document.querySelectorAll('[data-source-issue]').length;const status=document.getElementById('render-status');
 for(const el of document.querySelectorAll('.lesson-math')){try{katex.render(el.dataset.tex,el,{displayMode:el.dataset.display==='true',throwOnError:true,trust:false,strict:'warn',maxExpand:1000,maxSize:20});}catch(error){errors++;el.textContent=el.dataset.tex;el.classList.add('formula-error');el.title='Công thức chưa dựng được; cần kiểm tra cú pháp.';}}
-// Variation tables: keep source values, draw continuous interval arrows.
+// Variation tables: source-bound labels, split one-sided limits, large interval arrows.
 for(const table of document.querySelectorAll('article table')){
  const rows=Array.from(table.rows);
- const plain=cell=>{const c=cell.cloneNode(true);for(const m of c.querySelectorAll('.lesson-math'))m.replaceWith(m.dataset.tex);return c.textContent.trim().replace(/\\prime/g,'′').replace(/\\(?:infty)/g,'∞').replace(/[$ {}]/g,'').replace(/−/g,'-');};
+ const plain=cell=>{const c=cell.cloneNode(true);for(const m of c.querySelectorAll('.lesson-math'))m.replaceWith(m.dataset.tex);return c.textContent.trim().replace(/\\prime/g,'′').replace(/\\infty/g,'∞').replace(/[$ {}]/g,'').replace(/−/g,'-');};
  if(rows.length!==3)continue;
  const data=rows.map(r=>Array.from(r.cells).map(plain));
  if(!data[0][0]||!/[′']/.test(data[1][0])||data[1][0].replace(/\^?[′']/g,'')!==data[2][0])continue;
- if(!data.every(r=>r.length===data[0].length)||data.some(r=>r.some(v=>v.includes('||'))))continue;
+ if(!data.every(r=>r.length===data[0].length))continue;
  const points=[];for(let i=1;i<data[0].length;i++)if(data[0][i])points.push(i);
  if(points.length<2||points.length>8)continue;
- const dirs=[];for(let k=0;k<points.length-1;k++){const a=points[k],b=points[k+1];const sign=data[1].slice(a+1,b).join('');const arrow=data[2].slice(a+1,b).join('');dirs.push(arrow.includes('↗')||sign==='+'?'up':arrow.includes('↘')||sign==='-'?'down':null);}
- if(dirs.some(d=>!d)||dirs.some((d,k)=>{const a=data[2][points[k]],b=data[2][points[k+1]];const num=v=>v==='-∞'?-Infinity:v==='+∞'||v==='∞'?Infinity:Number(v.replace(',','.'));return d==='up'?num(a)>=num(b):num(a)<=num(b);})||points.some(i=>!/^[-+]?([0-9]+([.,][0-9]+)?|∞)$/.test(data[2][i])))continue;
+ const dirs=[];for(let k=0;k<points.length-1;k++){const a=points[k],b=points[k+1];const sign=data[1].slice(a+1,b).join('');const arrow=data[2].slice(a+1,b).join('');dirs.push(sign==='+'?'up':sign==='-'?'down':arrow.includes('↗')?'up':arrow.includes('↘')?'down':null);}
+ if(dirs.some(d=>!d))continue;
+ const values=points.map(i=>data[2][i].split('||'));
+ // Never manufacture a missing one-sided limit or turn an ordinary table into a BBT.
+ const numeric=v=>/^[-+]?([0-9]+([.,][0-9]+)?|∞)$/.test(v);
+ if(values.some((v,k)=>v.length>2||v.some(x=>!numeric(x))||(data[1][points[k]]==='||'&&v.length!==2)||(v.length===2&&(k===0||k===points.length-1))))continue;
+ const num=v=>v==='-∞'?-Infinity:v==='+∞'||v==='∞'?Infinity:Number(v.replace(',','.'));
+ if(dirs.some((d,k)=>{const a=num(values[k].at(-1)),b=num(values[k+1][0]);return d==='up'?a>=b:a<=b;}))continue;
  const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
- svg.setAttribute('viewBox','0 0 820 220');svg.setAttribute('role','img');svg.setAttribute('aria-label',table.innerText);svg.style.cssText='display:block;width:100%;height:auto;background:white;color:#111;break-inside:avoid;font:20px Times New Roman,serif';
- const add=(tag,attrs,text)=>{const el=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,v);if(text!==undefined)el.textContent=text;svg.append(el);return el;};
- add('rect',{x:1,y:1,width:818,height:218,fill:'white',stroke:'#111','stroke-width':2});
- for(const y of [52,100])add('line',{x1:1,y1:y,x2:819,y2:y,stroke:'#111','stroke-width':1.5});
- add('line',{x1:82,y1:1,x2:82,y2:219,stroke:'#111','stroke-width':1.5});
- const label=(x,y,t)=>add('text',{x,y,fill:'#111','text-anchor':'middle','dominant-baseline':'middle'},t.replace(/-/g,'−'));
- label(42,28,data[0][0]);label(42,77,data[1][0]);label(42,160,data[2][0]);
- const xs=points.map((_,k)=>130+k*640/(points.length-1));
- const ys=points.map((i,k)=>{const v=data[2][i];if(v.includes('∞'))return v.startsWith('-')?196:124;return (dirs[k]==='down'||dirs[k-1]==='up')?145:178;});
- points.forEach((i,k)=>{label(xs[k],28,data[0][i]);label(xs[k],77,data[1][i]);label(xs[k],ys[k],data[2][i]);});
- dirs.forEach((d,k)=>{label((xs[k]+xs[k+1])/2,77,data[1].slice(points[k]+1,points[k+1]).join(''));const x1=xs[k]+25,x2=xs[k+1]-25,y1=ys[k],y2=ys[k+1];add('line',{x1,y1,x2,y2,stroke:'#111','stroke-width':2});const a=Math.atan2(y2-y1,x2-x1);add('path',{d:`M ${x2-9*Math.cos(a-.45)} ${y2-9*Math.sin(a-.45)} L ${x2} ${y2} L ${x2-9*Math.cos(a+.45)} ${y2-9*Math.sin(a+.45)}`,fill:'none',stroke:'#111','stroke-width':2});});
- table.replaceWith(svg);
+ const width=Math.max(900,points.length*200),height=310;
+ svg.setAttribute('viewBox',`0 0 ${width} ${height}`);svg.setAttribute('role','img');svg.setAttribute('data-variation-card','2026110507');svg.setAttribute('aria-label',table.innerText);svg.style.cssText='display:block;width:100%;height:auto;min-width:650px;background:transparent;break-inside:avoid;font:20px Times New Roman,serif';
+ const mono=document.body.classList.contains('monochrome'),up=mono?'#111':'#16a34a',down=mono?'#111':'#dc2626';
+ const add=(tag,attrs,text,parent=svg)=>{const el=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,v);if(text!==undefined)el.textContent=text;parent.append(el);return el;};
+ add('rect',{x:1,y:1,width:width-2,height:height-2,rx:7,fill:'none',stroke:'#0f172a'});
+ add('rect',{x:1,y:1,width:width-2,height:32,fill:'#0f172a'});
+ add('text',{x:16,y:22,fill:'white','font-size':14,'font-family':'Arial,sans-serif','font-weight':700},'BẢNG BIẾN THIÊN');
+ for(const y of [90,144])add('line',{x1:1,y1:y,x2:width-1,y2:y,stroke:'#0f172a','stroke-width':1.6});
+ add('line',{x1:82,y1:33,x2:82,y2:height-1,stroke:'#0f172a','stroke-width':1.6});
+ const label=(x,y,t,color='#0f172a')=>add('text',{x,y,fill:color,'text-anchor':'middle','dominant-baseline':'middle'},t.replace(/-/g,'−'));
+ label(42,61,data[0][0]);label(42,117,data[1][0]);label(42,225,data[2][0]);
+ const xs=points.map((_,k)=>125+k*(width-175)/(points.length-1));
+ const level=(v,k,side)=>v.includes('∞')?(v.startsWith('-')?282:168):((side==='left'?dirs[k-1]==='up':dirs[k]==='down')?180:270);
+ points.forEach((i,k)=>{label(xs[k],61,data[0][i]);if(values[k].length===2){for(const offset of [-3,3])add('line',{x1:xs[k]+offset,y1:91,x2:xs[k]+offset,y2:height-2,stroke:down,'stroke-width':1.4});label(xs[k]-28,level(values[k][0],k,'left'),values[k][0]);label(xs[k]+28,level(values[k][1],k,'right'),values[k][1]);}else{label(xs[k],117,data[1][i]);const y=values[k][0].includes('∞')?level(values[k][0],k,'right'):(dirs[k]==='down'||dirs[k-1]==='up'?180:270);label(xs[k],y,values[k][0]);}});
+ dirs.forEach((d,k)=>{const color=d==='up'?up:down;label((xs[k]+xs[k+1])/2,117,data[1].slice(points[k]+1,points[k+1]).join(''),color);const x1=xs[k]+45,x2=xs[k+1]-45,y1=d==='up'?270:180,y2=d==='up'?180:270;add('line',{x1,y1,x2,y2,stroke:color,'stroke-width':2.8});const a=Math.atan2(y2-y1,x2-x1),size=16;add('path',{d:`M ${x2-size*Math.cos(a-.5)} ${y2-size*Math.sin(a-.5)} L ${x2} ${y2} L ${x2-size*Math.cos(a+.5)} ${y2-size*Math.sin(a+.5)} Z`,fill:color,stroke:color});});
+ const wrapper=document.createElement('div');wrapper.style.cssText='overflow-x:auto;margin:16px 0;break-inside:avoid';wrapper.append(svg);table.replaceWith(wrapper);
 }
 await document.fonts.ready;status.textContent=errors?'Có '+errors+' công thức cần kiểm tra; chưa cho in.':'Đã dựng công thức. Có thể in hoặc lưu PDF.';status.className=errors?'notice':'';
 const print=document.getElementById('print');print.disabled=errors>0;print.onclick=()=>window.print();document.documentElement.dataset.renderErrors=String(errors);document.documentElement.dataset.renderReady='true';
@@ -195,7 +210,7 @@ def handwritten_prompt(subject, grade, topic, lesson):
                                  "reference_scope": "Use the supplied notebook image for visual style only; no exam year, ministry identity, questions, or official certification"},
                        "rules": ["Use only the supplied lesson content and context", "Never invent or alter formulas, facts, examples or figures",
                                  "Preserve chemical, physical, mathematical and language notation for this subject",
-                                 "Use multiple pages instead of cutting or shrinking content", "Do not copy any subject matter or identity from a style reference"]}, ensure_ascii=False, indent=2)
+                                 "Use multiple pages instead of cutting or shrinking content", "Render variation tables as transparent panels over the infographic background; use large green rising/red falling arrows, aligned critical values and split one-sided limits at vertical discontinuities; never substitute tiny Unicode arrows in a flat grid", "Do not copy any subject matter or identity from a style reference"]}, ensure_ascii=False, indent=2)
 
 
 def faithful_infographic_data(subject, grade, topic, lesson):
