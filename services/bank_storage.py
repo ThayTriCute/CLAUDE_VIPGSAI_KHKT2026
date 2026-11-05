@@ -146,6 +146,43 @@ def read_exam_shard(path, grade=None):
     return list(iter_exam_shard(path, grade=grade))
 
 
+def read_curated_exam_packs(directory, *, subject, grade=None):
+    """Load only hash-bound, explicitly released CT2018 Station3 supplements.
+
+    A manifest permits loading source records, not whole-paper semantic approval.
+    Source holds remain in the returned dictionaries for the delivery gates.
+    """
+    directory = Path(directory)
+    result = []
+    for receipt in sorted(directory.glob('*.manifest.json')):
+        manifest = json.loads(receipt.read_text(encoding='utf-8'))
+        if manifest.get('subject') != subject or (grade is not None and
+                str(manifest.get('grade')) != str(grade)):
+            continue
+        if (manifest.get('schema_version') != 1 or manifest.get('station') != 3
+                or manifest.get('curriculum') != 'CT2018'
+                or manifest.get('runtime_import_allowed') is not True):
+            continue
+        filename = manifest.get('filename', '')
+        if not isinstance(filename, str) or Path(filename).name != filename or not filename.endswith('.json.xz'):
+            raise ValueError('Invalid curated shard filename')
+        path = directory / filename
+        digest = hashlib.sha256()
+        with path.open('rb') as stream:
+            for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+                digest.update(chunk)
+        if digest.hexdigest() != manifest.get('archive_sha256'):
+            raise ValueError('Curated shard checksum mismatch')
+        rows = read_exam_shard(path, grade=grade)
+        if any(row.get('subject') != subject or row.get('curriculum') != 'CT2018'
+               or str(row.get('grade')) != str(manifest.get('grade'))
+               or str(row.get('year')) != str(manifest.get('year'))
+               or str(row.get('code')) != str(manifest.get('variant')) for row in rows):
+            raise ValueError('Curated shard context mismatch')
+        result.extend(rows)
+    return result
+
+
 def append_exam_atomic(path, exam):
     """Idempotent exact import; reject conflicting identity and concurrent writes."""
     import os

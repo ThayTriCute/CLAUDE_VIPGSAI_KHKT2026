@@ -2232,6 +2232,25 @@ def get_shard_exams(subject: str, grade=None) -> list:
         logging.warning("Không thể nạp shard cho môn %s: %s", norm_subj, exc)
         loaded_exams = []
 
+    # Released source batches are separate immutable XZ files; never rewrite
+    # the large legacy shard or silently overwrite a conflicting exam identity.
+    try:
+        from services.bank_storage import read_curated_exam_packs
+        supplements = read_curated_exam_packs(os.path.join(BASE_DIR, 'data', 'curated_exam_sources'),
+                                             subject=canonical_subject(subject), grade=grade)
+        identity = lambda e: tuple(str(e.get(k, '')) for k in ('subject', 'grade', 'year', 'code', 'exam_type'))
+        known = {identity(e): e for e in loaded_exams}
+        for exam in supplements:
+            key = identity(exam)
+            if key in known:
+                if known[key] != exam:
+                    logging.warning('Conflicting curated exam identity skipped: %s', key)
+                continue
+            loaded_exams.append(exam)
+            known[key] = exam
+    except (OSError, ValueError, TypeError) as exc:
+        logging.warning('Curated source batch not loaded: %s', exc)
+
     _SHARD_CACHE[shard_key] = loaded_exams
     return loaded_exams
 

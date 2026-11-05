@@ -3949,6 +3949,1655 @@
         },
         "label_role": "App operational interpretation, not Ministry published level"
       }
+    },
+    "75d0d262ef6bcc1b4b91dc0358456bc2c61d2d3fdd7464410de201c2eff6826d": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "75d0d262ef6bcc1b4b91dc0358456bc2c61d2d3fdd7464410de201c2eff6826d",
+      "reviewed_level": "NB",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin CT2018 p53 HTML/web content",
+      "solution_rubric": "Recall the HTML image element img; distinguish hyperlink, paragraph and ordered-list elements.",
+      "cognitive_reason": "Recall the HTML image element img; distinguish hyperlink, paragraph and ordered-list elements.",
+      "cognitive_operations": [
+        "Recall the HTML image element img; distinguish hyperlink, paragraph and ordered-list elements."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin CT2018 p53 HTML/web content",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_LINKS_FORMS_ACTUAL_READ_20261103.json: printed page 60 image-link example",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.1",
+      "source_dossier": "T3_TIN2025_0530_SOURCE_REVIEW_CURRENT.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "bbc3f918eeca0e74eaed5352b3478ec669eea78d5af4a3e478da851efa35cb3c": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "bbc3f918eeca0e74eaed5352b3478ec669eea78d5af4a3e478da851efa35cb3c",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin CT2018 p53 HTML/web content",
+      "solution_rubric": "Combine uppercase Roman numbering type I with integer start 2. A Roman string II is not a valid integer start; style/begin do not replace the required numbering attributes.",
+      "cognitive_reason": "Combine uppercase Roman numbering type I with integer start 2. A Roman string II is not a valid integer start; style/begin do not replace the required numbering attributes.",
+      "cognitive_operations": [
+        "Combine uppercase Roman numbering type I with integer start 2. A Roman string II is not a valid integer start; style/begin do not replace the required numbering attributes."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin CT2018 p53 HTML/web content",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_LISTS_ACTUAL_READ_20261103.json: printed pages 52-53 ol/li foundation; precise attribute semantics additionally supported by WHATWG",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.2",
+      "source_dossier": "T3_TIN2025_0530_SOURCE_REVIEW_CURRENT.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "79cf671e8771c850b4a871540b0ea0da6eb0fb8c05ff8d3c8e3acf25145af06b": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "79cf671e8771c850b4a871540b0ea0da6eb0fb8c05ff8d3c8e3acf25145af06b",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin pp51-52, AI capabilities/applications/limitations",
+      "solution_rubric": "Individual contribution to group work is not directly recoverable from the final product alone. This is the difficult evaluation among the supplied education tasks, not a universal claim that AI cannot assist assessment. Compare the observational limitation with content preparation and information support.",
+      "cognitive_reason": "Individual contribution to group work is not directly recoverable from the final product alone. This is the difficult evaluation among the supplied education tasks, not a universal claim that AI cannot assist assessment. Compare the observational limitation with content preparation and information support.",
+      "cognitive_operations": [
+        "Individual contribution to group work is not directly recoverable from the final product alone. This is the difficult evaluation among the supplied education tasks, not a universal claim that AI cannot assist assessment. Compare the observational limitation with content preparation and information support."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin pp51-52, AI capabilities/applications/limitations",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_AI_ACTUAL_CONTENT_READ_20261103.json: actual pp6-13; conceptual support, not a claim this exact classroom example is quoted",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.3",
+      "source_dossier": "T3_TIN2025_0530_Q3_Q11_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "1e52429f6241d4474fec4d93e6535a861b968fffc32a720c1920b3f04c10d471": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "1e52429f6241d4474fec4d93e6535a861b968fffc32a720c1920b3f04c10d471",
+      "reviewed_level": "NB",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p52, networking devices",
+      "solution_rubric": "Access Point supplies wireless LAN access. Identify its function rather than routing or the ordinary wired hub/switch function.",
+      "cognitive_reason": "Access Point supplies wireless LAN access. Identify its function rather than routing or the ordinary wired hub/switch function.",
+      "cognitive_operations": [
+        "Access Point supplies wireless LAN access. Identify its function rather than routing or the ordinary wired hub/switch function."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p52, networking devices",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_NETWORK_ACTUAL_READ_20261103.json: actual pp15-16/20 wireless access-point explanation",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.4",
+      "source_dossier": "T3_TIN2025_0530_Q3_Q11_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "b50ba31cfc2a93c4b9e2ed3248f7d99c468e22bb92eaf9cc9fab96cc261f57e7": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "b50ba31cfc2a93c4b9e2ed3248f7d99c468e22bb92eaf9cc9fab96cc261f57e7",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p53, humane digital interaction",
+      "solution_rubric": "Report an unreceived order through customer service. This addresses the dispute constructively; insulting staff, a public boycott call or blaming unrelated shippers does not. Select a respectful response to the supplied familiar case, without inventing a universal dispute-resolution rule.",
+      "cognitive_reason": "Report an unreceived order through customer service. This addresses the dispute constructively; insulting staff, a public boycott call or blaming unrelated shippers does not. Select a respectful response to the supplied familiar case, without inventing a universal dispute-resolution rule.",
+      "cognitive_operations": [
+        "Report an unreceived order through customer service. This addresses the dispute constructively; insulting staff, a public boycott call or blaming unrelated shippers does not. Select a respectful response to the supplied familiar case, without inventing a universal dispute-resolution rule."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p53, humane digital interaction",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_SHARING_ETHICS_ACTUAL_READ_20261103.json: actual pp36-39 respectful communication",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.5",
+      "source_dossier": "T3_TIN2025_0530_Q3_Q11_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "225c891670341caa1bdec006aa59b6e87f50f69d79b784764e36e8fde930c5a0": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "225c891670341caa1bdec006aa59b6e87f50f69d79b784764e36e8fde930c5a0",
+      "reviewed_level": "NB",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p54, service/administration careers",
+      "solution_rubric": "Building business application software is development rather than the principal repair/maintenance responsibilities in the supplied career classification. This does not assert a repair professional can never program.",
+      "cognitive_reason": "Building business application software is development rather than the principal repair/maintenance responsibilities in the supplied career classification. This does not assert a repair professional can never program.",
+      "cognitive_operations": [
+        "Building business application software is development rather than the principal repair/maintenance responsibilities in the supplied career classification. This does not assert a repair professional can never program."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p54, service/administration careers",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_CSS_BOX_CAREERS_READ_20261103.json: actual pp108-109 repair/maintenance role",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.6",
+      "source_dossier": "T3_TIN2025_0530_Q3_Q11_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "afe6c14d1cf194a04bda769ebeefc092cec1b7c2af8ee641addfdfb04b04c754": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "afe6c14d1cf194a04bda769ebeefc092cec1b7c2af8ee641addfdfb04b04c754",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p53, structured HTML web content",
+      "solution_rubric": "The given table has three tr elements with two cells each, without row/column spans. The first row uses th and the next two td. Percentage width/height do not change the row/column count.",
+      "cognitive_reason": "The given table has three tr elements with two cells each, without row/column spans. The first row uses th and the next two td. Percentage width/height do not change the row/column count.",
+      "cognitive_operations": [
+        "The given table has three tr elements with two cells each, without row/column spans. The first row uses th and the next two td. Percentage width/height do not change the row/column count."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p53, structured HTML web content",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "{\"source\": \"Tin12ICT4719365396#page=54\", \"printed_pages\": [54, 55], \"Chrome_page\": 334, \"screenshot_uids\": [\"409_23\", \"409_24\"], \"finding\": \"Actual table markup/rendered examples and row/column span explanation\"}",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.8",
+      "source_dossier": "T3_TIN2025_0530_Q3_Q11_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "890e04974700a31e8a4ba42b5c744512efaee30d23facf32e87379b7825e78bb": {
+      "subject": "Tin học",
+      "grade": 10,
+      "assessment_grade": 12,
+      "outcome_grade": 10,
+      "topic": "",
+      "content_sha256": "890e04974700a31e8a4ba42b5c744512efaee30d23facf32e87379b7825e78bb",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p45, basic programming/iteration",
+      "solution_rubric": "Given n=11,i=7,S=0, the loop body runs at i7 and i9; i then becomes11 and the strict less-than condition fails. There are two iterations. The requested quantity is iteration count, not final sum16 or final i11. Python and the supplied positive-integer C++ loop agree.",
+      "cognitive_reason": "Given n=11,i=7,S=0, the loop body runs at i7 and i9; i then becomes11 and the strict less-than condition fails. There are two iterations. The requested quantity is iteration count, not final sum16 or final i11. Python and the supplied positive-integer C++ loop agree.",
+      "cognitive_operations": [
+        "Given n=11,i=7,S=0, the loop body runs at i7 and i9; i then becomes11 and the strict less-than condition fails. There are two iterations. The requested quantity is iteration count, not final sum16 or final i11. Python and the supplied positive-integer C++ loop agree."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p45, basic programming/iteration",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-10.4700509569",
+        "locator": "T3_TIN2026_KNTT_TIN10_WHILE_ACTUAL_READ_20261103.json: actual printed108",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "Original earlier-grade CT2018 outcome basis only; no claim that this instrument prescribes graduation item labels or exam-scope ratios."
+        }
+      ],
+      "source_item": "I.9",
+      "source_dossier": "T3_TIN2025_0530_Q3_Q11_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false,
+      "prerequisite_use_reason": "Earlier-grade prerequisite explicitly traced in source dossier; assessment grade12 does not relabel its curriculum grade."
+    },
+    "a5559c5372fbfd1bebc5cfa820ae67a3f09f05c84aece738c52454b5e4464d4f": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "a5559c5372fbfd1bebc5cfa820ae67a3f09f05c84aece738c52454b5e4464d4f",
+      "reviewed_level": "NB",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p52, network communication protocols",
+      "solution_rubric": "TCP provides reliable ordered byte-stream transport. It is not malware removal, DHCP address assignment or an application-level guarantee that mail reaches a recipient despite failures. Recall the protocol service; reliability does not mean delivery can never fail under a broken connection.",
+      "cognitive_reason": "TCP provides reliable ordered byte-stream transport. It is not malware removal, DHCP address assignment or an application-level guarantee that mail reaches a recipient despite failures. Recall the protocol service; reliability does not mean delivery can never fail under a broken connection.",
+      "cognitive_operations": [
+        "TCP provides reliable ordered byte-stream transport. It is not malware removal, DHCP address assignment or an application-level guarantee that mail reaches a recipient despite failures. Recall the protocol service; reliability does not mean delivery can never fail under a broken connection."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p52, network communication protocols",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_NETWORK_ACTUAL_READ_20261103.json: actual networking/protocol pages20-25",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.10",
+      "source_dossier": "T3_TIN2025_0530_Q3_Q11_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "d99efd758977dcebb08693fe8ef5bd372e5602d510e5e38b29a30ce9eeb2bb9a": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "d99efd758977dcebb08693fe8ef5bd372e5602d510e5e38b29a30ce9eeb2bb9a",
+      "reviewed_level": "NB",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin pp51-52, AI capabilities and limitations",
+      "solution_rubric": "The absolute-accuracy diagnosis claim exceeds what AI guarantees. Conversational language, handwriting recognition and product recommendation are established capability categories. This distinguishes a guarantee from assistance; it is not clinical advice or a claim AI cannot help diagnosis.",
+      "cognitive_reason": "The absolute-accuracy diagnosis claim exceeds what AI guarantees. Conversational language, handwriting recognition and product recommendation are established capability categories. This distinguishes a guarantee from assistance; it is not clinical advice or a claim AI cannot help diagnosis.",
+      "cognitive_operations": [
+        "The absolute-accuracy diagnosis claim exceeds what AI guarantees. Conversational language, handwriting recognition and product recommendation are established capability categories. This distinguishes a guarantee from assistance; it is not clinical advice or a claim AI cannot help diagnosis."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin pp51-52, AI capabilities and limitations",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_AI_ACTUAL_CONTENT_READ_20261103.json: actual pp6-13; conceptual support, not an exact quoted medical example",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.11",
+      "source_dossier": "T3_TIN2025_0530_Q3_Q11_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "8bc709c2302f5e6a3608cd6b27abf2a6236818dc7a877c037ce40b74c5a199bc": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "8bc709c2302f5e6a3608cd6b27abf2a6236818dc7a877c037ce40b74c5a199bc",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p53 HTML/CSS",
+      "solution_rubric": "5px supplies the requested width and solid the continuous border. Groove, dashed and double do not satisfy the stated style. Interpret both property-value conditions, not a new design task.",
+      "cognitive_reason": "5px supplies the requested width and solid the continuous border. Groove, dashed and double do not satisfy the stated style. Interpret both property-value conditions, not a new design task.",
+      "cognitive_operations": [
+        "5px supplies the requested width and solid the continuous border. Groove, dashed and double do not satisfy the stated style. Interpret both property-value conditions, not a new design task."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p53 HTML/CSS",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_CSS_BOX_CAREERS_READ_20261103.json, actual printed91 border width/style",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.12",
+      "source_dossier": "T3_TIN2025_0530_Q12_Q24_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "dcb86de785d699f3c8bcb48a54e0abab9b3d7ff31370582fb2b73b0282f637d8": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "dcb86de785d699f3c8bcb48a54e0abab9b3d7ff31370582fb2b73b0282f637d8",
+      "reviewed_level": "NB",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p53 HTML/web structure",
+      "solution_rubric": "html is the document root containing head/body and their descendants, unlike the other listed elements. Exact KNTT HTML-structure page40-41 reading remains to be completed; no precise page-content approval inferred from an index.",
+      "cognitive_reason": "html is the document root containing head/body and their descendants, unlike the other listed elements. Exact KNTT HTML-structure page40-41 reading remains to be completed; no precise page-content approval inferred from an index.",
+      "cognitive_operations": [
+        "html is the document root containing head/body and their descendants, unlike the other listed elements. Exact KNTT HTML-structure page40-41 reading remains to be completed; no precise page-content approval inferred from an index."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p53 HTML/web structure",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2025_KNTT_MAPPING_CLOSURE_20261103.json; https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396#page=40; printed [40, 41]; Tag nesting explained; actual complete document example opens html around head/body and closes html after them. Confirms root-container interpretation, answerB.",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.13",
+      "source_dossier": "T3_TIN2025_0530_Q12_Q24_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "f254823fa87b5f35d30659100c5b07ebb6906bef080aebf67b25f15168f64d13": {
+      "subject": "Tin học",
+      "grade": 10,
+      "assessment_grade": 12,
+      "outcome_grade": 10,
+      "topic": "",
+      "content_sha256": "f254823fa87b5f35d30659100c5b07ebb6906bef080aebf67b25f15168f64d13",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p45 basic programming",
+      "solution_rubric": "For i5,6,7 the positive integer x changes6→3→9→4; zero-based index4 in DOI_MOI_SANG_TAO is M. Both supplied languages agree for these positive divisions. Earlier loop evidence is reusable, but exact KNTT string-indexing content still needs reading.",
+      "cognitive_reason": "For i5,6,7 the positive integer x changes6→3→9→4; zero-based index4 in DOI_MOI_SANG_TAO is M. Both supplied languages agree for these positive divisions. Earlier loop evidence is reusable, but exact KNTT string-indexing content still needs reading.",
+      "cognitive_operations": [
+        "For i5,6,7 the positive integer x changes6→3→9→4; zero-based index4 in DOI_MOI_SANG_TAO is M. Both supplied languages agree for these positive divisions. Earlier loop evidence is reusable, but exact KNTT string-indexing content still needs reading."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p45 basic programming",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-10.4700509569",
+        "locator": "T3_TIN2025_KNTT_MAPPING_CLOSURE_20261103.json; https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-10.4700509569#page=120; printed [120, 121]; Python strings use character indices from0 tolen(s)-1; actual example prints s[i]. Together with prior actual for/while readings this supports the source program trace and outputM at index4, answerA.",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "Original earlier-grade CT2018 outcome basis only; no claim that this instrument prescribes graduation item labels or exam-scope ratios."
+        }
+      ],
+      "source_item": "I.14",
+      "source_dossier": "T3_TIN2025_0530_Q12_Q24_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false,
+      "prerequisite_use_reason": "Earlier-grade prerequisite explicitly traced in source dossier; assessment grade12 does not relabel its curriculum grade."
+    },
+    "691c22150ca63d53a5015dd01118c591696b080ba460f4a732c95997721f7339": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "691c22150ca63d53a5015dd01118c591696b080ba460f4a732c95997721f7339",
+      "reviewed_level": "NB",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin pp51-52 AI capabilities",
+      "solution_rubric": "Text summarization concerns language content. Face recognition, satellite-weather prediction and image-based fire prediction are different task categories; identify the taught language capability.",
+      "cognitive_reason": "Text summarization concerns language content. Face recognition, satellite-weather prediction and image-based fire prediction are different task categories; identify the taught language capability.",
+      "cognitive_operations": [
+        "Text summarization concerns language content. Face recognition, satellite-weather prediction and image-based fire prediction are different task categories; identify the taught language capability."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin pp51-52 AI capabilities",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_AI_ACTUAL_CONTENT_READ_20261103.json, actual pp6-9 AI capability concepts; not an exact quoted exam example",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.15",
+      "source_dossier": "T3_TIN2025_0530_Q12_Q24_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "55b09dd33e51bb50c3be3818f6e5d70e2b5120f740b5902e8d84201c4d0e42bb": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "55b09dd33e51bb50c3be3818f6e5d70e2b5120f740b5902e8d84201c4d0e42bb",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p53 CSS selectors",
+      "solution_rubric": "The paragraph declares class mau without id mau. The class selector applies green and italic; the ID selector does not match and therefore contributes neither red nor bold. Specificity is considered only among matching rules, not an unconditional ID-wins shortcut.",
+      "cognitive_reason": "The paragraph declares class mau without id mau. The class selector applies green and italic; the ID selector does not match and therefore contributes neither red nor bold. Specificity is considered only among matching rules, not an unconditional ID-wins shortcut.",
+      "cognitive_operations": [
+        "The paragraph declares class mau without id mau. The class selector applies green and italic; the ID selector does not match and therefore contributes neither red nor bold. Specificity is considered only among matching rules, not an unconditional ID-wins shortcut."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p53 CSS selectors",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_BAI17_ACTUAL_READ_20261103.json, actual pp98-99 selector matching/priority",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.16",
+      "source_dossier": "T3_TIN2025_0530_Q12_Q24_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "c09b5d9710bf5c1687315145ebc440e5a61eae1a535c4f135c757edbf52f8025": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "c09b5d9710bf5c1687315145ebc440e5a61eae1a535c4f135c757edbf52f8025",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p53 humane digital interaction",
+      "solution_rubric": "Share the positive environmental message constructively. Ridicule, denying the value of small actions or imposing on the friend do not meet the humane-interaction aim. Select a response to a familiar case, not a universal duty to repost.",
+      "cognitive_reason": "Share the positive environmental message constructively. Ridicule, denying the value of small actions or imposing on the friend do not meet the humane-interaction aim. Select a response to a familiar case, not a universal duty to repost.",
+      "cognitive_operations": [
+        "Share the positive environmental message constructively. Ridicule, denying the value of small actions or imposing on the friend do not meet the humane-interaction aim. Select a response to a familiar case, not a universal duty to repost."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p53 humane digital interaction",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_SHARING_ETHICS_ACTUAL_READ_20261103.json, actual pp36-39",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.17",
+      "source_dossier": "T3_TIN2025_0530_Q12_Q24_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "f70bbb3b7da95288e54b62f63d8bea551718510c3a1736fb754ea716c50fcb3c": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "f70bbb3b7da95288e54b62f63d8bea551718510c3a1736fb754ea716c50fcb3c",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p53 responsible/safe digital interaction",
+      "solution_rubric": "Verify an unexpected prize email before deciding. Following its link immediately, using another person's machine or forwarding the message does not establish legitimacy. This is the safe selection in the given case, not a promise any verification procedure is infallible.",
+      "cognitive_reason": "Verify an unexpected prize email before deciding. Following its link immediately, using another person's machine or forwarding the message does not establish legitimacy. This is the safe selection in the given case, not a promise any verification procedure is infallible.",
+      "cognitive_operations": [
+        "Verify an unexpected prize email before deciding. Following its link immediately, using another person's machine or forwarding the message does not establish legitimacy. This is the safe selection in the given case, not a promise any verification procedure is infallible."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p53 responsible/safe digital interaction",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_SHARING_ETHICS_ACTUAL_READ_20261103.json, actual pp36-39 careful verification and communication",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.18",
+      "source_dossier": "T3_TIN2025_0530_Q12_Q24_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "ce8e97b350a4a4d975efb8d725b9c5908e1a18081cec21e01d71ad9194c1afbb": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "ce8e97b350a4a4d975efb8d725b9c5908e1a18081cec21e01d71ad9194c1afbb",
+      "reviewed_level": "NB",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p53 CSS text formatting",
+      "solution_rubric": "font-family names the font family; font-weight, font-size and font-style specify other text properties. Handwritten B is not used as an answer source.",
+      "cognitive_reason": "font-family names the font family; font-weight, font-size and font-style specify other text properties. Handwritten B is not used as an answer source.",
+      "cognitive_operations": [
+        "font-family names the font family; font-weight, font-size and font-style specify other text properties. Handwritten B is not used as an answer source."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p53 CSS text formatting",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_CSS_BOX_CAREERS_READ_20261103.json, actual pp76-77 text CSS properties; no invented quotation",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.19",
+      "source_dossier": "T3_TIN2025_0530_Q12_Q24_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "a93f52a222786f878e37c6747034bf958c6e861a53c546ad696e408784231fdc": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "a93f52a222786f878e37c6747034bf958c6e861a53c546ad696e408784231fdc",
+      "reviewed_level": "NB",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p54 IT administration careers",
+      "solution_rubric": "Information-system security belongs to the administration group in the taught career taxonomy. Testing, graphic design and repair are other listed roles; do not infer a universal economic classification or rigid boundary between every professional job.",
+      "cognitive_reason": "Information-system security belongs to the administration group in the taught career taxonomy. Testing, graphic design and repair are other listed roles; do not infer a universal economic classification or rigid boundary between every professional job.",
+      "cognitive_operations": [
+        "Information-system security belongs to the administration group in the taught career taxonomy. Testing, graphic design and repair are other listed roles; do not infer a universal economic classification or rigid boundary between every professional job."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p54 IT administration careers",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_CSS_BOX_CAREERS_READ_20261103.json, actual pp110-111 administration-career chapter context",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.20",
+      "source_dossier": "T3_TIN2025_0530_Q12_Q24_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "eff5a153008286519d34643d979763c30b03dbfc4b1aee936c7ba8217c60bb0b": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "eff5a153008286519d34643d979763c30b03dbfc4b1aee936c7ba8217c60bb0b",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p52 network-resource sharing",
+      "solution_rubric": "Sharing a folder containing the printer driver is not intrinsically necessary: client drivers may be obtained by other supported installation methods. This differs from installing/configuring the shared printer and access. Exact KNTT printer-sharing workflow pages30-33 remains unread; prior file/folder-sharing pages26-29 do not substitute for it.",
+      "cognitive_reason": "Sharing a folder containing the printer driver is not intrinsically necessary: client drivers may be obtained by other supported installation methods. This differs from installing/configuring the shared printer and access. Exact KNTT printer-sharing workflow pages30-33 remains unread; prior file/folder-sharing pages26-29 do not substitute for it.",
+      "cognitive_operations": [
+        "Sharing a folder containing the printer driver is not intrinsically necessary: client drivers may be obtained by other supported installation methods. This differs from installing/configuring the shared printer and access. Exact KNTT printer-sharing workflow pages30-33 remains unread; prior file/folder-sharing pages26-29 do not substitute for it."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p52 network-resource sharing",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2025_KNTT_MAPPING_CLOSURE_20261103.json; https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396#page=30; printed [30, 31, 32, 33]; Print server installs/shares printer; client searches, selects and adds network printer with driver. No mandatory separate sharing of a driver folder. Confirms distinction between necessary printer setup/access and optional driver-distribution folder, answerB.",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.21",
+      "source_dossier": "T3_TIN2025_0530_Q12_Q24_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "5b38ff815e26576fe71e1fb17483a4a666c75f36f1040a0082931422009e6d40": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "5b38ff815e26576fe71e1fb17483a4a666c75f36f1040a0082931422009e6d40",
+      "reviewed_level": "NB",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p54 repair/maintenance service careers",
+      "solution_rubric": "Updating an operating system is software maintenance. Replacing failed parts, advising on hardware upgrades and installing network devices are the hardware/network alternatives in this question.",
+      "cognitive_reason": "Updating an operating system is software maintenance. Replacing failed parts, advising on hardware upgrades and installing network devices are the hardware/network alternatives in this question.",
+      "cognitive_operations": [
+        "Updating an operating system is software maintenance. Replacing failed parts, advising on hardware upgrades and installing network devices are the hardware/network alternatives in this question."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p54 repair/maintenance service careers",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_CSS_BOX_CAREERS_READ_20261103.json, actual pp108-109 repair/maintenance chapter",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.22",
+      "source_dossier": "T3_TIN2025_0530_Q12_Q24_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "7f50d2da76722b54db6fdff6ab8d88c2554bfdfa505bd6db64aa27460c633ad7": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "7f50d2da76722b54db6fdff6ab8d88c2554bfdfa505bd6db64aa27460c633ad7",
+      "reviewed_level": "NB",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p52 network devices",
+      "solution_rubric": "A conventional switch connects and forwards data within a LAN. Digital/analog signal conversion, wireless access and routing between networks are other device functions; do not generalize this basic role to exclude every multilayer-switch capability.",
+      "cognitive_reason": "A conventional switch connects and forwards data within a LAN. Digital/analog signal conversion, wireless access and routing between networks are other device functions; do not generalize this basic role to exclude every multilayer-switch capability.",
+      "cognitive_operations": [
+        "A conventional switch connects and forwards data within a LAN. Digital/analog signal conversion, wireless access and routing between networks are other device functions; do not generalize this basic role to exclude every multilayer-switch capability."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p52 network devices",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_NETWORK_ACTUAL_READ_20261103.json, actual pp14-15/22-23",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.23",
+      "source_dossier": "T3_TIN2025_0530_Q12_Q24_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "5057932db347c45f0cde72a8662bac8c0cec10aa1b18619713e26b58782a3208": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "5057932db347c45f0cde72a8662bac8c0cec10aa1b18619713e26b58782a3208",
+      "reviewed_level": "NB",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin pp51-52 AI capabilities/limitations",
+      "solution_rubric": "Learning and solving every natural and social problem is the unsupported unrestricted capability. Existing task-specific learning and recommendation do not imply such universality. Scope is the practical AI capability classification in this2025question, not a prediction that future AI can never change.",
+      "cognitive_reason": "Learning and solving every natural and social problem is the unsupported unrestricted capability. Existing task-specific learning and recommendation do not imply such universality. Scope is the practical AI capability classification in this2025question, not a prediction that future AI can never change.",
+      "cognitive_operations": [
+        "Learning and solving every natural and social problem is the unsupported unrestricted capability. Existing task-specific learning and recommendation do not imply such universality. Scope is the practical AI capability classification in this2025question, not a prediction that future AI can never change."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin pp51-52 AI capabilities/limitations",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_AI_ACTUAL_CONTENT_READ_20261103.json, actual pp6-13 concepts; no claim exact wording appears in textbook",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "I.24",
+      "source_dossier": "T3_TIN2025_0530_Q12_Q24_REVIEW_20261103.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "f6af2eff734e6fdcdb827111ca97f498fa114a749b1d4d6434f991d8c8730afb": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "f6af2eff734e6fdcdb827111ca97f498fa114a749b1d4d6434f991d8c8730afb",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p52 networking",
+      "solution_rubric": "In the described ordinary home setup, smartphones use the modem's integrated Wi-Fi instead of mobile data. Interpret the given connectivity model, not an unrestricted theorem that every internet-connected phone proves a modem has Wi-Fi.",
+      "cognitive_reason": "In the described ordinary home setup, smartphones use the modem's integrated Wi-Fi instead of mobile data. Interpret the given connectivity model, not an unrestricted theorem that every internet-connected phone proves a modem has Wi-Fi.",
+      "cognitive_operations": [
+        "In the described ordinary home setup, smartphones use the modem's integrated Wi-Fi instead of mobile data. Interpret the given connectivity model, not an unrestricted theorem that every internet-connected phone proves a modem has Wi-Fi."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p52 networking",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_NETWORK_ACTUAL_READ_20261103.json actual pp15-16/20; Wi-Fi access and wired/wireless device distinction",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "II.1.a",
+      "source_dossier": "T3_TIN2025_0530_TF_COMMON_REVIEW_20261104.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "2e8a7aa27537dacc9cbc3a891a37e92b03e323645f0431ef7975b86c144b468b": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "2e8a7aa27537dacc9cbc3a891a37e92b03e323645f0431ef7975b86c144b468b",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p52 networking",
+      "solution_rubric": "A correctly connected and configured access point placed near weak-coverage rooms can extend home Wi-Fi access. Physical proximity alone without a working modem uplink does not guarantee internet service.",
+      "cognitive_reason": "A correctly connected and configured access point placed near weak-coverage rooms can extend home Wi-Fi access. Physical proximity alone without a working modem uplink does not guarantee internet service.",
+      "cognitive_operations": [
+        "A correctly connected and configured access point placed near weak-coverage rooms can extend home Wi-Fi access. Physical proximity alone without a working modem uplink does not guarantee internet service."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p52 networking",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "Same actual networking device/access-point reading",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "II.1.b",
+      "source_dossier": "T3_TIN2025_0530_TF_COMMON_REVIEW_20261104.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "2cd0f0d52aab743fd6013e22da5d57d9fb475eee11577ec6779b1771108dc34b": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "2cd0f0d52aab743fd6013e22da5d57d9fb475eee11577ec6779b1771108dc34b",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p52 networking",
+      "solution_rubric": "For the given desktops without wireless capability, an Ethernet cable to the modem is the straightforward connection. The source says simplest, not only possible. Rejecting this statement merely because adapters or switched alternatives exist would change the source claim.",
+      "cognitive_reason": "For the given desktops without wireless capability, an Ethernet cable to the modem is the straightforward connection. The source says simplest, not only possible. Rejecting this statement merely because adapters or switched alternatives exist would change the source claim.",
+      "cognitive_operations": [
+        "For the given desktops without wireless capability, an Ethernet cable to the modem is the straightforward connection. The source says simplest, not only possible. Rejecting this statement merely because adapters or switched alternatives exist would change the source claim."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p52 networking",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "Same actual wired/wireless networking reading",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "II.1.c",
+      "source_dossier": "T3_TIN2025_0530_TF_COMMON_REVIEW_20261104.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "8d037d0edcb745e467595eea8a65be21795d04f9b473c9ba1dc9c44548f73ce5": {
+      "subject": "Tin học",
+      "grade": 12,
+      "assessment_grade": 12,
+      "outcome_grade": 12,
+      "topic": "",
+      "content_sha256": "8d037d0edcb745e467595eea8a65be21795d04f9b473c9ba1dc9c44548f73ce5",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p52 networking",
+      "solution_rubric": "An isolated switch connects the desktops locally but has no described path to the modem/internet. The statement explicitly omits that connection; local connectivity alone does not supply the required gateway.",
+      "cognitive_reason": "An isolated switch connects the desktops locally but has no described path to the modem/internet. The statement explicitly omits that connection; local connectivity alone does not supply the required gateway.",
+      "cognitive_operations": [
+        "An isolated switch connects the desktops locally but has no described path to the modem/internet. The statement explicitly omits that connection; local connectivity alone does not supply the required gateway."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p52 networking",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-12-dinh-huong-tin-hoc-ung-dung.4719365396",
+        "locator": "T3_TIN2026_KNTT_NETWORK_ACTUAL_READ_20261103.json actual pp14-17/20",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "CT2018 curriculum outcome basis only; does not prescribe the app cognitive label or authorize a new official examination."
+        }
+      ],
+      "source_item": "II.1.d",
+      "source_dossier": "T3_TIN2025_0530_TF_COMMON_REVIEW_20261104.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false
+    },
+    "eff9dcb417ad2893eef748546b2493ad75cce21c2a56627b92e583ad920299a5": {
+      "subject": "Tin học",
+      "grade": 11,
+      "assessment_grade": 12,
+      "outcome_grade": 11,
+      "topic": "",
+      "content_sha256": "eff9dcb417ad2893eef748546b2493ad75cce21c2a56627b92e583ad920299a5",
+      "reviewed_level": "NB",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p49 database structure/keys",
+      "solution_rubric": "The schema explicitly gives each station a unique maTram; this identifies TRAM rows and supplies the intended primary key.",
+      "cognitive_reason": "The schema explicitly gives each station a unique maTram; this identifies TRAM rows and supplies the intended primary key.",
+      "cognitive_operations": [
+        "The schema explicitly gives each station a unique maTram; this identifies TRAM rows and supplies the intended primary key."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p49 database structure/keys",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-11-dinh-huong-tin-hoc-ung-dung.4701297754",
+        "locator": "T3_TIN2026_KNTT_TIN11_KEYS_TABLES_ACTUAL_READ_20261103.json actual pp66/92-93; prerequisite grade retained",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "Original earlier-grade CT2018 outcome basis only; no claim that this instrument prescribes graduation item labels or exam-scope ratios."
+        }
+      ],
+      "source_item": "II.2.a",
+      "source_dossier": "T3_TIN2025_0530_TF_COMMON_REVIEW_20261104.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false,
+      "prerequisite_use_reason": "Earlier-grade prerequisite explicitly traced in source dossier; assessment grade12 does not relabel its curriculum grade."
+    },
+    "5d63bf22994a38f6a77272d9a5b49f9dcf5fc0d221ad80bb8fcf147484cc51f4": {
+      "subject": "Tin học",
+      "grade": 11,
+      "assessment_grade": 12,
+      "outcome_grade": 11,
+      "topic": "",
+      "content_sha256": "5d63bf22994a38f6a77272d9a5b49f9dcf5fc0d221ad80bb8fcf147484cc51f4",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p49 database structure/keys",
+      "solution_rubric": "A station can have multiple monthly rainfall rows in one year. maTram plus nam therefore does not uniquely identify MUA rows; thang is also needed in the stated one-value-per-station-month model. Two different months in2020 are a direct counterexample.",
+      "cognitive_reason": "A station can have multiple monthly rainfall rows in one year. maTram plus nam therefore does not uniquely identify MUA rows; thang is also needed in the stated one-value-per-station-month model. Two different months in2020 are a direct counterexample.",
+      "cognitive_operations": [
+        "A station can have multiple monthly rainfall rows in one year. maTram plus nam therefore does not uniquely identify MUA rows; thang is also needed in the stated one-value-per-station-month model. Two different months in2020 are a direct counterexample."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p49 database structure/keys",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-11-dinh-huong-tin-hoc-ung-dung.4701297754",
+        "locator": "Same actual database/key readings; independent uniqueness reasoning uses the supplied schema, not an invented textbook quotation",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "Original earlier-grade CT2018 outcome basis only; no claim that this instrument prescribes graduation item labels or exam-scope ratios."
+        }
+      ],
+      "source_item": "II.2.b",
+      "source_dossier": "T3_TIN2025_0530_TF_COMMON_REVIEW_20261104.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false,
+      "prerequisite_use_reason": "Earlier-grade prerequisite explicitly traced in source dossier; assessment grade12 does not relabel its curriculum grade."
+    },
+    "4676a104ea62e0a0a52a3cabe0321acc5a833e6bdda7666b3fc1b0e2a4dc2584": {
+      "subject": "Tin học",
+      "grade": 11,
+      "assessment_grade": 12,
+      "outcome_grade": 11,
+      "topic": "",
+      "content_sha256": "4676a104ea62e0a0a52a3cabe0321acc5a833e6bdda7666b3fc1b0e2a4dc2584",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p49 relational retrieval",
+      "solution_rubric": "TRAM supplies station name and MUA supplies year, month and rainfall. Joining those two on maTram supplies all requested attributes; temperature data is not requested.",
+      "cognitive_reason": "TRAM supplies station name and MUA supplies year, month and rainfall. Joining those two on maTram supplies all requested attributes; temperature data is not requested.",
+      "cognitive_operations": [
+        "TRAM supplies station name and MUA supplies year, month and rainfall. Joining those two on maTram supplies all requested attributes; temperature data is not requested."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p49 relational retrieval",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-11-dinh-huong-tin-hoc-ung-dung.4701297754",
+        "locator": "Same actual pp66 join/key reading",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "Original earlier-grade CT2018 outcome basis only; no claim that this instrument prescribes graduation item labels or exam-scope ratios."
+        }
+      ],
+      "source_item": "II.2.c",
+      "source_dossier": "T3_TIN2025_0530_TF_COMMON_REVIEW_20261104.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false,
+      "prerequisite_use_reason": "Earlier-grade prerequisite explicitly traced in source dossier; assessment grade12 does not relabel its curriculum grade."
+    },
+    "2d2887d5c4bf4eb0e8742d93f03bd11e6e2c6b656ca791eb617ccc422f9c62f8": {
+      "subject": "Tin học",
+      "grade": 11,
+      "assessment_grade": 12,
+      "outcome_grade": 11,
+      "topic": "",
+      "content_sha256": "2d2887d5c4bf4eb0e8742d93f03bd11e6e2c6b656ca791eb617ccc422f9c62f8",
+      "reviewed_level": "TH",
+      "reviewer": "Codex independent external-paper source review; not generation self-approval",
+      "reviewed_on": "2026-11-05",
+      "recheck_after": "2026-11-30",
+      "recheck_policy": "Conservative local review deadline; earlier if source/context changes",
+      "assessment_purpose": "station3_assessment",
+      "learning_outcome": "Tin p49 relational retrieval",
+      "solution_rubric": "The proposed join includes TRAM and MUA, but projection/filter use NHIETDO. Without joining the temperature table those attributes are unavailable. A2020condition does not repair the missing relation.",
+      "cognitive_reason": "The proposed join includes TRAM and MUA, but projection/filter use NHIETDO. Without joining the temperature table those attributes are unavailable. A2020condition does not repair the missing relation.",
+      "cognitive_operations": [
+        "The proposed join includes TRAM and MUA, but projection/filter use NHIETDO. Without joining the temperature table those attributes are unavailable. A2020condition does not repair the missing relation."
+      ],
+      "curriculum_source": {
+        "url": "https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/16-CT-Tin-hoc.pdf",
+        "locator": "Tin p49 relational retrieval",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "textbook_source": {
+        "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tin-hoc-11-dinh-huong-tin-hoc-ung-dung.4701297754",
+        "locator": "Same actual pp66 join/key reading",
+        "read_on": "2026-11-03",
+        "document_status": "final",
+        "read_scope": "relevant_content"
+      },
+      "legal_basis": [
+        {
+          "code": "32/2018/TT-BGDDT",
+          "url": "https://tulieuvankien.dangcongsan.vn/upload/3000006/20251024/1a3777c045146d5e2059d298a18d0b74TT-32-CTGDPT.pdf",
+          "locator": "Articles1-3,subject appendix corroborated separately; known amendments in dossier",
+          "checked_on": "2026-11-03",
+          "effective_from": "2019-02-15",
+          "applicable_purpose": "station3_assessment",
+          "original_applicable_purpose": "graduation_exam_reference_calibration",
+          "application_limit": "Original earlier-grade CT2018 outcome basis only; no claim that this instrument prescribes graduation item labels or exam-scope ratios."
+        }
+      ],
+      "source_item": "II.2.d",
+      "source_dossier": "T3_TIN2025_0530_TF_COMMON_REVIEW_20261104.json",
+      "original_source_year": 2025,
+      "source_variant": "0530",
+      "official_ministry_level": null,
+      "application_limit": "Exact source question in current Station3 reference use only; not entire2025paper approval",
+      "historical_edition_authenticated": false,
+      "prerequisite_use_reason": "Earlier-grade prerequisite explicitly traced in source dossier; assessment grade12 does not relabel its curriculum grade."
     }
   }
 }

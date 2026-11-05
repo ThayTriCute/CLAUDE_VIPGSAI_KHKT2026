@@ -180,7 +180,8 @@ class ExpertRegressionTests(unittest.TestCase):
         st = SimpleNamespace(session_state=SimpleNamespace(exam_data=original),error=Mock())
         enrich = Mock(side_effect=ValueError('Draft cannot be used'))
         exec(compile(ast.Module(body=[node],type_ignores=[]),'bank-boundary-test','exec'),
-             {'blended':{'p1':[{}]},'st':st,'enrich_exam_data':enrich,'custom_matrix_prompt':''})
+             {'blended':{'p1':[{}]},'st':st,'enrich_exam_data':enrich,'custom_matrix_prompt':'',
+              'original_paper_mode':False})
         self.assertIs(st.session_state.exam_data,original)
         st.error.assert_called_once_with('Draft cannot be used')
 
