@@ -14665,6 +14665,7 @@ if selected_station == station_labels[2]:
                                     st.error(str(error))
                                     st.stop()
                                 exam_time_mins = 50
+                                st.session_state.exam_time_mins = 50
                             else:
                                 blended = ree.generate_blended_real_exam(
                                     subject, grade_num, chosen_topics, (num_p1, num_p2, num_p3),

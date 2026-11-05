@@ -99,3 +99,19 @@ class OriginalTin0530Tests(unittest.TestCase):
         exam = read_curated_exam_packs(PACKS, subject='Tin học', grade=12)[0]
         audit = independent_exam_audit(exam, 'Tin học', 12, as_of='2026-11-05')
         self.assertEqual(audit['verified_records'], 31)
+
+    def test_original_ui_branch_persists_duration_and_avoids_recovery(self):
+        import ast
+        source = (PACKS.parents[1]/'app.py').read_text(encoding='utf-8-sig')
+        tree = ast.parse(source)
+        branches = [n for n in ast.walk(tree) if isinstance(n, ast.If)
+                    and isinstance(n.test, ast.Name) and n.test.id == 'original_paper_mode'
+                    and any(isinstance(c, ast.Call) and isinstance(c.func, ast.Name)
+                            and c.func.id == 'original_tin0530' for c in ast.walk(n))]
+        self.assertEqual(len(branches), 1)
+        active = ast.Module(body=branches[0].body, type_ignores=[])
+        self.assertIn('st.session_state.exam_time_mins = 50', ast.unparse(active))
+        calls = [c.func.id for c in ast.walk(active) if isinstance(c, ast.Call)
+                 and isinstance(c.func, ast.Name)]
+        self.assertNotIn('enrich_exam_data', calls)
+        self.assertNotIn('call_gemini_with_fallback', calls)
