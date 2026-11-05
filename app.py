@@ -14698,7 +14698,7 @@ if selected_station == station_labels[2]:
 
                                     st.session_state.exam_context = {"name": student_name, "grade": grade, "subject": subject, "phase": measure_phase, "student_id": measure_student_id}
 
-                                    st.session_state.custom_request_text = custom_matrix_prompt.strip() if custom_matrix_prompt else ""
+                                    st.session_state.custom_request_text = "" if original_paper_mode else (custom_matrix_prompt.strip() if custom_matrix_prompt else "")
 
                                     st.session_state.pop("literature_grade", None)
 

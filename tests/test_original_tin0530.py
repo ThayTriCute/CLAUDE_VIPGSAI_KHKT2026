@@ -23,6 +23,9 @@ class OriginalTin0530Tests(unittest.TestCase):
             self.assertEqual(exam['duration'], 50)
             self.assertEqual(''.join(q['ans'] for q in exam['p1']), 'BAADDABCBDAABADDCCDDBDBC')
             self.assertEqual(exam['p1'][6]['ans'], 'B')
+            self.assertTrue(all(q['is_real_bank_question'] and not q['is_ai_generated']
+                                for part in ('p1','p2') for q in exam[part]))
+            self.assertEqual(exam['p2'][-1]['orig_pos'], expected[-1])
             self.assertIn('app_reuse_review_issues', exam['p1'][6])
             self.assertFalse(exam_delivery_held(exam))
             self.assertFalse(exam['curriculum_audit']['academic_verified'])

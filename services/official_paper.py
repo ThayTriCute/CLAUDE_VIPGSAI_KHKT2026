@@ -51,6 +51,11 @@ def original_tin0530(pathway, *, directory=None):
     for part in ('p1', 'p2'):
         for question in exam[part]:
             sid = question.get('source_id')
+            question.update(is_real_bank_question=True, school=exam['school'],
+                            year=2025, portal='tuoitre.vn',
+                            exam_session=exam['exam_session'], orig_exam_code='0530',
+                            orig_pos=sid, source='Tin học THPT2025 mã0530 — ' + sid
+                            + '; ảnh đề Tuổi Trẻ đăng lại; khóa Bộ do Cổng Chính phủ đăng lại')
             issues = set(question.get('source_review_issues', []))
             if issues != REUSE_NOTES.get(sid, set()):
                 raise ValueError('Có vấn đề nguồn mới chưa được xử lý cho đề gốc.')
