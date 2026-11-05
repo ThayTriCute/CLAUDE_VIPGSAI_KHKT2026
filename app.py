@@ -14590,11 +14590,21 @@ if selected_station == station_labels[2]:
 
                 else:
 
+                    original_paper_mode = False
+                    if subject == "Tin học" and grade_num == 12:
+                        bank_mode = st.radio("Cách dùng kho đề Tin học:",
+                            ["Trộn theo cấu hình", "Đề gốc Bộ 2025 — mã 0530"],
+                            key="tin_bank_delivery_mode")
+                        original_paper_mode = bank_mode == "Đề gốc Bộ 2025 — mã 0530"
+                        if original_paper_mode:
+                            st.caption("Đề gốc: 24 câu trắc nghiệm + 2 câu đúng/sai chung + 2 câu theo định hướng đã chọn; 50 phút. Giữ khóa Bộ và thứ tự gốc; không trộn, thay câu hoặc gọi AI. Nhãn mức độ do ứng dụng thẩm định riêng.")
                     c_btn1, c_btn2 = st.columns([1.1, 1.1])
 
                     has_custom_prompt = bool(custom_matrix_prompt and custom_matrix_prompt.strip())
                     btn1_label = f"📚 Trích Xuất Đề Tùy Biến (Kho 600+ Đề Thật & Vân Tay)" if has_custom_prompt else f"🎲 Trộn Siêu Đề Mới (Kho Ngân Hàng)"
                     btn2_label = f"🤖 AI Tạo Đề Theo Tùy Biến (Ưu Tiên Số 1 - Mới Tinh 100%)" if has_custom_prompt else "🚀 Khởi Tạo Đề Mới (AI Sáng Tạo 2026)"
+                    if original_paper_mode:
+                        btn1_label = "📚 Mở đề gốc Tin học 2025 — 0530"
                     btn1_type = "primary" if has_custom_prompt else "secondary"
 
                     with c_btn1:
@@ -14647,16 +14657,25 @@ if selected_station == station_labels[2]:
                                             fp_c = ree.q_fingerprint(q_old)
                                             st.session_state.seen_question_fps.add(fp_c)
 
-                            blended = ree.generate_blended_real_exam(
-                                subject, grade_num, chosen_topics, (num_p1, num_p2, num_p3),
-                                custom_prompt=custom_matrix_prompt,
-                                exclude_fingerprints=st.session_state.seen_question_fps
-                            )
+                            if original_paper_mode:
+                                from services.official_paper import original_tin0530
+                                try:
+                                    blended = original_tin0530(st.session_state.get("curriculum_pathway", ""))
+                                except (OSError, ValueError, TypeError) as error:
+                                    st.error(str(error))
+                                    st.stop()
+                                exam_time_mins = 50
+                            else:
+                                blended = ree.generate_blended_real_exam(
+                                    subject, grade_num, chosen_topics, (num_p1, num_p2, num_p3),
+                                    custom_prompt=custom_matrix_prompt,
+                                    exclude_fingerprints=st.session_state.seen_question_fps
+                                )
 
                             if blended and (blended.get("p1") or blended.get("p2") or blended.get("p3")):
 
                                 try:
-                                    prepared_bank_exam = enrich_exam_data(blended, custom_request=custom_matrix_prompt)
+                                    prepared_bank_exam = blended if original_paper_mode else enrich_exam_data(blended, custom_request=custom_matrix_prompt)
                                 except (ValueError, TypeError) as error:
                                     st.error(str(error))
                                 else:
