@@ -11540,6 +11540,30 @@ if selected_station == station_labels[0]:
                                    mime="text/markdown", key=f"t1_orphaned_archive_{identity}")
 
     if not st.session_state.get("current_lesson"):
+        with st.expander("📦 Mở lại bài học và câu hỏi đầy đủ (.json)"):
+            st.caption("Bản lưu đầy đủ gồm nội dung và câu hỏi để tiếp tục học, không khôi phục điểm hoặc hội thoại cũ. Không gọi AI khi mở tệp.")
+            full_lesson_file = st.file_uploader("Chọn bản bài học đầy đủ", type=["json"], key="t1_full_lesson_file")
+            if full_lesson_file is not None:
+                try:
+                    from services.lesson_archive import decode_full_lesson
+                    full_lesson = decode_full_lesson(full_lesson_file.getvalue(), subject, grade_num)
+                    st.caption(full_lesson['topic'])
+                    if st.button("Mở nội dung và câu hỏi từ bản lưu", key="t1_restore_full_lesson"):
+                        st.session_state.current_lesson = full_lesson['text']
+                        st.session_state.current_lesson_context = (subject, grade_num)
+                        st.session_state.current_topic = full_lesson['topic']
+                        st.session_state.parsed_quiz = parse_quiz_questions(full_lesson['text'])
+                        st.session_state.quiz_states = {}
+                        st.session_state.quiz_selections = {}
+                        st.session_state.tram1_chat_history = []
+                        st.session_state.lab_data = None
+                        for stale_key in list(st.session_state):
+                            if str(stale_key).startswith('q_'):
+                                del st.session_state[stale_key]
+                        st.rerun()
+                except (ValueError, TypeError) as error:
+                    st.error(str(error))
+
         with st.expander("📂 Mở lại phiếu bài học đã lưu (.md)"):
             st.caption("Chọn đúng môn/lớp và nhập tên bài ở trên, rồi mở bản Markdown đã tải. "
                        "Chỉ dựng lại phiếu từ nội dung đã lưu; không gọi AI hoặc khôi phục điểm và hội thoại.")
@@ -11561,6 +11585,14 @@ if selected_station == station_labels[0]:
                         st.error(str(error))
     if st.session_state.get("current_lesson"):
         lesson_text = station1_master_sovereign_brain_gate(st.session_state.current_lesson, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''), policy_revision=CURRICULUM_POLICY_REVISION)
+        from services.lesson_archive import encode_full_lesson
+        import hashlib as _lesson_archive_hash
+        full_lesson_bytes = encode_full_lesson(st.session_state.current_lesson, subject, grade_num,
+                                             st.session_state.get('current_topic', ''), CURRICULUM_POLICY_REVISION)
+        st.download_button("📦 Tải đầy đủ bài học và câu hỏi (.json)", full_lesson_bytes,
+                           file_name="Bai_hoc_day_du_" + _lesson_archive_hash.sha256(st.session_state.current_lesson.encode('utf-8')).hexdigest()[:12] + ".json",
+                           mime="application/json", key="t1_download_full_" + current_context_key)
+
         part2_split = re.split(r'(?i)(?:###\s*)?PHẦN 2[\:\.]?', lesson_text)
         part3_split = re.split(r'(?i)(?:###\s*)?PHẦN 3[\:\.]?', lesson_text)
 
