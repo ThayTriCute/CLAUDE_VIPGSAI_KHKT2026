@@ -11,7 +11,7 @@ from markdown_it import MarkdownIt
 from services.academic_context import academic_context
 
 ROOT = Path(__file__).resolve().parents[1]
-T1_CONTEXT_REVISION = 2026110510
+T1_CONTEXT_REVISION = 2026110604
 _TOKENS = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$)")
 
 
@@ -146,7 +146,7 @@ def build_lesson_html(subject, grade, topic, lesson, style="handwritten"):
 h1{font-size:30px;line-height:1.2;color:#b51e35;text-align:center;margin:10px 0 20px}h2,h3,h4{color:#b51e35;line-height:1.25;break-after:avoid}h2{font-size:1.2em}h3{font-size:1.1em}
 .context{text-align:center;font:15px system-ui;margin-bottom:20px;color:#334155}.source-note{font:13px system-ui;border-top:1px solid #bcae94;padding-top:12px;margin-top:24px;color:#475569}
 article{font-size:17px;line-height:1.6}article p{margin:0 0 .75em}article li{margin:.25em 0}article table{border-collapse:collapse;width:100%;font-size:.85em}td,th{border:1px solid #9e998e;padding:6px;vertical-align:top}
-pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#ffffff80;padding:10px;font:14px/1.4 monospace}code{font-family:monospace;font-size:.8em}.katex{font-size:1.02em}.katex-display{overflow-x:auto;overflow-y:hidden;margin:.7em 0}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:transparent;padding:10px;font:14px/1.4 monospace}code{font-family:monospace;font-size:.8em}article pre code{background:transparent}.katex{font-size:1.02em}.katex-display{overflow-x:auto;overflow-y:hidden;margin:.7em 0}
 .formula-error{outline:2px solid #b91c1c;color:#991b1b;white-space:pre-wrap;font-family:monospace}.monochrome,.monochrome h1,.monochrome h2,.monochrome h3,.monochrome h4{color:#111}.monochrome .paper{background:#fff}
 .color .paper{background:#fff}.color h2{border-left:4px solid #0891b2;padding-left:10px}.notice{color:#b91c1c}
 .monochrome .verified-function-visuals polyline{stroke:#111}
