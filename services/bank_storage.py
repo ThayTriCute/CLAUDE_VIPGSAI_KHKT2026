@@ -245,3 +245,42 @@ def append_exam_atomic(path, exam):
         if os.path.exists(temporary):
             os.unlink(temporary)
     return True
+
+
+def exam_storage_identity(exam):
+    """Compare content and source context, never the printed code alone."""
+    if isinstance(exam.get('data'), dict):
+        exam = {**{k: exam[k] for k in ('subject', 'grade', 'code') if k in exam}, **exam['data']}
+    # Keep every scientific/context/source field, including unfamiliar extensions.
+    # Only storage timestamps may differ without creating another revision.
+    payload = {key: value for key, value in exam.items()
+               if key not in ('saved_at', 'uploaded_at', 'added_at')}
+    return hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True,
+                                    separators=(',', ':')).encode('utf-8')).hexdigest()
+
+
+def unique_exam_records(exams):
+    seen = set()
+    result = []
+    for exam in exams:
+        identity = exam_storage_identity(exam)
+        if identity not in seen:
+            result.append(exam)
+            seen.add(identity)
+    return result
+
+
+def read_exam_cache_records(directory, subject, grade):
+    """Read both legacy names and content-addressed snapshots by metadata."""
+    from services.academic_context import canonical_subject
+    result = []
+    for path in sorted(Path(directory).glob('*.json')):
+        try:
+            record = json.loads(path.read_text(encoding='utf-8'))
+            if (isinstance(record, dict) and isinstance(record.get('data'), dict)
+                    and canonical_subject(record.get('subject', '')) == canonical_subject(subject)
+                    and (grade is None or str(record.get('grade')) == str(grade))):
+                result.append(record)
+        except (ValueError, OSError):
+            continue
+    return result

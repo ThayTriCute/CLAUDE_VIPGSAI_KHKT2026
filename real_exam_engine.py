@@ -40,7 +40,8 @@ import requests
 from threading import RLock
 from functools import wraps
 from copy import deepcopy
-from services.bank_storage import BoundedCache
+from pathlib import Path
+from services.bank_storage import BoundedCache, exam_storage_identity, unique_exam_records
 from services.academic_context import canonical_subject, normalize_grade, topic_matches, validate_exam_context
 
 _BANK_LOCK = RLock()
@@ -741,61 +742,61 @@ def apply_full_7layer_quality_pipeline(exam: dict, subject: str = "Toán học",
 # 3.1. QUẢN LÝ KHO ĐỀ THI TẢI LÊN TỪ GIÁO VIÊN (TEACHER UPLOAD ENGINE)
 # ------------------------------------------------------------------------------
 def load_teacher_uploaded_exams(subject: str = None, grade = None):
-    """Tải danh sách đề thi do Giáo viên tự tải lên và chuẩn hóa."""
+    """Read legacy teacher records plus immutable new revisions."""
+    from services.bank_storage import unique_exam_records
     exams = []
     try:
         if os.path.exists(TEACHER_EXAMS_FILE):
-            with open(TEACHER_EXAMS_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                exams = data.get("exams", [])
-    except Exception as exc:
-        logging.warning("Không thể đọc teacher exams: %s", exc)
-
+            with open(TEACHER_EXAMS_FILE, 'r', encoding='utf-8') as stream:
+                legacy = json.load(stream)
+            if not isinstance(legacy, dict) or not isinstance(legacy.get('exams'), list) or not all(isinstance(row, dict) for row in legacy['exams']):
+                raise ValueError('Invalid teacher archive')
+            exams.extend(legacy['exams'])
+    except (OSError, ValueError) as error:
+        logging.warning('Không thể đọc kho giáo viên cũ; giữ nguyên file: %s', error)
+    versions = Path(TEACHER_EXAMS_FILE + '.versions')
+    for path in sorted(versions.glob('*.json')):
+        try:
+            record = json.loads(path.read_text(encoding='utf-8'))
+            if isinstance(record.get('data'), dict):
+                item = record['data']
+                item.setdefault('uploaded_at', record.get('saved_at', ''))
+                exams.append(item)
+        except (OSError, ValueError, AttributeError) as error:
+            logging.warning('Không đọc được phiên bản đề %s: %s', path.name, error)
     if subject:
         norm_subj = normalize_subject_name(subject).lower()
-        exams = [ex for ex in exams if normalize_subject_name(ex.get("subject", "")).lower() == norm_subj]
+        exams = [ex for ex in exams if normalize_subject_name(ex.get('subject', '')).lower() == norm_subj]
     if grade is not None:
-        exams = [ex for ex in exams if str(ex.get("grade")) == str(grade)]
-    return exams
+        exams = [ex for ex in exams if str(ex.get('grade')) == str(grade)]
+    return unique_exam_records(exams)
 
+
+@_serialized_bank
 def save_teacher_uploaded_exam(exam: dict) -> bool:
-    """Lưu đề thi của Giáo viên vào kho đề lưu trữ vĩnh viễn."""
+    """Save a new immutable revision; never replace the legacy teacher archive."""
+    from services.bank_storage import save_exam_cache_snapshot
     try:
-        current_exams = []
+        if not isinstance(exam, dict):
+            return False
         if os.path.exists(TEACHER_EXAMS_FILE):
-            try:
-                with open(TEACHER_EXAMS_FILE, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    current_exams = data.get("exams", [])
-            except Exception:
-                current_exams = []
-        
-        # Kiểm tra trùng mã đề hoặc cập nhật
-        exam_code = str(exam.get("code", random.randint(1011, 9999)))
-        exam["code"] = exam_code
-        exam["is_teacher_upload"] = True
-        exam["uploaded_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        replaced = False
-        for idx, ex in enumerate(current_exams):
-            if ex.get("code") == exam_code:
-                current_exams[idx] = exam
-                replaced = True
-                break
-        if not replaced:
-            current_exams.insert(0, exam)
-
-        out_data = {
-            "version": "TEACHER-EXAMS-2026",
-            "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "total": len(current_exams),
-            "exams": current_exams
-        }
-        with open(TEACHER_EXAMS_FILE, "w", encoding="utf-8") as f:
-            json.dump(out_data, f, ensure_ascii=False, indent=2)
+            with open(TEACHER_EXAMS_FILE, 'r', encoding='utf-8') as stream:
+                legacy = json.load(stream)
+            if not isinstance(legacy, dict) or not isinstance(legacy.get('exams'), list) or not all(isinstance(row, dict) for row in legacy['exams']):
+                raise ValueError('Kho cũ không hợp lệ; không ghi đè để tự sửa.')
+        item = deepcopy(exam)
+        item['code'] = str(item.get('code') or random.randint(1011, 9999))
+        item['is_teacher_upload'] = True
+        item.pop('uploaded_at', None)
+        save_exam_cache_snapshot(TEACHER_EXAMS_FILE + '.versions', {
+            'subject': item.get('subject'), 'grade': item.get('grade'),
+            'code': item['code'], 'saved_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'data': item})
+        globals().get('_FAST_EXAM_LIST_CACHE', {}).clear()
+        globals().get('_QUESTIONS_POOL_CACHE', {}).clear()
         return True
-    except Exception as exc:
-        logging.error("Lỗi khi lưu đề giáo viên: %s", exc)
+    except (OSError, ValueError, TypeError) as error:
+        logging.error('Không lưu đề giáo viên; dữ liệu cũ được giữ nguyên: %s', error)
         return False
 
 @_serialized_bank
@@ -2281,7 +2282,9 @@ def get_baseline_full_exams(subject: str, grade, enrich_visuals: bool = False, *
     grade_key = str(grade) if grade is not None else "all"
     cache_key = (norm_subj, grade_key, bool(enrich_visuals), bool(_question_pool))
 
-    t_mtime = os.path.getmtime(TEACHER_EXAMS_FILE) if os.path.exists(TEACHER_EXAMS_FILE) else 0
+    t_versions = TEACHER_EXAMS_FILE + '.versions'
+    t_mtime = (os.path.getmtime(TEACHER_EXAMS_FILE) if os.path.exists(TEACHER_EXAMS_FILE) else 0,
+               os.path.getmtime(t_versions) if os.path.exists(t_versions) else 0)
     c_dir = os.path.join(BASE_DIR, "data", "exam_cache")
     c_mtime = os.path.getmtime(c_dir) if os.path.exists(c_dir) else 0
 
@@ -2326,35 +2329,29 @@ def get_baseline_full_exams(subject: str, grade, enrich_visuals: bool = False, *
     # 2. Đọc kho đề do Giáo viên đã tải lên hệ thống
     try:
         t_exams = load_teacher_uploaded_exams(subject, grade)
-        existing_codes = {r.get("code") for r in results}
+        existing_codes = {exam_storage_identity(r) for r in results}
         for tex in t_exams:
-            if tex.get("code") not in existing_codes:
+            if exam_storage_identity(tex) not in existing_codes:
                 results.append(tex)
-                existing_codes.add(tex.get("code"))
+                existing_codes.add(exam_storage_identity(tex))
     except Exception as exc:
         logging.warning("Không thể đọc teacher exams: %s", exc)
 
     # 3. Đọc kho đề do AI tự động tích lũy
     try:
-        if os.path.exists(c_dir):
-            existing_codes = {r.get("code") for r in results}
-            for fname in os.listdir(c_dir):
-                if fname.endswith(".json"):
-                    fpath = os.path.join(c_dir, fname)
-                    with open(fpath, "r", encoding="utf-8") as f_cached:
-                        c_item = json.load(f_cached)
-                    c_subj = normalize_subject_name(c_item.get("subject", "")).lower()
-                    c_grade = str(c_item.get("grade", ""))
-                    if c_subj == norm_subj and (grade is None or grade_key == "all" or c_grade == grade_key):
-                        ex_ai = c_item.get("data", c_item)
-                        if isinstance(ex_ai, dict) and ex_ai.get("code") not in existing_codes:
-                            from services.bank_storage import mark_ai_exam_provenance
-                            ex_ai = mark_ai_exam_provenance(ex_ai)
-                            ex_ai["school"] = ex_ai.get("school") or "Hệ Thống Gia Sư AI (Độc Bản Tự Sinh)"
-                            ex_ai["portal"] = ex_ai.get("portal") or "GSAI Autonomous Bank 2026"
-                            ex_ai["is_ai_harvested"] = True
-                            results.append(ex_ai)
-                            existing_codes.add(ex_ai.get("code"))
+        from services.bank_storage import read_exam_cache_records
+        existing_codes = {exam_storage_identity(r) for r in results}
+        for c_item in read_exam_cache_records(c_dir, subject, None if grade_key == 'all' else grade):
+            ex_ai = c_item['data']
+            from services.bank_storage import mark_ai_exam_provenance
+            ex_ai = mark_ai_exam_provenance(ex_ai)
+            ex_ai['school'] = ex_ai.get('school') or 'Hệ Thống Gia Sư AI (Độc Bản Tự Sinh)'
+            ex_ai['portal'] = ex_ai.get('portal') or 'GSAI Autonomous Bank 2026'
+            ex_ai['is_ai_harvested'] = True
+            identity = exam_storage_identity(ex_ai)
+            if identity not in existing_codes:
+                results.append(ex_ai)
+                existing_codes.add(identity)
     except Exception as exc:
         logging.warning("Không thể đọc AI harvested exams: %s", exc)
 
@@ -2410,7 +2407,7 @@ def ingest_ai_generated_exam_to_bank(exam_data: dict, subject: str, grade):
 
     # 1. Bơm tức thì vào Shard Cache trong RAM
     if norm_subj in _SHARD_CACHE and isinstance(_SHARD_CACHE[norm_subj], list):
-        if exam_code not in [e.get("code") for e in _SHARD_CACHE[norm_subj]]:
+        if exam_storage_identity(exam_copy) not in {exam_storage_identity(e) for e in _SHARD_CACHE[norm_subj]}:
             _SHARD_CACHE[norm_subj].append(exam_copy)
 
     # 2. Lưu vào tệp nén/JSON cache để tích lũy lâu dài
@@ -2849,12 +2846,12 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
         if chosen_topics:
             exams_list = [ex for ex in exams_list if any(topic_matches(t, ex.get("topic") or ex.get("title", "")) for t in chosen_topics)]
         if exams_list:
-            fresh_nv = [e for e in exams_list if str(e.get("code", e.get("title", ""))) not in _RECENT_EXAM_COOLDOWN]
+            fresh_nv = [e for e in exams_list if exam_storage_identity(e) not in _RECENT_EXAM_COOLDOWN]
             if not fresh_nv:
                 _RECENT_EXAM_COOLDOWN.clear()
                 fresh_nv = exams_list
             chosen_ex = deepcopy(random.choice(fresh_nv))
-            _RECENT_EXAM_COOLDOWN.add(str(chosen_ex.get("code", chosen_ex.get("title", ""))))
+            _RECENT_EXAM_COOLDOWN.add(exam_storage_identity(chosen_ex))
             if len(_RECENT_EXAM_COOLDOWN) > 50:
                 _RECENT_EXAM_COOLDOWN.pop()
             chosen_ex["code"] = str(random.randint(1011, 9999))

@@ -8530,35 +8530,21 @@ def get_cached_exams(subject_name, grade_level):
 
     try:
 
-        if os.path.exists(EXAM_CACHE_DIR):
+        from services.bank_storage import read_exam_cache_records, exam_storage_identity
 
-            safe_subj = re.sub(r'[^\w\-]', '_', subject_name)
+        known = {exam_storage_identity(row) for row in results}
 
-            prefix = f"{safe_subj}_lop{grade_level}_"
+        for obj in read_exam_cache_records(EXAM_CACHE_DIR, subject_name, grade_level):
 
-            for fname in sorted(os.listdir(EXAM_CACHE_DIR), reverse=True):
+            if not exam_delivery_held(obj) and exam_storage_identity(obj) not in known:
 
-                if fname.endswith(".json") and fname.startswith(prefix):
+                results.append(obj)
 
-                    fpath = os.path.join(EXAM_CACHE_DIR, fname)
+                known.add(exam_storage_identity(obj))
 
-                    try:
+    except Exception as exc:
 
-                        with open(fpath, "r", encoding="utf-8") as f_in:
-
-                            obj = json.load(f_in)
-
-                            if isinstance(obj, dict) and "data" in obj and not exam_delivery_held(obj):
-
-                                results.append(obj)
-
-                    except Exception:
-
-                        pass
-
-    except Exception:
-
-        pass
+        logging.warning("Không thể đọc cache đề: %s", exc)
 
     return results
 
@@ -13510,6 +13496,7 @@ if selected_station == station_labels[2]:
 
     st.subheader(f"📝 Trạm 3: Khảo Thí Độc Lập - Môn {subject} (Lớp {grade_num})")
 
+    from services.bank_storage import exam_storage_identity
     from services.official_paper import original_question_number
     from services.exam_delivery import question_solution_text, answer_source_label
     from qa_runtime import mcq_key_option
@@ -14234,6 +14221,9 @@ if selected_station == station_labels[2]:
 
                         ]
 
+                        from services.cache_metadata import distinct_exam_labels
+                        r_opts = distinct_exam_labels(r_opts, filtered_exams)
+
                         if "sel_real_exam_t3" in st.session_state and (not r_opts or st.session_state.sel_real_exam_t3 >= len(r_opts)):
                             st.session_state.sel_real_exam_t3 = 0
 
@@ -14258,19 +14248,19 @@ if selected_station == station_labels[2]:
                             if "seen_whole_exam_codes" not in st.session_state:
                                 st.session_state.seen_whole_exam_codes = set()
 
-                            fresh_exams = [e for e in filtered_exams if str(e.get("code", e.get("title", ""))) not in st.session_state.seen_whole_exam_codes]
+                            fresh_exams = [e for e in filtered_exams if exam_storage_identity(e) not in st.session_state.seen_whole_exam_codes]
                             if not fresh_exams:
                                 st.session_state.seen_whole_exam_codes.clear()
                                 fresh_exams = filtered_exams
 
                             sel_real_item = random.choice(fresh_exams)
-                            st.session_state.seen_whole_exam_codes.add(str(sel_real_item.get("code", sel_real_item.get("title", ""))))
+                            st.session_state.seen_whole_exam_codes.add(exam_storage_identity(sel_real_item))
                             st.toast(f"🎲 Đã bốc ngẫu nhiên đề mới: Mã {sel_real_item.get('code', 'Chính thức')} — {sel_real_item.get('title', 'Đề thi')[:35]}...", icon="🎯")
                         else:
                             sel_real_item = filtered_exams[chosen_real_idx]
                             if "seen_whole_exam_codes" not in st.session_state:
                                 st.session_state.seen_whole_exam_codes = set()
-                            st.session_state.seen_whole_exam_codes.add(str(sel_real_item.get("code", sel_real_item.get("title", ""))))
+                            st.session_state.seen_whole_exam_codes.add(exam_storage_identity(sel_real_item))
 
                         st.session_state.exam_data = enrich_exam_data(sel_real_item)
 
@@ -15389,8 +15379,8 @@ if selected_station == station_labels[2]:
 
                 with st.expander(f"⚡ Mở Đề Thi Có Sẵn Từ Ngân Hàng Offline ({len(cached_list)} đề đã lưu - Nạp tức thì 0.1s)", expanded=False):
 
-                    from services.cache_metadata import cached_exam_label
-                    c_opts = [cached_exam_label(item) for item in cached_list]
+                    from services.cache_metadata import cached_exam_label, distinct_exam_labels
+                    c_opts = distinct_exam_labels([cached_exam_label(item) for item in cached_list], cached_list)
 
                     from services.widget_state import valid_option_index
                     import hashlib as _cache_key_hash
@@ -15419,13 +15409,13 @@ if selected_station == station_labels[2]:
                             if "seen_cached_exam_codes" not in st.session_state:
                                 st.session_state.seen_cached_exam_codes = set()
 
-                            fresh_cached = [e for e in cached_list if str(e.get("code", "")) not in st.session_state.seen_cached_exam_codes]
+                            fresh_cached = [e for e in cached_list if exam_storage_identity(e) not in st.session_state.seen_cached_exam_codes]
                             if not fresh_cached:
                                 st.session_state.seen_cached_exam_codes.clear()
                                 fresh_cached = cached_list
 
                             sel_cached_item = random.choice(fresh_cached)
-                            st.session_state.seen_cached_exam_codes.add(str(sel_cached_item.get("code", "")))
+                            st.session_state.seen_cached_exam_codes.add(exam_storage_identity(sel_cached_item))
                             st.toast(f"🎲 Đã bốc đề ngẫu nhiên mới: Mã {sel_cached_item.get('code')}", icon="🎯")
                         else:
                             sel_cached_item = cached_list[chosen_cache_idx]

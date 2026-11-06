@@ -40,3 +40,7 @@ turbo_enterprise_optimizer.py
 *.db-shm
 *.sqlite
 *.sqlite3
+
+# Runtime teacher revisions and generated exams stay outside source control
+**/teacher_uploaded_exams.json.versions/
+data/exam_cache/
