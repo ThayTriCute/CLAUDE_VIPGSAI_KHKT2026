@@ -74,14 +74,8 @@ def original_tin0530(pathway, *, directory=None):
                 original_source_archive_sha256=TIN0530_SHA,
                 original_question_numbers_preserved=True)
     solutions = json.loads((directory / 'tin_2025_0530.solutions.json').read_text(encoding='utf8'))
-    if solutions.get('archive_sha256') != TIN0530_SHA:
-        raise ValueError('Lời giải không khớp phiên bản đề nguồn.')
-    for question in exam['p1']:
-        solution = solutions.get('records', {}).get(question['source_id'])
-        if not solution or solution.get('answer') != question['ans']:
-            raise ValueError('Lời giải không khớp khóa của câu nguồn.')
-        question['explain'] = ('Giải thích độc lập của ứng dụng, không phải lời giải do Bộ ban hành: '
-                               + solution['explanation'])
+    from services.reviewed_solutions import apply_reviewed_solutions
+    exam = apply_reviewed_solutions(exam, solutions, TIN0530_SHA)
     result = prepare_exam_for_delivery(exam, 'Tin học', 12, duration=50)
     return result
 
