@@ -4728,7 +4728,11 @@ def render_mermaid(code: str):
 
     const container = document.getElementById("mindmap-container");
 
-    const height = 550;
+    function availableMindmapHeight(viewportHeight, containerTop) {
+        return Math.max(220, Math.min(550, viewportHeight - containerTop - 24));
+    }
+    let height = availableMindmapHeight(window.innerHeight, container.getBoundingClientRect().top);
+    container.style.height = height + 'px';
 
 
 
@@ -5146,7 +5150,12 @@ def render_mermaid(code: str):
             }, 400);
         }
         fitMindmap();
-        window.addEventListener('resize', fitMindmap);
+        window.addEventListener('resize', () => {
+            height = availableMindmapHeight(window.innerHeight, container.getBoundingClientRect().top);
+            container.style.height = height + 'px';
+            svg.attr('height', height);
+            fitMindmap();
+        });
         if (document.fonts) document.fonts.ready.then(fitMindmap);
 
 
@@ -5251,11 +5260,11 @@ def render_mermaid(code: str):
 
     if hasattr(st, "iframe"):
 
-        st.iframe(final_html, height=580)
+        st.iframe(final_html, height=680)
 
     else:
 
-        components.html(final_html, height=580, scrolling=False)
+        components.html(final_html, height=680, scrolling=True)
 
 
 
