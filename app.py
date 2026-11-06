@@ -11779,7 +11779,7 @@ if selected_station == station_labels[0]:
                                         f"Không chỉ chèn danh ngôn hoặc khen chung chung. Gợi mở từ bài học: {t1_quote_data['lesson']}. "
                                         f"Đối chiếu các lời chốt trước trong lịch sử; không lặp bài học nhân cách, ví dụ sống, danh ngôn hoặc chỉ thay vài từ. Chọn khía cạnh đạo đức khác có liên hệ thực với ngữ cảnh hiện tại; không ép đổi triết gia khi không có nguồn xác minh. "
                                         f"Chọn triết gia trong kho Á–Âu theo ngữ cảnh, không ép mỗi lượt trích cả hai truyền thống. Không dùng ẩn dụ làm bằng chứng khoa học hoặc phán xét nhân phẩm học sinh. {quote_reference}\n"
-                                        f"5. LỜI CHÚC ÂN CẦN: Lời chúc yêu thương của Người Thầy khích lệ {student_name} tự tin tiến sang Trạm 2 (Giải bài tập & Check VAR trực tiếp)!"
+                                        f"5. LỜI CHÚC ÂN CẦN: Lời chúc yêu thương của Người Thầy khích lệ {student_name} tự tin tiến sang Trạm 2: Gia Sư Socratic & Nộp Bài để trao đổi hoặc nộp bài làm! Không gọi Trạm 2 là Luyện Tập & Khảo Thí; tên đó thuộc Trạm 3."
                                         f" Học sinh đang học lớp {grade_num}; không tự gọi học sinh lớp 6–9 là học sinh THPT, không tự gán tên trường. Diễn đạt mạch lạc, vừa sức theo lớp, không dùng các tiêu đề hành chính như 'Đóng gói bản chất'; không rút phần giáo dục nhân cách còn vài lời khen."
                                     )
                                 else:
