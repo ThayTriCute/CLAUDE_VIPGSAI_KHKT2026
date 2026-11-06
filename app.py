@@ -4720,9 +4720,18 @@ def render_mermaid(code: str):
 
     if (!treeData || !treeData.children || treeData.children.length === 0) {
 
-        console.warn("Kích hoạt Auto-Healer Tree Generator cho sơ đồ tư duy!");
-
-        treeData = generateAutoHealerTree(rawCode);
+        const failed = document.getElementById("mindmap-container");
+        failed.style.height = 'auto';
+        failed.style.cursor = 'default';
+        const notice = document.createElement('p');
+        notice.textContent = 'Chưa dựng được sơ đồ theo dữ liệu đã nhận. Nội dung gốc được giữ bên dưới; không thay bằng sơ đồ mẫu hoặc coi đây là mô phỏng đã kiểm chứng.';
+        notice.style.color = '#fbbf24';
+        const original = document.createElement('pre');
+        original.textContent = rawCode;
+        original.style.cssText = 'white-space:pre-wrap;color:#e2e8f0;overflow-wrap:anywhere';
+        failed.replaceChildren(notice, original);
+        failed.parentElement.querySelectorAll('button').forEach(button => button.disabled = true);
+        throw new Error('Unsupported mindmap structure; original data preserved without fabricated branches.');
 
     }
 
