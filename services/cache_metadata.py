@@ -13,3 +13,12 @@ def cached_exam_label(item):
         stamp = stamp.isoformat()
     stamp = text(stamp, '')[:10]
     return f"Mã đề {text(row.get('code'), 'Chưa rõ')} - {text(row.get('topic'), 'Chuyên đề ôn tập')} ({stamp})"
+
+
+def distinct_exam_labels(labels, exams):
+    """Keep same-code variants distinguishable without renumbering source codes."""
+    from collections import Counter
+    from services.bank_storage import exam_storage_identity
+    counts = Counter(labels)
+    return [label if counts[label] == 1 else label + ' • Bản ' + exam_storage_identity(exam)[:10]
+            for label, exam in zip(labels, exams)]
