@@ -5,7 +5,7 @@ import re
 
 from services.lesson_export import _TOKENS
 
-T1_CONTEXT_REVISION = 2026110201
+T1_CONTEXT_REVISION = 2026110603
 
 
 def _chemical_macros(text, convert):
@@ -156,7 +156,7 @@ def polya_display_markdown(text):
         heading = re.compile(
             r'(?:\*\*|__)?Bước[ \t]+([1-4])[ \t]*:[ \t]*(?:\*\*|__)?[ \t]*'
             r'(Tìm hiểu đề|Lập kế hoạch|Thực hiện kế hoạch|Kiểm tra và nhìn lại)'
-            r'[ \t]*:?(?:\*\*|__)?[ \t]*', re.I)
+            r'[ \t]*[:.]?(?:\*\*|__)?[ \t]*', re.I)
         titles = {'1': 'Tìm hiểu đề', '2': 'Lập kế hoạch',
                   '3': 'Thực hiện kế hoạch', '4': 'Kiểm tra và nhìn lại'}
         def separate(match):
