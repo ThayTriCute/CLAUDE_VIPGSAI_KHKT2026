@@ -29,6 +29,34 @@ class ReviewedEnglishFamilyTests(unittest.TestCase):
         self.assertEqual(source, repair(source, 'Tiếng Anh', 11, 'Family life'))
         self.assertEqual(result, repair(result, 'Tiếng Anh', 10, 'Family life'))
 
+    def test_replacement_context_and_adjective_review_preserve_keys(self):
+        source = (
+            'In my family, my father ________ the heavy lifting, and my mother does the cooking.\n'
+            'A. is doing\nB. does\nC. do\nD. are doing\nCORRECT: B\n'
+            '\"Where is your mother?\" - \"She ________ the garden. She loves plants.\"\n'
+            'CORRECT: B\n'
+            'My brother usually (wash) ________ the dishes, but today I (do) ________ it for him.\n'
+            'Vế sau có \"today\" ám chỉ một sự thay đổi tạm thời so với thói quen\n'
+            'Nam / usually / take out the rubbish / but / tonight / he / help / his sister / with her homework.\n'
+            'lỗi dùng động từ trạng thái (tired)\n'
+            'cách dùng thì và động từ trạng thái (stative verbs)\n'
+        )
+        fixed = repair(source, 'Tiếng Anh', 10, 'Unit 1 Family life')
+        self.assertIn("In our family's usual household routine", fixed)
+        self.assertIn('garden right now', fixed)
+        self.assertIn('Right now, I (do)', fixed)
+        self.assertIn('but / right now / he', fixed)
+        self.assertNotIn('động từ trạng thái (tired)', fixed)
+        self.assertIn('be + tính từ', fixed)
+        self.assertEqual(fixed.count('CORRECT: B'), 2)
+        self.assertIn('A. is doing\nB. does\nC. do\nD. are doing', fixed)
+        self.assertEqual(fixed, repair(fixed, 'Tiếng Anh', 10, 'Unit 1 Family life'))
+        self.assertEqual(source, repair(source, 'Tiếng Anh', 11, 'Unit 1 Family life'))
+        fenced = '```text\n' + source + '\n```'
+        self.assertEqual(fenced, repair(fenced, 'Tiếng Anh', 10, 'Unit 1 Family life'))
+        unrelated = 'cách dùng thì và động từ trạng thái (stative verbs): know, believe'
+        self.assertEqual(unrelated, repair(unrelated, 'Tiếng Anh', 10, 'Unit 1 Family life'))
+
     def test_quoted_code_and_other_contexts_stay_unchanged(self):
         source = '```text\nMy sister is cleaning her room every Sunday morning.\n```'
         self.assertEqual(source, repair(source, 'Tiếng Anh', 10, 'Family life'))

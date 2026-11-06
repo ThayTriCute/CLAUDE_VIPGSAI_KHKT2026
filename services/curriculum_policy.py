@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110510
+T1_CONTEXT_REVISION = 2026110601
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -58,6 +58,39 @@ def correct_reviewed_english_family_guidance(text, subject, grade, topic=""):
         prose = prose.replace(
             'Xác định đúng "mỗi tối" (thói quen) và "tối nay" (tình huống cụ thể) để chia động từ.',
             'Phân biệt thói quen mỗi tối với hành động người anh/em đang làm ngay lúc nói: take / is doing. Trạng từ chỉ là gợi ý; phải xét nghĩa và ngữ cảnh.')
+        # Independently reviewed issues in the single authorized replacement.
+        # Keep option order/keys; strengthen the intended context, not the answer.
+        prose = re.sub(
+            r'In my family, my father (_+) the heavy lifting, and my mother does the cooking\.',
+            r"In our family's usual household routine, my father \1 the heavy lifting, and my mother does the cooking.", prose)
+        prose = re.sub(
+            r'"Where is your mother\?" - "She (_+) the garden\. She loves plants\."',
+            r'"Where is your mother right now?" - "She \1 the garden right now. She loves plants."', prose)
+        prose = re.sub(
+            r'My brother usually \(wash\) (_+) the dishes, but today I \(do\) (_+) it for him\.',
+            r'My brother usually (wash) \1 the dishes. Right now, I (do) \2 it for him.', prose)
+        replacements = {
+            'Vế sau có "today" ám chỉ một sự thay đổi tạm thời so với thói quen':
+                'Vế sau nêu rõ "Right now" và việc người nói đang làm thay; riêng today không quyết định thì',
+            'but / tonight / he / help': 'but / right now / he / help',
+            'một hành động khác biệt xảy ra vào tối nay': 'một hành động khác biệt đang diễn ra ngay lúc nói',
+            'Xác định vế sau là hành động tạm thời (tonight)': 'Xác định vế sau là hành động đang diễn ra (right now)',
+            'Vế có "tonight" (diễn tả sự tạm thời/đang xảy ra)': 'Vế có "right now" (hành động đang diễn ra ngay lúc nói)',
+            'mốc thời gian "tonight"': 'mốc thời gian "right now"',
+            'cách dùng thì và động từ trạng thái (stative verbs)': 'cách dùng thì và cấu trúc be + tính từ',
+            'lỗi dùng động từ trạng thái (tired)': 'lỗi dùng be với tính từ tired trong ngữ cảnh này',
+            'tính chất của động từ trạng thái': 'cấu trúc be + tính từ trong ngữ cảnh này',
+            'Với tính từ "tired" (mệt mỏi - chỉ trạng thái), chúng ta có dùng thì tiếp diễn để mô tả không?':
+                'Trong ngữ cảnh này, hãy phân biệt tính từ tired với động từ và xét cách dùng be để mô tả trạng thái.',
+            'Câu hỏi "Where is your mother?" cho thấy người hỏi đang tìm người mẹ ở thời điểm hiện tại. Do đó, câu trả lời phải dùng thì Hiện tại tiếp diễn để chỉ hành động đang diễn ra.':
+                'Ngữ cảnh nêu right now và hành động tưới vườn đang diễn ra nên trong tình huống này dùng Hiện tại tiếp diễn. Câu hỏi Where is your mother? đứng riêng không phải quy tắc bắt buộc chọn thì.',
+        }
+        tired_context = 'my mother is being tired' in prose or 'động từ trạng thái (tired)' in prose
+        for old, new in replacements.items():
+            if (old.startswith(('cách dùng thì và động từ trạng thái', 'tính chất của động từ trạng thái'))
+                    and not tired_context):
+                continue
+            prose = prose.replace(old, new)
         prose = prose.replace('**Dấu hiệu nhận biết**', '**Trạng từ gợi ý, cần xét ngữ cảnh**')
         prose = prose.replace('Tiêu chí sản phẩm:', 'Tự kiểm tra:')
         return prose
@@ -709,7 +742,7 @@ def lesson_prompt(subject, grade, topic):
 Soạn bài học với ba tiêu đề chính: '### PHẦN 1: BÀI HỌC', '### PHẦN 2: TRẮC NGHIỆM KHÁCH QUAN SOCRATIC', '### PHẦN 3: BÀI TẬP TỰ LUẬN'.
 Phần 1: khởi động, hình thành kiến thức, ví dụ có lời giải phù hợp lớp, luyện tập và vận dụng; đặc trưng thể loại/môn học phải được giữ.
 Trình bày rõ năm mục của Phần 1: Khởi động; Hình thành kiến thức; Ví dụ có lời giải; Luyện tập; Vận dụng. Nội dung mỗi mục hướng trực tiếp tới học sinh tự học; Hình thành kiến thức phải tóm tắt rõ kiến thức cốt lõi và cách dùng, không chỉ ghi mục tiêu hay hoạt động. Câu hỏi tự kiểm ngắn giúp học sinh nhận ra phần chưa hiểu; không dùng các khung “Mục tiêu – Hoạt động thực hiện – Tiêu chí sản phẩm” thay cho lời giảng. Khởi động dùng tình huống gần gũi gắn đúng bài; luyện tập kiểm tra kiến thức vừa học; vận dụng cho nhiệm vụ khả thi, phù hợp tuổi, không đòi dữ kiện chưa cung cấp. Ví dụ có lời giải phải giải thích cách làm. Với môn đọc hiểu, ngoại ngữ và xã hội, chọn hoạt động đặc trưng môn, không ép thành bài toán tính số. Với thí nghiệm hoặc hóa chất, ưu tiên dữ liệu/mô phỏng và chỉ quan sát thí nghiệm do giáo viên tổ chức; không giao tự pha trộn hóa chất tại nhà.
-Với ngoại ngữ, chọn dạng ngữ pháp theo ý nghĩa và ngữ cảnh đủ rõ; trạng từ thời gian không tự quyết định duy nhất một thì. Khi kiểm tra thói quen, phân biệt rõ thói quen ổn định với hoạt động lặp lại tạm thời để không loại một phương án vẫn đúng ngữ pháp. Giữ đúng quan hệ đại từ, người nói và quan hệ gia đình khi chuyển ngữ; không đổi bà của nhân vật thành bà của mẹ nhân vật. Chỉ nhận diện dạng động từ hoặc hòa hợp chủ vị không tự động là vận dụng.
+Với ngoại ngữ, chọn dạng ngữ pháp theo ý nghĩa và ngữ cảnh đủ rõ; trạng từ thời gian không tự quyết định duy nhất một thì. Khi kiểm tra thói quen, phân biệt rõ thói quen ổn định với hoạt động lặp lại tạm thời để không loại một phương án vẫn đúng ngữ pháp. Giữ đúng quan hệ đại từ, người nói và quan hệ gia đình khi chuyển ngữ; không đổi bà của nhân vật thành bà của mẹ nhân vật. Chỉ nhận diện dạng động từ hoặc hòa hợp chủ vị không tự động là vận dụng. Phân biệt từ loại với chức năng trong câu: tính từ tired không phải động từ trạng thái; giải thích cấu trúc be + tính từ theo đúng ngữ cảnh, không biến quy tắc thường dùng thành khẳng định không có ngoại lệ.
 Phần 2: đúng 3 câu trắc nghiệm, mỗi câu có 4 phương án A/B/C/D và duy nhất một đáp án. Ghi CORRECT: cho đáp án nội bộ, EXPLAIN: cho giải thích nội bộ, HINT: cho gợi mở Socratic theo riêng ngữ cảnh câu hỏi. HINT chỉ dẫn dắt học sinh tự nghĩ; không giải hộ hoặc tiết lộ đáp án. Không dùng EXPLAIN thay HINT.
 Phần 3: đúng 2 câu tự luận, mỗi câu hướng dẫn đủ bốn bước Pólya bằng tiếng Việt: Bước 1: Tìm hiểu đề; Bước 2: Lập kế hoạch; Bước 3: Thực hiện kế hoạch; Bước 4: Kiểm tra và nhìn lại. Chỉ đặt câu hỏi hoặc hướng dẫn để học sinh tự thực hiện, không giải hộ, không đưa đáp án. Phần 1 vẫn được giải thích lý thuyết và có ví dụ minh họa; không áp quy tắc giấu lời giải của Socratic sang Phần 1.
 Mỗi câu Phần 2 và Phần 3 mở đầu 'Câu n. [Mức độ: NB/TH/VD/VDC]' (chọn một nhãn, hoặc để rỗng nếu chưa đủ căn cứ). Tiếp theo là nội dung câu, các dòng OUTCOME: yêu cầu cần đạt; COGNITIVE_REASON: căn cứ phân loại; COGNITIVE_STEPS: ["thao tác tư duy 1", "thao tác tư duy 2"]. Đây là đề xuất cần giáo viên duyệt, không mặc định tất cả câu là vận dụng.
