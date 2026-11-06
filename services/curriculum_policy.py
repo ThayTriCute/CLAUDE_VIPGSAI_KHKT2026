@@ -739,6 +739,15 @@ def lesson_prompt(subject, grade, topic):
             "Không yêu cầu luận điểm/dẫn chứng nghị luận cho bài kể chuyện.\n"
         )
     if canonical_subject(subject) == "Tin học" and re.search(
+            r"\b(?:while|python)\b|vong lap", folded(topic)):
+        visual_guidance += (
+            "\nVòng lặp Python: kiểm tra điều kiện while trước thân lệnh; điều kiện sai ban đầu "
+            "thì thân lệnh chạy 0 lần. Không kết luận vô hạn chỉ vì thiếu cập nhật biến hoặc "
+            "điều kiện luôn True nếu chưa loại trừ break, return, ngoại lệ và cách dừng khác. "
+            "Câu hỏi về lặp vô hạn phải nêu phạm vi: mỗi lượt thân lệnh hoàn tất và không có "
+            "thoát sớm. Chạy nhẩm bảng biến để kiểm khóa, điều kiện biên và vị trí thụt lề.\n"
+        )
+    if canonical_subject(subject) == "Tin học" and re.search(
             r"\b(?:html|css|web)\b|trang mạng", folded(topic)):
         visual_guidance += (
             "\nHTML: phân biệt ngữ nghĩa tiêu đề cấp 1, đoạn văn và ngắt dòng với cách hiển thị. "
