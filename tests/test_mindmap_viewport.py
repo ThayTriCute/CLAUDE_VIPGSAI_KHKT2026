@@ -9,6 +9,26 @@ from tests.test_expert_patch_regressions import load_function
 
 class MindmapViewportTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node required to exercise generated JavaScript')
+    def test_wrapped_toolbar_leaves_drawing_inside_actual_frame(self):
+        pages = []
+        frames = []
+        render = load_function('render_mermaid', st=SimpleNamespace(
+            iframe=lambda page, **kwargs: (pages.append(page), frames.append(kwargs))))
+        render('graph LR\nA[Family life] --> B[Routine]')
+        height_function = re.search(r'function availableMindmapHeight\([^)]*\) \{[^}]*\}', pages[0])[0]
+        script = "const assert=require('node:assert/strict');\n" + height_function + "\n"
+        script += '''
+for (const top of [48,80,160,240]) {
+  const h=availableMindmapHeight(680,top);
+  assert(top+h+24<=680);
+  assert(h>=220 && h<=550);
+}
+assert(availableMindmapHeight(580,80)===476);
+'''
+        subprocess.run([shutil.which('node'), '-e', script], check=True, capture_output=True, text=True)
+        self.assertEqual(frames[0]['height'], 680)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node required to exercise generated JavaScript')
     def test_actual_generated_fit_contains_tall_and_narrow_trees(self):
         pages = []
         render = load_function('render_mermaid', st=SimpleNamespace(iframe=lambda page, **kwargs: pages.append(page)))
