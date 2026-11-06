@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110601
+T1_CONTEXT_REVISION = 2026110602
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -85,6 +85,17 @@ def correct_reviewed_english_family_guidance(text, subject, grade, topic=""):
             'Câu hỏi "Where is your mother?" cho thấy người hỏi đang tìm người mẹ ở thời điểm hiện tại. Do đó, câu trả lời phải dùng thì Hiện tại tiếp diễn để chỉ hành động đang diễn ra.':
                 'Ngữ cảnh nêu right now và hành động tưới vườn đang diễn ra nên trong tình huống này dùng Hiện tại tiếp diễn. Câu hỏi Where is your mother? đứng riêng không phải quy tắc bắt buộc chọn thì.',
         }
+        # Keep the reviewed stem, hint and cognitive rationale consistent.
+        # These editorial repairs never grant a level or review approval.
+        prose = prose.replace(
+            'Học sinh cần hiểu tình huống "đang ở đâu" để suy luận ra hành động đang diễn ra.',
+            'Học sinh xác định hành động đang diễn ra từ ngữ cảnh tưới vườn và mốc right now; câu hỏi nơi chốn đứng riêng không xác định thì.')
+        prose = prose.replace(
+            "Phân tích câu hỏi 'Where is...?' để xác định thời điểm hành động",
+            'Xác định mốc right now và hành động tưới vườn đang diễn ra')
+        prose = prose.replace(
+            'Khi ai đó hỏi "Mẹ bạn đâu rồi?", họ muốn biết về một thói quen hàng ngày hay một hành động đang thực hiện ngay lúc đó?',
+            'Trong tình huống tưới vườn có mốc right now, hành động đang diễn ra lúc nói hay là thói quen? Câu hỏi nơi chốn đứng riêng chưa đủ để chọn thì.')
         tired_context = 'my mother is being tired' in prose or 'động từ trạng thái (tired)' in prose
         for old, new in replacements.items():
             if (old.startswith(('cách dùng thì và động từ trạng thái', 'tính chất của động từ trạng thái'))
@@ -100,13 +111,23 @@ def correct_reviewed_english_family_guidance(text, subject, grade, topic=""):
 def repair_reviewed_english_family_question(question, subject, grade, topic=""):
     """Apply the same reviewed prose repairs to an already parsed live quiz.
 
-    Keep keys, order, cognitive metadata and the caller's original unchanged.
+    Keep keys, order, review decisions and the caller's original unchanged.
     """
     result = deepcopy(question)
     for field in ('question', 'explain', 'hint'):
         if isinstance(result.get(field), str):
             result[field] = correct_reviewed_english_family_guidance(
                 result[field], subject, grade, topic)
+    evidence = result.get('cognitive_evidence')
+    if isinstance(evidence, dict):
+        for field in ('learning_outcome', 'cognitive_rationale'):
+            if isinstance(evidence.get(field), str):
+                evidence[field] = correct_reviewed_english_family_guidance(
+                    evidence[field], subject, grade, topic)
+        if isinstance(evidence.get('solution_steps'), list):
+            evidence['solution_steps'] = [correct_reviewed_english_family_guidance(
+                step, subject, grade, topic) if isinstance(step, str) else step
+                for step in evidence['solution_steps']]
     if isinstance(result.get('options'), list):
         result['options'] = [correct_reviewed_english_family_guidance(
             option, subject, grade, topic) if isinstance(option, str) else option

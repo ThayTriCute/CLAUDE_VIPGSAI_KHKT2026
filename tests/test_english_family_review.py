@@ -68,6 +68,26 @@ class ReviewedEnglishFamilyTests(unittest.TestCase):
 
 
 class ParsedEnglishFamilyTests(unittest.TestCase):
+    def test_where_question_evidence_uses_explicit_time_without_approving_level(self):
+        from copy import deepcopy
+        from services.curriculum_policy import repair_reviewed_english_family_question
+        original = {'question': '"Where is your mother right now?"',
+                    'correct': 'B', 'level': 'TH',
+                    'cognitive_evidence': {
+                        'cognitive_rationale': 'Học sinh cần hiểu tình huống "đang ở đâu" để suy luận ra hành động đang diễn ra.',
+                        'solution_steps': ["Phân tích câu hỏi 'Where is...?' để xác định thời điểm hành động"],
+                        'review': 'pending'}}
+        before = deepcopy(original)
+        fixed = repair_reviewed_english_family_question(original, 'Tiếng Anh', 10, 'Family life')
+        self.assertEqual(original, before)
+        self.assertIn('right now', fixed['cognitive_evidence']['cognitive_rationale'])
+        self.assertIn('right now', fixed['cognitive_evidence']['solution_steps'][0])
+        self.assertEqual(fixed['cognitive_evidence']['review'], 'pending')
+        self.assertEqual((fixed['correct'], fixed['level']), ('B', 'TH'))
+        self.assertEqual(fixed, repair_reviewed_english_family_question(fixed, 'Tiếng Anh', 10, 'Family life'))
+        self.assertEqual(original, repair_reviewed_english_family_question(original, 'Tiếng Anh', 11, 'Family life'))
+        self.assertIn('right now', repair(before['cognitive_evidence']['cognitive_rationale'], 'Tiếng Anh', 10, 'Family life'))
+
     def test_existing_parsed_quiz_is_repaired_without_mutating_key_or_source(self):
         from copy import deepcopy
         from services.curriculum_policy import repair_reviewed_english_family_question
