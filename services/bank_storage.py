@@ -251,10 +251,10 @@ def exam_storage_identity(exam):
     """Compare content and source context, never the printed code alone."""
     if isinstance(exam.get('data'), dict):
         exam = {**{k: exam[k] for k in ('subject', 'grade', 'code') if k in exam}, **exam['data']}
-    fields = ('subject', 'grade', 'year', 'code', 'school', 'portal', 'exam_type',
-              'curriculum', 'source', 'source_url', 'provenance_kind',
-              'p1', 'p2', 'p3', 'part_doc_hieu', 'part_viet')
-    payload = {key: exam[key] for key in fields if key in exam}
+    # Keep every scientific/context/source field, including unfamiliar extensions.
+    # Only storage timestamps may differ without creating another revision.
+    payload = {key: value for key, value in exam.items()
+               if key not in ('saved_at', 'uploaded_at', 'added_at')}
     return hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True,
                                     separators=(',', ':')).encode('utf-8')).hexdigest()
 

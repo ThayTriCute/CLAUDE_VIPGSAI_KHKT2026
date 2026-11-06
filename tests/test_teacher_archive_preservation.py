@@ -76,6 +76,13 @@ class TeacherArchivePreservationTests(unittest.TestCase):
                 self.assertTrue(engine.save_teacher_uploaded_exam(paper('teacher C')))
                 self.assertEqual(len(engine.get_baseline_full_exams('Tin học',12)),6)
 
+    def test_identity_preserves_unfamiliar_scientific_and_source_context(self):
+        original=paper()
+        first=exam_storage_identity(original)
+        for key in ('shared_context','exam_session','visuals','custom_scientific_context'):
+            self.assertNotEqual(first,exam_storage_identity(dict(original,**{key:'different'})))
+        self.assertEqual(first,exam_storage_identity(dict(original,uploaded_at='later')))
+
     def test_cache_reader_accepts_legacy_and_snapshots_by_context_not_filename(self):
         with tempfile.TemporaryDirectory() as tmp:
             for subject,grade,text in [('Tin học',12,'new'),('Tin học',11,'grade11'),('Toán học',12,'math')]:
