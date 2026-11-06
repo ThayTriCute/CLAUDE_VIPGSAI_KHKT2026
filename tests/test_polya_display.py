@@ -30,6 +30,17 @@ class PolyaDisplayTests(unittest.TestCase):
         self.assertNotIn('- **Bước', result)
         self.assertEqual(polya_display_markdown(result), result)
 
+    def test_observed_bold_period_heading_leaves_no_markdown_debris(self):
+        text = '*   **Bước 1: Tìm hiểu đề.** Đọc đúng ngữ cảnh.\n*   **Bước 2: Lập kế hoạch.** Giữ nội dung.'
+        result = polya_display_markdown(text)
+        self.assertNotIn('.**', result)
+        self.assertIn('**Bước 1: Tìm hiểu đề:** Đọc đúng ngữ cảnh.', result)
+        self.assertIn('\n\n**Bước 2: Lập kế hoạch:** Giữ nội dung.', result)
+        self.assertEqual(polya_display_markdown(result), result)
+        rendered = lesson_body_html(result)
+        self.assertNotIn('.**', rendered)
+        self.assertIn('Đọc đúng ngữ cảnh.', rendered)
+
     def test_code_math_and_mentions_are_not_rewritten(self):
         protected = ('```text\nBước 1: Tìm hiểu đề: sample\n```\n'
                      '`Bước 2: Lập kế hoạch: sample`\n$ x=1 $\n'
