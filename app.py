@@ -4590,7 +4590,12 @@ def render_mermaid(code: str):
 
 
 
+        // A tree must preserve every source node and cannot contain shared parents/cycles.
+        const visited = new Set();
+        let invalidTree = false;
         function build(id, depth) {
+            if (visited.has(id)) { invalidTree = true; return {id, name: nodeLabels[id] || id, depth}; }
+            visited.add(id);
 
             const item = { id: id, name: nodeLabels[id] || id, depth: depth };
 
@@ -4606,7 +4611,8 @@ def render_mermaid(code: str):
 
         }
 
-        return build(rootId, 0);
+        const result = build(rootId, 0);
+        return invalidTree || visited.size !== allIds.length ? null : result;
 
     }
 
@@ -12771,7 +12777,7 @@ QUY TẮC PHÂN LOẠI MÔ HÌNH:
         if is_proposition_request(st.session_state[intent_key], subject) and predicate_data is None:
             st.warning('Chưa dựng được phép gán biến theo biểu thức này. Không thay bằng đồ thị hoặc mô hình mẫu khác bài.')
         else:
-            st.success("✨ Đã khởi tạo mô phỏng Phòng Lab liên môn thành công!")
+            st.caption("Dữ liệu trực quan đã được nhận. Sơ đồ không tự có chức năng mô phỏng; cần kiểm nội dung và các điều khiển theo yêu cầu.")
             render_smart_lab(data, subject)
 
 
