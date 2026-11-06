@@ -8455,11 +8455,9 @@ def save_exam_to_cache(exam_data, subject_name, grade_level, topic_name=""):
 
         }
 
-        with open(fpath, "w", encoding="utf-8") as f_out:
+        from services.bank_storage import save_exam_cache_snapshot
 
-            json.dump(save_obj, f_out, ensure_ascii=False, indent=2)
-
-        return fpath
+        return save_exam_cache_snapshot(EXAM_CACHE_DIR, save_obj)
 
     except Exception as exc:
 

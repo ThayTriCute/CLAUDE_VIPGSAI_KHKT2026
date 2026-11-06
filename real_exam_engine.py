@@ -2427,8 +2427,8 @@ def ingest_ai_generated_exam_to_bank(exam_data: dict, subject: str, grade):
             "code": exam_code,
             "data": exam_copy
         }
-        with open(fpath, "w", encoding="utf-8") as f_out:
-            json.dump(save_obj, f_out, ensure_ascii=False, indent=2)
+        from services.bank_storage import save_exam_cache_snapshot
+        save_exam_cache_snapshot(cache_dir, save_obj)
     except Exception as exc:
         logging.warning("Không thể ghi file tích lũy đề AI: %s", exc)
 

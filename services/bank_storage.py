@@ -146,6 +146,38 @@ def read_exam_shard(path, grade=None):
     return list(iter_exam_shard(path, grade=grade))
 
 
+def save_exam_cache_snapshot(directory, record):
+    """Keep distinct payloads even when generated exam codes collide.
+
+    Publish a complete file without replacing an existing cache or source file.
+    Timestamps do not affect content identity, so repeated saves are idempotent.
+    """
+    import os
+    import tempfile
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    identity = {key: value for key, value in record.items() if key != 'saved_at'}
+    stable = json.dumps(identity, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
+    digest = hashlib.sha256(stable.encode('utf-8')).hexdigest()
+    target = directory / ('exam_' + digest + '.json')
+    handle, temporary = tempfile.mkstemp(prefix='.exam-', suffix='.tmp', dir=directory)
+    try:
+        with os.fdopen(handle, 'w', encoding='utf-8') as stream:
+            json.dump(record, stream, ensure_ascii=False, indent=2)
+            stream.flush()
+            os.fsync(stream.fileno())
+        try:
+            os.link(temporary, target)
+        except FileExistsError:
+            existing = json.loads(target.read_text(encoding='utf-8'))
+            if {k: v for k, v in existing.items() if k != 'saved_at'} != identity:
+                raise ValueError('Conflicting cache snapshot; no overwrite performed')
+        return str(target)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
 def read_curated_exam_packs(directory, *, subject, grade=None):
     """Load only hash-bound, explicitly released CT2018 Station3 supplements.
 
