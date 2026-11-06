@@ -1,12 +1,14 @@
 {
   "schema_version": 1,
   "archive_sha256": "685700c87d4fcf11e30516e1a0567c6cc56a92c9e6660258eae65f597786bc0e",
-  "scope": "Application independent explanations of original MCQ; not Ministry-authored solutions or cognitive certification",
+  "scope": "Independent application explanations for 24 MCQ and 24 TF response units; not Ministry-authored solutions or cognitive certification",
   "evidence": [
     "T3_TIN2025_0530_SOURCE_REVIEW_CURRENT.json",
     "T3_TIN2025_0530_Q3_Q11_REVIEW_20261103.json",
     "T3_TIN2025_0530_Q12_Q24_REVIEW_20261103.json",
-    "T3_TIN2025_KNTT_MAPPING_CLOSURE_20261103.json"
+    "T3_TIN2025_KNTT_MAPPING_CLOSURE_20261103.json",
+    "T3_TIN2025_0530_TF_COMMON_REVIEW_20261104.json",
+    "T3_TIN2025_0530_TF_SPECIAL_REVIEW_20261104.json"
   ],
   "records": {
     "I.1": {
@@ -104,6 +106,106 @@
     "I.24": {
       "answer": "C",
       "explanation": "Khả năng học và giải quyết mọi vấn đề tự nhiên, xã hội là khẳng định không giới hạn, chưa được chứng minh bởi các hệ thống AI chuyên biệt được xét. Học theo tác vụ hoặc gợi ý không suy ra khả năng phổ quát này. Chọn C."
+    },
+    "II.1.a": {
+      "answer": true,
+      "explanation": "Trong mô hình gia đình được mô tả, điện thoại dùng Wi-Fi tích hợp ở modem để vào mạng thay vì dữ liệu di động. Kết luận theo mô hình đã cho, không suy rằng mọi điện thoại có Internet đều chứng minh modem có Wi-Fi."
+    },
+    "II.1.b": {
+      "answer": true,
+      "explanation": "Access Point đặt gần vùng sóng yếu có thể mở rộng truy cập Wi-Fi khi được kết nối và cấu hình đúng với modem. Chỉ đặt thiết bị gần phòng, chưa có đường kết nối hoạt động, không bảo đảm có Internet."
+    },
+    "II.1.c": {
+      "answer": true,
+      "explanation": "Với máy bàn không có Wi-Fi trong đề, nối cáp Ethernet tới modem là cách đơn giản. Đề nói đơn giản nhất, không nói là cách duy nhất; không bác bỏ chỉ vì có thể dùng bộ chuyển đổi khác."
+    },
+    "II.1.d": {
+      "answer": false,
+      "explanation": "Switch chỉ nối các máy trong LAN nhưng không có đường tới modem/Internet theo mô tả. Kết nối nội bộ không tự cung cấp đường ra Internet."
+    },
+    "II.2.a": {
+      "answer": true,
+      "explanation": "maTram là mã duy nhất cho mỗi trạm trong mô hình, nên nhận diện được từng dòng của bảng TRAM và là khóa chính được xét."
+    },
+    "II.2.b": {
+      "answer": false,
+      "explanation": "Cùng một trạm có nhiều tháng trong một năm, nên maTram và nam chưa phân biệt được từng dòng MUA. Theo mô hình mỗi trạm có một giá trị mưa mỗi tháng, còn cần thang."
+    },
+    "II.2.c": {
+      "answer": true,
+      "explanation": "Tên trạm lấy từ TRAM; năm, tháng và lượng mưa lấy từ MUA. Nối hai bảng theo maTram cung cấp các thuộc tính được hỏi, không cần dữ liệu nhiệt độ."
+    },
+    "II.2.d": {
+      "answer": false,
+      "explanation": "Câu truy vấn chỉ nối TRAM và MUA nhưng dùng thuộc tính của NHIETDO chưa được nối. Điều kiện năm2020 không sửa được thiếu quan hệ này."
+    },
+    "II.3.a": {
+      "answer": true,
+      "explanation": "Mô hình phân tích sắc thái tích cực/tiêu cực trong tin tức và bài đăng là ứng dụng xử lý ngôn ngữ, không chỉ dự đoán một giá số."
+    },
+    "II.3.b": {
+      "answer": false,
+      "explanation": "Dữ liệu huấn luyện đã gắn nhãn tích cực/tiêu cực, nên đây là học có giám sát. Không có căn cứ bắt buộc dùng học không giám sát như nhận định."
+    },
+    "II.3.c": {
+      "answer": false,
+      "explanation": "Chỉ dùng toàn bộ dữ liệu thu thập để huấn luyện không cung cấp bước đánh giá độc lập khả năng khái quát. Kết luận bác bỏ yêu cầu chỉ cần huấn luyện như đề nêu; không phải cấm mọi cách huấn luyện cuối cùng với toàn bộ dữ liệu khi đã có đánh giá độc lập."
+    },
+    "II.3.d": {
+      "answer": true,
+      "explanation": "Đề nói có thể: lợi nhuận giao dịch thực tế có thể là một chỉ số kết quả khi triển khai. Nó không phải thước đo duy nhất, không bảo đảm sinh lời và chịu tác động của thị trường cùng các yếu tố khác."
+    },
+    "II.4.a": {
+      "answer": false,
+      "explanation": "Chương trình sắp xếp/truy cập mảng rồi trả một biểu thức số, không thực hiện các thao tác vào-trước-ra-trước của hàng đợi. Mảng có thể dùng để cài hàng đợi trong chương trình khác; không được suy rằng mảng không bao giờ biểu diễn hàng đợi. Khái niệm này thuộc phạm vi chuyên đề CS12.1, không gán thành yêu cầu cốt lõi bắt buộc cho mọi học sinh lớp12."
+    },
+    "II.4.b": {
+      "answer": true,
+      "explanation": "Khi mảng đã không giảm, không có phần tử đứng trước lớn hơn x nên thân while không chạy; các dòng6–7 thực hiện0 lần. Phép gán phía sau vòng while là dòng khác."
+    },
+    "II.4.c": {
+      "answer": false,
+      "explanation": "Sau lần lặp for thứ2, tức i=2, mảng là [5,7,9,2,4,6], chưa phải [2,5,7,9,4,6]. Cần thêm một bước chèn nữa mới có trạng thái được nêu."
+    },
+    "II.4.d": {
+      "answer": true,
+      "explanation": "Mảng sau sắp xếp là [2,3,4,5,6,7,8]; n//2=3 và A[3]=5. Hàm trả (2+5)/2=3,5. Bản C++ dùng2.0 nên giữ phần thập phân; kết quả không phải riêng số trung vị."
+    },
+    "II.5.a": {
+      "answer": false,
+      "explanation": "Công cụ tạo website phù hợp có thể hỗ trợ biểu mẫu đăng ký, trực tiếp hoặc thông qua tích hợp. Khẳng định không hỗ trợ biểu mẫu đăng ký CLB là sai."
+    },
+    "II.5.b": {
+      "answer": false,
+      "explanation": "Không có yêu cầu chung rằng ảnh banner bắt buộc là PNG. Chẳng hạn Google Sites hỗ trợ JPEG,PNG,GIF; cần kiểm định dạng mà công cụ được chọn thực sự hỗ trợ."
+    },
+    "II.5.c": {
+      "answer": true,
+      "explanation": "Yêu cầu xem trên máy tính và điện thoại phù hợp với việc chọn công cụ hỗ trợ bố cục trên hai loại thiết bị. Không suy ra mọi công cụ tự động bảo đảm giao diện di động tốt."
+    },
+    "II.5.d": {
+      "answer": true,
+      "explanation": "Video YouTube có quyền truy cập/nhúng phù hợp có thể được chèn bằng giao diện video/nhúng của công cụ như Google Sites. Việc đưa video và dùng liên kết là khả thi trong công cụ hỗ trợ; dán chữ liên kết tùy ý không luôn tạo trình phát."
+    },
+    "II.6.a": {
+      "answer": true,
+      "explanation": "Dữ liệu nhóm,loại,năm,số lao động có thể trải thành các cột trên một trang tính. Có thể lưu không đồng nghĩa trang tính có đầy đủ chuẩn hóa,ràng buộc quan hệ và chức năng của hệ quản trị CSDL."
+    },
+    "II.6.b": {
+      "answer": true,
+      "explanation": "Trong mô hình mỗi loại có một số lao động cho mỗi năm, cặp maLoai và nam nhận diện một dòng LAODONG. Chỉ maLoai sẽ lặp lại qua các năm; không được bỏ nam khỏi cặp khóa."
+    },
+    "II.6.c": {
+      "answer": false,
+      "explanation": "NHOM liên hệ LOAI bằng maNhom; LOAI liên hệ LAODONG bằng maLoai. LAODONG không có trường maNhom, nên quan hệ trực tiếp NHOM–LAODONG được đề xuất không khớp cấu trúc khóa đã cho."
+    },
+    "II.6.d": {
+      "answer": false,
+      "explanation": "Truy vấn chỉ nối NHOM và LOAI nhưng chọn/lọc thuộc tính LAODONG chưa được nối. Vì thiếu bảng này, tham chiếu LAODONG.nam không hợp lệ; điều kiện năm2022 không khắc phục được lỗi."
     }
-  }
+  },
+  "subject": "Tin học",
+  "grade": 12,
+  "year": 2025,
+  "variant": "0530"
 }

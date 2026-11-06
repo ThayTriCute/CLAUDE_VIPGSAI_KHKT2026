@@ -12,7 +12,8 @@ class ReviewLabelsTests(unittest.TestCase):
             self.assertTrue(all('không phải lời giải do Bộ ban hành' in
                                 question_solution_text(q) for q in exam['p1']))
             self.assertIn('display:flex', question_solution_text(exam['p1'][6]))
-            self.assertIn('Chưa có lời giải độc lập', question_solution_text(exam['p2'][0]))
+            self.assertIn('a) Đúng:', question_solution_text(exam['p2'][0]))
+            self.assertTrue(all('không phải lời giải do Bộ ban hành' in question_solution_text(q) for q in exam['p2']))
 
     def test_explanation_from_other_source_or_wrong_key_is_rejected(self):
         import json
