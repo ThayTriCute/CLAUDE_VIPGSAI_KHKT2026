@@ -5524,6 +5524,29 @@ def render_smart_lab(data, current_subject=""):
 
     dtype = data.get("type")
 
+    if dtype == 'light_threshold_control':
+        from services.threshold_control import light_controller_step
+        st.markdown('### Đèn tự động — điều khiển hai ngưỡng')
+        st.caption('Mô hình định tính, độ sáng quy ước 0–100; không phải lux hay hướng dẫn đấu điện. Ngưỡng lấy từ yêu cầu, vùng giữa giữ trạng thái trước đó.')
+        state_key = lab_key('light_on')
+        light = st.slider('Độ sáng quy ước', 0.0, 100.0, 50.0, key=lab_key('light_level'))
+        power = st.checkbox('Có nguồn điện', value=True, key=lab_key('light_power'))
+        if st.button('Đặt lại trạng thái đèn', key=lab_key('light_reset')):
+            st.session_state[state_key] = False
+        on = light_controller_step(light, data['low'], data['high'], power, st.session_state.get(state_key, False))
+        st.session_state[state_key] = on
+        st.write(f"Đèn: {'BẬT' if on else 'TẮT'} — bật khi độ sáng < {data['low']:g}, tắt khi > {data['high']:g}; tại hai ngưỡng giữ trạng thái. Mất nguồn luôn tắt.")
+        lamp_color = '#facc15' if on else '#94a3b8'
+        diagram = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 230" role="img" aria-label="Sơ đồ tín hiệu và nguồn điện">
+        <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#334155"/></marker></defs>
+        <g fill="none" stroke="#334155" stroke-width="2"><rect x="15" y="65" width="185" height="70" rx="8"/><rect x="300" y="65" width="220" height="70" rx="8"/><rect x="650" y="65" width="170" height="70" rx="8" fill="{lamp_color}"/>
+        <path d="M200 100 H300 M520 100 H650" marker-end="url(#arrow)"/>
+        <path d="M410 205 V135 M410 190 H735 V135" stroke-dasharray="6 4" marker-end="url(#arrow)"/></g>
+        <g font-family="sans-serif" font-size="16" text-anchor="middle" fill="#0f172a"><text x="108" y="95">Cảm biến ánh sáng</text><text x="108" y="120">Đầu vào thông tin</text><text x="410" y="95">Bộ điều khiển + đóng cắt</text><text x="410" y="120">Xử lí, giữ trạng thái</text><text x="735" y="95">Đèn — đầu ra</text><text x="735" y="120">{'Phát sáng' if on else 'Không sáng'}</text><text x="250" y="75">Tín hiệu</text><text x="585" y="75">Lệnh bật/tắt</text><text x="410" y="225">Nguồn điện — đường năng lượng (nét đứt)</text></g></svg>'''
+        st.markdown(diagram, unsafe_allow_html=True)
+        st.download_button('Tải sơ đồ điều khiển (SVG)', diagram.encode('utf-8'), file_name='So_do_dieu_khien_den.svg', mime='image/svg+xml', key=lab_key('light_svg'))
+        return
+
     if dtype == 'proposition_quadratic':
         from services.lab_scope import evaluate_proposition
         import sympy as sp
@@ -12440,7 +12463,14 @@ if selected_station == station_labels[0]:
 
 
 
-    if st.button("✨ Khởi chạy Phòng Lab", key=f"btn_lab_{current_context_key}") and lab_command.strip():
+    from services.threshold_control import light_controller_request
+    explicit_light_model = light_controller_request(lab_command) if subject in ('Công nghệ', 'Vật lý', 'Khoa học tự nhiên') else None
+    lab_clicked = st.button("✨ Khởi chạy Phòng Lab", key=f"btn_lab_{current_context_key}")
+    if lab_clicked and lab_command.strip() and explicit_light_model is not None:
+        st.session_state[f'lab_intent_command_{current_context_key}'] = lab_command
+        st.session_state.lab_request_revision = st.session_state.get("lab_request_revision", 0) + 1
+        st.session_state.lab_data = explicit_light_model
+    if lab_clicked and lab_command.strip() and explicit_light_model is None:
         st.session_state[f'lab_intent_command_{current_context_key}'] = lab_command
         st.session_state.lab_request_revision = st.session_state.get("lab_request_revision", 0) + 1
 
