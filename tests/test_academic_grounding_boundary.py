@@ -21,7 +21,9 @@ class AcademicGroundingBoundaryTests(unittest.TestCase):
         prepared = with_academic_grounding('ONLY JSON schema X')
         self.assertTrue(prepared.startswith('ONLY JSON schema X'))
         for clause in ('Lịch sử, GDCD và Giáo dục kinh tế và pháp luật',
-                       'xác minh tên bộ, ấn bản và phạm vi',
+                       'VniTeach, Nền tảng Tập huấn NXBGDVN và Trường Học Số Quốc Gia',
+                       'không hiểu thành ba loại SGK/SGV/SBT',
+                       'không phải ba bằng chứng độc lập',
                        'Bài mẫu không đại diện toàn cuốn',
                        'điều/khoản liên quan, ngày hiệu lực',
                        'không tự gán tác giả',
