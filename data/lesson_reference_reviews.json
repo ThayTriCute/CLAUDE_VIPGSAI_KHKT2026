@@ -401,6 +401,42 @@
           ]
         }
       ]
+    },
+    {
+      "id": "kntt-sinh10-membrane-20261107",
+      "subject": "Sinh học",
+      "grade": 10,
+      "topics": [
+        "Trao đổi chất qua màng tế bào — Sinh học 10, KNTT, Bài 10"
+      ],
+      "reviewed_on": "2026-11-07",
+      "scope": "Đối chiếu một bài: SGK64–70 và SGV79–83 qua ảnh reader NXBGD; không phải toàn SGK hoặc toàn YCCĐ pháp quy.",
+      "sources": [
+        {
+          "title": "SGK Sinh học 10 — Kết nối tri thức với cuộc sống, NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-sinh-hoc-10.4700819489",
+          "locator": "Mục lục in4: Bài10 bắt đầu64, Bài11 bắt đầu71. Đã xem trực quan các cặp64–65,66–67,68–69 và trang70 qua Chrome MCP.",
+          "edition_note": "Được liên kết từ portal Bộ SGK thống nhất sinh-hoc-10-939773641.939773641; ảnh máy chủ04/2026, không tự suy năm tái bản.",
+          "criteria": [
+            "Vận chuyển thụ động không trực tiếp tiêu tốn năng lượng tế bào. Dòng thuần theo gradient thích hợp; các phân tử vẫn chuyển động hai chiều, cân bằng động không có nghĩa mọi phân tử dừng.",
+            "Khuếch tán đơn giản qua lớp kép phospholipid phù hợp phân tử nhỏ không phân cực; ion/chất phân cực thường cần protein kênh hoặc chất mang đặc hiệu. Không khẳng định mọi chất nhỏ đều xuyên lipid tự do. Ion chịu gradient điện hóa; không chỉ so nồng độ.",
+            "Thẩm thấu là vận chuyển nước qua màng thấm chọn lọc. Khi mô hình dùng chất tan không qua màng, so nồng độ hạt tan hiệu dụng hai bên và nêu điều kiện nhiệt độ/áp suất; không đồng nhất mọi chất tan với độ trương. Nước đi thuần về phía có thế nước thấp hơn trong điều kiện đã nêu.",
+            "Ưu/nhược/đẳng trương là tương đối với tế bào và tính thấm màng. Tế bào động vật có thể co hoặc trương/vỡ tùy điều kiện; tế bào thực vật có thành nên trương nước tạo sức trương, mất nước có thể co nguyên sinh; không gọi thành tế bào là màng bán thấm chủ yếu.",
+            "Vận chuyển chủ động cần năng lượng và protein phù hợp, có thể ngược gradient. Bơm Na/K là ví dụ dùng ATP; không suy mọi dạng chủ động đều trực tiếp thủy phân ATP. Nhập/xuất bào dùng biến dạng màng và năng lượng; không đồng nhất với phân tử đi qua kênh.",
+            "Lab cần cho đổi nồng độ trong/ngoài và loại tế bào, hiện dòng nước thuần và trạng thái tương ứng. Mọi đường cong/thời gian là mô phỏng định tính hoặc dữ liệu giả định ghi rõ, không gán số đo SGK. Không biến mô hình thành chỉ dẫn truyền dịch hoặc điều trị; không giao lấy máu hay tự thao tác sinh học nguy hiểm.",
+            "Khung Khoa học và đời sống trang67 có cách ghi nồng độ và diễn giải sức khỏe cần kiểm độc lập trước dùng; không sao chép thành lời khuyên y tế. Chỉ dùng hiện tượng thẩm thấu có điều kiện cho bài này."
+          ]
+        },
+        {
+          "title": "SGV Sinh học 10 — Kết nối tri thức với cuộc sống, NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgv-sinh-hoc-10.4923915253",
+          "locator": "Mục lục in5 định vị Bài10 ở79; đã đọc79–83 (đầu hoạt động, đáp án/so sánh thụ động–chủ động, thẩm thấu, nhập/xuất bào). Chưa đọc84, không nhận đã đọc cả79–84.",
+          "edition_note": "Liên kết SGV cùng portal chính thức; không tự gán năm tái bản.",
+          "criteria": [
+            "SGV80–81 phân biệt lớp lipid với protein, độ đặc hiệu/bão hòa, gradient điện hóa; giải thích thành tế bào và sức trương. SGV82–83 mô tả nhập/xuất bào và trường hợp rau muống cuộn do mặt trong/ngoài hút nước khác nhau; không suy mọi mô có đáp ứng giống nhau."
+          ]
+        }
+      ]
     }
   ]
 }
