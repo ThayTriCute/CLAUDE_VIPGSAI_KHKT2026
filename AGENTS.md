@@ -1,3 +1,6 @@
+## Owner yêu cầu làm liên tục theo Goal — 07/11/2026
+
+Goal của chat đã được kích hoạt theo yêu cầu owner: tiếp công việc được giao qua các lượt, không dừng chỉ để báo trạng thái hoặc ghi bàn giao. Tự đọc/ghi checkpoint sau mốc rồi làm bước kế tiếp. Chỉ chờ khi đang có tác vụ phụ thuộc thực sự, cần đầu vào bắt buộc, hoặc giới hạn hệ thống; không tạo scheduler/chat/AI bổ sung. Không tuyên bố chạy nền nếu Goal/tác vụ không thực sự hoạt động. Các quy tắc nguồn, không gọi AI trùng, nghiệm thu đúng bằng chứng và phát hành theo khối vẫn giữ nguyên.
 ## Quy tắc owner xác nhận 07/11/2026 — bảo toàn bài đã duyệt khi xây bộ lọc
 
 - Hoàn thành nghiệm thu tất cả môn khối 10, 11, 12 trước, sau đó mới hoàn thiện bộ lọc CT2018 – KNTT – YCCĐ – văn bản pháp quy.

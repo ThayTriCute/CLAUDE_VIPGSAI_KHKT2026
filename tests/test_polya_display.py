@@ -5,6 +5,18 @@ from services.text_boundaries import chemical_display_markdown, polya_display_ma
 
 
 class PolyaDisplayTests(unittest.TestCase):
+    def test_complete_bold_step_titles_do_not_leave_literal_delimiters(self):
+        source = ('**Bước 1: Đặt vấn đề** Em đã tính $T$ và $L$.\n\n'
+                  '**Bước 2: Gợi mở tư duy** Tăng $v_0$ thì sao?')
+        result = polya_display_markdown(source)
+        self.assertIn('**Bước 1:** Đặt vấn đề Em', result)
+        self.assertNotIn('vấn đề**', result)
+        self.assertNotIn('tư duy**', result)
+        self.assertEqual(polya_display_markdown(result), result)
+        self.assertIn('$v_0$', result)
+        self.assertNotIn('**', lesson_body_html(source))
+        self.assertIn('**Bước 2: keep**', polya_display_markdown('`**Bước 2: keep**`'))
+
     def test_plain_example_steps_are_separate_in_live_and_export(self):
         source = ('Ví dụ: Đối chiếu số đo.\nHướng dẫn:\n'
                   '- Bước 1: So sánh $pH=5,5$ với ngưỡng.\n'

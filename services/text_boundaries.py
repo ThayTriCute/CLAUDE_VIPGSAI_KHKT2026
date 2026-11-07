@@ -167,6 +167,11 @@ def option_markdown_label(option):
 def polya_display_markdown(text):
     """Separate explicit teaching steps; preserve the established Polya headings."""
     def format_prose(value):
+        # Consume a complete bold label before splitting its numeric prefix.
+        # Otherwise **Bước 1: Đặt vấn đề** leaves the closing ** as prose.
+        value = re.sub(
+            r'(\*\*|__)((?:Bước|Step)[ \t]+\d+[ \t]*:)[ \t]*([^\n]*?)\1',
+            lambda m: '**' + m[2] + '** ' + m[3], value, flags=re.I)
         value = re.sub(r'(?mi)^[ \t]*[-*][ \t]+(?=(?:\*\*|__)?(?:Bước|Step)[ \t]+\d+\s*:)', '', value)
         # Newlines alone are soft breaks in Markdown. A paragraph boundary is
         # required even when a step has no canonical Polya stage title.

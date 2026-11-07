@@ -73,6 +73,17 @@ class Station1ClosureTests(unittest.TestCase):
             with self.subTest(message=message):
                 self.assertFalse(detect(message))
 
+    def test_no_additional_questions_after_real_explanation(self):
+        detect = load_function('detect_student_concluded_intent')
+        message = ('Em hiểu rồi thầy. Trong mô hình bỏ qua cản không khí, g không đổi, '
+                   'vật ném ngang có vx=v0 và vy=gt; từ H=20m với v0=15m/s, g=10m/s² '
+                   'thì T=2s và L=30m. Vật chỉ còn chịu trọng lực sau khi rời tay, '
+                   'không có lực ném tiếp tục đẩy. Em không còn câu hỏi thêm về bài này.')
+        self.assertTrue(detect(message))
+        self.assertTrue(detect('Em đã hiểu bài, không có câu hỏi thêm.'))
+        self.assertFalse(detect('Em không còn câu hỏi thêm phần cũ nhưng tại sao T không đổi?'))
+        self.assertFalse(detect('Em không có câu hỏi thêm vì em chưa hiểu để hỏi.'))
+
     def closure_try(self):
         tree = ast.parse((Path(__file__).resolve().parents[1] / 'app.py').read_text(encoding='utf-8'))
         return next(node for node in ast.walk(tree) if isinstance(node, ast.Try) and
