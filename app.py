@@ -3654,7 +3654,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
                        quote_author="THẦY PHAN MINH TRÍ",
                        show_support_qr=True):
     import datetime
-    from services.exam_code_text import source_text_html
+    from services.exam_code_text import source_text_html, teaching_text_html, teaching_text_latex
     from services.exam_delivery import question_solution_text
     from services.official_paper import original_print_context, original_question_number
     original_context = original_print_context(exam)
@@ -4061,10 +4061,10 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
                 ans_expl_html = f"""
                 <div style="background-color: #f0fdf4; border-left: 3.5px solid #16a34a; padding: 5px 10px; margin: 4px 0 6px 0; border-radius: 4px; font-size: 13px; line-height: 1.45;">
                     <div style="font-weight: bold; color: #15803d; margin-bottom: 2px;">✅ ĐÁP ÁN: {html.escape(str(answer))}</div>
-                    <div style="color: #1e293b;">💡 <strong>Hướng dẫn tư duy Bình dân học vụ (Bản chất sư phạm Socratic):</strong><br>{html.escape(expl_q)}</div>
+                    <div style="color: #1e293b;">💡 <strong>Hướng dẫn tư duy Bình dân học vụ (Bản chất sư phạm Socratic):</strong><br>{teaching_text_html(expl_q)}</div>
                 </div>
                 """
-                tex.append(r"\vspace{0.15cm}\noindent\fbox{\parbox{0.96\textwidth}{\textbf{Đáp án:} " + latex_text(str(answer)) + r" \\ \textit{\textbf{💡 Hướng dẫn tư duy Bình dân học vụ:}} " + latex_text(expl_q) + r"}}\par\vspace{0.25cm}")
+                tex.append(r"\vspace{0.15cm}\noindent\fbox{\parbox{0.96\textwidth}{\textbf{Đáp án:} " + latex_text(str(answer)) + r" \\ \textit{\textbf{💡 Hướng dẫn tư duy Bình dân học vụ:}} " + teaching_text_latex(expl_q, latex_text) + r"}}\par\vspace{0.25cm}")
 
             blocks.append(f"<article style='margin-bottom: 8px; break-inside: avoid;'>{body_html}{ans_expl_html}</article>")
 
@@ -13403,7 +13403,7 @@ if selected_station == station_labels[1]:
 
         with st.chat_message(m["role"]):
 
-            st.markdown(m["content"])
+            st.markdown(chemical_display_markdown(m["content"]))
 
             if m["role"] == "assistant" and len(m.get("content", "")) > 15:
 
@@ -13575,9 +13575,12 @@ if selected_station == station_labels[1]:
                         prompt_msg,
                         system_instruction=t2_followup_inst
                     )
-                    clean_rep = st.write_stream(stream_gen2)
+                    t2_reply_slot = st.empty()
+                    with t2_reply_slot.container():
+                        clean_rep = st.write_stream(stream_gen2)
                     if "<DIAGNOSTIC>" in clean_rep:
                         clean_rep = clean_rep.split("<DIAGNOSTIC>")[0].strip()
+                    t2_reply_slot.markdown(chemical_display_markdown(clean_rep))
                     st.session_state.messages.append({"role": "assistant", "content": clean_rep})
                 except Exception as e:
                     st.error(f"Lỗi phản hồi: {e}")
@@ -16300,7 +16303,7 @@ if selected_station == station_labels[2]:
 
                     # LỜI GIẢI CHI TIẾT & PHƯƠNG PHÁP LUẬN BỘ GD&ĐT
                     expl = question_solution_text(q)
-                    st.info(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl}")
+                    st.info(chemical_display_markdown(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl}"))
                     st.markdown("---")
 
             if exam.get("p2"):
@@ -16318,7 +16321,7 @@ if selected_station == station_labels[2]:
                         st.markdown(f"- Ý {chr(97+s_idx)}): *{stmt.get('t')}* -> Em chọn: **{user_ans_s}** | **{answer_source_label(exam)}:** **{expected_str}** {mark_icon}")
 
                     expl2 = question_solution_text(q)
-                    st.info(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl2}")
+                    st.info(chemical_display_markdown(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl2}"))
                     st.markdown("---")
 
             if exam.get("p3"):
@@ -16333,7 +16336,7 @@ if selected_station == station_labels[2]:
                     st.markdown(f"- **Đáp số em điền:** `{user_val}` &nbsp;|&nbsp; **Đáp số chuẩn:** `{correct_val}`")
 
                     expl3 = question_solution_text(q)
-                    st.info(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl3}")
+                    st.info(chemical_display_markdown(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl3}"))
                     st.markdown("---")
 
 
@@ -16356,7 +16359,7 @@ if selected_station == station_labels[2]:
 
         for m in st.session_state.tram3_chat_messages:
 
-            with st.chat_message(m["role"]): st.markdown(m["content"])
+            with st.chat_message(m["role"]): st.markdown(chemical_display_markdown(m["content"]))
 
 
 

@@ -33,6 +33,22 @@ class PolyaDisplayTests(unittest.TestCase):
         option = 'A. Bước 1: So sánh rồi kết luận.'
         self.assertEqual(chemical_display_markdown(option, separate_steps=False), option)
 
+    def test_exam_answer_html_and_tex_reuse_step_layout_without_editing_code(self):
+        from services.exam_code_text import teaching_text_html, teaching_text_latex
+        source = ('Bước 1: Xét $x<2$. Bước 2: Kết luận.\n\n'
+                  '```text\n**Bước 9:** literal\n```\n'
+                  '$\\text{Bước 8: keep}$')
+        page = teaching_text_html(source)
+        self.assertIn('<strong>Bước 1:</strong>', page)
+        self.assertIn('<br><br><strong>Bước 2:</strong>', page)
+        self.assertIn('**Bước 9:** literal', page)
+        self.assertNotIn('<strong>Bước 9:', page)
+        tex = teaching_text_latex(source, lambda value: value)
+        self.assertIn(r'\par\smallskip Bước 2:', tex)
+        self.assertIn('**Bước 9:** literal', tex)
+        self.assertIn('$\\text{Bước 8: keep}$', tex)
+        self.assertIn('$x<2$', tex)
+
     source = ('Câu 1. Em hãy kể một trải nghiệm.\n\n'
               'Bước 1: Tìm hiểu đề: Em kể điều gì? Bước 2: Lập kế hoạch: Chọn trình tự. '
               'Bước 3: Thực hiện kế hoạch: Tự viết bài. Bước 4: Kiểm tra và nhìn lại: Tự sửa.')
