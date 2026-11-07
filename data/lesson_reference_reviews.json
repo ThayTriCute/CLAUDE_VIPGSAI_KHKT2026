@@ -287,6 +287,31 @@
           ]
         }
       ]
+    },
+    {
+      "id": "kntt-cn10-thietke-hethong-kithuat-20261107",
+      "subject": "Công nghệ",
+      "grade": 10,
+      "topics": [
+        "Hệ thống kĩ thuật - Công nghệ 10, Thiết kế và công nghệ, KNTT: cấu trúc đầu vào, xử lí, đầu ra; ví dụ đèn tự động và cảnh báo cháy. Phân biệt tín hiệu và năng lượng, cảm biến và bộ xử lí. Sơ đồ khối, câu hỏi và lời giải đầy đủ, không trộn trồng trọt hoặc bịa số trang."
+      ],
+      "reviewed_on": "2026-11-07",
+      "scope": "Đối chiếu khái niệm, cấu trúc và luồng vật liệu/năng lượng/thông tin của Bài 2; phân biệt mạch hở/mạch kín. Không chứng nhận mọi bài, câu hỏi, phản hồi AI, mô hình thực hoặc toàn bộ SGK.",
+      "sources": [
+        {
+          "title": "SGK Công nghệ 10 – Thiết kế và công nghệ, Kết nối tri thức với cuộc sống — NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-cong-nghe-10-thiet-ke-va-cong-nghe.4700882633",
+          "locator": "Bài 2: Hệ thống kĩ thuật, trang in 11–13; mục I, II, Hình 2.1–2.6 và vận dụng điều hòa. Đã đọc hình trang thực trong Chrome MCP ngày 07/11/2026.",
+          "edition_note": "Bản trực tuyến được cổng NXBGD xếp trong Bộ SGK thống nhất, ảnh lưu trên máy chủ tháng 04/2026; chưa xác minh năm tái bản. Đã đọc tài liệu thông tin cập nhật được chính cổng sách liên kết (Drive 1ZErzG8Cp-Rxn4nsWoNV99_ChB-KHB3xM): một mục tại trang 41, Tổng cục Thống kê đổi thành Cục Thống kê; không có mục sửa trang 11–13 trong tài liệu này.",
+          "criteria": [
+            "Xác định đầu vào, bộ phận xử lí, đầu ra theo ranh giới và nhiệm vụ của hệ thống.",
+            "Đầu vào và đầu ra có thể là vật liệu, năng lượng hoặc thông tin; xử lí không chỉ là vi điều khiển.",
+            "Phân biệt tín hiệu điều khiển với năng lượng cấp cho thiết bị chấp hành.",
+            "Mạch kín có tín hiệu phản hồi từ đầu ra; tự động bật/tắt chưa đủ để kết luận là mạch kín.",
+            "Ví dụ đèn theo ánh sáng, cảnh báo cháy và điều hòa phải giữ đúng vai trò của các khối và điều kiện áp dụng."
+          ]
+        }
+      ]
     }
   ]
 }
