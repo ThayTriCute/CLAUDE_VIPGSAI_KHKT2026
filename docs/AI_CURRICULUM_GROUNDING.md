@@ -33,3 +33,7 @@ Ba nguồn VniTeach, Tập huấn NXBGDVN, Trường Học Số Quốc Gia đã 
 ## Quyết định owner 08/11/2026 — chỉ tra online khi có lý do cụ thể
 
 Bắt buộc dùng kho nén F:/FINAL KHKT 2026/textbook_archive_6_12 trước: tra chỉ mục/metadata và nội dung nén liên quan đúng môn, lớp, bộ, cuốn, bài; tái dùng bằng chứng còn đúng phiên bản. Chỉ tra VniTeach, Tập huấn NXBGDVN hoặc Trường Học Số Quốc Gia khi (1) kho thiếu đúng sách/nội dung cần dùng sau khi đã kiểm có mục tiêu, hoặc (2) cần xác tín thêm điểm cụ thể như ấn bản, trang cập nhật, mâu thuẫn nguồn. Trước tra online ghi ngắn phần local đã kiểm và lý do cần tra; sau tra lưu nguồn/bằng chứng về F để dùng lại. Không tìm link, tải lại, gọi AI hoặc đọc lại toàn cuốn chỉ vì chưa xem kỹ kho; không coi chỉ mục cũ là bằng chứng toàn kho thiếu. Không tự tăng retry hoặc sinh lại bài đã có. Đây là điều kiện bắt buộc, không chỉ khuyến nghị ưu tiên local. Giữ kiểm chứng cần thiết, không tự công bố kiến thức/pháp luật đã đạt.
+
+## Owner xác nhận 08/11/2026 — nhãn Bộ sách Thống Nhất
+
+Chủ dự án xác nhận “Bộ sách Thống Nhất” trong kho/THSQG này chính là KNTT thống nhất. Không coi khác nhãn Thống Nhất/KNTT tự nó là sai bộ sách hoặc lý do bắt buộc tra online. Dùng đối chiếu tiếp theo xác nhận này; vẫn kiểm đúng môn/lớp/cuốn/bài/trang và các cập nhật cụ thể khi có căn cứ cần xác tín.

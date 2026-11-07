@@ -35,6 +35,25 @@ class ReviewedContentCorrectionTests(unittest.TestCase):
                                       ('Sinh học', 10, 'Bài khác')]:
             self.assertEqual(original, apply_reviewed_content_corrections(original, subject, grade, topic))
 
+    def test_history_source_repairs_keep_quiz_keys_and_exact_topic_scope(self):
+        import re
+        topic = 'Hiện thực lịch sử và lịch sử được con người nhận thức — Lịch sử 10, KNTT, Bài 1'
+        review = reviewed_lesson_sources('Lịch sử', 10, topic)
+        rules = review['content_corrections']
+        original = '\n'.join(r['before'] for r in rules) + '\nCORRECT: C\nCORRECT: B\nCORRECT: C'
+        fixed = apply_reviewed_content_corrections(original, 'Lịch sử', 10, topic)
+        self.assertEqual(re.findall(r'CORRECT: ([A-D])', fixed), ['C', 'B', 'C'])
+        self.assertIn('**Sử học:**', fixed)
+        self.assertIn('**Chức năng của Sử học:**', fixed)
+        self.assertIn('**Nhiệm vụ của Sử học:**', fixed)
+        self.assertNotIn('một bên coi Ma-gien-lăng là người có công truyền bá văn minh', fixed)
+        self.assertNotIn('tấm bia phía Tây Ban Nha', fixed)
+        self.assertNotIn('bãi cọc Cao Quỳ', fixed)
+        self.assertEqual(fixed, apply_reviewed_content_corrections(fixed, 'Lịch sử', 10, topic))
+        for subject, grade, other_topic in [('Lịch sử', 11, topic), ('Ngữ văn', 10, topic),
+                                            ('Lịch sử', 10, 'Bài khác')]:
+            self.assertEqual(original, apply_reviewed_content_corrections(original, subject, grade, other_topic))
+
     def test_explicit_corrections_preserve_code_and_require_review(self):
         review = dict(status='reviewed_requirements_source', content_corrections=[
             dict(before='Sai điều kiện', after='Đủ điều kiện', reason='Source-backed')])
