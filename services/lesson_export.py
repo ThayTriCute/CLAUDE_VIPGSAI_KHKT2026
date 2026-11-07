@@ -42,7 +42,6 @@ def lesson_body_html(lesson):
     # Separate explicit teaching steps and inline bullets; protect formulas/code.
     from services.text_boundaries import preserve_math_and_code
     def teaching_lines(value):
-        value = re.sub(r"(?<!\n)[ \t]+(?=(?:\*\*)?Bước[ \t]+\d+[ \t]*:)", "\n\n", value)
         value = re.sub(r"(?<=\S)[ \t]+\*[ \t]+(?=[A-ZĐÀ-Ỹ])", "\n\n- ", value)
         value = re.sub(r"(?<=\S)[ \t]+(?=[a-d]\)[ \t]+[A-ZĐÀ-Ỹ])", "\n\n", value)
         return value

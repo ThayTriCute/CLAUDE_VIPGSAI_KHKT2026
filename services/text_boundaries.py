@@ -97,9 +97,11 @@ def _chemical_core_tex(body):
     return ''.join(output)
 
 
-def chemical_display_markdown(text):
+def chemical_display_markdown(text, *, separate_steps=True):
     """Display-only conversion; stored lesson/answers/source remain unchanged."""
     value = wrap_naked_chemistry(str(text or ''))
+    if separate_steps:
+        value = polya_display_markdown(value)
     def token(match):
         raw = match[0]
         if raw.startswith(('`', '~~~')):
@@ -150,9 +152,14 @@ def option_markdown_label(option):
 
 
 def polya_display_markdown(text):
-    """Put recognized Polya stages in separate paragraphs without editing tasks."""
+    """Separate explicit teaching steps; preserve the established Polya headings."""
     def format_prose(value):
-        value = re.sub(r'(?m)^[ \t]*[-*][ \t]+(?=(?:\*\*|__)?Bước[ \t]+[1-4]\s*:)', '', value)
+        value = re.sub(r'(?mi)^[ \t]*[-*][ \t]+(?=(?:\*\*|__)?(?:Bước|Step)[ \t]+\d+\s*:)', '', value)
+        # Newlines alone are soft breaks in Markdown. A paragraph boundary is
+        # required even when a step has no canonical Polya stage title.
+        value = re.sub(
+            r'(?:\*\*|__)?\b(Bước|Step)[ \t]+(\d+)[ \t]*:[ \t]*(?:\*\*|__)?[ \t]*',
+            lambda m: '\n\n**' + m[1] + ' ' + m[2] + ':** ', value, flags=re.I)
         heading = re.compile(
             r'(?:\*\*|__)?Bước[ \t]+([1-4])[ \t]*:[ \t]*(?:\*\*|__)?[ \t]*'
             r'(Tìm hiểu đề|Lập kế hoạch|Thực hiện kế hoạch|Kiểm tra và nhìn lại)'
@@ -165,7 +172,11 @@ def polya_display_markdown(text):
             return '\n\n**Bước ' + match[1] + ': ' + titles[match[1]] + ':** '
         value = heading.sub(separate, value)
         return re.sub(r'\n{3,}', '\n\n', value)
-    return preserve_math_and_code(text, format_prose).strip()
+    # Product-rendered figures and code-like HTML blocks are already formatted.
+    # Do not inject Markdown into SVG labels or HTML source examples.
+    blocks = re.split(r'(<(?:svg|pre|script|style)\b[^>]*>[\s\S]*?</(?:svg|pre|script|style)\s*>)', str(text or ''), flags=re.I)
+    return ''.join(block if i % 2 else preserve_math_and_code(block, format_prose)
+                   for i, block in enumerate(blocks)).strip()
 
 
 def student_essay_text(text):

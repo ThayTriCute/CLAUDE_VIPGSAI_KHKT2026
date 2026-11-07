@@ -11997,7 +11997,7 @@ if selected_station == station_labels[0]:
                 if widget_key not in st.session_state and previous_choice in q['options']:
                     st.session_state[widget_key] = previous_choice
                 user_choice = st.radio(f"Chọn đáp án câu {idx+1}:", q['options'], key=widget_key, label_visibility="collapsed", index=None,
-                    format_func=lambda option: chemical_display_markdown(option_markdown_label(option)))
+                    format_func=lambda option: chemical_display_markdown(option_markdown_label(option), separate_steps=False))
                 if user_choice is not None:
                     st.session_state.quiz_selections[idx] = user_choice
 

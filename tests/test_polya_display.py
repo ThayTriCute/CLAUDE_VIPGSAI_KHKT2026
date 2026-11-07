@@ -1,10 +1,38 @@
 import unittest
 
 from services.lesson_export import lesson_body_html
-from services.text_boundaries import polya_display_markdown, student_essay_text
+from services.text_boundaries import chemical_display_markdown, polya_display_markdown, student_essay_text
 
 
 class PolyaDisplayTests(unittest.TestCase):
+    def test_plain_example_steps_are_separate_in_live_and_export(self):
+        source = ('Ví dụ: Đối chiếu số đo.\nHướng dẫn:\n'
+                  '- Bước 1: So sánh $pH=5,5$ với ngưỡng.\n'
+                  '- Bước 2: Xét điều kiện trước khi kết luận.')
+        for render in (polya_display_markdown, chemical_display_markdown):
+            result = render(source)
+            self.assertIn('\n\n**Bước 1:** So sánh $pH=5,5$', result)
+            self.assertIn('\n\n**Bước 2:** Xét điều kiện', result)
+            self.assertEqual(render(result), result)
+            self.assertNotIn('Tìm hiểu đề', result)
+        page = lesson_body_html(source)
+        self.assertIn('<p><strong>Bước 1:</strong>', page)
+        self.assertIn('<p><strong>Bước 2:</strong>', page)
+
+    def test_arbitrary_step_count_inline_english_and_protected_content(self):
+        source = ('Quy trình: Step 1: Read the data. Step 5: Check the result.\n'
+                  'Bước 6: Viết báo cáo.\n'
+                  '`Bước 1: literal`\n$\\text{Step 2: keep}$\n'
+                  '<svg><text>Bước 3: Nhãn hình</text></svg>')
+        result = chemical_display_markdown(source)
+        for label in ('Step 1', 'Step 5', 'Bước 6'):
+            self.assertIn('\n\n**' + label + ':**', result)
+        for protected in ('`Bước 1: literal`', '$\\text{Step 2: keep}$',
+                          '<svg><text>Bước 3: Nhãn hình</text></svg>'):
+            self.assertIn(protected, result)
+        option = 'A. Bước 1: So sánh rồi kết luận.'
+        self.assertEqual(chemical_display_markdown(option, separate_steps=False), option)
+
     source = ('Câu 1. Em hãy kể một trải nghiệm.\n\n'
               'Bước 1: Tìm hiểu đề: Em kể điều gì? Bước 2: Lập kế hoạch: Chọn trình tự. '
               'Bước 3: Thực hiện kế hoạch: Tự viết bài. Bước 4: Kiểm tra và nhìn lại: Tự sửa.')
