@@ -5543,7 +5543,10 @@ def render_smart_lab(data, current_subject=""):
         <path d="M200 100 H300 M520 100 H650" marker-end="url(#arrow)"/>
         <path d="M410 205 V135 M410 190 H735 V135" stroke-dasharray="6 4" marker-end="url(#arrow)"/></g>
         <g font-family="sans-serif" font-size="16" text-anchor="middle" fill="#0f172a"><text x="108" y="95">Cảm biến ánh sáng</text><text x="108" y="120">Đầu vào thông tin</text><text x="410" y="95">Bộ điều khiển + đóng cắt</text><text x="410" y="120">Xử lí, giữ trạng thái</text><text x="735" y="95">Đèn — đầu ra</text><text x="735" y="120">{'Phát sáng' if on else 'Không sáng'}</text><text x="250" y="75">Tín hiệu</text><text x="585" y="75">Lệnh bật/tắt</text><text x="410" y="225">Nguồn điện — đường năng lượng (nét đứt)</text></g></svg>'''
-        st.markdown(diagram, unsafe_allow_html=True)
+        # Follow the app theme on screen; keep dark ink in the standalone export.
+        screen_diagram = diagram.replace('#334155', 'currentColor').replace('#0f172a', 'currentColor')
+        screen_diagram = screen_diagram.replace('<text x="735"', '<text fill="#0f172a" x="735"')
+        st.markdown(screen_diagram, unsafe_allow_html=True)
         st.download_button('Tải sơ đồ điều khiển (SVG)', diagram.encode('utf-8'), file_name='So_do_dieu_khien_den.svg', mime='image/svg+xml', key=lab_key('light_svg'))
         return
 
