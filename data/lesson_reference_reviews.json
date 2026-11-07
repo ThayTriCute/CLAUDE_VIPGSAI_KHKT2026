@@ -477,6 +477,23 @@
           "before": "Tại sao khi muối dưa cải, sau một thời gian, nước trong hũ muối dưa lại tăng lên và lá dưa bị teo lại?",
           "after": "Xét giai đoạn đầu muối dưa cải trong hũ kín, không thêm nước, bỏ qua bay hơi và coi nước muối bên ngoài ưu trương đối với tế bào lá. Hãy giải thích vì sao nước thoát khỏi lá vào dịch muối và lá giảm sức trương, teo lại.",
           "reason": "Nêu điều kiện giai đoạn đầu, không suy mực nước luôn tăng từ thẩm thấu trong mọi hũ dưa."
+        },
+        {
+          "before": "**Câu 3. [Mức độ: VD]**",
+          "after": "**Câu 3. [Mức độ: TH]**",
+          "reason": "Hạ nhãn đề xuất cho đúng thao tác phân loại cơ chế; giữ nguyên đáp án B và trạng thái cần giáo viên duyệt."
+        },
+        {
+          "before": "Học sinh vận dụng kiến thức về tính chất của glucose (phân cực) và điều kiện không tốn ATP để phân loại.",
+          "after": "Học sinh hiểu đặc điểm chất mang và chiều gradient đã cho để phân loại khuếch tán tăng cường; không suy từ riêng việc không dùng ATP trực tiếp. Nhãn TH là đề xuất cần giáo viên duyệt.",
+          "reason": "Lý do mức độ phải khớp giả thiết đã sửa, không lẫn chủ động thứ cấp."
+        }
+      ],
+      "assessment_proposals": [
+        {
+          "question": "Glucose được vận chuyển vào tế bào qua protein mang theo chiều từ nơi có nồng độ glucose cao tới thấp, không ghép với gradient ion hay nguồn năng lượng khác. Cơ chế này được gọi là gì?",
+          "level": "TH",
+          "reason": "Phân loại trực tiếp cơ chế từ chiều gradient và protein đã cho; không có tình huống chuyển giao mới. Đây là đề xuất sau đối chiếu SGK65–66/SGV80–81, chưa phải thẩm định YCCĐ hoặc chứng nhận của Bộ."
         }
       ]
     }

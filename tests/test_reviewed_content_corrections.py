@@ -6,6 +6,23 @@ TOPIC = 'Trao đổi chất qua màng tế bào — Sinh học 10, KNTT, Bài 10
 
 
 class ReviewedContentCorrectionTests(unittest.TestCase):
+    def test_exact_stem_level_revision_stays_a_proposal_and_keeps_keys(self):
+        from services.lesson_sources import apply_reviewed_quiz_proposal
+        from services.cognitive_levels import level_caption
+        review=reviewed_lesson_sources('Sinh học',10,TOPIC)
+        stem=next(r['before'] for r in review['content_corrections'] if r['before'].startswith('Sự vận chuyển glucose'))
+        original=dict(question=stem,level='VD',correct='B',options=['a','b','c','d'])
+        fixed=apply_reviewed_quiz_proposal(original,'Sinh học',10,TOPIC)
+        self.assertEqual(fixed['level'],'TH')
+        self.assertEqual(fixed['level_claimed'],'VD')
+        self.assertEqual(original['level'],'VD')
+        self.assertEqual(fixed['correct'],original['correct'])
+        self.assertEqual(fixed['options'],original['options'])
+        self.assertIn('chưa duyệt',level_caption(fixed))
+        self.assertEqual(fixed,apply_reviewed_quiz_proposal(fixed,'Sinh học',10,TOPIC))
+        for subject,grade,topic in [('Sinh học',11,TOPIC),('Hóa học',10,TOPIC),('Sinh học',10,'Khác')]:
+            self.assertEqual(original,apply_reviewed_quiz_proposal(original,subject,grade,topic))
+
     def test_actual_glucose_counterexample_has_required_conditions(self):
         review = reviewed_lesson_sources('Sinh học', 10, TOPIC)
         rule = next(x for x in review['content_corrections'] if x['before'].startswith('Sự vận chuyển glucose'))

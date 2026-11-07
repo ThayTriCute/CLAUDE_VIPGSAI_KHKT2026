@@ -2,7 +2,7 @@ def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
-    for module, revision in ((lesson_sources, 2026110703), (curriculum_policy, 2026110702),
+    for module, revision in ((lesson_sources, 2026110704), (curriculum_policy, 2026110702),
                              (lab_scope, 2026110703), (lesson_export, 2026110604),
                              (text_boundaries, 2026110701), (socratic_context, 2026110704)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
@@ -12053,6 +12053,9 @@ if selected_station == station_labels[0]:
         from services.curriculum_policy import repair_reviewed_english_family_question
         quiz_list = [repair_reviewed_english_family_question(
             q, subject, grade_num, st.session_state.get("current_topic", "")) for q in quiz_list]
+        from services.lesson_sources import apply_reviewed_quiz_proposal
+        quiz_list = [apply_reviewed_quiz_proposal(
+            q, subject, grade_num, st.session_state.get('current_topic', '')) for q in quiz_list]
         st.session_state.parsed_quiz = quiz_list
         quiz_recovery_key = (st.session_state.get('current_lesson', ''), 2026110202)
         if (quiz_list and any(q.get('correct') not in ('A', 'B', 'C', 'D') for q in quiz_list)

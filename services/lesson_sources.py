@@ -14,7 +14,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 PUBLISHER_PORTAL = "https://taphuan.nxbgd.vn/tap-huan?tab=public"
 PUBLISHER_DIGITAL_LIBRARY = "https://truonghocsoquocgia.nxbgd.vn/"
 NATIONAL_SCHOOL_TEXTBOOK_LIBRARY = "https://www.thsqg.vn/sach"
-T1_CONTEXT_REVISION = 2026110703
+T1_CONTEXT_REVISION = 2026110704
 REVIEW_REGISTRY = Path(__file__).resolve().parents[1] / 'data/lesson_reference_reviews.json'
 PUBLISHER_2026_NOTICE = "https://nxbgd.vn/bai-viet/nha-xuat-ban-giao-duc-viet-nam-thong-bao-ve-viec-su-dung-sach-giao-khoa-nam-hoc-2026-2027"
 
@@ -129,6 +129,24 @@ def apply_reviewed_content_corrections(text, subject, grade, topic):
         return value
     parts = re.split(r'(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|<(?:pre|svg|script|style)\b[^>]*>[\s\S]*?</(?:pre|svg|script|style)\s*>)', str(text), flags=re.I)
     return ''.join(part if i % 2 else repair(part) for i, part in enumerate(parts))
+
+
+def apply_reviewed_quiz_proposal(question, subject, grade, topic):
+    """Revise only an explicit exact-stem proposal, never certify its level."""
+    from copy import deepcopy
+    result = deepcopy(question)
+    review = reviewed_lesson_sources(subject, grade, topic)
+    if review['status'] != 'reviewed_requirements_source':
+        return result
+    stem = apply_reviewed_content_corrections(str(result.get('question', '')), subject, grade, topic)
+    matches = [r for r in review.get('assessment_proposals', [])
+               if r.get('level') in ('NB', 'TH', 'VD', 'VDC') and r.get('reason')
+               and folded(r.get('question', '')) == folded(stem)]
+    if len(matches) == 1:
+        result.setdefault('level_claimed', result.get('level', ''))
+        result['level'] = matches[0]['level']
+        result['level_proposal_reason'] = matches[0]['reason']
+    return result
 
 
 def apply_reviewed_essay_labels(text, subject, grade, topic):
