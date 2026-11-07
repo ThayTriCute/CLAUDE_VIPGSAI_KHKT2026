@@ -5527,6 +5527,7 @@ def render_smart_lab(data, current_subject=""):
     dtype = data.get("type")
 
     if dtype == 'soil_ph_band':
+        from html import escape
         from services.lab_scope import classify_closed_band
         st.markdown('### Phân loại đất theo khoảng pH đã nêu')
         st.caption('Mô hình đọc số đo giả định trong phạm vi 0–14, không đo đất thật hoặc tính liều cải tạo. Hai ngưỡng lấy nguyên từ lệnh, gồm cả hai đầu khoảng trung tính theo quy ước phân loại đất.')
@@ -5544,7 +5545,7 @@ def render_smart_lab(data, current_subject=""):
             x = 15 + index * 280
             active = key == band
             fill, ink = ('#bbf7d0', '#0f172a') if active else ('none', 'currentColor')
-            cards.append(f'<rect x="{x}" y="20" width="250" height="85" rx="8" fill="{fill}" stroke="currentColor"/><g text-anchor="middle" fill="{ink}"><text x="{x+125}" y="53">{label}</text><text x="{x+125}" y="83">{interval}</text></g>')
+            cards.append(f'<rect x="{x}" y="20" width="250" height="85" rx="8" fill="{fill}" stroke="currentColor"/><g text-anchor="middle" fill="{ink}"><text x="{x+125}" y="53">{escape(label)}</text><text x="{x+125}" y="83">{escape(interval)}</text></g>')
         diagram = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 125" role="img" aria-label="Sơ đồ phân loại pH đất" style="font:16px sans-serif">' + ''.join(cards) + '</svg>'
         st.markdown(diagram, unsafe_allow_html=True)
         st.caption('Sơ đồ nhóm phân loại, chiều rộng ô không biểu diễn độ dài khoảng pH.')
