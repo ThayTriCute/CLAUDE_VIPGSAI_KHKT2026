@@ -1,3 +1,7 @@
+## Lưu trữ thống nhất theo owner — 07/11/2026
+
+Bản chính của bài lưu, bản đã đối chiếu, báo cáo và bằng chứng dự án đặt trong F:/FINAL KHKT 2026/qa_evidence/. Chrome Downloads chỉ là vùng tải tạm; sau mỗi lần tải phải sao chép bản chính về F, kiểm dung lượng/hash và ghi đường dẫn F trong checkpoint/lời bàn giao. Không đổi cấu hình Downloads chung hoặc xóa bản cũ ngoài dự án. Mã nguồn tiếp tục trong release_station1_20261031. Không lưu khóa hay dữ liệu học sinh vào thư mục QA/Git; kho bí mật được mã hóa giữ nguyên cơ chế riêng.
+
 ## Ưu tiên owner 07/11/2026 — bộ lọc làm sau nghiệm thu THPT
 
 Kiểm xong tất cả môn khối10,11,12 rồi mới tiếp tục hoàn thiện bộ lọc CT2018/KNTT/YCCĐ/văn bản. Phần ràng buộc API đã vá giữ nguyên; đọc docs/AI_CURRICULUM_GROUNDING.md trước sửa tiếp. Không coi prompt là bộ kiểm định học thuật hoàn chỉnh.
