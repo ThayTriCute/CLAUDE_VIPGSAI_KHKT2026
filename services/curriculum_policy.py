@@ -842,3 +842,27 @@ def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
             + structure + WEB_QUESTION_INSTRUCTION + "\nYêu cầu tùy biến trong phạm vi môn/lớp đã chọn: " + str(custom)
             + "\nTự giải và đối chiếu đáp án với giả thiết; thiếu hình thì không đặt câu yêu cầu đọc hình đó. Không sao chép nguồn thiếu bằng chứng hoặc tự nhận là đề thật."
             + "\nChỉ xuất JSON hợp lệ theo schema sau (mở rộng số câu theo cấu hình):\n" + json.dumps(schema, ensure_ascii=False))
+
+
+ACADEMIC_GROUNDING_GUIDANCE = """[BỘ LỌC CHƯƠNG TRÌNH VÀ NGUỒN — DÙNG CHUNG]
+Mọi bài giảng, đề, lời giải, gia sư và Lab phải đúng môn/lớp/chủ đề/nhánh sách trong ngữ cảnh.
+Lấy CT GDPT 2018 cùng sửa đổi còn hiệu lực làm chuẩn YCCĐ; Kết nối tri thức với cuộc sống (KNTT) làm trục sách. Không đồng nhất mục tiêu do AI tự viết với YCCĐ nguyên văn của Bộ.
+Trước trả kết quả, tự đối chiếu từng mục tiêu–kiến thức–ví dụ–câu hỏi–đáp án với YCCĐ và nguồn đúng bài đã cung cấp. Phân biệt yêu cầu bắt buộc, kiến thức nền và phần mở rộng; không dùng phần mở rộng làm chuẩn bắt buộc của lớp.
+Chỉ xác nhận đã đối chiếu khi có nội dung nguồn, vị trí và phiên bản thực sự trong ngữ cảnh. Link/danh mục sách, trí nhớ model hoặc prompt này không phải nội dung SGK hay phụ lục chương trình. Thiếu nguồn thì nói rõ phạm vi chưa xác minh, không bịa trang, mã YCCĐ, trích dẫn hoặc chứng nhận đúng chuẩn.
+Văn bản áp dụng phải đúng ngày hiệu lực, đối tượng, môn/lớp và mục đích; đọc bản sửa đổi cùng bản gốc. Không áp dự thảo hoặc văn bản chưa hiệu lực; không biến công văn hướng dẫn thành quy phạm chung, không áp định dạng thi tốt nghiệp cho mọi lớp/môn.
+Nếu nguồn mâu thuẫn hoặc thiếu căn cứ, không khẳng định đáp án pháp lý/chương trình là đã xác minh; nêu giới hạn trong trường giải thích hiện có. Giữ nguyên schema JSON, không thêm trường bắt buộc hoặc văn bản ngoài JSON. Không tự gọi thêm AI, tăng retry hoặc bỏ bài hợp lệ.
+Danh mục văn bản dưới đây chỉ là metadata tra cứu, không phải toàn văn hay chứng nhận đã rà soát toàn bộ pháp luật ngành.
+"""
+
+
+def with_academic_grounding(system_instruction):
+    """Attach the same minimum contract at both model transports, including JSON."""
+    value = str(system_instruction or '')
+    if ACADEMIC_GROUNDING_GUIDANCE in value:
+        return value
+    rows = legal_references()
+    metadata = [{key: row.get(key) for key in ('code', 'scope', 'effective_from', 'url')}
+                for row in rows]
+    return (value + '\n\n' + ACADEMIC_GROUNDING_GUIDANCE
+            + 'Ngày áp dụng: ' + policy_evaluation_date() + '\n'
+            + json.dumps(metadata, ensure_ascii=False))

@@ -2460,6 +2460,8 @@ def call_gemini_with_fallback(prompt_or_contents, system_instruction=None, json_
 
     from services.text_boundaries import with_teaching_step_layout
     effective_si = with_teaching_step_layout(effective_si)
+    from services.curriculum_policy import with_academic_grounding
+    effective_si = with_academic_grounding(effective_si)
 
     with st.status("Gia sư AI đang tiếp nhận yêu cầu...", expanded=True) as status_box:
 
@@ -2647,6 +2649,8 @@ def stream_gemini_with_fallback(prompt_or_contents, system_instruction=None):
     effective_si = f"{DEFAULT_PEDAGOGICAL_SYSTEM_INSTRUCTION}\n\n{system_instruction}" if system_instruction else DEFAULT_PEDAGOGICAL_SYSTEM_INSTRUCTION
     from services.text_boundaries import with_teaching_step_layout
     effective_si = with_teaching_step_layout(effective_si)
+    from services.curriculum_policy import with_academic_grounding
+    effective_si = with_academic_grounding(effective_si)
 
 
 

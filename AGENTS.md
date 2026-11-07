@@ -1,3 +1,7 @@
+## Ưu tiên owner 07/11/2026 — bộ lọc làm sau nghiệm thu THPT
+
+Kiểm xong tất cả môn khối10,11,12 rồi mới tiếp tục hoàn thiện bộ lọc CT2018/KNTT/YCCĐ/văn bản. Phần ràng buộc API đã vá giữ nguyên; đọc docs/AI_CURRICULUM_GROUNDING.md trước sửa tiếp. Không coi prompt là bộ kiểm định học thuật hoàn chỉnh.
+
 ## Quy tắc ưu tiên 07/11/2026 — AI sinh bài và bố cục bước
 
 - Trước sửa prompt/sinh bài/renderer/export, đọc checkpoint và `docs/AI_TEACHING_STEPS_LAYOUT_PROMPT.txt`. Owner đã duyệt bố cục xuống đoạn từng bước; giữ đóng bằng chứng đã duyệt khi không có lỗi mới.
