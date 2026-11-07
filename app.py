@@ -5526,6 +5526,32 @@ def render_smart_lab(data, current_subject=""):
 
     dtype = data.get("type")
 
+    if dtype == 'soil_ph_band':
+        from services.lab_scope import classify_closed_band
+        st.markdown('### Phân loại đất theo khoảng pH đã nêu')
+        st.caption('Mô hình đọc số đo giả định trong phạm vi 0–14, không đo đất thật hoặc tính liều cải tạo. Hai ngưỡng lấy nguyên từ lệnh, gồm cả hai đầu khoảng trung tính theo quy ước phân loại đất.')
+        low, high = data['low'], data['high']
+        ph = st.slider('pH mẫu đất giả định', 0.0, 14.0, 7.0, step=0.01, key=lab_key('soil_ph'))
+        band = classify_closed_band(ph, low, high)
+        names = {'below': 'Đất chua', 'within': 'Đất trung tính theo khoảng đã nêu', 'above': 'Đất kiềm'}
+        st.write(f'pH = {ph:g}: {names[band]}. Khoảng trung tính: {low:g} ≤ pH ≤ {high:g}.')
+        st.info('Tên dải phân loại đất không đồng nghĩa mọi giá trị trong dải đều trung tính hóa học. Trong mô hình dung dịch nước ở 25 °C, trung tính hóa học có pH xấp xỉ 7. Một số đo pH chưa đủ để quyết định bón vôi hay chọn liều; còn phụ thuộc cây, cách đo và khả năng đệm của đất.')
+        cards = []
+        for index, (key, label, interval) in enumerate((
+                ('below', 'Đất chua', f'pH < {low:g}'),
+                ('within', 'Dải đất trung tính', f'{low:g} ≤ pH ≤ {high:g}'),
+                ('above', 'Đất kiềm', f'pH > {high:g}'))):
+            x = 15 + index * 280
+            active = key == band
+            fill, ink = ('#bbf7d0', '#0f172a') if active else ('none', 'currentColor')
+            cards.append(f'<rect x="{x}" y="20" width="250" height="85" rx="8" fill="{fill}" stroke="currentColor"/><g text-anchor="middle" fill="{ink}"><text x="{x+125}" y="53">{label}</text><text x="{x+125}" y="83">{interval}</text></g>')
+        diagram = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 125" role="img" aria-label="Sơ đồ phân loại pH đất" style="font:16px sans-serif">' + ''.join(cards) + '</svg>'
+        st.markdown(diagram, unsafe_allow_html=True)
+        st.caption('Sơ đồ nhóm phân loại, chiều rộng ô không biểu diễn độ dài khoảng pH.')
+        exported = diagram.replace('currentColor', '#0f172a')
+        st.download_button('Tải sơ đồ phân loại đất (SVG)', exported.encode('utf-8'), file_name='Phan_loai_pH_dat.svg', mime='image/svg+xml', key=lab_key('soil_ph_svg'))
+        return
+
     if dtype == 'light_threshold_control':
         from services.threshold_control import light_controller_step
         st.markdown('### Đèn tự động — điều khiển hai ngưỡng')
@@ -12470,12 +12496,14 @@ if selected_station == station_labels[0]:
 
     from services.threshold_control import light_controller_request
     explicit_light_model = light_controller_request(lab_command) if subject in ('Công nghệ', 'Vật lý', 'Khoa học tự nhiên') else None
+    from services.lab_scope import soil_ph_lab_request
+    explicit_local_model = explicit_light_model or soil_ph_lab_request(lab_command, subject)
     lab_clicked = st.button("✨ Khởi chạy Phòng Lab", key=f"btn_lab_{current_context_key}")
-    if lab_clicked and lab_command.strip() and explicit_light_model is not None:
+    if lab_clicked and lab_command.strip() and explicit_local_model is not None:
         st.session_state[f'lab_intent_command_{current_context_key}'] = lab_command
         st.session_state.lab_request_revision = st.session_state.get("lab_request_revision", 0) + 1
-        st.session_state.lab_data = explicit_light_model
-    if lab_clicked and lab_command.strip() and explicit_light_model is None:
+        st.session_state.lab_data = explicit_local_model
+    if lab_clicked and lab_command.strip() and explicit_local_model is None:
         st.session_state[f'lab_intent_command_{current_context_key}'] = lab_command
         st.session_state.lab_request_revision = st.session_state.get("lab_request_revision", 0) + 1
 

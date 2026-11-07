@@ -7,6 +7,30 @@ from services.academic_context import academic_context, canonical_subject
 T1_CONTEXT_REVISION = 2026110202
 
 
+def classify_closed_band(value, low, high):
+    """Classify an explicit inclusive numeric band, without inferring its limits."""
+    if not all(math.isfinite(v) for v in (value, low, high)) or low >= high:
+        raise ValueError('Giá trị phải hữu hạn và ngưỡng dưới nhỏ hơn ngưỡng trên.')
+    return 'below' if value < low else ('above' if value > high else 'within')
+
+
+def soil_ph_lab_request(command, subject):
+    import unicodedata
+    if canonical_subject(subject) not in ('Công nghệ', 'Khoa học tự nhiên', 'Hóa học'):
+        return None
+    text = ''.join(c for c in unicodedata.normalize('NFD', str(command).lower())
+                   if unicodedata.category(c) != 'Mn').replace('đ', 'd')
+    if not ('dat' in text and re.search(r'\bph\b', text)):
+        return None
+    match = re.search(r'trung tinh\s+tu\s+(\d+(?:[.,]\d+)?)\s+den\s+(\d+(?:[.,]\d+)?)', text)
+    if not match:
+        return None
+    low, high = (float(v.replace(',', '.')) for v in match.groups())
+    if not 0 <= low < high <= 14:
+        return None
+    return {'type': 'soil_ph_band', 'low': low, 'high': high}
+
+
 def is_proposition_request(command, subject):
     from services.academic_context import folded
     return canonical_subject(subject) == 'Toán học' and 'menh de' in folded(command)
