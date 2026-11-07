@@ -19,6 +19,12 @@ def repair_reviewed_station1_closing(reply, student_message, subject, grade, clo
         text = text.replace(first,
             'Thầy ghi nhận em đã tự kiểm tra dấu đạo hàm ở hai phía điểm xét và trình bày lập luận của mình. '
             'Việc đối chiếu kết quả thay vì chỉ nhớ công thức là thói quen học tập đáng khuyến khích.', 1)
+    # This precise English quotation was checked against MIT Book VI. Label
+    # the accompanying Vietnamese gloss, without inventing another citation.
+    if ('Marcus Aurelius' in text and 'meditations.6.six.html' in text
+            and 'I seek the truth by which no man was ever injured' in text):
+        text = text.replace('(Tôi tìm kiếm sự thật, điều chưa từng làm hại ai',
+                            '(Diễn nghĩa tiếng Việt từ bản dịch tiếng Anh của George Long: Tôi tìm kiếm sự thật, điều chưa từng làm hại ai')
     if 'Marcus Aurelius' in text and 'Meditations' in text and 'George Long' in text:
         text = text.replace('theo bản dịch của George Long',
                             'diễn nghĩa tiếng Việt từ bản dịch tiếng Anh của George Long')
