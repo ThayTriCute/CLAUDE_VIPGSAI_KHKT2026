@@ -7,6 +7,19 @@ from services.lesson_export import _TOKENS
 
 T1_CONTEXT_REVISION = 2026110603
 
+TEACHING_STEP_LAYOUT_GUIDANCE = r"""BỐ CỤC CÁC BƯỚC — QUY TẮC DÙNG CHUNG:
+Áp dụng mọi môn/lớp cho bài học, đề, lời giải, gợi ý và gia sư: mỗi nhãn Bước N: hoặc Step N: phải bắt đầu một đoạn riêng, có một dòng trống giữa các bước; in đậm nhãn nếu đầu ra dùng Markdown. Không dồn các bước vào một đoạn, kể cả ví dụ chỉ có hai bước hoặc có nhiều hơn bốn bước.
+Giữ tên và số bước phù hợp nhiệm vụ; không tự ép quy trình khác thành bốn bước Pólya. Giữ nguyên công thức, mã, số liệu, điều kiện và nội dung từng bước; không ngắt bên trong công thức hay khối mã để tạo bố cục.
+Nếu đầu ra là JSON, giữ đúng schema và JSON hợp lệ: biểu diễn xuống đoạn bằng \n\n bên trong giá trị chuỗi, không chèn Markdown hoặc văn bản bên ngoài JSON. Quy tắc bố cục không thay thế kiểm chứng kiến thức, đáp án hoặc nguồn."""
+
+
+def with_teaching_step_layout(system_instruction):
+    """Attach the same rule once at the actual model-call boundary."""
+    value = str(system_instruction or '')
+    if TEACHING_STEP_LAYOUT_GUIDANCE in value:
+        return value
+    return value + '\n\n' + TEACHING_STEP_LAYOUT_GUIDANCE
+
 
 def _chemical_macros(text, convert):
     """Visit balanced ce bodies, including braced charges/isotopes."""

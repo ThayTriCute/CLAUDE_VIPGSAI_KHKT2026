@@ -2458,6 +2458,9 @@ def call_gemini_with_fallback(prompt_or_contents, system_instruction=None, json_
     else:
         effective_si = f"{DEFAULT_PEDAGOGICAL_SYSTEM_INSTRUCTION}\n\n{system_instruction}" if system_instruction else DEFAULT_PEDAGOGICAL_SYSTEM_INSTRUCTION
 
+    from services.text_boundaries import with_teaching_step_layout
+    effective_si = with_teaching_step_layout(effective_si)
+
     with st.status("Gia sư AI đang tiếp nhận yêu cầu...", expanded=True) as status_box:
 
         for current_model in model_queue:
@@ -2642,6 +2645,8 @@ def stream_gemini_with_fallback(prompt_or_contents, system_instruction=None):
     deadline = time.monotonic() + 180
 
     effective_si = f"{DEFAULT_PEDAGOGICAL_SYSTEM_INSTRUCTION}\n\n{system_instruction}" if system_instruction else DEFAULT_PEDAGOGICAL_SYSTEM_INSTRUCTION
+    from services.text_boundaries import with_teaching_step_layout
+    effective_si = with_teaching_step_layout(effective_si)
 
 
 

@@ -1,3 +1,10 @@
+## Quy tắc ưu tiên 07/11/2026 — AI sinh bài và bố cục bước
+
+- Trước sửa prompt/sinh bài/renderer/export, đọc checkpoint và `docs/AI_TEACHING_STEPS_LAYOUT_PROMPT.txt`. Owner đã duyệt bố cục xuống đoạn từng bước; giữ đóng bằng chứng đã duyệt khi không có lỗi mới.
+- API không mặc nhiên đọc tệp local. Mọi đường gọi model phải nhận quy tắc qua `with_teaching_step_layout` tại ranh giới API, gồm JSON/streaming/model dự phòng; không chỉ thêm hướng dẫn vào tài liệu. Đường/provider mới phải có kiểm thử contract tương ứng.
+- Giữ formatter dùng chung sau sinh, bảo toàn toán/mã/đáp án; không vá riêng một môn/lớp hoặc mẫu bài. Không thêm lượt AI, tăng retry hoặc sinh lại bài đã lưu để kiểm bố cục.
+- Phát hành theo quyết định owner mới nhất: hoàn thành local khối nào mới push đợt khối đó; quy tắc này ưu tiên các mục lịch sử yêu cầu push từng bản vá nhỏ.
+
 # Hướng dẫn bổ sung cho BBT và đồ thị
 
 Bắt buộc trước mọi thao tác liên quan hình trong infographic: đọc `docs/AI_BBT_GRAPH_INFOGRAPHIC_PROMPT.txt`, đối chiếu yêu cầu mới nhất và bằng chứng đúng phiên bản. Mọi đồ thị, hình vẽ, BBT nằm trong infographic phải dùng nền trong suốt để hiện đúng nền infographic, kể cả nền quanh nhãn. Không chèn tấm nền trắng riêng. Giữ nét/nhãn tương phản và kiểm hình thực; đọc prompt không thay thế kiểm chứng. Quy tắc phải có cả trong prompt API và prompt phong cách tải về.
