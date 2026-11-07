@@ -2068,7 +2068,8 @@ def get_cross_station_pedagogical_context(current_station: int) -> str:
 def get_unique_philosophical_lesson(station_id: int, subject: str = "", context: str = "") -> dict:
     """Shared verified rotation across Trạm1–3 and sessions of this runtime."""
     from services.philosophy_rotation import reserve_plan
-    return reserve_plan(CROSS_STATION_PHILOSOPHY_BANK, station_id)
+    return reserve_plan(CROSS_STATION_PHILOSOPHY_BANK, station_id,
+                        prior=st.session_state.get('philosophical_teaching_history', []))
 
 
 def detect_student_concluded_intent(user_input: str, history: list = None) -> bool:
@@ -2093,6 +2094,16 @@ def detect_student_concluded_intent(user_input: str, history: list = None) -> bo
     if re.search(r"(?:chưa|không)\s+hết\s+(?:thắc\s+mắc|câu\s+hỏi)|không\s+hiểu", txt):
         return False
     question_scan = txt
+    # Reported understanding may coordinate several embedded why/how clauses.
+    # Mask that complete statement, but preserve questions and contrast turns.
+    def reported_understanding(match):
+        clause = match[0]
+        if re.search(r'\b(?:nhưng|tuy nhiên|còn|muốn hỏi|cho em hỏi|cho con hỏi|giải thích giúp)\b', clause):
+            return clause
+        return 'em báo đã hiểu nội dung'
+    question_scan = re.sub(
+        r'\b(?:em|con|mình|tôi)\s+(?:(?:đã|cũng|hoàn toàn|thật sự)\s+)*(?:hiểu|biết rõ|nắm rõ)\s+(?:vì sao|tại sao|như thế nào|làm sao)\b[^.!?;\n]*',
+        reported_understanding, question_scan)
     for settled in ("không còn câu hỏi thêm", "không có câu hỏi thêm", "không còn câu hỏi",
                     "không có câu hỏi", "hết câu hỏi",
                     "không còn thắc mắc", "không có thắc mắc", "hết thắc mắc",

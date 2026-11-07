@@ -72,6 +72,17 @@ class PhilosophyRotationTests(unittest.TestCase):
             self.assertIn('Bài học dữ liệu',prompt)
             self.assertNotIn(str(path),prompt)
 
+    def test_existing_public_session_history_is_not_lost_on_new_ledger(self):
+        from services.philosophy_rotation import reserve_plan
+        bank={1:[dict(author='A',origin='Phương Đông',quote='Seen',lesson='Old',
+                      source_verified=True,source_url='https://example.com/a',source_locator='1'),
+                 dict(author='B',origin='Phương Đông',quote='Fresh',lesson='New',
+                      source_verified=True,source_url='https://example.com/b',source_locator='2')]}
+        with tempfile.TemporaryDirectory() as folder:
+            plan=reserve_plan(bank,1,ledger_path=Path(folder)/'new.sqlite3',
+                              prior=[dict(author='A',quote='Seen')])
+            self.assertEqual(plan['quote'],'Fresh')
+
     def test_all_stations_pass_plan_before_api_and_record_after_response(self):
         source=Path('app.py').read_text(encoding='utf-8')
         for station,var in [(1,'t1'),(2,'t2'),(3,'t3')]:
