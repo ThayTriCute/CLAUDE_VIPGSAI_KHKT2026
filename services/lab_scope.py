@@ -7,6 +7,40 @@ from services.academic_context import academic_context, canonical_subject
 T1_CONTEXT_REVISION = 2026110202
 
 
+def horizontal_throw_request(command, subject):
+    """Use only explicit SI parameters; never substitute an unrelated preset."""
+    from services.academic_context import folded
+    import unicodedata
+    text = ''.join(c for c in unicodedata.normalize('NFD', str(command).casefold())
+                   if not unicodedata.combining(c)).replace('đ', 'd')
+    if canonical_subject(subject) not in ('Vật lý', 'Khoa học tự nhiên') or 'nem ngang' not in folded(command):
+        return None
+    patterns = {'height': r'\bh\s*=\s*(\d+(?:[.,]\d+)?)\s*m(?![/a-z])',
+                'speed': r'\bv[_ ]?0\s*=\s*(\d+(?:[.,]\d+)?)\s*m\s*/\s*s\b',
+                'gravity': r'\bg\s*=\s*(\d+(?:[.,]\d+)?)\s*m\s*/\s*s(?:\^?2|²)'}
+    values = {}
+    for key, pattern in patterns.items():
+        matches = re.findall(pattern, text)
+        if len(matches) != 1:
+            return None
+        values[key] = float(matches[0].replace(',', '.'))
+    if not all(math.isfinite(v) and 0 < v <= 10000 for v in values.values()):
+        return None
+    return dict(values, type='horizontal_throw')
+
+
+def horizontal_throw_state(height, speed, gravity, fraction):
+    """Ideal near-Earth motion, height measured up from a flat ground plane."""
+    if (not all(math.isfinite(v) and v > 0 for v in (height, speed, gravity))
+            or not math.isfinite(fraction) or not 0 <= fraction <= 1):
+        raise ValueError('Cần H, v₀, g dương hữu hạn và tiến trình từ 0 đến 1.')
+    total = math.sqrt(2 * height / gravity)
+    t = total * fraction
+    return {'T': total, 'L': speed * total, 't': t, 'x': speed * t,
+            'z': max(0.0, height * (1 - fraction * fraction)),
+            'vx': speed, 'vz': -gravity * t, 'speed': math.hypot(speed, gravity * t)}
+
+
 def classify_closed_band(value, low, high):
     """Classify an explicit inclusive numeric band, without inferring its limits."""
     if not all(math.isfinite(v) for v in (value, low, high)) or low >= high:

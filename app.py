@@ -5540,6 +5540,47 @@ def render_smart_lab(data, current_subject=""):
 
     dtype = data.get("type")
 
+    if dtype == 'horizontal_throw':
+        from services.lab_scope import horizontal_throw_state
+        st.markdown('### Ném ngang — tách hai chuyển động thành phần')
+        st.caption('Mô hình gần mặt đất: bỏ cản không khí, g không đổi, mặt đất phẳng. Gốc ở mặt đất dưới điểm ném; x hướng ngang, z hướng lên. Chỉ xét tới lần chạm đất đầu tiên, không mô phỏng va chạm hoặc độ nảy.')
+        height = st.number_input('Độ cao H (m)', min_value=0.01, max_value=10000.0, value=float(data['height']), key=lab_key('throw_h'))
+        speed = st.number_input('Vận tốc ngang ban đầu v₀ (m/s)', min_value=0.01, max_value=10000.0, value=float(data['speed']), key=lab_key('throw_v'))
+        gravity = st.number_input('Gia tốc trọng trường g (m/s²)', min_value=0.01, max_value=10000.0, value=float(data['gravity']), key=lab_key('throw_g'))
+        fraction = st.slider('Tiến trình bay (%)', 0, 100, 0, key=lab_key('throw_progress')) / 100
+        compare = st.checkbox('So sánh với vật thả rơi cùng lúc, cùng độ cao', value=True, key=lab_key('throw_compare'))
+        state = horizontal_throw_state(height, speed, gravity, fraction)
+        columns = st.columns(3)
+        columns[0].metric('Thời gian tới đất T (s)', f"{state['T']:.4g}")
+        columns[1].metric('Tầm xa L (m)', f"{state['L']:.4g}")
+        columns[2].metric('Thời điểm đang xét t (s)', f"{state['t']:.4g}")
+        points = [horizontal_throw_state(height, speed, gravity, i / 100) for i in range(101)]
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=[p['x'] for p in points], y=[p['z'] for p in points], name='Quỹ đạo ném ngang', mode='lines'))
+        fig.add_trace(go.Scatter(x=[state['x']], y=[state['z']], name='Vật ném ngang', mode='markers', marker=dict(size=14)))
+        if compare:
+            fig.add_trace(go.Scatter(x=[0, 0], y=[height, 0], name='Đường thả rơi', mode='lines', line=dict(dash='dot')))
+            fig.add_trace(go.Scatter(x=[0], y=[state['z']], name='Vật thả rơi cùng lúc', mode='markers', marker=dict(size=11, symbol='diamond')))
+        fig.add_shape(type='line', x0=0, x1=state['L'], y0=0, y1=0, line=dict(color='#94a3b8', width=2))
+        fig.update_layout(xaxis_title='x (m)', yaxis_title='z: độ cao so với mặt đất (m)',
+                          xaxis=dict(range=[-0.05*state['L'], 1.1*state['L']]), yaxis=dict(range=[-0.08*height, 1.15*height]),
+                          paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=440,
+                          legend=dict(orientation='h', y=1.18), margin=dict(t=80), uirevision=lab_key('throw_plot'))
+        st.plotly_chart(fig, width='stretch', key=lab_key('throw_chart'))
+        st.caption('Hai trục có đơn vị mét; tỉ lệ hiển thị có thể khác nhau. Các số hiển thị làm tròn; tính toán dùng giá trị đầy đủ.')
+        st.write(f"x = {state['x']:.4g} m; z = {state['z']:.4g} m; vₓ = {state['vx']:.4g} m/s; v_z = {state['vz']:.4g} m/s; độ lớn vận tốc = {state['speed']:.4g} m/s.")
+        if fraction == 1:
+            st.info('Vật vừa chạm mặt đất: mô hình bay dừng tại đây. Vận tốc ngay trước va chạm không phải vận tốc sau va chạm.')
+        st.markdown('**Thử dự đoán rồi kiểm:** giữ H và g, tăng gấp đôi v₀: T có đổi không, L đổi ra sao? Giữ v₀ và g, tăng H gấp bốn: T và L thay đổi thế nào? Vì sao hai vật trong phép so sánh luôn cùng độ cao?')
+        st.caption('Đây là mô phỏng từ phương trình, không phải dữ liệu thí nghiệm đo thật. Không thử ném vật từ nơi cao.')
+        import csv, io
+        buffer = io.StringIO()
+        writer = csv.writer(buffer)
+        writer.writerow(['t_s', 'x_m', 'z_m', 'vx_m_s', 'vz_m_s'])
+        writer.writerows((p['t'], p['x'], p['z'], p['vx'], p['vz']) for p in points)
+        st.download_button('Tải bảng dữ liệu mô phỏng (CSV)', buffer.getvalue().encode('utf-8-sig'), file_name='Nem_ngang_mo_phong.csv', mime='text/csv', key=lab_key('throw_csv'))
+        return
+
     if dtype == 'soil_ph_band':
         from html import escape
         from services.lab_scope import classify_closed_band
@@ -12514,7 +12555,8 @@ if selected_station == station_labels[0]:
     from services.threshold_control import light_controller_request
     explicit_light_model = light_controller_request(lab_command) if subject in ('Công nghệ', 'Vật lý', 'Khoa học tự nhiên') else None
     from services.lab_scope import soil_ph_lab_request
-    explicit_local_model = explicit_light_model or soil_ph_lab_request(lab_command, subject)
+    from services.lab_scope import horizontal_throw_request
+    explicit_local_model = explicit_light_model or soil_ph_lab_request(lab_command, subject) or horizontal_throw_request(lab_command, subject)
     lab_clicked = st.button("✨ Khởi chạy Phòng Lab", key=f"btn_lab_{current_context_key}")
     if lab_clicked and lab_command.strip() and explicit_local_model is not None:
         st.session_state[f'lab_intent_command_{current_context_key}'] = lab_command
