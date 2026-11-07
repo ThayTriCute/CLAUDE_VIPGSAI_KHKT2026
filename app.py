@@ -11785,11 +11785,14 @@ if selected_station == station_labels[0]:
     if st.session_state.get("current_lesson"):
         lesson_text = station1_master_sovereign_brain_gate(st.session_state.current_lesson, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''), policy_revision=CURRICULUM_POLICY_REVISION)
         from services.lesson_archive import encode_full_lesson
+        from services.lesson_sources import apply_reviewed_content_corrections
         import hashlib as _lesson_archive_hash
-        full_lesson_bytes = encode_full_lesson(st.session_state.current_lesson, subject, grade_num,
+        archive_lesson_text = apply_reviewed_content_corrections(
+            st.session_state.current_lesson, subject, grade_num, st.session_state.get('current_topic', ''))
+        full_lesson_bytes = encode_full_lesson(archive_lesson_text, subject, grade_num,
                                              st.session_state.get('current_topic', ''), CURRICULUM_POLICY_REVISION)
         st.download_button("📦 Tải đầy đủ bài học và câu hỏi (.json)", full_lesson_bytes,
-                           file_name="Bai_hoc_day_du_" + _lesson_archive_hash.sha256(st.session_state.current_lesson.encode('utf-8')).hexdigest()[:12] + ".json",
+                           file_name="Bai_hoc_day_du_" + _lesson_archive_hash.sha256(archive_lesson_text.encode('utf-8')).hexdigest()[:12] + ".json",
                            mime="application/json", key="t1_download_full_" + current_context_key)
 
         part2_split = re.split(r'(?i)(?:###\s*)?PHẦN 2[\:\.]?', lesson_text)
