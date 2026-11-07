@@ -1,5 +1,7 @@
 QUY TẮC BỐ CỤC BƯỚC DÙNG CHUNG — OWNER DUYỆT NGÀY 07/11/2026
 
+Bổ sung nguồn đối chiếu: công thức trong tiêu chí nguồn cũng phải khai báo bằng LaTeX có dấu phân cách, phương trình hóa học dùng \ce trong khối toán. Không ghi công thức bằng ký hiệu gõ tắt như gamma^ hoặc CNO^2 rồi coi là đã dựng. lesson_source_review_html dùng chung lesson_body_html cho từng tiêu chí, giữ đoạn, thoát HTML và bảo toàn mã; không tự đoán ý nghĩa hoặc số mũ của văn bản thường. Kiểm cả phần nguồn cuối phiếu, không chỉ đếm lỗi KaTeX trong thân bài. Kiểm thử cơ chế đa môn/lớp không thay nghiệm thu học thuật hoặc kiểm phân trang in thực tế.
+
 Mọi AI tiếp quản sửa prompt, sinh bài, renderer hoặc xuất tài liệu phải đọc checkpoint hiện tại và tài liệu này trước khi làm. Đây là chỉ dẫn công việc, không phải bằng chứng đã nghiệm thu toàn chương trình.
 
 Mỗi Bước N:/Step N: phải thành một đoạn riêng, nhãn rõ. Áp dụng mọi môn/lớp, bài học, ví dụ, lời giải, gợi ý, gia sư và các đường xuất. Không chỉ xử lí bốn tên bước Pólya; ví dụ hai bước và quy trình nhiều bước cũng phải dễ đọc. Không tự thêm tên bước Pólya vào quy trình khác.

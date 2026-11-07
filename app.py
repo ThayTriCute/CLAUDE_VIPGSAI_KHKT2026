@@ -2,7 +2,7 @@ def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
-    for module, revision in ((lesson_sources, 2026110205), (curriculum_policy, 2026110701),
+    for module, revision in ((lesson_sources, 2026110702), (curriculum_policy, 2026110701),
                              (lab_scope, 2026110702), (lesson_export, 2026110604),
                              (text_boundaries, 2026110701), (socratic_context, 2026110702)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:

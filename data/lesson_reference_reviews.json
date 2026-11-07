@@ -382,13 +382,13 @@
           "locator": "Mục lục trang4–5; Bài19 trang in92–100, Hình19.1–19.7, Bảng19.1. Đã đọc ảnh gốc từ URL quan sát Chrome MCP, lưu HOA10_OFFICIAL_p92..100_20261107.png.",
           "edition_note": "Portal Bộ SGK thống nhất 940249942; ảnh máy chủ tháng04/2026. Không tự gán năm tái bản; chưa tìm thấy liên kết đính chính trên portal đã xem, không suy không có đính chính.",
           "criteria": [
-            "Tốc độ trung bình cần nêu chất theo dõi, khoảng thời gian, dấu và đơn vị. Khi chuẩn hóa theo phương trình aA+bB→cC+dD ở thể tích không đổi: v=-ΔCA/(aΔt)=-ΔCB/(bΔt)=ΔCC/(cΔt)=ΔCD/(dΔt). Không lẫn tốc độ mất một chất với tốc độ đã chia hệ số.",
-            "Bảng19.1 dùng H2O2→H2O+1/2O2 với nồng độ1.000,0.707,0.500,0.354,0.250 mol/L tại0,3,6,9,12h. Khoảng0–3h: mấtH2O2≈0.0977 mol/(L.h). Nếu đổi sang2H2O2→2H2O+O2 thì tốc độ phản ứng chuẩn hóa bằng một nửa; không gọi hai quy ước là mâu thuẫn.",
-            "Biểu thức tốc độ phải có căn cứ thực nghiệm hoặc giả thiết phản ứng đơn giản. Không lấy mọi hệ số phương trình làm số mũ. Ví dụ2NO+O2→2NO2 được cho v=k*CNO^2*CO2; không suy cơ chế đơn giản chỉ từ phương trình tổng.",
+            "Tốc độ trung bình cần nêu chất theo dõi, khoảng thời gian, dấu và đơn vị. Khi chuẩn hóa theo phương trình $aA+bB\\to cC+dD$ ở thể tích không đổi:\n\n$$v=-\\frac{\\Delta C_A}{a\\Delta t}=-\\frac{\\Delta C_B}{b\\Delta t}=\\frac{\\Delta C_C}{c\\Delta t}=\\frac{\\Delta C_D}{d\\Delta t}$$\n\n Không lẫn tốc độ mất một chất với tốc độ đã chia hệ số.",
+            "Bảng 19.1 dùng $\\ce{H2O2 -> H2O + 1/2 O2}$ với nồng độ 1.000, 0.707, 0.500, 0.354, 0.250 mol/L tại 0, 3, 6, 9, 12 h. Khoảng 0–3 h: tốc độ mất $\\ce{H2O2} \\approx 0.0977\\,\\mathrm{mol/(L\\cdot h)}$. Nếu đổi sang $\\ce{2H2O2 -> 2H2O + O2}$ thì tốc độ phản ứng chuẩn hóa bằng một nửa; không gọi hai quy ước là mâu thuẫn.",
+            "Biểu thức tốc độ phải có căn cứ thực nghiệm hoặc giả thiết phản ứng đơn giản. Không lấy mọi hệ số phương trình làm số mũ. Ví dụ $\\ce{2NO + O2 -> 2NO2}$ được cho $v=kC_{\\ce{NO}}^2C_{\\ce{O2}}$; không suy cơ chế đơn giản chỉ từ phương trình tổng.",
             "Giữ nhiệt độ/môi trường/xúc tác khi so sánh nồng độ. k không đổi theo nồng độ trong điều kiện đã cố định; đơn vị k phụ thuộc bậc phản ứng. Nén hỗn hợp khí tăng nồng độ, không đồng nhất mọi cách tăng áp suất tổng với tăng áp suất riêng phần chất phản ứng.",
-            "Hệ số nhiệt độ gamma áp dụng trong khoảng nhiệt độ và điều kiện đã cho; không khẳng định mọi phản ứng luôn tăng2–4lần mỗi10°C. Dùng v2/v1=gamma^((T2-T1)/10) khi đề giả định gamma không đổi.",
+            "Hệ số nhiệt độ gamma áp dụng trong khoảng nhiệt độ và điều kiện đã cho; không khẳng định mọi phản ứng luôn tăng 2–4 lần mỗi 10°C. Dùng $\\frac{v_2}{v_1}=\\gamma^{(T_2-T_1)/10}$ khi đề giả định gamma không đổi.",
             "Diện tích tiếp xúc so sánh cùng lượng chất và các điều kiện khác tương đương. Xúc tác thay đường phản ứng/năng lượng hoạt hóa, được tái sinh; không làm tăng lượng sản phẩm giới hạn hoặc dịch cân bằng chỉ vì tăng tốc.",
-            "Chỉ mô phỏng/đọc số liệu hoặc quan sát thí nghiệm giáo viên tổ chức; không giao tự làm phản ứng sinhSO2, trộn acid, nung Mg hoặc thao tácH2O2 tại nhà. Không bịa thời gian thí nghiệm/độ đục/hằng số tốc độ rồi gắn cho SGK. Lab cần có điều khiển và kết quả nhất quán, phân biệt dữ liệu mô phỏng với phép đo thật."
+            "Chỉ mô phỏng/đọc số liệu hoặc quan sát thí nghiệm giáo viên tổ chức; không giao tự làm phản ứng sinh $\\ce{SO2}$, trộn acid, nung Mg hoặc thao tác $\\ce{H2O2}$ tại nhà. Không bịa thời gian thí nghiệm/độ đục/hằng số tốc độ rồi gắn cho SGK. Lab cần có điều khiển và kết quả nhất quán, phân biệt dữ liệu mô phỏng với phép đo thật."
           ]
         },
         {

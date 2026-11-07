@@ -14,7 +14,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 PUBLISHER_PORTAL = "https://taphuan.nxbgd.vn/tap-huan?tab=public"
 PUBLISHER_DIGITAL_LIBRARY = "https://truonghocsoquocgia.nxbgd.vn/"
 NATIONAL_SCHOOL_TEXTBOOK_LIBRARY = "https://www.thsqg.vn/sach"
-T1_CONTEXT_REVISION = 2026110205
+T1_CONTEXT_REVISION = 2026110702
 REVIEW_REGISTRY = Path(__file__).resolve().parents[1] / 'data/lesson_reference_reviews.json'
 PUBLISHER_2026_NOTICE = "https://nxbgd.vn/bai-viet/nha-xuat-ban-giao-duc-viet-nam-thong-bao-ve-viec-su-dung-sach-giao-khoa-nam-hoc-2026-2027"
 
@@ -88,6 +88,7 @@ def reviewed_tutor_source_context(subject, grade, topic):
 
 
 def lesson_source_review_html(subject, grade, topic):
+    from services.lesson_export import lesson_body_html
     review = reviewed_lesson_sources(subject, grade, topic)
     if review['status'] != 'reviewed_requirements_source':
         return ('<div class="lesson-source-review" data-source-review-status="'
@@ -96,12 +97,12 @@ def lesson_source_review_html(subject, grade, topic):
     items = []
     for source in review['sources']:
         page = f" Trang: {source['page']}." if source.get('page') is not None else ''
-        criteria = '; '.join(source.get('criteria', []))
+        criteria = ''.join(lesson_body_html(item) for item in source.get('criteria', []))
         items.append('<li><a href="' + html.escape(source['url'], quote=True)
                      + '" target="_blank" rel="noopener noreferrer">' + html.escape(source['title'])
                      + '</a><br>' + html.escape(source['locator'] + page)
                      + '<br>' + html.escape(source['edition_note'])
-                     + ('<br>' + html.escape(criteria) if criteria else '') + '</li>')
+                     + ('<div class="source-criteria">' + criteria + '</div>' if criteria else '') + '</li>')
     return ('<div class="lesson-source-review" data-source-review-status="reviewed_requirements_source">'
             + '<b>Nguồn đã đối chiếu yêu cầu bài học</b>'
             + '<p>Ngày đối chiếu: ' + html.escape(review['reviewed_on']) + '. '
