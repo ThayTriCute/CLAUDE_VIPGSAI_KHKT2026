@@ -4,6 +4,15 @@ from services.philosophy_rotation import MODERN
 
 
 class QuoteReferenceCompletionTests(unittest.TestCase):
+    def test_internal_guidance_marker_removed_but_code_and_math_preserved(self):
+        from services.philosophy_rotation import GUIDANCE
+        marker=GUIDANCE.splitlines()[0]
+        text='Bài giảng giữ nguyên $x^2$.\n\n'+marker+'\n\nKết thúc.\n`'+marker+'`'
+        fixed=complete_verified_quote_reference(text,[])
+        self.assertIn('Bài giảng giữ nguyên $x^2$.',fixed)
+        self.assertNotIn('\n'+marker+'\n',fixed)
+        self.assertIn('`'+marker+'`',fixed)
+
     def test_real_mill_missing_url_and_note_are_completed_without_rewriting(self):
         ref=next(x for x in MODERN if x['author']=='John Stuart Mill')
         original='John Stuart Mill: "'+ref['quote']+'". Bài học lắng nghe.'

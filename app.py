@@ -4,7 +4,7 @@ def _refresh_t1_context_services():
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
     for module, revision in ((lesson_sources, 2026110703), (curriculum_policy, 2026110702),
                              (lab_scope, 2026110703), (lesson_export, 2026110604),
-                             (text_boundaries, 2026110701), (socratic_context, 2026110703)):
+                             (text_boundaries, 2026110701), (socratic_context, 2026110704)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
@@ -2044,19 +2044,19 @@ def get_cross_station_pedagogical_context(current_station: int) -> str:
     # Thông tin Trạm 1
     t1_topic = st.session_state.get('current_topic', '')
     if st.session_state.get('tram1_understood', False):
-        ctx_parts.append(f"• Trạm 1 (Lý thuyết): Em đã làm chủ hoàn toàn kiến thức cốt lõi chuyên đề '{t1_topic}'.")
+        ctx_parts.append(f"• Trạm 1 (Lý thuyết): Em đã báo hiểu phần vừa trao đổi của '{t1_topic}'; đây là trạng thái đối thoại, chưa chứng nhận toàn bộ chuyên đề.")
     elif t1_topic:
         ctx_parts.append(f"• Trạm 1 (Lý thuyết): Em đang tìm hiểu chuyên đề '{t1_topic}'.")
 
     # Thông tin Trạm 2
     if st.session_state.get('tram2_understood', False):
-        ctx_parts.append("• Trạm 2 (Bài tập): Em đã tự mình tháo gỡ thành công nút thắt bài tập, nhận diện và khắc phục trọn vẹn các lỗi sai.")
+        ctx_parts.append("• Trạm 2 (Bài tập): Em đã báo hiểu phần vừa trao đổi; chỉ tổng kết thao tác và lỗi có bằng chứng, không suy đã sửa hết mọi câu.")
     elif st.session_state.get('tram2_count', 0) > 0:
         ctx_parts.append("• Trạm 2 (Bài tập): Em đã nộp bài làm và đang đối thoại cùng Thầy tháo gỡ các chỗ khuất tất.")
 
     # Thông tin Trạm 3
     if st.session_state.get('tram3_understood', False):
-        ctx_parts.append("• Trạm 3 (Khảo thí): Em đã hoàn thành đề thi và nắm chắc phương pháp xử lý các câu khó/bẫy đề.")
+        ctx_parts.append("• Trạm 3 (Khảo thí): Em đã kết thúc lượt trao đổi sau thi; không suy nắm vững cả đề chỉ từ tín hiệu kết thúc hoặc điểm số.")
     elif st.session_state.get('tram3_count', 0) > 0 or len(st.session_state.get('tram3_chat_messages', [])) > 0:
         ctx_parts.append("• Trạm 3 (Khảo thí): Em đã tham gia thi thử và đang lắng nghe phân tích sau thi.")
 
@@ -13721,7 +13721,7 @@ if selected_station == station_labels[1]:
                             f"Lịch sử đối thoại trước đó:\n{history_context}\n"
                             f"Học sinh {student_name} phản hồi: \"{q}\"\n\n"
                             f"🎯 MỆNH LỆNH SƯ PHẠM ĐỈNH CAO - CHỐT ĐIỂM CHẠM SƯ PHẠM TRẠM 2 (CLOSURE) & TRAO TRUYỀN TRIẾT LÝ NHÂN CÁCH Á - ÂU:\n"
-                            f"1. DỪNG TRUY VẤN: Tuyệt đối KHÔNG hỏi thêm bất kỳ câu hỏi nào. Học sinh đã tự tháo gỡ hoàn toàn các nút thắt bài tập và không còn băn khoăn gì nữa!\n"
+                            f"1. DỪNG TRUY VẤN: Không hỏi thêm khi học sinh báo đã hiểu phần vừa trao đổi và không còn câu hỏi. Chỉ ghi nhận thao tác có bằng chứng, không khẳng định đã tháo gỡ mọi bài tập.\n"
                             f"2. BIỂU DƯƠNG NỒNG NHIỆT: Khen ngợi tinh thần vượt khó, sự kiên định không bỏ cuộc và tư duy tự sửa sai trung thực của {student_name}.\n"
                             f"3. ĐÓNG GÓI BẢN CHẤT: Chốt 1 câu ngắn gọn về kinh nghiệm cốt lõi để không bao giờ tái phạm lỗi này nữa.\n"
                             f"4. BÀI HỌC TRIẾT LÝ NHÂN CÁCH & LẼ SỐNG (BẮT BUỘC): Đúc kết bài học về ý chí và sự cẩn trọng: {t2_quote_data['lesson']} kèm câu danh ngôn triết lý của {t2_quote_data['author']} ({t2_quote_data['origin']}): \"{t2_quote_data['quote']}\". (Đổi bài học, góc nhìn và cách vận dụng theo kế hoạch chung, không lặp lại bài giảng trước).\n"
@@ -16531,7 +16531,12 @@ if selected_station == station_labels[2]:
 
         st.markdown("### 💬 Gia Sư Socratic Khảo Thí: Vấn Đáp & Khắc Phục Lỗi Sai")
 
-        for m in st.session_state.tram3_chat_messages:
+        for index, m in enumerate(st.session_state.tram3_chat_messages):
+            if m.get('role') == 'assistant' and index == len(st.session_state.tram3_chat_messages)-1:
+                closure_plan = st.session_state.get('tram3_closure_info', {})
+                if closure_plan.get('plan_id'):
+                    from services.socratic_context import complete_verified_quote_reference
+                    m['content'] = complete_verified_quote_reference(m['content'], [closure_plan])
 
             with st.chat_message(m["role"]): st.markdown(chemical_display_markdown(m["content"]))
 
@@ -16560,9 +16565,9 @@ if selected_station == station_labels[2]:
                             f"Học sinh {student_name} vừa thi xong đề Mã {ex_code} môn {subject} Lớp {grade_num} đạt {total_score}/10.\n"
                             f"Học sinh vừa phản hồi: \"{q3}\"\n\n"
                             f"🎯 MỆNH LỆNH SƯ PHẠM ĐỈNH CAO - CHỐT ĐIỂM CHẠM SƯ PHẠM TRẠM 3 (CLOSURE TOÀN DIỆN) & TRAO TRUYỀN TRIẾT LÝ NHÂN CÁCH Á - ÂU:\n"
-                            f"1. DỪNG TRUY VẤN: Tuyệt đối KHÔNG hỏi thêm bất kỳ câu hỏi nào. Học sinh đã thấu suốt toàn bộ phương pháp xử lý câu hỏi trong đề thi!\n"
+                            f"1. DỪNG TRUY VẤN: Không hỏi thêm khi học sinh báo đã hiểu phần vừa tự kiểm và không còn câu hỏi. Không suy đã thấu suốt toàn bộ đề thi; câu thiếu dữ kiện không tự quy là lỗ hổng của học sinh.\n"
                             f"2. BIỂU DƯƠNG BẢN LĨNH KHẢO THÍ: Khen ngợi tinh thần cầu tiến, sự trung thực trong thi cử và thái độ học hỏi từ những câu chưa đúng của {student_name}.\n"
-                            f"3. TỔNG KẾT HÀNH TRÌNH 3 TRẠM: Nhìn lại sự trưởng thành từ chiếm lĩnh lý thuyết (Trạm 1), tôi luyện bài tập thực chiến (Trạm 2) đến bản lĩnh phòng thi (Trạm 3).\n"
+                            f"3. TỔNG KẾT HÀNH TRÌNH 3 TRẠM: Chỉ nhắc phần kiến thức và thao tác có trong bằng chứng đối thoại/bài làm; phân biệt học sinh tự báo hiểu với kết quả đã kiểm. Không mặc định hoàn thành trọn vẹn các trạm hoặc cả đề.\n"
                             f"4. BÀI HỌC TRIẾT LÝ NHÂN CÁCH LỚN & KHÁT VỌNG CỐNG HIẾN: Đúc kết bài học về lý tưởng sống: {t3_quote_data['lesson']} kèm câu danh ngôn bất hủ của {t3_quote_data['author']} ({t3_quote_data['origin']}): \"{t3_quote_data['quote']}\". (Đổi bài học, góc nhìn và cách vận dụng theo kế hoạch chung giữa cả3trạm).\n"
                             f"5. LỜI CHÚC TƯƠNG LAI: Lời chúc ấm áp, tin tưởng của Người Thầy chúc {student_name} luôn dưỡng thiện tâm, ươm mầm nhân tài để thành công rực rỡ và cống hiến cho quê hương An Giang và Tổ quốc Việt Nam!"
                         )

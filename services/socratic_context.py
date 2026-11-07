@@ -3,7 +3,7 @@ import re
 
 from services.academic_context import canonical_subject, folded
 
-T1_CONTEXT_REVISION = 2026110703
+T1_CONTEXT_REVISION = 2026110704
 
 
 def complete_verified_quote_reference(reply, references):
@@ -12,7 +12,12 @@ def complete_verified_quote_reference(reply, references):
     No invented quotation or attribution, and no AI retry for missing formatting.
     Code examples do not count as a quotation in the teaching prose.
     """
-    text = str(reply or '')
+    from services.philosophy_rotation import GUIDANCE
+    marker = GUIDANCE.splitlines()[0]
+    parts = re.split(r'(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`)', str(reply or ''))
+    text = ''.join(part if i % 2 else re.sub(
+        r'(?m)^[ \t]*(?:#+[ \t]*)?(?:\*\*)?' + re.escape(marker) + r'(?:\*\*)?[ \t]*(?:\n|$)', '', part)
+        for i, part in enumerate(parts))
     prose = re.sub(r'```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`', '', text)
     normalized = folded(prose)
     for reference in references:

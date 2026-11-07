@@ -90,3 +90,15 @@ class PhilosophyRotationTests(unittest.TestCase):
         for station,content in [(2,'clean_rep'),(3,'t3_rep')]:
             pos=source.index(f'register_station_closure({station},')
             self.assertGreater(pos,source.rfind('"role": "assistant", "content": '+content,0,pos))
+
+    def test_reported_closure_context_does_not_certify_entire_exam(self):
+        tree=ast.parse(Path('app.py').read_text(encoding='utf-8'))
+        fn=next(n for n in tree.body if isinstance(n,ast.FunctionDef)
+                and n.name=='get_cross_station_pedagogical_context')
+        state=dict(current_topic='Test',tram1_understood=True,tram2_understood=True,tram3_understood=True)
+        env=dict(st=SimpleNamespace(session_state=state))
+        exec(compile(ast.Module(body=[fn],type_ignores=[]),'actual-reported-context','exec'),env)
+        value=env[fn.name](3)
+        self.assertNotIn('làm chủ hoàn toàn',value)
+        self.assertIn('chưa chứng nhận',value)
+        self.assertIn('không suy nắm vững cả đề',value)
