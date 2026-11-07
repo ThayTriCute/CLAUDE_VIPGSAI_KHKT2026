@@ -17,6 +17,18 @@ class AcademicGroundingBoundaryTests(unittest.TestCase):
         self.assertEqual(with_academic_grounding(prepared), prepared)
         self.assertIn('Trạm1,2,3', prepared)
 
+    def test_civic_history_review_contract_preserves_schema_and_scope(self):
+        prepared = with_academic_grounding('ONLY JSON schema X')
+        self.assertTrue(prepared.startswith('ONLY JSON schema X'))
+        for clause in ('Lịch sử, GDCD và Giáo dục kinh tế và pháp luật',
+                       'xác minh tên bộ, ấn bản và phạm vi',
+                       'Bài mẫu không đại diện toàn cuốn',
+                       'điều/khoản liên quan, ngày hiệu lực',
+                       'không tự gán tác giả',
+                       'không chứng nhận đạt pháp luật Việt Nam'):
+            self.assertIn(clause, prepared)
+        self.assertEqual(with_academic_grounding(prepared), prepared)
+
     def test_membrane_counterexample_is_in_shared_system_guidance(self):
         prepared = with_academic_grounding('Keep requested JSON schema')
         for clause in ('chủ động thứ cấp', 'gradient điện hóa', 'tính thấm màng/chất tan'):
