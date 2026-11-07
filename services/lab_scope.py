@@ -4,7 +4,47 @@ import math
 
 from services.academic_context import academic_context, canonical_subject
 
-T1_CONTEXT_REVISION = 2026110202
+T1_CONTEXT_REVISION = 2026110702
+
+
+def reaction_rate_table_request(command, subject, grade, topic):
+    """Route only the explicitly requested, reviewed H2O2 source table."""
+    from services.academic_context import folded
+    from services.lesson_sources import reviewed_lesson_sources
+    if canonical_subject(subject) != 'Hóa học' or int(grade) != 10:
+        return None
+    if 'bang 19 1' not in folded(command) or 'h2o2' not in folded(command):
+        return None
+    review = reviewed_lesson_sources(subject, grade, topic)
+    if review.get('id') != 'kntt-hoa10-tocdo-20261107' or review['status'] != 'reviewed_requirements_source':
+        return None
+    return {'type': 'chem_rate_table', 'times_h': [0, 3, 6, 9, 12],
+            'concentrations_M': [1.000, .707, .500, .354, .250],
+            'source_url': review['sources'][0]['url'], 'source_locator': 'SGK Hóa10 Bảng19.1, trang93'}
+
+
+def average_reactant_rate(times, concentrations, start, end, coefficient=1):
+    if (len(times) != len(concentrations) or len(times) < 2
+            or not all(math.isfinite(v) for v in (*times, *concentrations, coefficient))
+            or any(b <= a for a, b in zip(times, times[1:]))
+            or any(c < 0 for c in concentrations) or coefficient <= 0
+            or not (type(start) is int and type(end) is int and 0 <= start < end < len(times))):
+        raise ValueError('Cần dữ liệu hữu hạn, thời gian tăng và hai mốc khác nhau; hệ số dương.')
+    loss = (concentrations[start] - concentrations[end]) / (times[end] - times[start])
+    return {'loss_rate': loss, 'normalized_rate': loss / coefficient,
+            'delta_t': times[end] - times[start], 'delta_c': concentrations[end] - concentrations[start]}
+
+
+def experimental_rate_ratio(no_ratio, oxygen_ratio):
+    if not all(math.isfinite(x) and x >= 0 for x in (no_ratio, oxygen_ratio)):
+        raise ValueError('Tỉ lệ nồng độ phải không âm, hữu hạn.')
+    return no_ratio ** 2 * oxygen_ratio
+
+
+def temperature_rate_ratio(gamma, low, high):
+    if not all(math.isfinite(x) for x in (gamma, low, high)) or gamma <= 0:
+        raise ValueError('Hệ số nhiệt độ phải dương và dữ kiện hữu hạn.')
+    return gamma ** ((high - low) / 10)
 
 
 def horizontal_throw_request(command, subject):

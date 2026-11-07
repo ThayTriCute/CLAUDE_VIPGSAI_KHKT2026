@@ -3,8 +3,8 @@ def _refresh_t1_context_services():
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
     for module, revision in ((lesson_sources, 2026110205), (curriculum_policy, 2026110701),
-                             (lab_scope, 2026110202), (lesson_export, 2026110604),
-                             (text_boundaries, 2026110701), (socratic_context, 2026110506)):
+                             (lab_scope, 2026110702), (lesson_export, 2026110604),
+                             (text_boundaries, 2026110701), (socratic_context, 2026110702)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
@@ -5539,6 +5539,65 @@ def render_smart_lab(data, current_subject=""):
         return f"{name}__{control_scope}"
 
     dtype = data.get("type")
+
+    if dtype == 'chem_rate_table':
+        from services.lab_scope import average_reactant_rate, experimental_rate_ratio, temperature_rate_ratio
+        st.markdown('### Tốc độ phản ứng — đọc thí nghiệm và kiểm chứng dự đoán')
+        st.caption('Dữ liệu H₂O₂ lấy từ Bảng19.1 SGK Hóa10 trang93. Hai phần so sánh nồng độ/nhiệt độ dưới đây là bài toán mô hình riêng, không phải kết quả thí nghiệm mới hoặc phép đo của phản ứng H₂O₂.')
+        tabs = st.tabs(['Số liệu H₂O₂', 'Ảnh hưởng nồng độ', 'Ảnh hưởng nhiệt độ'])
+        times, concentrations = data['times_h'], data['concentrations_M']
+        with tabs[0]:
+            interval = st.select_slider('Chọn khoảng thời gian (giờ)', options=list(range(len(times))),
+                                        value=(0, 1), format_func=lambda i: str(times[i]), key=lab_key('rate_interval'))
+            coefficient = st.selectbox('Hệ số H₂O₂ trong phương trình dùng để chuẩn hóa', [1, 2], key=lab_key('rate_coefficient'))
+            st.latex(r'\mathrm{H_2O_2\rightarrow H_2O+\tfrac12 O_2}' if coefficient == 1 else r'\mathrm{2H_2O_2\rightarrow2H_2O+O_2}')
+            fig = go.Figure(go.Scatter(x=times, y=concentrations, mode='lines+markers', name='Số liệu SGK', line=dict(color='#38bdf8')))
+            if interval[0] < interval[1]:
+                result = average_reactant_rate(times, concentrations, *interval, coefficient)
+                fig.add_trace(go.Scatter(x=[times[i] for i in interval], y=[concentrations[i] for i in interval], mode='lines+markers', name='Dây cung của khoảng chọn', line=dict(color='#fbbf24', dash='dash')))
+                cols = st.columns(2)
+                cols[0].metric('Tốc độ mất H₂O₂ (mol/(L·h))', f"{result['loss_rate']:.6g}")
+                cols[1].metric('Tốc độ phản ứng chuẩn hóa (mol/(L·h))', f"{result['normalized_rate']:.6g}")
+                st.write(f"ΔC = {result['delta_c']:.6g} mol/L; Δt = {result['delta_t']:g} h. Tốc độ chuẩn hóa đổi sang mol/(L·s): {result['normalized_rate']/3600:.6g}.")
+                if result['loss_rate'] < 0:
+                    st.warning('Nồng độ tăng trong khoảng chọn: không gọi giá trị này là tốc độ mất chất dương.')
+            else:
+                st.info('Chọn hai mốc thời gian khác nhau để tính tốc độ trung bình; không chia cho khoảng thời gian bằng 0.')
+            fig.update_layout(xaxis_title='Thời gian (h)', yaxis_title='Nồng độ H₂O₂ (mol/L)', height=390,
+                              paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', legend=dict(orientation='h'))
+            st.plotly_chart(fig, width='stretch', key=lab_key('rate_table_chart'))
+            st.caption('Đoạn nối các điểm chỉ giúp đọc dữ liệu, không chứng minh đường động học tại mọi thời điểm. Thể tích không đổi; tốc độ mất H₂O₂ không đổi khi nhân đôi phương trình, còn tốc độ chuẩn hóa chia theo hệ số đã chọn.')
+            st.markdown('**Dự đoán rồi kiểm:** chọn các khoảng 0–3, 3–6 và 9–12 giờ. Khoảng nào chất giảm nhanh hơn? Đổi hệ số 1 thành 2: đại lượng nào thay đổi, đại lượng nào giữ nguyên?')
+            import csv, io
+            buffer = io.StringIO(); writer = csv.writer(buffer)
+            writer.writerow(['time_h', 'H2O2_mol_L'])
+            writer.writerows(zip(times, concentrations))
+            st.download_button('Tải dữ liệu nguồn để tự tính (CSV)', buffer.getvalue().encode('utf-8-sig'), file_name='Hoa10_Bang19_1_H2O2.csv', mime='text/csv', key=lab_key('rate_source_csv'))
+        with tabs[1]:
+            st.latex(r'2NO+O_2\rightarrow2NO_2,\qquad v=kC_{NO}^{2}C_{O_2}')
+            st.caption('Dùng biểu thức thực nghiệm được nêu ở SGK trang95. Giữ nhiệt độ, môi trường và k; tính tỉ số tốc độ, không tự cho một k thực nghiệm hoặc suy số mũ từ mọi phương trình.')
+            no_ratio = st.slider('Nồng độ NO so với ban đầu (lần)', 0.0, 3.0, 1.0, step=.1, key=lab_key('rate_no'))
+            oxygen_ratio = st.slider('Nồng độ O₂ so với ban đầu (lần)', 0.0, 3.0, 1.0, step=.1, key=lab_key('rate_o2'))
+            ratio = experimental_rate_ratio(no_ratio, oxygen_ratio)
+            st.metric('v mới / v ban đầu', f'{ratio:.4g}')
+            fig = go.Figure(go.Bar(x=['Ban đầu', 'Sau thay đổi'], y=[1, ratio], marker_color=['#94a3b8', '#38bdf8']))
+            fig.update_layout(yaxis_title='Tỉ số tốc độ', height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+            st.plotly_chart(fig, width='stretch', key=lab_key('rate_ratio_chart'))
+            st.markdown('**Kiểm chứng:** tăng riêng NO gấp đôi, rồi tăng riêng O₂ gấp đôi. Vì sao hai kết quả khác nhau? Đây là so sánh ở cùng điều kiện, không phải tăng áp suất tổng bằng khí trơ.')
+        with tabs[2]:
+            st.caption('Bài toán giả định riêng: γ không đổi từ 20 đến 50°C; không gán hệ số này thành kết quả đo cho H₂O₂ hoặc NO ở hai phần trước.')
+            gamma = st.slider('Hệ số nhiệt độ γ giả định', 1.0, 4.0, 2.0, step=.1, key=lab_key('rate_gamma'))
+            temperature = st.slider('Nhiệt độ so với mốc 20°C', 20, 50, 20, key=lab_key('rate_temperature'))
+            factor = temperature_rate_ratio(gamma, 20, temperature)
+            st.metric('v(T) / v(20°C)', f'{factor:.5g}')
+            st.latex(r'\frac{v(T)}{v(20)}=\gamma^{(T-20)/10}')
+            fig = go.Figure(go.Scatter(x=list(range(20, 51)), y=[temperature_rate_ratio(gamma, 20, t) for t in range(20, 51)], mode='lines', name='Mô hình γ không đổi'))
+            fig.add_trace(go.Scatter(x=[temperature], y=[factor], mode='markers', name='Đang xét'))
+            fig.update_layout(xaxis_title='T (°C)', yaxis_title='v(T)/v(20°C)', height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+            st.plotly_chart(fig, width='stretch', key=lab_key('rate_temperature_chart'))
+            st.markdown('**Thử dự đoán:** γ = 2, tăng 30°C thì tốc độ tăng bao nhiêu lần? Vì sao không lấy 30 nhân với 2? Không ngoại suy ra ngoài khoảng đã cho.')
+        st.caption('Lab phân tích số liệu/mô hình; không hướng dẫn tự pha hóa chất hay thực hiện thí nghiệm tại nhà. Nguồn: ' + data['source_locator'])
+        return
 
     if dtype == 'horizontal_throw':
         from services.lab_scope import horizontal_throw_state
@@ -11823,6 +11882,11 @@ if selected_station == station_labels[0]:
                                     chat_display = repair_reviewed_station1_closing(
                                         chat_display, st.session_state.tram1_chat_history[t1_msg_index-1]['content'],
                                         subject, grade_num, closing=True)
+                                    # Only this unapproved, reproduced specimen needs a
+                                    # retrospective note; leave approved old chats alone.
+                                    if (subject == 'Hóa học' and grade_num == 10 and st.session_state.get('current_topic') == 'Tốc độ phản ứng — Hóa học 10, KNTT, Bài 19'):
+                                        from services.socratic_context import label_verified_quote_translation
+                                        chat_display = label_verified_quote_translation(chat_display, CROSS_STATION_PHILOSOPHY_BANK[1])
                                     t1_msg["content"] = chat_display
                             st.markdown(chemical_display_markdown(chat_display))
 
@@ -11944,6 +12008,9 @@ if selected_station == station_labels[0]:
                                 from services.socratic_context import repair_reviewed_station1_closing
                                 t1_ans_clean = repair_reviewed_station1_closing(
                                     t1_ans_clean, t1_input, subject, grade_num, closing=is_t1_understood)
+                                if is_t1_understood:
+                                    from services.socratic_context import label_verified_quote_translation
+                                    t1_ans_clean = label_verified_quote_translation(t1_ans_clean, [t1_quote_data])
                                 t1_reply_slot.markdown(chemical_display_markdown(t1_ans_clean))
                                 st.session_state.tram1_chat_history.append({"role": "assistant", "content": t1_ans_clean})
                                 if is_t1_understood and isinstance(t1_ans_clean, str) and t1_ans_clean.strip():
@@ -12561,7 +12628,10 @@ if selected_station == station_labels[0]:
     explicit_light_model = light_controller_request(lab_command) if subject in ('Công nghệ', 'Vật lý', 'Khoa học tự nhiên') else None
     from services.lab_scope import soil_ph_lab_request
     from services.lab_scope import horizontal_throw_request
-    explicit_local_model = explicit_light_model or soil_ph_lab_request(lab_command, subject) or horizontal_throw_request(lab_command, subject)
+    from services.lab_scope import reaction_rate_table_request
+    explicit_local_model = (explicit_light_model or soil_ph_lab_request(lab_command, subject)
+                            or horizontal_throw_request(lab_command, subject)
+                            or reaction_rate_table_request(lab_command, subject, grade_num, st.session_state.get('current_topic', '')))
     lab_clicked = st.button("✨ Khởi chạy Phòng Lab", key=f"btn_lab_{current_context_key}")
     if lab_clicked and lab_command.strip() and explicit_local_model is not None:
         st.session_state[f'lab_intent_command_{current_context_key}'] = lab_command

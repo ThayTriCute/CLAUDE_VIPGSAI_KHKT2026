@@ -3,7 +3,23 @@ import re
 
 from services.academic_context import canonical_subject, folded
 
-T1_CONTEXT_REVISION = 2026110506
+T1_CONTEXT_REVISION = 2026110702
+
+
+def label_verified_quote_translation(reply, references):
+    """Attach supplied provenance only when quote, author and URL all match."""
+    text = str(reply or '')
+    normalized = folded(text)
+    for reference in references:
+        quote = reference.get('quote', '')
+        author = reference.get('author', '')
+        url = reference.get('source_url', '')
+        note = reference.get('translation_note', '')
+        if (reference.get('source_verified') is True and quote and author and url and note
+                and folded(quote) in normalized and folded(author) in normalized and url in text
+                and note not in text):
+            text += '\n\n' + note
+    return text
 
 
 def repair_reviewed_station1_closing(reply, student_message, subject, grade, closing=False):
