@@ -1422,7 +1422,10 @@ available_subjects = (
 
 )
 
-subject = st.sidebar.selectbox("📚 Môn học cần hỗ trợ:", available_subjects)
+from services.widget_state import retained_subject_index
+subject = st.sidebar.selectbox("📚 Môn học cần hỗ trợ:", available_subjects,
+                              index=retained_subject_index(st.session_state.get('active_context_key'), available_subjects),
+                              key="subject_selector")
 
 
 
@@ -10638,6 +10641,8 @@ def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán h�
     t = correct_reviewed_cubic_prior_knowledge(t, subject, grade, topic)
     from services.curriculum_policy import correct_reviewed_english_family_guidance
     t = correct_reviewed_english_family_guidance(t, subject, grade, topic)
+    from services.curriculum_policy import correct_reviewed_horizontal_throw
+    t = correct_reviewed_horizontal_throw(t, subject, grade, topic)
 
     # 2. Quét & chuẩn hóa KaTeX
     t = sanitize_katex_latex(t)

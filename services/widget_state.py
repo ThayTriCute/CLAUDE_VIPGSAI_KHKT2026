@@ -1,6 +1,16 @@
 """Small, deterministic guards for persisted Streamlit widget state."""
 
 
+def retained_subject_index(active_context, options):
+    """Recover the last subject after a failed run cleans up widget state.
+
+    Only retain a subject still offered by the selected grade. This does not
+    restore attempts, chat, credentials, or another grade's lesson.
+    """
+    previous = str(active_context or '').partition('_')[2]
+    return options.index(previous) if previous in options else 0
+
+
 def switch_exam_request_context(state, previous, current):
     """Keep each subject/grade's draft, without carrying it into another one.
 

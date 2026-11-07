@@ -855,6 +855,32 @@ Danh mục văn bản dưới đây chỉ là metadata tra cứu, không phải 
 """
 
 
+def correct_reviewed_horizontal_throw(text, subject, grade, topic=""):
+    """Reviewed VL10 specimen edits; no answer permutation or new AI request."""
+    if (canonical_subject(subject) != 'Vật lý' or normalize_grade(grade) != 10
+            or folded(topic) != folded('Chuyển động ném ngang — Vật lí 10, KNTT, Bài 12 mục I')):
+        return text
+    value = str(text)
+    marker = 'Chuyển động ném ngang là chuyển động của một vật có vận tốc ban đầu theo phương nằm ngang và sau đó chỉ chịu tác dụng của trọng lực.'
+    value = value.replace(marker, marker + ' Mô hình xét gần mặt đất, bỏ qua sức cản không khí, gia tốc trọng trường không đổi; H > 0, g > 0 và vận tốc ném ngang v₀ > 0. Chỉ xét từ lúc thả tới lần chạm đất đầu tiên: 0 ≤ t ≤ T. Không có lực ném tiếp tục đẩy vật sau khi rời tay.')
+    # Idempotence when formatted content is passed through the gate again.
+    sentence = ' Mô hình xét gần mặt đất, bỏ qua sức cản không khí, gia tốc trọng trường không đổi; H > 0, g > 0 và vận tốc ném ngang v₀ > 0. Chỉ xét từ lúc thả tới lần chạm đất đầu tiên: 0 ≤ t ≤ T. Không có lực ném tiếp tục đẩy vật sau khi rời tay.'
+    while sentence + sentence in value:
+        value = value.replace(sentence + sentence, sentence)
+    value = value.replace('Vật không chịu tác dụng của lực nào (bỏ qua sức cản không khí)',
+                          'Thành phần hợp lực theo phương ngang bằng không (vật vẫn chịu trọng lực theo phương đứng)')
+    old = 'Trong môn bóng chuyền, khi cầu thủ thực hiện cú đập bóng (coi như ném ngang tại thời điểm chạm tay), các yếu tố nào về phía cầu thủ (chiều cao bật nhảy, lực đập) sẽ quyết định quả bóng có thể sang sân đối phương và nằm trong vạch quy định?'
+    value = value.replace(old, 'Trong mô hình giả định, bóng rời tay theo phương ngang từ độ cao H với vận tốc ban đầu v₀; bỏ qua cản không khí và coi mặt đất phẳng. H và v₀ ảnh hưởng thế nào tới thời gian rơi, tầm xa? Một cú đập bóng thực có thể có vận tốc hướng xuống, xoáy và lực cản nên không mặc nhiên là ném ngang. Không suy vận tốc từ lực đập khi thiếu thời gian tác dụng và dữ kiện tương tác; không dùng mô hình này để bảo đảm bóng qua lưới.')
+    value = value.replace('Một quả bóng tennis được ném ngang từ độ cao $H$. Sau 1 giây',
+                          'Trong mô hình bỏ qua cản không khí, một quả bóng tennis được ném ngang từ độ cao $H > 5$ m so với mặt đất phẳng. Sau 1 giây')
+    value = value.replace('**Câu 2. [Mức độ: VDC]**\nMột quả bóng tennis',
+                          '**Câu 2. [Mức độ: VD]**\nMột quả bóng tennis')
+    value = value.replace('**Câu 2. [Mức độ: VDC]**\nTrong mô hình bỏ qua cản không khí, một quả bóng tennis',
+                          '**Câu 2. [Mức độ: VD]**\nTrong mô hình bỏ qua cản không khí, một quả bóng tennis')
+    value = value.replace('OUTCOME: [KNTT-VL10-12.I]', 'OUTCOME: [Mục tiêu AI đề xuất, không phải mã YCCĐ chính thức]')
+    return value
+
+
 def with_academic_grounding(system_instruction):
     """Attach the same minimum contract at both model transports, including JSON."""
     value = str(system_instruction or '')
