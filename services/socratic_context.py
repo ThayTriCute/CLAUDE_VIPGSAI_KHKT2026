@@ -3,7 +3,30 @@ import re
 
 from services.academic_context import canonical_subject, folded
 
-T1_CONTEXT_REVISION = 2026110702
+T1_CONTEXT_REVISION = 2026110703
+
+
+def complete_verified_quote_reference(reply, references):
+    """Complete supplied provenance only for a full matching quote and author.
+
+    No invented quotation or attribution, and no AI retry for missing formatting.
+    Code examples do not count as a quotation in the teaching prose.
+    """
+    text = str(reply or '')
+    prose = re.sub(r'```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`', '', text)
+    normalized = folded(prose)
+    for reference in references:
+        quote, author = reference.get('quote', ''), reference.get('author', '')
+        url, locator = reference.get('source_url', ''), reference.get('source_locator', '')
+        if (reference.get('source_verified') is True and quote and author and locator
+                and url.startswith('https://') and folded(quote) in normalized
+                and folded(author) in normalized):
+            if url not in text:
+                text += '\n\nNguồn đối chiếu: [' + str(author) + ' — ' + str(locator) + '](' + url + ').'
+            note = reference.get('translation_note', '')
+            if note and note not in text:
+                text += '\n\n' + note
+    return text
 
 
 def label_verified_quote_translation(reply, references):

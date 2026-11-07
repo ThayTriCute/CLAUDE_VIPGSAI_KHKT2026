@@ -4,7 +4,7 @@ def _refresh_t1_context_services():
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
     for module, revision in ((lesson_sources, 2026110703), (curriculum_policy, 2026110702),
                              (lab_scope, 2026110703), (lesson_export, 2026110604),
-                             (text_boundaries, 2026110701), (socratic_context, 2026110702)):
+                             (text_boundaries, 2026110701), (socratic_context, 2026110703)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
@@ -12032,8 +12032,8 @@ if selected_station == station_labels[0]:
                                 t1_ans_clean = repair_reviewed_station1_closing(
                                     t1_ans_clean, t1_input, subject, grade_num, closing=is_t1_understood)
                                 if is_t1_understood:
-                                    from services.socratic_context import label_verified_quote_translation
-                                    t1_ans_clean = label_verified_quote_translation(t1_ans_clean, [t1_quote_data])
+                                    from services.socratic_context import complete_verified_quote_reference
+                                    t1_ans_clean = complete_verified_quote_reference(t1_ans_clean, [t1_quote_data])
                                 t1_reply_slot.markdown(chemical_display_markdown(t1_ans_clean))
                                 st.session_state.tram1_chat_history.append({"role": "assistant", "content": t1_ans_clean})
                                 if is_t1_understood and isinstance(t1_ans_clean, str) and t1_ans_clean.strip():
@@ -13561,6 +13561,13 @@ if selected_station == station_labels[1]:
         st.session_state.messages = [{"role": "assistant", "content": welcome_intro}]
 
     for idx_m, m in enumerate(st.session_state.get("messages", [])):
+        # Complete the latest new-runtime closure from its verified plan only;
+        # earlier approved histories are left untouched.
+        if m.get('role') == 'assistant' and idx_m == len(st.session_state.messages)-1:
+            closure_plan = st.session_state.get('tram2_closure_info', {})
+            if closure_plan.get('plan_id'):
+                from services.socratic_context import complete_verified_quote_reference
+                m['content'] = complete_verified_quote_reference(m['content'], [closure_plan])
 
         with st.chat_message(m["role"]):
 
@@ -13743,8 +13750,8 @@ if selected_station == station_labels[1]:
                     if "<DIAGNOSTIC>" in clean_rep:
                         clean_rep = clean_rep.split("<DIAGNOSTIC>")[0].strip()
                     if is_student_understood:
-                        from services.socratic_context import label_verified_quote_translation
-                        clean_rep = label_verified_quote_translation(clean_rep, [t2_quote_data])
+                        from services.socratic_context import complete_verified_quote_reference
+                        clean_rep = complete_verified_quote_reference(clean_rep, [t2_quote_data])
                     t2_reply_slot.markdown(chemical_display_markdown(clean_rep))
                     st.session_state.messages.append({"role": "assistant", "content": clean_rep})
                     if is_student_understood and str(clean_rep).strip():
@@ -16578,10 +16585,10 @@ if selected_station == station_labels[2]:
                     )
                     t3_rep = st.write_stream(t3_stream)
                     if is_t3_concluded and str(t3_rep).strip():
-                        from services.socratic_context import label_verified_quote_translation
-                        annotated = label_verified_quote_translation(t3_rep, [t3_quote_data])
+                        from services.socratic_context import complete_verified_quote_reference
+                        annotated = complete_verified_quote_reference(t3_rep, [t3_quote_data])
                         if annotated != t3_rep:
-                            st.caption(t3_quote_data['translation_note'])
+                            st.markdown(annotated[len(str(t3_rep)):])
                         t3_rep = annotated
                     st.session_state.tram3_chat_messages.append({"role": "assistant", "content": t3_rep})
                     if is_t3_concluded and str(t3_rep).strip():
