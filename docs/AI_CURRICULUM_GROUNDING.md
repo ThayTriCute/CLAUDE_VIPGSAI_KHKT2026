@@ -37,3 +37,11 @@ Bắt buộc dùng kho nén F:/FINAL KHKT 2026/textbook_archive_6_12 trước: t
 ## Owner xác nhận 08/11/2026 — nhãn Bộ sách Thống Nhất
 
 Chủ dự án xác nhận “Bộ sách Thống Nhất” trong kho/THSQG này chính là KNTT thống nhất. Không coi khác nhãn Thống Nhất/KNTT tự nó là sai bộ sách hoặc lý do bắt buộc tra online. Dùng đối chiếu tiếp theo xác nhận này; vẫn kiểm đúng môn/lớp/cuốn/bài/trang và các cập nhật cụ thể khi có căn cứ cần xác tín.
+
+## Owner 08/11/2026 — căn cứ kho XZ khi Trạm1 sinh bài
+
+Mọi AI sinh bài Trạm1 phải dùng căn cứ đúng môn/lớp/cuốn/bài/trang từ kho local trước; chỉ bổ sung từ ba nguồn khi phần căn cứ còn thiếu hoặc cần xác tín điểm cụ thể. CT2018 cùng sửa đổi còn hiệu lực và KNTT/KNTT thống nhất là chuẩn; bộ lọc hoàn chỉnh làm sau nghiệm thu các môn/lớp, không coi prompt là đã hoàn thành bộ lọc. API không tự đọc filesystem hay tra web: ứng dụng phải truyền nội dung nguồn vào request.
+
+Cơ chế hiện tại: lesson_generation_request gọi local_textbook_grounding trước API và đưa kết quả vào textbook_grounding trong user context. Đọc index.json và đúng một gói json.xz đã đối chiếu ở textbook_archive_6_12/reviewed_lesson_packets, kiểm SHA/đường dẫn/đúng môn-lớp-bài/trạng thái/phạm vi, giới hạn kích thước. Biến GSAI_TEXTBOOK_ARCHIVE_ROOT chỉ nơi mount kho trên máy khác; không có kho thì archive_unavailable, không giả vờ Cloud truy cập F. Gói là trích diễn giải theo bằng chứng đã đọc, không phải toàn văn sách. Không tự biến HTMLcatalog/PDF chưa đọc thành kiến thức chuẩn. Thiếu gói ghi no_exact_reviewed_packet; gói lỗi ghi invalid_reviewed_packet, không đưa nguồn lỗi vào API. Hướng dẫn chung cả hai transport yêu cầu phân biệt thiếu căn cứ và nội dung đã đọc, không tự tuyên bố đủ ba nguồn/YCCĐ/luật.
+
+Mới có gói Bài1 Lịch sử10 từ bằng chứng SGK6–10/SGV23–31 đã đọc; chưa đủ mọi môn/lớp, chưa có OCR/tự đọc ảnhPDF/XZ toàn kho hoặc bộ tra web tự động. Cần lần lượt lập gói đúng bài từ kho và lưu vị trí/phiên bản, kiểm nội dung thật. Không tự sinh lại bài đã duyệt để thử cơ chế. Bộ lọc tương lai phải bảo toàn bài owner-approved và chỉ mở lại khi có lỗi cụ thể có căn cứ.

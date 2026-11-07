@@ -789,8 +789,9 @@ def lesson_generation_request(subject, grade, topic):
     full = lesson_prompt(subject, grade, topic)
     if not full.startswith(prefix):
         raise ValueError("Lesson instruction boundary changed; review request builder.")
-    from services.lesson_sources import reviewed_lesson_sources
-    context = {"lesson_topic": str(topic)}
+    from services.lesson_sources import reviewed_lesson_sources, local_textbook_grounding
+    context = {"lesson_topic": str(topic),
+               "textbook_grounding": local_textbook_grounding(subject, grade, topic)}
     review = reviewed_lesson_sources(subject, grade, topic)
     if review['status'] == 'reviewed_requirements_source':
         context['reviewed_requirements_source'] = review
@@ -846,6 +847,7 @@ def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
 
 ACADEMIC_GROUNDING_GUIDANCE = """[BỘ LỌC CHƯƠNG TRÌNH VÀ NGUỒN — DÙNG CHUNG]
 Mọi bài giảng, đề, lời giải, gia sư và Lab phải đúng môn/lớp/chủ đề/nhánh sách trong ngữ cảnh.
+Trạm1 sinh bài phải căn cứ nguồn local XZ trước. Đọc textbook_grounding trong ngữ cảnh: chỉ dùng reviewed_excerpt_packet_loaded như phần trích diễn giải đã đối chiếu đúng bài, không coi là toàn cuốn hay đã đủ cả ba nguồn. API không tự mở ổ F hoặc tra web; không tuyên bố đã đọc sách khi chỉ nhận danh mục/link hoặc trạng thái thiếu/invalid/archive_unavailable. Khi căn cứ chưa đủ, nêu rõ phần chưa xác minh trong nội dung hiện có, không bịa trang/YCCĐ/kiến thức như thể có nguồn. Chỉ bổ sung từ VniTeach, Tập huấn NXBGDVN, Trường Học Số Quốc Gia sau khi kiểm kho thiếu đúng phần cần dùng hoặc có điểm cụ thể cần xác tín; không tự gọi thêm AI/retry. Chủ dự án xác nhận nhãn Bộ sách Thống Nhất trong kho/THSQG là KNTT thống nhất; không dùng khác nhãn làm lỗi hoặc lý do tra lại. CT GDPT2018 và sửa đổi còn hiệu lực là chuẩn chương trình; sách và bộ lọc tương lai không tự chứng minh mọi đầu ra đều đúng. Không thay bài owner đã duyệt chỉ vì thêm quy tắc này.
 Với vận chuyển qua màng (Sinh học/KHTN), không dùng riêng dấu hiệu “không dùng ATP trực tiếp” để kết luận thụ động: phải xét chiều gradient và nguồn năng lượng ghép, phân biệt chủ động thứ cấp. Ion chịu gradient điện hóa. Thẩm thấu cần nêu tính thấm màng/chất tan và điều kiện áp suất; phân biệt chuyển động hai chiều với dòng thuần. Chỉ đưa phần mở rộng đủ để bảo đảm câu hỏi không mơ hồ, không biến kiến thức ngoài phạm vi thành yêu cầu bắt buộc của lớp.
 Lấy CT GDPT 2018 cùng sửa đổi còn hiệu lực làm chuẩn YCCĐ; Kết nối tri thức với cuộc sống (KNTT) làm trục sách. Không đồng nhất mục tiêu do AI tự viết với YCCĐ nguyên văn của Bộ.
 Trước trả kết quả, tự đối chiếu từng mục tiêu–kiến thức–ví dụ–câu hỏi–đáp án với YCCĐ và nguồn đúng bài đã cung cấp. Phân biệt yêu cầu bắt buộc, kiến thức nền và phần mở rộng; không dùng phần mở rộng làm chuẩn bắt buộc của lớp.

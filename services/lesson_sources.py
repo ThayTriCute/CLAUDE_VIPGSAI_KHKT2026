@@ -2,6 +2,8 @@
 import hashlib
 import html
 import json
+import lzma
+import os
 import re
 from datetime import date, datetime, timedelta, timezone
 from functools import lru_cache
@@ -85,6 +87,80 @@ def reviewed_tutor_source_context(subject, grade, topic):
             + json.dumps(payload, ensure_ascii=False)
             + '\nBám đúng phạm vi này. Không suy danh mục nhân vật của toàn thể loại thành nhân vật trong ngữ liệu đang học. '
               'Ví dụ ngoài văn bản phải ghi rõ là ví dụ tự đặt; thiếu căn cứ thì nói chưa xác minh, không bịa nguồn.\n')
+
+
+def local_textbook_grounding(subject, grade, topic):
+    """Read one indexed, reviewed XZ excerpt packet before lesson generation.
+
+    Full-book OCR and network retrieval are deliberately not inferred from a
+    catalogue. A missing packet is explicit, including on hosts without F:.
+    """
+    subject, grade = academic_context(subject, grade)
+    root = Path(os.environ.get('GSAI_TEXTBOOK_ARCHIVE_ROOT') or
+                Path(__file__).resolve().parents[2] / 'textbook_archive_6_12')
+    result = {'status': 'archive_unavailable', 'source_order': 'local_xz_before_online',
+              'page_content_loaded': False, 'semantic_acceptance': False,
+              'online_lookup_performed': False}
+    if not root.is_dir():
+        return result
+    result['status'] = 'no_exact_reviewed_packet'
+    index = root / 'reviewed_lesson_packets' / 'index.json'
+    if not index.is_file():
+        return result
+    try:
+        if index.stat().st_size > 1_000_000:
+            raise ValueError('Source index too large')
+        catalogue = json.loads(index.read_text(encoding='utf-8'))
+        if not isinstance(catalogue, dict) or not isinstance(catalogue.get('entries'), list):
+            raise ValueError('Invalid source index')
+        entries = catalogue['entries']
+        if not all(isinstance(row, dict) for row in entries):
+            raise ValueError('Invalid source entry')
+        matches = [row for row in entries if academic_context(row['subject'], row['grade'])
+                   == (subject, grade) and folded(row['topic']) == folded(topic)]
+        if not matches:
+            return result
+        if len(matches) != 1:
+            raise ValueError('Ambiguous source packet')
+        row = matches[0]
+        packet_root = index.parent.resolve()
+        packet = (packet_root / row['path']).resolve()
+        if not packet.is_relative_to(packet_root) or packet.suffix != '.xz':
+            raise ValueError('Invalid packet path')
+        if packet.stat().st_size > 262144:
+            raise ValueError('Source packet too large')
+        compressed = packet.read_bytes()
+        if hashlib.sha256(compressed).hexdigest() != row['sha256']:
+            raise ValueError('Source packet hash mismatch')
+        with lzma.open(packet, 'rb') as stream:
+            raw = stream.read(65537)
+        if len(raw) > 65536:
+            raise ValueError('Decoded packet too large')
+        payload = json.loads(raw)
+        if (not isinstance(payload, dict) or payload.get('schema_version') != 1 or payload.get('review_status') != 'source_reviewed'
+                or academic_context(payload['subject'], payload['grade']) != (subject, grade)
+                or folded(payload['topic']) != folded(topic)):
+            raise ValueError('Unreviewed or mismatched packet')
+        sources = payload['sources']
+        if not isinstance(sources, list) or not sources or len(sources) > 8:
+            raise ValueError('Missing source excerpts')
+        for source in sources:
+            if not isinstance(source, dict):
+                raise ValueError('Invalid source')
+            host = (urlparse(source.get('url', '')).hostname or '').lower()
+            if (not any(host == h or host.endswith('.' + h) for h in
+                        ('vniteach.com', 'nxbgd.vn', 'thsqg.vn'))
+                    or urlparse(source['url']).scheme != 'https'
+                    or not all(isinstance(source.get(k), str) and source[k].strip()
+                               for k in ('title', 'locator', 'edition_note', 'reviewed_excerpt'))):
+                raise ValueError('Invalid source excerpt provenance')
+        result.update(status='reviewed_excerpt_packet_loaded', sources=sources,
+                      evidence_kind='reviewed_paraphrase_not_full_book',
+                      packet_sha256=row['sha256'],
+                      coverage_note=payload.get('coverage_note', ''))
+    except (OSError, ValueError, TypeError, KeyError, lzma.LZMAError):
+        result['status'] = 'invalid_reviewed_packet'
+    return result
 
 
 def lesson_source_review_html(subject, grade, topic):
