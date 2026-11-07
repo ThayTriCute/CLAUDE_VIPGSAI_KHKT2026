@@ -2125,7 +2125,8 @@ def detect_student_concluded_intent(user_input: str, history: list = None) -> bo
     if re.search(r"(?:chưa|không)\s+hết\s+(?:thắc\s+mắc|câu\s+hỏi)|không\s+hiểu", txt):
         return False
     question_scan = txt
-    for settled in ("không còn thắc mắc", "không có thắc mắc", "hết thắc mắc"):
+    for settled in ("không còn thắc mắc", "không có thắc mắc", "hết thắc mắc",
+                    "không còn hỏi thêm", "không hỏi gì thêm", "không hỏi thêm"):
         question_scan = question_scan.replace(settled, "")
 
     # 1. NẾU CÂU CÓ DẤU HIỆU ĐẶT CÂU HỎI MỚI -> CHẮC CHẮN VẪN ĐANG HỎI, CHƯA PHẢI CLOSURE
@@ -2143,6 +2144,7 @@ def detect_student_concluded_intent(user_input: str, history: list = None) -> bo
     concluded_signals = [
         "không còn thắc mắc", "hết thắc mắc", "không còn gì để hỏi", "không còn gì hỏi",
         "không có thắc mắc", "không còn câu hỏi", "hết câu hỏi", "không hỏi gì thêm",
+        "không còn hỏi thêm", "không hỏi thêm",
         "thông suốt rồi", "thấu suốt rồi", "thông rồi", "đã thông", "hiểu rõ rồi",
         "nắm chắc rồi", "nắm vững rồi", "hiểu bài rồi", "em hiểu hết rồi", "con hiểu hết rồi",
         "em đã hiểu bài", "em đã hiểu và muốn chuyển sang luyện tập",

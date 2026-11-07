@@ -57,6 +57,22 @@ class Station1ClosureTests(unittest.TestCase):
             with self.subTest(message=message):
                 self.assertFalse(detect(message))
 
+    def test_negated_ask_more_preserves_actual_followup_questions(self):
+        detect = load_function('detect_student_concluded_intent')
+        for message in (
+                'Em đã hiểu và không còn hỏi thêm.',
+                'Em hiểu đất có bốn thành phần. Em không hỏi gì thêm.',
+                'Em hiểu vòng phản hồi rồi, không hỏi thêm.'):
+            with self.subTest(message=message):
+                self.assertTrue(detect(message))
+        for message in (
+                'Em không còn hỏi thêm phần đầu nhưng vì sao pH lại khác?',
+                'Em đã hiểu nhưng vẫn muốn hỏi thêm về vòng lặp.',
+                'Em không hỏi gì thêm vì chưa hiểu để đặt câu hỏi.',
+                'Em không hỏi thêm nhưng chỗ này vẫn còn băn khoăn.'):
+            with self.subTest(message=message):
+                self.assertFalse(detect(message))
+
     def closure_try(self):
         tree = ast.parse((Path(__file__).resolve().parents[1] / 'app.py').read_text(encoding='utf-8'))
         return next(node for node in ast.walk(tree) if isinstance(node, ast.Try) and
