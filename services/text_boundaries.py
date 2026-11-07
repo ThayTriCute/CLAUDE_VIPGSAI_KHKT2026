@@ -5,11 +5,12 @@ import re
 
 from services.lesson_export import _TOKENS
 
-T1_CONTEXT_REVISION = 2026110603
+T1_CONTEXT_REVISION = 2026110701
 
 TEACHING_STEP_LAYOUT_GUIDANCE = r"""BỐ CỤC CÁC BƯỚC — QUY TẮC DÙNG CHUNG:
 Áp dụng mọi môn/lớp cho bài học, đề, lời giải, gợi ý và gia sư: mỗi nhãn Bước N: hoặc Step N: phải bắt đầu một đoạn riêng, có một dòng trống giữa các bước; in đậm nhãn nếu đầu ra dùng Markdown. Không dồn các bước vào một đoạn, kể cả ví dụ chỉ có hai bước hoặc có nhiều hơn bốn bước.
 Giữ tên và số bước phù hợp nhiệm vụ; không tự ép quy trình khác thành bốn bước Pólya. Giữ nguyên công thức, mã, số liệu, điều kiện và nội dung từng bước; không ngắt bên trong công thức hay khối mã để tạo bố cục.
+Với một đẳng thức dài gồm nhiều phân thức, dùng một cặp dấu toán bao trọn công thức (ưu tiên khối $$...$$ riêng). Không bọc từng phân thức rời rồi để tên biến, dấu bằng hoặc phép nhân ở ngoài; tách phương trình và lời dẫn bằng khoảng trắng hoặc xuống đoạn.
 Nếu đầu ra là JSON, giữ đúng schema và JSON hợp lệ: biểu diễn xuống đoạn bằng \n\n bên trong giá trị chuỗi, không chèn Markdown hoặc văn bản bên ngoài JSON. Quy tắc bố cục không thay thế kiểm chứng kiến thức, đáp án hoặc nguồn."""
 
 
@@ -83,6 +84,13 @@ def _chemical_core_tex(body):
             output.append(('{}' if not output else '') + char + '{' + value + '}')
             i += match.end(); previous = 'script'
             continue
+        fraction = re.match(r'(\d+)\s*/\s*(\d+)', body[i:])
+        if fraction and previous not in ('atom', 'number', ')', ']', 'script'):
+            if int(fraction[2]) == 0:
+                raise ValueError('Invalid fractional coefficient')
+            output.append(r'\frac{' + fraction[1] + '}{' + fraction[2] + '}')
+            previous = 'number'; i += fraction.end()
+            continue
         match = re.match(r'[A-Za-z]+|\d+(?:\.\d+)?', body[i:])
         if match:
             token = match[0]
@@ -149,6 +157,18 @@ def preserve_math_and_code(text, normalize_prose):
     for index, original in enumerate(slots):
         result = result.replace(f'{prefix}N{index}END', original)
     return result
+
+
+def remove_empty_math(text):
+    """Remove complete empty math tokens, never a valid display delimiter pair."""
+    def clean(match):
+        raw = match[0]
+        if raw.startswith('$$') and not raw[2:-2].strip():
+            return ''
+        if raw.startswith('$') and not raw.startswith('$$') and not raw[1:-1].strip():
+            return ''
+        return raw
+    return _TOKENS.sub(clean, str(text))
 
 
 def option_markdown_label(option):

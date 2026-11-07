@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110602
+T1_CONTEXT_REVISION = 2026110701
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -879,6 +879,62 @@ def correct_reviewed_horizontal_throw(text, subject, grade, topic=""):
                           '**Câu 2. [Mức độ: VD]**\nTrong mô hình bỏ qua cản không khí, một quả bóng tennis')
     value = value.replace('OUTCOME: [KNTT-VL10-12.I]', 'OUTCOME: [Mục tiêu AI đề xuất, không phải mã YCCĐ chính thức]')
     return value
+
+
+def correct_reviewed_reaction_rate(text, subject, grade, topic=""):
+    """Source-reviewed Bài19 repairs, retaining original MCQ keys and numbers."""
+    if (canonical_subject(subject) != 'Hóa học' or normalize_grade(grade) != 10
+            or folded(topic) != folded('Tốc độ phản ứng — Hóa học 10, KNTT, Bài 19')):
+        return text
+    def repair(value):
+        broken = (r'$aA + bB \rightarrow cC + dD$v_{tb} = -$\frac{1}{a}$ \cdot '
+                  r'$\frac{\Delta C_A}{\Delta t}$ = -$\frac{1}{b}$ \cdot '
+                  r'$\frac{\Delta C_B}{\Delta t}$ = $\frac{1}{c}$ \cdot '
+                  r'$\frac{\Delta C_C}{\Delta t}$ = $\frac{1}{d}$ \cdot $\frac{\Delta C_D}{\Delta t}$')
+        fixed = (r'$aA+bB\rightarrow cC+dD$. Ở thể tích không đổi, tốc độ trung bình chuẩn hóa theo phương trình là:'
+                 '\n\n' + r'$$v_{tb}=-\frac{1}{a}\frac{\Delta C_A}{\Delta t}=-\frac{1}{b}\frac{\Delta C_B}{\Delta t}=\frac{1}{c}\frac{\Delta C_C}{\Delta t}=\frac{1}{d}\frac{\Delta C_D}{\Delta t}$$' + '\n\n')
+        value = value.replace(broken, fixed)
+        additions = {
+            '**b. Các yếu tố ảnh hưởng đến tốc độ phản ứng**':
+                '**b. Các yếu tố ảnh hưởng đến tốc độ phản ứng**\n\n'
+                'Khi so sánh một yếu tố, giữ các yếu tố khác phù hợp và không đổi. '
+                'Phân biệt tốc độ mất một chất với tốc độ phản ứng đã chia hệ số; công thức dùng nồng độ giả thiết thể tích không đổi.',
+            'Tăng áp suất tương đương với tăng nồng độ khí $\\rightarrow$ tốc độ phản ứng tăng.':
+                'Nén hỗn hợp khí ở nhiệt độ không đổi làm tăng nồng độ chất phản ứng khí, thường làm tăng tốc độ phản ứng. Không suy mọi cách tăng áp suất tổng đều có tác dụng này; thêm khí trơ ở thể tích và nhiệt độ không đổi không làm tăng nồng độ các chất phản ứng.',
+            'Quy tắc Van\'t Hoff:':
+                'Quy tắc Van\'t Hoff (giả thiết hệ số nhiệt độ không đổi trong khoảng đang xét):',
+            'Làm tăng tốc độ phản ứng nhưng không bị biến đổi về lượng và chất sau phản ứng.':
+                'Tạo đường phản ứng có năng lượng hoạt hóa thấp hơn và được tái sinh sau chu trình. Với cùng điều kiện và lượng chất đầu, xúc tác không tự làm tăng lượng sản phẩm giới hạn hoặc thay đổi vị trí cân bằng.',
+            'Quạt cung cấp thêm $\\ce{O2}$ (tăng nồng độ) và đập nhỏ than (tăng diện tích tiếp xúc).':
+                'Quạt đưa thêm không khí tới vùng cháy, bổ sung oxygen bị tiêu thụ; không tự làm tăng phần mol oxygen của không khí cấp. Chia nhỏ cùng lượng than làm tăng diện tích tiếp xúc nếu các điều kiện khác tương đương. Chỉ phân tích tình huống, không giao học sinh tự nhóm lửa hoặc đập than; không khái quát dùng quạt cho mọi đám cháy.',
+            'Một phản ứng có hệ số nhiệt độ $\\gamma = 2$.':
+                'Một phản ứng có hệ số nhiệt độ $\\gamma = 2$ không đổi trong khoảng từ $20^\\circ C$ đến $50^\\circ C$.',
+            'Khi tăng nồng độ chất phản ứng, tốc độ phản ứng thường tăng là do':
+                'Giữ nhiệt độ và các điều kiện khác không đổi, khi tăng nồng độ chất phản ứng, tốc độ phản ứng thường tăng là do',
+            'Dữ liệu thực nghiệm cho thấy tại một thời điểm,':
+                'Trong một bộ dữ liệu giả định phục vụ bài tập, ở thể tích không đổi, tại một thời điểm,',
+            'Kết quả này cho biết trung bình mỗi giây có bao nhiêu $mol/L\\ce{H2O2}$ đã phản ứng?':
+                'Đây là tốc độ phản ứng đã chuẩn hóa theo hệ số. Nếu muốn suy tốc độ mất H₂O₂, em cần liên hệ với hệ số 2 trong phương trình như thế nào?',
+        }
+        for old, new in additions.items():
+            # Several replacements retain their heading as a prefix.
+            if new not in value:
+                value = value.replace(old, new)
+        heading = '**3. Ví dụ có lời giải**'
+        law = ('**Định luật tác dụng khối lượng và hằng số tốc độ:** Ở nhiệt độ và môi trường xác định, '
+               'biểu thức tốc độ được xác định từ thực nghiệm. Với phản ứng đơn giản được giả thiết phù hợp, '
+               'số mũ có thể bằng hệ số phương trình; không áp dụng cách suy này cho mọi phản ứng. '
+               'Ví dụ theo nguồn SGK: với $2NO+O_2\\rightarrow2NO_2$, thực nghiệm cho '
+               '$v=kC_{NO}^{2}C_{O_2}$. Trong các điều kiện đã cố định, $k$ không phụ thuộc nồng độ; '
+               'giá trị phụ thuộc phản ứng/nhiệt độ và đơn vị phụ thuộc tổng bậc. '
+               'Nếu dùng $v$ theo mol/(L·s) cho ví dụ này thì $k$ có đơn vị L²/(mol²·s). '
+               'Không đồng nhất định luật tốc độ với công thức tốc độ trung bình.\n\n')
+        if heading in value and '**Định luật tác dụng khối lượng và hằng số tốc độ:**' not in value:
+            value = value.replace(heading, law + heading, 1)
+        return value
+    # Edits intentionally repair mathematics, but never example source code.
+    parts = re.split(r'(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|<(?:pre|svg|script|style)\b[^>]*>[\s\S]*?</(?:pre|svg|script|style)\s*>)', str(text), flags=re.I)
+    return ''.join(part if i % 2 else repair(part) for i, part in enumerate(parts))
 
 
 def with_academic_grounding(system_instruction):
