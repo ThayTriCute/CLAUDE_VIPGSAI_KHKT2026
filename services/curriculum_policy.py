@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110701
+T1_CONTEXT_REVISION = 2026110702
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -846,6 +846,7 @@ def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
 
 ACADEMIC_GROUNDING_GUIDANCE = """[BỘ LỌC CHƯƠNG TRÌNH VÀ NGUỒN — DÙNG CHUNG]
 Mọi bài giảng, đề, lời giải, gia sư và Lab phải đúng môn/lớp/chủ đề/nhánh sách trong ngữ cảnh.
+Với vận chuyển qua màng (Sinh học/KHTN), không dùng riêng dấu hiệu “không dùng ATP trực tiếp” để kết luận thụ động: phải xét chiều gradient và nguồn năng lượng ghép, phân biệt chủ động thứ cấp. Ion chịu gradient điện hóa. Thẩm thấu cần nêu tính thấm màng/chất tan và điều kiện áp suất; phân biệt chuyển động hai chiều với dòng thuần. Chỉ đưa phần mở rộng đủ để bảo đảm câu hỏi không mơ hồ, không biến kiến thức ngoài phạm vi thành yêu cầu bắt buộc của lớp.
 Lấy CT GDPT 2018 cùng sửa đổi còn hiệu lực làm chuẩn YCCĐ; Kết nối tri thức với cuộc sống (KNTT) làm trục sách. Không đồng nhất mục tiêu do AI tự viết với YCCĐ nguyên văn của Bộ.
 Trước trả kết quả, tự đối chiếu từng mục tiêu–kiến thức–ví dụ–câu hỏi–đáp án với YCCĐ và nguồn đúng bài đã cung cấp. Phân biệt yêu cầu bắt buộc, kiến thức nền và phần mở rộng; không dùng phần mở rộng làm chuẩn bắt buộc của lớp.
 Chỉ xác nhận đã đối chiếu khi có nội dung nguồn, vị trí và phiên bản thực sự trong ngữ cảnh. Link/danh mục sách, trí nhớ model hoặc prompt này không phải nội dung SGK hay phụ lục chương trình. Thiếu nguồn thì nói rõ phạm vi chưa xác minh, không bịa trang, mã YCCĐ, trích dẫn hoặc chứng nhận đúng chuẩn.

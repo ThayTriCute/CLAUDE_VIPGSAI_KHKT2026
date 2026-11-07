@@ -14,7 +14,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 PUBLISHER_PORTAL = "https://taphuan.nxbgd.vn/tap-huan?tab=public"
 PUBLISHER_DIGITAL_LIBRARY = "https://truonghocsoquocgia.nxbgd.vn/"
 NATIONAL_SCHOOL_TEXTBOOK_LIBRARY = "https://www.thsqg.vn/sach"
-T1_CONTEXT_REVISION = 2026110702
+T1_CONTEXT_REVISION = 2026110703
 REVIEW_REGISTRY = Path(__file__).resolve().parents[1] / 'data/lesson_reference_reviews.json'
 PUBLISHER_2026_NOTICE = "https://nxbgd.vn/bai-viet/nha-xuat-ban-giao-duc-viet-nam-thong-bao-ve-viec-su-dung-sach-giao-khoa-nam-hoc-2026-2027"
 
@@ -107,6 +107,28 @@ def lesson_source_review_html(subject, grade, topic):
             + '<b>Nguồn đã đối chiếu yêu cầu bài học</b>'
             + '<p>Ngày đối chiếu: ' + html.escape(review['reviewed_on']) + '. '
             + html.escape(review['scope']) + '</p><ul>' + ''.join(items) + '</ul></div>')
+
+
+def apply_reviewed_content_corrections(text, subject, grade, topic):
+    """Apply explicit source-backed corrections only to an exact reviewed topic.
+
+    This is not a general rewrite or a curriculum acceptance filter. Old approved
+    reviews without correction records remain unchanged, as do code examples.
+    """
+    review = reviewed_lesson_sources(subject, grade, topic)
+    if review['status'] != 'reviewed_requirements_source':
+        return text
+    rules = review.get('content_corrections', [])
+    def repair(value):
+        for rule in rules:
+            if (isinstance(rule, dict) and isinstance(rule.get('before'), str)
+                    and rule['before'] and isinstance(rule.get('after'), str)
+                    and rule['after'] and rule.get('reason')):
+                if rule['after'] not in value:
+                    value = value.replace(rule['before'], rule['after'])
+        return value
+    parts = re.split(r'(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|<(?:pre|svg|script|style)\b[^>]*>[\s\S]*?</(?:pre|svg|script|style)\s*>)', str(text), flags=re.I)
+    return ''.join(part if i % 2 else repair(part) for i, part in enumerate(parts))
 
 
 def apply_reviewed_essay_labels(text, subject, grade, topic):

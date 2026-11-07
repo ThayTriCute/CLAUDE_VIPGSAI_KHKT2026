@@ -436,6 +436,48 @@
             "SGV80–81 phân biệt lớp lipid với protein, độ đặc hiệu/bão hòa, gradient điện hóa; giải thích thành tế bào và sức trương. SGV82–83 mô tả nhập/xuất bào và trường hợp rau muống cuộn do mặt trong/ngoài hút nước khác nhau; không suy mọi mô có đáp ứng giống nhau."
           ]
         }
+      ],
+      "content_corrections": [
+        {
+          "before": "Các chất đi từ nơi có nồng độ cao đến nơi có nồng độ thấp (theo gradient nồng độ), không tiêu tốn năng lượng ($ATP$).",
+          "after": "Dòng vận chuyển thuần của chất thụ động đi theo gradient nồng độ thích hợp; với ion cần xét gradient điện hóa. Quá trình không trực tiếp dùng năng lượng chuyển hóa tế bào. Các phân tử vẫn chuyển động hai chiều; cân bằng động không có nghĩa chúng dừng lại.",
+          "reason": "SGK65–66, SGV80–81: ion chịu gradient điện hóa; phân biệt chuyển động và dòng thuần."
+        },
+        {
+          "before": "Sự khuếch tán của các phân tử nước qua màng. Nước di chuyển từ nơi có thế nước cao (nồng độ chất tan thấp) sang nơi có thế nước thấp (nồng độ chất tan cao).",
+          "after": "Sự vận chuyển nước qua màng thấm chọn lọc. Trong mô hình cùng nhiệt độ, ban đầu cùng áp suất và chất tan không qua màng, nước đi thuần từ phía loãng sang phía đậm đặc hơn. Tổng quát nước đi từ thế nước cao tới thấp; áp suất và tính thấm đối với từng chất tan đều có vai trò.",
+          "reason": "SGK66–67; bổ sung giả thiết để không đồng nhất mọi nồng độ với độ trương."
+        },
+        {
+          "before": "Nồng độ trong và ngoài cân bằng.",
+          "after": "Trong mô hình chất tan không qua màng, hai phía có nồng độ hạt tan hiệu dụng bằng nhau nên không có dòng nước thuần; nước vẫn trao đổi hai chiều.",
+          "reason": "Không nhầm cân bằng động với ngừng chuyển động."
+        },
+        {
+          "before": "Cần năng lượng ($ATP$) và protein vận chuyển; đi ngược gradient nồng độ (từ thấp đến cao).",
+          "after": "Cần nguồn năng lượng và protein vận chuyển thích hợp, cho phép vận chuyển ngược gradient. Chủ động sơ cấp có thể dùng ATP trực tiếp; chủ động thứ cấp ghép với gradient ion đã được tạo nhờ năng lượng, không nhất thiết thủy phân ATP ngay tại chất mang đó. Với ion cần xét gradient điện hóa.",
+          "reason": "Phân biệt năng lượng trực tiếp/gián tiếp; không loại chủ động thứ cấp chỉ vì không dùng ATP trực tiếp."
+        },
+        {
+          "before": "Khi bón nhiều phân, nồng độ chất tan ở dịch đất trở nên cao hơn so với dịch bào trong rễ cây (môi trường ưu trương). Theo nguyên lý thẩm thấu, nước sẽ từ trong rễ cây đi ra ngoài đất. Tế bào mất nước làm cây bị héo.",
+          "after": "Nếu bón phân làm dịch đất đủ đậm đặc, hạ thế nước bên ngoài rễ xuống thấp hơn bên trong, rễ sẽ khó hút nước hoặc có thể mất nước ra ngoài. Mất sức trương làm cây héo; ngày nóng còn tăng thoát hơi nước. Không kết luận mọi lần bón nhiều phân đều lập tức tạo dòng nước ra rễ nếu chưa biết điều kiện.",
+          "reason": "Ví dụ cần giả thiết và phân biệt khó hút nước với chắc chắn mất nước."
+        },
+        {
+          "before": "Sự vận chuyển glucose vào tế bào thông qua các protein mang mà không tiêu tốn ATP được gọi là gì?",
+          "after": "Glucose được vận chuyển vào tế bào qua protein mang theo chiều từ nơi có nồng độ glucose cao tới thấp, không ghép với gradient ion hay nguồn năng lượng khác. Cơ chế này được gọi là gì?",
+          "reason": "Không dùng tiêu chí thiếu ATP trực tiếp để loại vận chuyển chủ động thứ cấp; giữ khóa B."
+        },
+        {
+          "before": "Glucose là phân tử phân cực, không đi qua được lớp lipid nên cần protein hỗ trợ (protein mang). Vì không tốn ATP nên đây là vận chuyển thụ động (khuếch tán tăng cường).",
+          "after": "Trong điều kiện đề đã cho, glucose đi theo gradient của chính nó qua protein mang và không ghép nguồn năng lượng khác, nên là khuếch tán tăng cường. Không chỉ dựa vào việc không thủy phân ATP trực tiếp: vận chuyển chủ động thứ cấp có thể ghép gradient ion. Glucose không khuếch tán trực tiếp đáng kể qua lớp lipid trong mô hình này.",
+          "reason": "Giải thích phải theo đủ giả thiết; không phát biểu tuyệt đối mọi glucose transport."
+        },
+        {
+          "before": "Tại sao khi muối dưa cải, sau một thời gian, nước trong hũ muối dưa lại tăng lên và lá dưa bị teo lại?",
+          "after": "Xét giai đoạn đầu muối dưa cải trong hũ kín, không thêm nước, bỏ qua bay hơi và coi nước muối bên ngoài ưu trương đối với tế bào lá. Hãy giải thích vì sao nước thoát khỏi lá vào dịch muối và lá giảm sức trương, teo lại.",
+          "reason": "Nêu điều kiện giai đoạn đầu, không suy mực nước luôn tăng từ thẩm thấu trong mọi hũ dưa."
+        }
       ]
     }
   ]

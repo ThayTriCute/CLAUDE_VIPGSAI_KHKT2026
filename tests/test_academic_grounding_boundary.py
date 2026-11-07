@@ -10,6 +10,12 @@ from services.curriculum_policy import (
 
 
 class AcademicGroundingBoundaryTests(unittest.TestCase):
+    def test_membrane_counterexample_is_in_shared_system_guidance(self):
+        prepared = with_academic_grounding('Keep requested JSON schema')
+        for clause in ('chủ động thứ cấp', 'gradient điện hóa', 'tính thấm màng/chất tan'):
+            self.assertIn(clause, prepared)
+        self.assertEqual(with_academic_grounding(prepared), prepared)
+
     def test_both_transports_apply_before_fallback(self):
         tree = ast.parse(Path('app.py').read_text(encoding='utf-8'))
         for name in ('call_gemini_with_fallback', 'stream_gemini_with_fallback'):

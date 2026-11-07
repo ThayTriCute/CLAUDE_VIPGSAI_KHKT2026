@@ -2,7 +2,7 @@ def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
-    for module, revision in ((lesson_sources, 2026110702), (curriculum_policy, 2026110701),
+    for module, revision in ((lesson_sources, 2026110703), (curriculum_policy, 2026110702),
                              (lab_scope, 2026110702), (lesson_export, 2026110604),
                              (text_boundaries, 2026110701), (socratic_context, 2026110702)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
@@ -10747,6 +10747,8 @@ def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán h�
     t = correct_reviewed_horizontal_throw(t, subject, grade, topic)
     from services.curriculum_policy import correct_reviewed_reaction_rate
     t = correct_reviewed_reaction_rate(t, subject, grade, topic)
+    from services.lesson_sources import apply_reviewed_content_corrections
+    t = apply_reviewed_content_corrections(t, subject, grade, topic)
 
     # 2. Quét & chuẩn hóa KaTeX
     t = sanitize_katex_latex(t)
@@ -12078,6 +12080,9 @@ if selected_station == station_labels[0]:
                 clean_q_display = sanitize_katex_latex(clean_q_display)
                 from services.curriculum_policy import correct_reviewed_reaction_rate
                 clean_q_display = correct_reviewed_reaction_rate(
+                    clean_q_display, subject, grade_num, st.session_state.get('current_topic', ''))
+                from services.lesson_sources import apply_reviewed_content_corrections
+                clean_q_display = apply_reviewed_content_corrections(
                     clean_q_display, subject, grade_num, st.session_state.get('current_topic', ''))
                 st.markdown(chemical_display_markdown(f"**Câu {idx+1}:** `[{level_caption(q, quiz_cognitive_audits[idx] if idx < len(quiz_cognitive_audits) else None)}]`\n\n{clean_q_display}"))
 
