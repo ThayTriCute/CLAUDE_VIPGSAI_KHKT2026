@@ -3,7 +3,7 @@ def _refresh_t1_context_services():
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
     for module, revision in ((lesson_sources, 2026110703), (curriculum_policy, 2026110702),
-                             (lab_scope, 2026110702), (lesson_export, 2026110604),
+                             (lab_scope, 2026110703), (lesson_export, 2026110604),
                              (text_boundaries, 2026110701), (socratic_context, 2026110702)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
@@ -5539,6 +5539,43 @@ def render_smart_lab(data, current_subject=""):
         return f"{name}__{control_scope}"
 
     dtype = data.get("type")
+
+    if dtype == 'bio_osmosis':
+        from services.lab_scope import osmosis_state
+        st.markdown('### Thẩm thấu — dự đoán, đổi điều kiện và giải thích')
+        st.caption('Mô hình định tính theo SGK Sinh10 trang66–67, không phải phép đo hoặc phim tế bào thật. Xét ban đầu cùng nhiệt độ/áp suất, màng cho nước qua và không cho chất tan đang xét qua. Nồng độ là số hạt tan hiệu dụng; không đồng nhất mọi mol chất tan với độ trương.')
+        cell = st.radio('Loại tế bào:', ['Động vật', 'Thực vật có thành'], horizontal=True, key=lab_key('osmosis_cell'))
+        c1, c2 = st.columns(2)
+        inside = c1.slider('Hạt tan hiệu dụng bên trong (đơn vị tương đối)', 0, 600, 300, 25, key=lab_key('osmosis_inside'))
+        outside = c2.slider('Hạt tan hiệu dụng bên ngoài (đơn vị tương đối)', 0, 600, 300, 25, key=lab_key('osmosis_outside'))
+        model = osmosis_state(inside, outside, cell.startswith('Thực vật'))
+        names = {'balanced': 'Không có dòng thuần', 'inward': 'Vào tế bào ban đầu', 'outward': 'Ra khỏi tế bào ban đầu'}
+        environments = {'isotonic': 'Đẳng trương', 'hypotonic': 'Nhược trương', 'hypertonic': 'Ưu trương'}
+        m1, m2 = st.columns(2)
+        m1.metric('Môi trường ngoài so với tế bào', environments[model['environment']])
+        m2.metric('Chiều nước thuần', names[model['direction']])
+        st.info(model['result'])
+        # Two arrows always remain: equal net flux never means no molecular motion.
+        inward_width = 8 if model['direction'] == 'inward' else 3
+        outward_width = 8 if model['direction'] == 'outward' else 3
+        plant = cell.startswith('Thực vật')
+        wall = '<rect x="265" y="60" width="250" height="190" rx="16" fill="none" stroke="#22c55e" stroke-width="9"/>' if plant else ''
+        membrane = ('<rect x="290" y="85" width="200" height="140" rx="18" fill="#38bdf822" stroke="#38bdf8" stroke-width="3"/>' if plant
+                    else '<ellipse cx="390" cy="155" rx="112" ry="85" fill="#38bdf822" stroke="#38bdf8" stroke-width="3"/>')
+        st.markdown(f'''<svg viewBox="0 0 780 310" role="img" aria-label="Hai chiều trao đổi nước qua màng; độ đậm mũi tên chỉ chiều dòng thuần ban đầu" style="width:100%;max-width:900px">
+<defs><marker id="osmosis_arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#38bdf8"/></marker></defs>
+{wall}{membrane}<g fill="currentColor" font-family="sans-serif" font-size="18"><text x="390" y="35" text-anchor="middle">Bên trong: {inside}</text><text x="80" y="65">Bên ngoài: {outside}</text><text x="390" y="160" text-anchor="middle">Màng tế bào</text><text x="390" y="290" text-anchor="middle">Sơ đồ quy ước, không biểu diễn thể tích hoặc thời gian thực</text></g>
+<path d="M90 120H310" stroke="#38bdf8" stroke-width="{inward_width}" marker-end="url(#osmosis_arrow)"/><path d="M310 205H90" stroke="#38bdf8" stroke-width="{outward_width}" marker-end="url(#osmosis_arrow)"/></svg>''', unsafe_allow_html=True)
+        st.markdown('**Tự kiểm chứng:** Đặt hai phía bằng nhau: còn hai mũi tên nhưng dòng thuần bằng không. Giữ bên trong 300, đổi bên ngoài 150 rồi 450: chiều nào đổi? Đổi loại tế bào: thành tế bào làm hậu quả khác nhau thế nào?')
+        st.caption('Độ đậm mũi tên chỉ chiều ưu thế, không phải tốc độ định lượng. Kết quả ban đầu không dự báo trạng thái cân bằng cuối cùng: nồng độ, thể tích và áp suất có thể đổi theo thời gian. Không dùng để suy liều/nồng độ truyền dịch hay điều trị.')
+        import csv, io
+        stream = io.StringIO()
+        writer = csv.writer(stream)
+        writer.writerow(['cell_type', 'inside_effective_relative', 'outside_effective_relative', 'initial_net_direction', 'scope'])
+        writer.writerow([cell, inside, outside, model['direction'], 'qualitative_model_not_measurement'])
+        st.download_button('Tải cấu hình và kết quả mô hình (.csv)', stream.getvalue().encode('utf-8-sig'), 'Sinh10_tham_thau_mo_hinh.csv', 'text/csv', key=lab_key('osmosis_csv'))
+        st.markdown(f'[Nguồn SGK đã đối chiếu]({data["source_url"]})')
+        return
 
     if dtype == 'chem_rate_table':
         from services.lab_scope import average_reactant_rate, experimental_rate_ratio, temperature_rate_ratio
@@ -12637,9 +12674,11 @@ if selected_station == station_labels[0]:
     from services.lab_scope import soil_ph_lab_request
     from services.lab_scope import horizontal_throw_request
     from services.lab_scope import reaction_rate_table_request
+    from services.lab_scope import osmosis_lab_request
     explicit_local_model = (explicit_light_model or soil_ph_lab_request(lab_command, subject)
                             or horizontal_throw_request(lab_command, subject)
-                            or reaction_rate_table_request(lab_command, subject, grade_num, st.session_state.get('current_topic', '')))
+                            or reaction_rate_table_request(lab_command, subject, grade_num, st.session_state.get('current_topic', ''))
+                            or osmosis_lab_request(lab_command, subject, grade_num, st.session_state.get('current_topic', '')))
     lab_clicked = st.button("✨ Khởi chạy Phòng Lab", key=f"btn_lab_{current_context_key}")
     if lab_clicked and lab_command.strip() and explicit_local_model is not None:
         st.session_state[f'lab_intent_command_{current_context_key}'] = lab_command

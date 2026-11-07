@@ -4,7 +4,43 @@ import math
 
 from services.academic_context import academic_context, canonical_subject
 
-T1_CONTEXT_REVISION = 2026110702
+T1_CONTEXT_REVISION = 2026110703
+
+
+def osmosis_state(inside, outside, plant=False):
+    """Initial net direction for impermeant effective osmoles, equal pressure/T.
+
+    No physical time, volume curve or lysis threshold is inferred from SGK.
+    Later plant wall pressure can balance osmosis; this is not an endpoint model.
+    """
+    inside, outside = float(inside), float(outside)
+    if any(not math.isfinite(x) or x < 0 for x in (inside, outside)):
+        raise ValueError('Nồng độ phải hữu hạn và không âm.')
+    delta = inside-outside
+    if abs(delta) <= 1e-9:
+        direction, environment = 'balanced', 'isotonic'
+        result = 'Không có dòng nước thuần; nước vẫn trao đổi hai chiều.'
+    elif delta > 0:
+        direction, environment = 'inward', 'hypotonic'
+        result = ('Nước vào ban đầu; thành tế bào tạo sức trương, áp suất tăng có thể cân bằng dòng nước.'
+                  if plant else 'Nước vào ban đầu; tế bào có thể trương và vỡ tùy điều kiện, không suy ngưỡng từ mô hình này.')
+    else:
+        direction, environment = 'outward', 'hypertonic'
+        result = ('Mất nước, giảm sức trương; đủ mất nước có thể co nguyên sinh, màng tách khỏi thành.'
+                  if plant else 'Mất nước và co lại; không gọi là co nguyên sinh ở tế bào động vật.')
+    return dict(direction=direction, environment=environment, delta=delta,
+                result=result, bidirectional_exchange=True)
+
+
+def osmosis_lab_request(command, subject, grade, topic):
+    from services.academic_context import folded
+    from services.lesson_sources import reviewed_lesson_sources
+    if canonical_subject(subject) != 'Sinh học' or int(grade) != 10 or 'tham thau' not in folded(command):
+        return None
+    review = reviewed_lesson_sources(subject, grade, topic)
+    if review.get('id') != 'kntt-sinh10-membrane-20261107' or review['status'] != 'reviewed_requirements_source':
+        return None
+    return dict(type='bio_osmosis', source_url=review['sources'][0]['url'])
 
 
 def reaction_rate_table_request(command, subject, grade, topic):
