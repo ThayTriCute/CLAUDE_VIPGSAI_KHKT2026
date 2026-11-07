@@ -338,6 +338,33 @@
           ]
         }
       ]
+    },
+    {
+      "id": "kntt-vl10-nemngang-20261107",
+      "subject": "Vật lý",
+      "grade": 10,
+      "topics": [
+        "Chuyển động ném ngang — Vật lí 10, KNTT, Bài 12 mục I"
+      ],
+      "reviewed_on": "2026-11-07",
+      "scope": "Đối chiếu riêng mục I Chuyển động ném ngang, không gộp thành đã kiểm mục ném xiên hoặc toàn SGK.",
+      "sources": [
+        {
+          "title": "SGK Vật lí 10 — Kết nối tri thức với cuộc sống, NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-vat-li-10.4700746482",
+          "locator": "Mục lục trang4; Bài12 mụcI trang in49–51; Hình12.1–12.5, công thức12.1/12.2 và bài tập ví dụ. Đã đọc ảnh trang gốc NXBGD từ URL quan sát Chrome MCP.",
+          "edition_note": "Cổng Bộ SGK thống nhất dẫn reader4700746482, ảnh trang lưu trên máy chủ04/2026. Không dùng portal939934811 thuộc SGK khác; không tự gán năm tái bản. Chưa thấy mục cập nhật trên portal940250226 đã kiểm, không suy thành không có đính chính ở nơi khác.",
+          "criteria": [
+            "Ném ngang có vận tốc ban đầu nằm ngang, vy ban đầu bằng0. Giả thiết bỏ cản không khí, g không đổi và chuyển động sau rời tay chỉ chịu trọng lực; không có lực ném tiếp tục đẩy vật.",
+            "Chọn hệ quy chiếu gần mặt đất, gốc và chiều trục rõ ràng; không trộn độ rơi hướng xuống với độ cao so mặt đất hướng lên.",
+            "Vận tốc ngang vx=v0 không đổi; chuyển động đứng là rơi tự do, hai thành phần độc lập. Nếu chiều xuống dương từ điểm ném: x=v0*t, y=g*t^2/2; nếu dùng độ cao từ mặt đất: z=H-g*t^2/2.",
+            "Thời gian tới mặt đất T=sqrt(2H/g), tầm xa L=v0*T với H>0,g>0; khối lượng không ảnh hưởng trong mô hình lý tưởng. Cùng độ cao, thời điểm phóng và vy0=0 mới có cùng thời gian rơi.",
+            "Quỹ đạo là nhánh parabol khi v0>0; mô hình thực dùng0<=t<=T và0<=x<=L, không kéo dài xuống dưới mặt đất rồi gọi đó là quỹ đạo bay.",
+            "Ví dụ SGK H40m,v0=12m/s,g9.8m/s^2 cho T xấp xỉ2.86s,L xấp xỉ34.3m. Số liệu ví dụ tự đặt phải ghi rõ, giữ g/đơn vị/độ chính xác nhất quán; không bịa kết quả thí nghiệm.",
+            "Bài tập tự luận có kết quả, lời giải thật và rubric; hình thực đúng dữ kiện và nhãn không đè nhau, gợi ý riêng không lộ đáp án. Không yêu cầu học sinh thử ném vật từ nơi cao."
+          ]
+        }
+      ]
     }
   ]
 }
