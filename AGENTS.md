@@ -1,3 +1,11 @@
+## Quy tắc owner xác nhận 07/11/2026 — bảo toàn bài đã duyệt khi xây bộ lọc
+
+- Hoàn thành nghiệm thu tất cả môn khối 10, 11, 12 trước, sau đó mới hoàn thiện bộ lọc CT2018 – KNTT – YCCĐ – văn bản pháp quy.
+- Bài mới phải qua kiểm tra theo nguồn và phạm vi áp dụng trước khi nghiệm thu.
+- Bài đã được chủ dự án duyệt phải giữ nguyên nội dung, thứ tự/khóa đáp án, trạng thái nghiệm thu và bằng chứng đúng phiên bản. Bộ lọc mới không tự sửa, xóa, chặn sử dụng hoặc hủy nghiệm thu các bài này.
+- Rà soát lại bài đã duyệt chỉ ghi cảnh báo/điểm cần đối chiếu. Chỉ mở lại nghiệm thu khi phát hiện lỗi cụ thể có căn cứ; lưu bản cũ và bằng chứng trước/sau, không bắt duyệt lại toàn bộ chỉ vì thay bộ lọc.
+- Đây là quy tắc owner đã xác nhận, thay cho trạng thái “đề xuất thiết kế” trong các đoạn lịch sử. Quy tắc chưa phải bằng chứng cơ chế bảo toàn đã được code/kiểm hoàn chỉnh.
+- Bản chính nhật ký, bài lưu và bằng chứng nằm tại F:/FINAL KHKT 2026/qa_evidence/. Ca sau phải đọc checkpoint và quy tắc này trước sửa bộ lọc.
 ## Lưu trữ thống nhất theo owner — 07/11/2026
 
 Bản chính của bài lưu, bản đã đối chiếu, báo cáo và bằng chứng dự án đặt trong F:/FINAL KHKT 2026/qa_evidence/. Chrome Downloads chỉ là vùng tải tạm; sau mỗi lần tải phải sao chép bản chính về F, kiểm dung lượng/hash và ghi đường dẫn F trong checkpoint/lời bàn giao. Không đổi cấu hình Downloads chung hoặc xóa bản cũ ngoài dự án. Mã nguồn tiếp tục trong release_station1_20261031. Không lưu khóa hay dữ liệu học sinh vào thư mục QA/Git; kho bí mật được mã hóa giữ nguyên cơ chế riêng.
