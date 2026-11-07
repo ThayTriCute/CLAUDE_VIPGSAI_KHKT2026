@@ -49,3 +49,6 @@ Yêu cầu chủ dự án 05/11/2026: phần Đồ thị phải có hình vẽ t
 - UI chỉ Chrome MCP đúng cửa sổ kiểm thử nền tím/avatar T, repoVIP và appVIP được giao. Không desktop, không profile/tab anh đang làm việc. Sau mất kết nối lấy inventory mới, không đoán tabID/profile. Quyền thao tác đã có; không hỏi lại quyền chung, chỉ hỏi khi không xác định được đúng tab hoặc thiếu điều kiện thực tế.
 - Kiểm local phù hợp, push tệp cụ thể khi bản vá đã đủ bằng chứng; theo CI/merge rồi xác minh Cloud. Không stage DB/cache/khóa/dữ liệu học sinh. Ghi riêng local/push/main/Cloud và phần chưa kiểm.
 - Sau mỗi mốc và trước kết thúc, cập nhật bàn giao ngắn ở đầu file, lưu bằng chứng và kiểm đã ghi thành công: mục hiện tại/đã đóng, nguyên nhân và tầng sửa, phạm vi môn/lớp, commit, test/log, AI pending, blocker và bước tiếp. Không hứa tiếp tục chạy khi không có tác vụ thật đang chạy.
+# Owner 08/11/2026 — tiếp việc khi đang chờ xác nhận tùy chọn
+
+Sau phần tự kiểm, lưu bằng chứng/mục chờ owner (như phân trang in), rồi tự tiếp công việc độc lập hoặc cặp tiếp theo; không chờ owner phản hồi mới tiến hành. Giữ nguyên pending trong nhật ký, không suy im lặng là duyệt. Quyết định này ưu tiên quy tắc cũ phải đóng mọi xác nhận cặp trước mới chuyển. Chỉ dừng bước phụ thuộc vì thiếu đầu vào bắt buộc thật hoặc giới hạn hệ thống. Không gọi AI trùng hoặc tự tạo scheduler/chat.

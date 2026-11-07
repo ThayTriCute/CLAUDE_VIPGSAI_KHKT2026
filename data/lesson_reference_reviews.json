@@ -496,6 +496,41 @@
           "reason": "Phân loại trực tiếp cơ chế từ chiều gradient và protein đã cho; không có tình huống chuyển giao mới. Đây là đề xuất sau đối chiếu SGK65–66/SGV80–81, chưa phải thẩm định YCCĐ hoặc chứng nhận của Bộ."
         }
       ]
+    },
+    {
+      "id": "kntt-lichsu10-hienthuc-20261108",
+      "subject": "Lịch sử",
+      "grade": 10,
+      "topics": [
+        "Hiện thực lịch sử và lịch sử được con người nhận thức — Lịch sử 10, KNTT, Bài 1"
+      ],
+      "reviewed_on": "2026-11-08",
+      "scope": "Đã đọc Bài1 SGK in6–10 và SGV23–31; không phải toàn SGK hay toàn YCCĐ pháp quy.",
+      "sources": [
+        {
+          "title": "SGK Lịch sử 10 — Kết nối tri thức với cuộc sống, NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-lich-su-10.4755748913",
+          "locator": "Bài1 trang in6–10; mục lục2, title và imprint112 đã xem qua Chrome MCP.",
+          "edition_note": "Title explicitly tái bản lần thứ ba,có chỉnh lí,bổ sung. Imprint copyright2023 and registration line contains2026; printing date blanks not inferred. Current portal source; not legal certification or assertion all 2026 changes mapped.",
+          "criteria": [
+            "Phân biệt sự kiện quá khứ thực sự diễn ra với việc con người thuật lại/giải thích, không dùng cách hỏi mơ hồ khiến một phát biểu có thể mang hai nghĩa.",
+            "Hiện thực quá khứ khách quan không thay theo quan điểm; nhận thức có thể khác/được bổ sung theo tư liệu và phương pháp. Không suy mọi diễn giải đều đúng hoặc nhận thức có thể khôi phục hoàn toàn quá khứ.",
+            "SGK7–8 mũi tên/khuôn đúc Cổ Loa và truyện thể hiện các dạng tư liệu/tái hiện khác nhau; không dùng truyền thuyết như bằng chứng tự xác minh sự kiện.",
+            "SGK8/SGV26–29 hai bia La-pu-la-pu/Ma-gien-lăng: so sánh cùng sự kiện, góc nhìn và mục đích khác; tách sự kiện với đánh giá. Không viết Ma-gien-lăng còn sống hoàn tất hành trình1522; SGK8 nêu Ê-ca-nô trở về.",
+            "Sử học nghiên cứu quá khứ loài người nhiều quy mô; phân biệt chức năng khoa học/xã hội với nhiệm vụ nhận thức/giáo dục/dự báo. Dự báo dựa bài học/bối cảnh, không tiên tri hoặc áp quy luật máy móc.",
+            "Mục tiêu SGK/SGV đã đọc không tự là nguyên văn YCCĐ pháp quy. Chưa tạo bài hoặc nghiệm thu kiến thức toàn môn."
+          ]
+        },
+        {
+          "title": "SGV Lịch sử 10 — Kết nối tri thức với cuộc sống, NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgv-lich-su-10.4923893701",
+          "locator": "Mục lục4, mục tiêu5; hướng dẫn Bài1 in23–31 đã đọc.",
+          "edition_note": "Reader cùng portal NXBGD hiện đang cung cấp; không tự gán năm in từ ngày ảnh máy chủ.",
+          "criteria": [
+            "SGV nhấn mạnh khai thác tư liệu và thảo luận để phân biệt hiện thực/nhận thức, tránh áp đặt một chiều và quá nhấn phương pháp luận trừu tượng cho HS. Mục tiêu SGV không tự là YCCĐ nguyên văn pháp quy."
+          ]
+        }
+      ]
     }
   ]
 }
