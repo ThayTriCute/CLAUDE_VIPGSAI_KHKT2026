@@ -10,6 +10,13 @@ from services.curriculum_policy import (
 
 
 class AcademicGroundingBoundaryTests(unittest.TestCase):
+    def test_cross_station_closure_rules_reach_shared_api_instruction(self):
+        from services.philosophy_rotation import GUIDANCE
+        prepared = with_academic_grounding('Requested JSON schema')
+        self.assertIn(GUIDANCE, prepared)
+        self.assertEqual(with_academic_grounding(prepared), prepared)
+        self.assertIn('Trạm1,2,3', prepared)
+
     def test_membrane_counterexample_is_in_shared_system_guidance(self):
         prepared = with_academic_grounding('Keep requested JSON schema')
         for clause in ('chủ động thứ cấp', 'gradient điện hóa', 'tính thấm màng/chất tan'):

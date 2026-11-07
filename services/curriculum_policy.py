@@ -940,7 +940,8 @@ def correct_reviewed_reaction_rate(text, subject, grade, topic=""):
 
 def with_academic_grounding(system_instruction):
     """Attach the same minimum contract at both model transports, including JSON."""
-    value = str(system_instruction or '')
+    from services.philosophy_rotation import with_closure_guidance
+    value = with_closure_guidance(system_instruction)
     if ACADEMIC_GROUNDING_GUIDANCE in value:
         return value
     rows = legal_references()

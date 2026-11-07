@@ -28,6 +28,8 @@ Kiểm xong tất cả môn khối10,11,12 rồi mới tiếp tục hoàn thiệ
 
 ## Chủ dự án nhắc lại 07/11/2026: mọi bản vá phải xét toàn hệ thống
 
+Yêu cầu nhân sinh mới nhất áp dụng đủ Trạm1, Trạm2, Trạm3: đọc docs/AI_CONTEXTUAL_PHILOSOPHY_CLOSURE.md trước sửa/sinh phản hồi gia sư. Khi HS hiểu và không còn hỏi, phải đúc kết rồi giảng nhân sinh sâu theo ngữ cảnh, đa dạng Á–Âu/cổ–hiện đại và tránh lặp qua phiên/trạm. Hướng dẫn phải vào API, không chỉ tồn tại trong file. Ghi rõ giới hạn lịch sử runtime/Cloud và kho nguồn hữu hạn; không tự tuyên bố mọi bài giảng đã mới/đúng từ test cơ chế.
+
 Trước vá/sinh bài, đọc docs/AI_CURRICULUM_GROUNDING.md và docs/AI_TEACHING_STEPS_LAYOUT_PROMPT.txt. Tìm nguyên nhân ở tầng dùng chung đa môn/đa lớp, không chỉ sửa ca mẫu rồi báo đạt toàn hệ thống. Quy tắc phải đi vào system instruction tại ranh giới API cho cả JSON/streaming/model dự phòng; không mặc định API đã đọc file local. Thêm provider phải kiểm contract này. Quy tắc chuyên môn chỉ áp trong ngữ cảnh thích hợp; giữ bài owner đã duyệt và phân biệt kiểm cơ chế với nghiệm thu kiến thức. Ghi nguyên nhân, phạm vi, bằng chứng trước/sau và phần chưa kiểm trong bàn giao.
 
 Bắt buộc trước mọi thao tác liên quan hình trong infographic: đọc `docs/AI_BBT_GRAPH_INFOGRAPHIC_PROMPT.txt`, đối chiếu yêu cầu mới nhất và bằng chứng đúng phiên bản. Mọi đồ thị, hình vẽ, BBT nằm trong infographic phải dùng nền trong suốt để hiện đúng nền infographic, kể cả nền quanh nhãn. Không chèn tấm nền trắng riêng. Giữ nét/nhãn tương phản và kiểm hình thực; đọc prompt không thay thế kiểm chứng. Quy tắc phải có cả trong prompt API và prompt phong cách tải về.

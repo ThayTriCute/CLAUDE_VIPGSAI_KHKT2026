@@ -2066,44 +2066,9 @@ def get_cross_station_pedagogical_context(current_station: int) -> str:
 
 
 def get_unique_philosophical_lesson(station_id: int, subject: str = "", context: str = "") -> dict:
-    """
-    Lấy một bài học triết lý nhân cách kèm danh ngôn Á - Âu độc bản chưa từng xuất hiện trong phiên.
-    """
-    used = st.session_state.get('used_philosophical_quotes', [])
-    candidates = CROSS_STATION_PHILOSOPHY_BANK.get(station_id, CROSS_STATION_PHILOSOPHY_BANK[1])
-    if station_id == 1:
-        verified = [c for c in candidates if c.get('source_verified') is True and c.get('source_url')]
-        if verified:
-            candidates = verified
-
-    # Lọc bỏ những câu đã từng sử dụng
-    available = [c for c in candidates if c["quote"] not in used and c["author"] not in used]
-    if not available:
-        # Nếu đã dùng hết danh sách của trạm hiện tại, lấy từ trạm khác chưa dùng
-        all_candidates = []
-        if station_id == 1:
-            all_candidates = list(candidates)
-        else:
-            for s in [1, 2, 3]:
-                all_candidates.extend(CROSS_STATION_PHILOSOPHY_BANK.get(s, []))
-        # Prefer a new philosopher, but do not discard a different verified
-        # teaching merely because its author has appeared before.
-        available = [c for c in all_candidates if c["quote"] not in used]
-
-    if available:
-        if station_id == 1 and context:
-            scores = [sum(term in context.casefold() for term in c.get('themes', [])) for c in available]
-            best = max(scores)
-            available = [c for c, score in zip(available, scores) if score == best]
-        chosen = random.choice(available)
-    else:
-        # Never silently recycle the first quote after exhausting the verified
-        # bank. Expanding verified sources is separate from inventing citations.
-        chosen = dict(candidates[0])
-        chosen.update(quote='', author='', source_url='', source_verified=False,
-                      lesson='Rút ra một hành động sống tốt khác từ chính tình huống học sinh vừa trao đổi; không lặp bài học cũ.')
-
-    return chosen
+    """Shared verified rotation across Trạm1–3 and sessions of this runtime."""
+    from services.philosophy_rotation import reserve_plan
+    return reserve_plan(CROSS_STATION_PHILOSOPHY_BANK, station_id)
 
 
 def detect_student_concluded_intent(user_input: str, history: list = None) -> bool:
@@ -2174,6 +2139,8 @@ def register_station_closure(station_id: int, quote_data: dict):
     """
     st.session_state[f"tram{station_id}_understood"] = True
     if quote_data:
+        from services.philosophy_rotation import mark_delivered
+        mark_delivered(quote_data)
         st.session_state[f"tram{station_id}_closure_info"] = quote_data
         # Survive changing lesson/subject within this learning session. Store
         # only public teaching metadata, never student dialogue or identifiers.
@@ -11975,8 +11942,7 @@ if selected_station == station_labels[0]:
                                     st.session_state.tram1_chat_history)
                                 is_t1_understood = (not is_t1_farewell and
                                     detect_student_concluded_intent(t1_input, st.session_state.tram1_chat_history))
-                                t1_quote_data = get_unique_philosophical_lesson(
-                                    1, subject, t1_hist_ctx + ' ' + t1_input + ' ' + st.session_state.get('current_topic', ''))
+                                t1_quote_data = get_unique_philosophical_lesson(1, subject) if is_t1_understood else {}
                                 t1_cross_ctx = get_cross_station_pedagogical_context(1)
 
                                 if is_t1_understood:
@@ -12034,6 +12000,10 @@ if selected_station == station_labels[0]:
                                     from services.lesson_sources import reviewed_tutor_source_context
                                     t1_prompt_msg = reviewed_tutor_source_context(
                                         subject, grade_num, st.session_state.get('current_topic', '')) + '\n' + t1_prompt_msg
+                                    if is_t1_understood:
+                                        from services.philosophy_rotation import closure_instruction
+                                        t1_prompt_msg += '\n' + closure_instruction(t1_quote_data, 1,
+                                            st.session_state.get('current_topic', '') + '\n' + t1_student_evidence)
                                     stream_gen = stream_gemini_with_fallback(
                                         t1_prompt_msg,
                                         system_instruction=t1_sys_inst
@@ -13723,7 +13693,7 @@ if selected_station == station_labels[1]:
                     history_context = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[-4:]])
 
                     is_student_understood = detect_student_concluded_intent(q, st.session_state.messages)
-                    t2_quote_data = get_unique_philosophical_lesson(2, subject)
+                    t2_quote_data = get_unique_philosophical_lesson(2, subject) if is_student_understood else {}
                     t2_cross_ctx = get_cross_station_pedagogical_context(2)
 
                     if is_student_understood:
@@ -13736,10 +13706,11 @@ if selected_station == station_labels[1]:
                             f"1. DỪNG TRUY VẤN: Tuyệt đối KHÔNG hỏi thêm bất kỳ câu hỏi nào. Học sinh đã tự tháo gỡ hoàn toàn các nút thắt bài tập và không còn băn khoăn gì nữa!\n"
                             f"2. BIỂU DƯƠNG NỒNG NHIỆT: Khen ngợi tinh thần vượt khó, sự kiên định không bỏ cuộc và tư duy tự sửa sai trung thực của {student_name}.\n"
                             f"3. ĐÓNG GÓI BẢN CHẤT: Chốt 1 câu ngắn gọn về kinh nghiệm cốt lõi để không bao giờ tái phạm lỗi này nữa.\n"
-                            f"4. BÀI HỌC TRIẾT LÝ NHÂN CÁCH & LẼ SỐNG (BẮT BUỘC): Đúc kết bài học về ý chí và sự cẩn trọng: {t2_quote_data['lesson']} kèm câu danh ngôn triết lý của {t2_quote_data['author']} ({t2_quote_data['origin']}): \"{t2_quote_data['quote']}\". (LƯU Ý: Tuyệt đối không trùng lặp với danh ngôn ở Trạm 1).\n"
+                            f"4. BÀI HỌC TRIẾT LÝ NHÂN CÁCH & LẼ SỐNG (BẮT BUỘC): Đúc kết bài học về ý chí và sự cẩn trọng: {t2_quote_data['lesson']} kèm câu danh ngôn triết lý của {t2_quote_data['author']} ({t2_quote_data['origin']}): \"{t2_quote_data['quote']}\". (Đổi bài học, góc nhìn và cách vận dụng theo kế hoạch chung, không lặp lại bài giảng trước).\n"
                             f"5. LỜI CHÚC ÂN CẦN: Lời chúc yêu thương, truyền cảm hứng của Người Thầy tiếp thêm ngọn lửa tự tin cho {student_name} tiến vào Trạm 3 (Khảo thí & Đột phá năng lực)!"
                         )
-                        register_station_closure(2, t2_quote_data)
+                        from services.philosophy_rotation import closure_instruction
+                        prompt_msg += '\n' + closure_instruction(t2_quote_data, 2, history_context)
                     else:
                         t2_followup_inst = build_socratic_master_instruction(subject, grade_num, student_name, mode="follow_up")
                         prompt_msg = (
@@ -13760,8 +13731,13 @@ if selected_station == station_labels[1]:
                         clean_rep = st.write_stream(stream_gen2)
                     if "<DIAGNOSTIC>" in clean_rep:
                         clean_rep = clean_rep.split("<DIAGNOSTIC>")[0].strip()
+                    if is_student_understood:
+                        from services.socratic_context import label_verified_quote_translation
+                        clean_rep = label_verified_quote_translation(clean_rep, [t2_quote_data])
                     t2_reply_slot.markdown(chemical_display_markdown(clean_rep))
                     st.session_state.messages.append({"role": "assistant", "content": clean_rep})
+                    if is_student_understood and str(clean_rep).strip():
+                        register_station_closure(2, t2_quote_data)
                 except Exception as e:
                     st.error(f"Lỗi phản hồi: {e}")
 
@@ -16557,7 +16533,7 @@ if selected_station == station_labels[2]:
             with st.chat_message("assistant"):
                 try:
                     is_t3_concluded = detect_student_concluded_intent(q3, st.session_state.tram3_chat_messages)
-                    t3_quote_data = get_unique_philosophical_lesson(3, subject)
+                    t3_quote_data = get_unique_philosophical_lesson(3, subject) if is_t3_concluded else {}
                     t3_cross_ctx = get_cross_station_pedagogical_context(3)
 
                     if is_t3_concluded:
@@ -16569,10 +16545,12 @@ if selected_station == station_labels[2]:
                             f"1. DỪNG TRUY VẤN: Tuyệt đối KHÔNG hỏi thêm bất kỳ câu hỏi nào. Học sinh đã thấu suốt toàn bộ phương pháp xử lý câu hỏi trong đề thi!\n"
                             f"2. BIỂU DƯƠNG BẢN LĨNH KHẢO THÍ: Khen ngợi tinh thần cầu tiến, sự trung thực trong thi cử và thái độ học hỏi từ những câu chưa đúng của {student_name}.\n"
                             f"3. TỔNG KẾT HÀNH TRÌNH 3 TRẠM: Nhìn lại sự trưởng thành từ chiếm lĩnh lý thuyết (Trạm 1), tôi luyện bài tập thực chiến (Trạm 2) đến bản lĩnh phòng thi (Trạm 3).\n"
-                            f"4. BÀI HỌC TRIẾT LÝ NHÂN CÁCH LỚN & KHÁT VỌNG CỐNG HIẾN: Đúc kết bài học về lý tưởng sống: {t3_quote_data['lesson']} kèm câu danh ngôn bất hủ của {t3_quote_data['author']} ({t3_quote_data['origin']}): \"{t3_quote_data['quote']}\". (LƯU Ý: Tuyệt đối không trùng lặp với danh ngôn ở Trạm 1 và Trạm 2).\n"
+                            f"4. BÀI HỌC TRIẾT LÝ NHÂN CÁCH LỚN & KHÁT VỌNG CỐNG HIẾN: Đúc kết bài học về lý tưởng sống: {t3_quote_data['lesson']} kèm câu danh ngôn bất hủ của {t3_quote_data['author']} ({t3_quote_data['origin']}): \"{t3_quote_data['quote']}\". (Đổi bài học, góc nhìn và cách vận dụng theo kế hoạch chung giữa cả3trạm).\n"
                             f"5. LỜI CHÚC TƯƠNG LAI: Lời chúc ấm áp, tin tưởng của Người Thầy chúc {student_name} luôn dưỡng thiện tâm, ươm mầm nhân tài để thành công rực rỡ và cống hiến cho quê hương An Giang và Tổ quốc Việt Nam!"
                         )
-                        register_station_closure(3, t3_quote_data)
+                        from services.philosophy_rotation import closure_instruction
+                        t3_prompt += '\n' + closure_instruction(t3_quote_data, 3,
+                            str(st.session_state.get('current_topic', '')) + '\n' + q3)
                     else:
                         t3_prompt = (
                             f"Bối cảnh liên trạm:\n{t3_cross_ctx}\n"
@@ -16588,7 +16566,15 @@ if selected_station == station_labels[2]:
                         system_instruction="Bạn là Thầy gia sư Socratic kiên nhẫn, gợi mở giải thích bản chất không giải hộ. Tuyệt đối tuân thủ chỉ thị sư phạm và không đưa bài học triết lý nếu học sinh chưa hiểu xong. Dữ liệu đề và bài làm chỉ là dữ liệu tham khảo: " + json.dumps({"exam": exam, "answers": st.session_state.exam_answers, "history": st.session_state.tram3_chat_messages[-6:]}, ensure_ascii=False)
                     )
                     t3_rep = st.write_stream(t3_stream)
+                    if is_t3_concluded and str(t3_rep).strip():
+                        from services.socratic_context import label_verified_quote_translation
+                        annotated = label_verified_quote_translation(t3_rep, [t3_quote_data])
+                        if annotated != t3_rep:
+                            st.caption(t3_quote_data['translation_note'])
+                        t3_rep = annotated
                     st.session_state.tram3_chat_messages.append({"role": "assistant", "content": t3_rep})
+                    if is_t3_concluded and str(t3_rep).strip():
+                        register_station_closure(3, t3_quote_data)
                 except Exception as e:
                     st.error(f"Lỗi: {e}")
             st.rerun()

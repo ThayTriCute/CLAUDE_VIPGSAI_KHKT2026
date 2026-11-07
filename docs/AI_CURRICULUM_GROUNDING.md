@@ -1,5 +1,7 @@
 # CT2018, KNTT, YCCĐ và văn bản áp dụng
 
+Phần chốt gia sư Trạm1–3 phải tuân docs/AI_CONTEXTUAL_PHILOSOPHY_CLOSURE.md: đủ chiều sâu, mới theo ngữ cảnh, luân phiên nguồn Á–Âu/cổ–hiện đại có xác minh và lịch sử kế hoạch qua phiên. GUIDANCE của philosophy_rotation được with_academic_grounding gắn chung cho mọi transport/model; đọc tệp không thay việc truyền API hoặc kiểm phản hồi thật.
+
 ## Quy tắc chủ dự án nhắc lại 07/11/2026 — sửa cho toàn hệ thống
 
 Mỗi lỗi quan sát là ca tái hiện để tìm tầng sở hữu nguyên nhân trong prompt, nguồn, parser, kiểm định, trạng thái, hiển thị hoặc xuất. Ưu tiên cơ chế chung đa môn/đa lớp; không coi sửa một ví dụ là hoàn thành hệ thống. Quy tắc chuyên môn phải có điều kiện môn/chủ đề phù hợp, không áp cơ học sang môn khác.
