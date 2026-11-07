@@ -312,6 +312,32 @@
           ]
         }
       ]
+    },
+    {
+      "id": "kntt-cn10-trongtrot-dattrong-20261107",
+      "subject": "Công nghệ",
+      "grade": 10,
+      "topics": [
+        "Giới thiệu về đất trồng — Công nghệ 10, Công nghệ trồng trọt, KNTT, Bài 3"
+      ],
+      "reviewed_on": "2026-11-07",
+      "scope": "Đối chiếu Bài 3 Giới thiệu về đất trồng: khái niệm, bốn thành phần, keo đất, thành phần cơ giới và phản ứng dung dịch đất. Không thay cho thí nghiệm đất thực tế hoặc toàn bộ chương trình.",
+      "sources": [
+        {
+          "title": "SGK Công nghệ 10 – Công nghệ trồng trọt, Kết nối tri thức với cuộc sống — NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-cong-nghe-10-cong-nghe-trong-trot.4715169808",
+          "locator": "Mục lục trang 4; Bài 3 trang in 19–22, mục I, II, III, Hình 3.1–3.3; đã đọc ảnh trang gốc NXBGD từ URL quan sát trên Chrome MCP.",
+          "edition_note": "Cổng Bộ SGK thống nhất, ảnh trang trên máy chủ NXBGD tháng 04/2026; không tự gán năm tái bản. Đã đọc thông tin cập nhật 1 trang do cổng sách liên kết (Drive 1DDEkjAt_nvba7l09DoowB6aJDnFHzI1s): các trang 8,9,26,57,106,116,117,136; không có mục sửa 19–22 trong tài liệu này.",
+          "criteria": [
+            "Đất trồng gồm phần lỏng, phần rắn, phần khí và sinh vật đất; nêu đúng vai trò, không đồng nhất đất với phân bón.",
+            "Keo đất có nhân và lớp điện kép; dấu điện tích do tầng ion quyết định điện, ion khuếch tán có khả năng trao đổi với dung dịch đất; không nói mọi keo đều âm.",
+            "Phân biệt cát, limon, sét theo kích thước và tỉ lệ; tính giữ nước và dinh dưỡng có điều kiện, không tự suy càng nhiều sét càng tốt cho mọi cây.",
+            "Theo phân loại đất của SGK trang 22: chua pH dưới 6,6; trung tính 6,6–7,5; kiềm trên 7,5. Kiểm cả hai giá trị biên.",
+            "Phân biệt dải phân loại đất theo SGK với trung tính hóa học của dung dịch: không khẳng định H+ bằng OH− ở mọi pH trong dải 6,6–7,5. Với dung dịch nước ở 25°C trong mô hình phổ thông, trung tính hóa học ở pH xấp xỉ 7.",
+            "Bài tập phải có đáp án/lời giải và rubric, hướng dẫn tìm hiểu đất địa phương cần phép đo/nguồn thực tế; không bịa kết quả địa phương hoặc liều bón vôi khi thiếu dữ kiện."
+          ]
+        }
+      ]
     }
   ]
 }
