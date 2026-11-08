@@ -16,3 +16,6 @@ AI làm việc với repo phải:
 Công cụ QA workspace qa_evidence/audit_saved_lesson_local.py dùng parser/validator có sẵn, không API và không sửa bài; kiểm context/hash/cấu trúc câu hỏi và một số cờ nghi vấn, không chứng minh đáp án đều đúng. Không đưa dữ liệu phiên, khóa hoặc DB lên GitHub để chạy công cụ.
 
 Khi nguồn nêu ranh giới đoạn/câu/dòng, dùng đúng phạm vi đó, không lấy bản trích quen thuộc thay thế. Đối chiếu người nói, số câu trong gợi ý, câu hỏi và đáp án; diễn giải không phải nguyên văn. Tự luận cần gợi ý lời giải/rubric có nội dung và chấp nhận lập luận khác có bằng chứng. Ca thật Văn11 Trao duyên (SGK711–758) là bằng chứng lỗi phạm vi, không giới hạn quy tắc ở môn Văn.
+
+
+Khi dựng đồ thị/Lab, phương trình và nhãn phải dùng cùng hệ số với dữ liệu đang tính; không làm tròn hệ số rồi vẫn ghi dấu bằng. Nếu chỉ trình bày gần đúng, ghi rõ gần đúng và mức chính xác. Đối chiếu đơn vị từng phiên bản nguồn trước ghép số liệu; ví dụ bản mẫu và bản tái bản có thể khác đơn vị trục. Chỉ lấy hình/tình huống đang kiểm làm ca tái hiện, áp dụng quy tắc cho mọi môn/lớp.

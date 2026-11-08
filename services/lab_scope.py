@@ -4,7 +4,31 @@ import math
 
 from services.academic_context import academic_context, canonical_subject
 
-T1_CONTEXT_REVISION = 2026110804
+T1_CONTEXT_REVISION = 2026110805
+
+
+def oscillator_equation_latex(amplitude, omega, phase):
+    """Keep the displayed equation consistent with the plotted slider values."""
+    from fractions import Fraction
+    values = tuple(float(v) for v in (amplitude, omega, phase))
+    if not all(math.isfinite(v) for v in values) or values[0] <= 0 or values[1] <= 0:
+        raise ValueError('Biên độ và tần số góc phải dương, các tham số phải hữu hạn.')
+
+    def number(value, allow_pi=False):
+        if value == 0:
+            return '0'
+        if allow_pi:
+            fraction = Fraction(value / math.pi).limit_denominator(12)
+            candidate = float(fraction) * math.pi
+            if fraction and abs(value - candidate) <= 2 * math.ulp(value):
+                n, d = fraction.numerator, fraction.denominator
+                sign = '-' if n < 0 else ''
+                top = (str(abs(n)) if abs(n) != 1 else '') + r'\pi'
+                return sign + (top if d == 1 else r'\frac{' + top + '}{' + str(d) + '}')
+        return str(int(value)) if value.is_integer() else str(value)
+
+    a, w, p = number(values[0]), number(values[1], True), number(values[2], True)
+    return rf'x = {a}\cos\left({w}t + \left({p}\right)\right)\,\mathrm{{cm}}'
 
 
 

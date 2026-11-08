@@ -11,7 +11,7 @@ from markdown_it import MarkdownIt
 from services.academic_context import academic_context
 
 ROOT = Path(__file__).resolve().parents[1]
-T1_CONTEXT_REVISION = 2026110604
+T1_CONTEXT_REVISION = 2026110801
 _TOKENS = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$)")
 
 
@@ -35,8 +35,21 @@ def renderer_assets():
     return css, notebook, js.replace("</script", r"<\/script")
 
 
-def lesson_body_html(lesson):
+def lesson_body_html(lesson, trusted_svgs=()):
     """Protect math/code separately; never convert formulas to approximate Unicode."""
+    # Raw generated HTML remains escaped. Only exact fragments authored in the
+    # matched local review may pass through, never SVG examples inside code.
+    visuals = {}
+    visual_nonce = hashlib.sha256(lesson.encode()).hexdigest()[:12]
+    def protect_visuals(prose):
+        for svg in trusted_svgs:
+            if isinstance(svg, str) and svg.startswith('<svg ') and svg.endswith('</svg>') and svg in prose:
+                token = f'GSAISVG{visual_nonce}N{len(visuals)}END'
+                visuals[token] = svg
+                prose = prose.replace(svg, token)
+        return prose
+    pieces = re.split(r'(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`)', lesson)
+    lesson = ''.join(piece if i % 2 else protect_visuals(piece) for i, piece in enumerate(pieces))
     from services.text_boundaries import wrap_naked_chemistry, polya_display_markdown
     lesson = polya_display_markdown(wrap_naked_chemistry(lesson))
     # Separate explicit teaching steps and inline bullets; protect formulas/code.
@@ -85,6 +98,8 @@ def lesson_body_html(lesson):
     body = md.render(protected)
     for token, value in replacements.items():
         body = body.replace(token, value)
+    for token, svg in visuals.items():
+        body = body.replace('<p>' + token + '</p>', svg).replace(token, svg)
     if naked_math:
         body = '<p class="notice" data-source-issue="math-delimiter">Có lệnh công thức chưa nằm trong dấu phân cách toán học; cần sửa nội dung trước khi in.</p>' + body
     return body
@@ -122,7 +137,11 @@ def build_lesson_html(subject, grade, topic, lesson, style="handwritten"):
     metadata = json.dumps({"subject": subject, "grade": grade, "topic": topic, "source_sha256": digest,
                            "reference_review": reviewed_lesson_sources(subject, grade, topic)}, ensure_ascii=False).replace("<", "\\u003c")
     title = html.escape(str(topic or subject))
-    body = lesson_body_html(lesson)
+    review = reviewed_lesson_sources(subject, grade, topic)
+    trusted_svgs = [match[0] for rule in review.get('content_corrections', [])
+                    if isinstance(rule, dict) and isinstance(rule.get('after'), str)
+                    for match in re.finditer(r'<svg\b[^>]*>[\s\S]*?</svg>', rule['after'])]
+    body = lesson_body_html(lesson, trusted_svgs=trusted_svgs)
     if subject == 'Toán học':
         from services.function_visuals import with_function_visuals
         body = with_function_visuals(body, topic, lesson)

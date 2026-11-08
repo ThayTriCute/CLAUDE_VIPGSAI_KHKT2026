@@ -1850,6 +1850,128 @@
           }
         ]
       }
+    },
+    {
+      "id": "kntt-vatly11-daodong-bai1-20261108",
+      "subject": "Vật lý",
+      "grade": 11,
+      "topics": [
+        "Dao động điều hòa — Vật lí 11, KNTT, Bài 1"
+      ],
+      "reviewed_on": "2026-11-08",
+      "scope": "Ba cổng đã đọc đúng Bài1trang6–9, bảnmẫuVniTeach11/2022khácđơnvịhình1.3. Mộtbàithật38.56s được sửa có căn cứ, chưaowner/toànCT/pháp luật.",
+      "sources": [
+        {
+          "title": "SGK Vật lí11 — NXBGDVN, KNTT",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-vat-li-11.4701093133",
+          "locator": "Bài1 trangin6–9, title táibản3 đãđọc ảnhselected05–08 và00; 8ảnh chọnlọcđãlưu local/XZ gồmtrangphụ,khôngtoànbộ.",
+          "edition_note": "Title táibản3; năm chưa xác tín. Hình1.3trang8 x(mm); khôngtrộncmởbảnmẫu2022.",
+          "criteria": [
+            "Giữ đúng đơn vị/phạm vi/phiên bản nguồn, có lời giải/rubric, không chứng nhận toàn YCCĐ/pháp luật."
+          ]
+        },
+        {
+          "title": "Trường Học Số Quốc Gia — Vật lí11 KNTT thống nhất",
+          "url": "https://www.thsqg.vn/sach/vat-li-11-tn/doc",
+          "locator": "Bài1trangin6–9,reader7–10 vàtitleđãđọcChrome.",
+          "edition_note": "Cùng nội dung trong phạm vi đã đọc với NXBGDVN, khôngphảitácgiảđộclập; x(mm)hình1.3; titlethirdreprintnămchưađượcxáctín.",
+          "criteria": [
+            "Giữ đúng đơn vị/phạm vi/phiên bản nguồn, có lời giải/rubric, không chứng nhận toàn YCCĐ/pháp luật."
+          ]
+        },
+        {
+          "title": "VniTeach — SGK Vật lí11 KNTT, bản mẫu11/2022",
+          "url": "https://www.vniteach.com/2022/12/18/sgk-vat-li-11-bo-sach-kntt/",
+          "locator": "PDFcover1 vàtrangin6–9/PDF8–11đãđọc; fullPDF119pageslưuF/XZnhưngkhôngđọctoànbộ.",
+          "edition_note": "CoverBẢNMẪUtháng11/2022; hình1.3trụcx(cm),khácNXBGDVN/THSQGmm; khôngcoilàbảnhiệnhành.",
+          "criteria": [
+            "Giữ đúng đơn vị/phạm vi/phiên bản nguồn, có lời giải/rubric, không chứng nhận toàn YCCĐ/pháp luật."
+          ]
+        }
+      ],
+      "grounded_facts": [
+        "Dao động cơ là chuyển động qua lại quanh vị trí cân bằng; dao động có thể tuần hoàn hoặc không. Tuần hoàn trở lại vị trí theo cùng hướng sau khoảng thời gian bằng nhau, không suy mọi dao động tuần hoàn đều điều hòa.",
+        "Dao động điều hòa có đồ thị li độ-thời gian hình sin; phương trình x=Acos(omega*t+phi), A>0, phi pha ban đầu, pha tại t là omega*t+phi, đơn vịrad. Chọn trục và gốc thời gian ảnh hưởng pha, không thay biên độ.",
+        "Trang7 hỏi x=2cos(4pi*t+pi/2)cm: A2cm, pha ban đầu pi/2rad, pha t2s bằng17pi/2rad; có thể quy đồng dư pha nhưng phải phân biệt pha và li độ. Li độ tại2s bằng0cm; pha không phải li độ.",
+        "Trang8 pittông quãng chuyển động hai biên16cm cho biên độ8cm, không16cm. Li độ là đại số, biên độ dương; khoảng cách hai biên2A.",
+        "Con lắc đơn dao động góc nhỏ (nguồn nêu xấp xỉ góc dưới10độ) được mô tả gần đúng điều hòa; không suy mọi biên độ hoặc bỏma sátđềulí tưởng. Hìnhchiếu chuyểnđộngtrònđều là môhình quan hệ, khôngphải conlắcchuyểnđộngtròn.",
+        "Trang8 hình1.3 có biên độ40mm, ban đầu x=40mm và t=2s ở biên âm x=-40mm. Không ghi số đọc t0.5s khi chưa đủ độ phân giải/đối chiếu; số đọc đồ thị phải ghi độ chính xác, không coi là đo thực nghiệm.",
+        "NXBGDVN reader4701093133 đã đọc trangin6–9/title táibản3: hình1.3 dùngmm giốngTHSQG, trongkhi VniTeachbảnmẫu11/2022 dùngcm. Không lấy40cmtừbảnmẫu chođồthị40mmhiệnđọc; khôngsuy đãđọctoànđínhchính hoặcấn bảnnăm. Bài1 chỉkháiniệm/đồthị/phươngtrình vàbiênđộ/pha, khôngbiếnthànhbàivậntốc/gia tốc/nănglượng kếtiếp."
+      ],
+      "content_corrections": [
+        {
+          "before": "Chúng đều lặp đi lặp lại quanh một vị trí cố định.",
+          "after": "Chúng chuyển động qua lại quanh vị trí cân bằng; có trường hợp tuần hoàn và không tuần hoàn, chẳng hạn cành cây trong gió không nhất thiết lặp lại đều.",
+          "reason": "Không đồng nhất dao động cơ với dao động tuần hoàn."
+        },
+        {
+          "before": "mô hình lý tưởng nhất:",
+          "after": "một mô hình dao động tuần hoàn đơn giản:",
+          "reason": "Không dùng so sánh lý tưởng nhất thiếu nghĩa vật lí."
+        },
+        {
+          "before": "$x$: Li độ (vị trí của vật so với gốc tọa độ tại thời điểm $t$).",
+          "after": "$x$: Li độ đại số tại thời điểm $t$, với gốc tọa độ chọn ở vị trí cân bằng và chiều dương đã quy ước.",
+          "reason": "Gốc li độ phải ở vị trí cân bằng trong phương trình đang dùng."
+        },
+        {
+          "before": "Từ đồ thị, ta có thể xác định được biên độ $A$ (giá trị cao nhất của đường cong) và các trạng thái của vật tại từng thời điểm.",
+          "after": "Khi đồ thị thể hiện đủ biên dao động, biên độ $A$ là độ lệch cực đại so với vị trí cân bằng; không lấy điểm cao nhất của một đoạn đồ thị bị cắt làm biên độ. Đọc li độ theo đúng trục, đơn vị và thời điểm. Con lắc đơn chỉ gần đúng điều hòa ở góc nhỏ trong điều kiện phù hợp; không coi mọi chuyển động qua lại đều điều hòa.",
+          "reason": "Đủ miền dữ liệu, điều kiện mô hình và đơn vị."
+        },
+        {
+          "before": "*Gợi ý:* Đoạn thẳng vật đi được từ biên này sang biên kia tương ứng với khoảng cách từ $-A$ đến $+A$.",
+          "after": "Đáp án: hai đầu đoạn dao động là hai biên nên $2A=10$cm, suy ra $A=5$cm. Đây là khoảng cách hai biên, không phải tổng quãng đường trong một chu kì. Rubric: nhận ra $2A$ 1 điểm, tính đúng và ghi đơn vị 1 điểm.",
+          "reason": "Có lời giải luyện tập, phân biệt đoạn dao động và quãng đường."
+        },
+        {
+          "before": "Quan sát một pit-tông trong động cơ ô tô đang chuyển động. Nếu quãng đường giữa điểm cao nhất và điểm thấp nhất mà pit-tông đạt được là $16$ cm, hãy viết biểu thức biểu diễn biên độ của chuyển động này và giải thích tại sao biên độ không phải là $16$ cm.",
+          "after": "Xét mô hình bài học cho pit-tông chuyển động điều hòa trên đoạn giữa hai biên dài16cm; chỉ đọc hình/mô phỏng, không tiếp cận động cơ đang chạy. Tính biên độ.\n\nĐáp án: $2A=16$cm nên $A=8$cm, tính từ vị trí cân bằng ở trung điểm đến một biên. Đây là mô hình trong bài, không khẳng định mọi cơ cấu pit-tông thực đều dao động điều hòa chính xác. Rubric: phân biệt đoạn hai biên và biên độ 1 điểm, tính/đơn vị 1 điểm, nêu giới hạn mô hình 1 điểm.",
+          "reason": "Không giao quan sát động cơ chạy; mô hình lí tưởng có giới hạn."
+        },
+        {
+          "before": "Các đại lượng còn lại có thể âm, dương hoặc bằng $0$ tùy vào thời điểm và cách chọn gốc tọa độ.",
+          "after": "Li độ và pha tại thời điểm t có thể đổi theo thời gian; pha ban đầu là hằng số của mô hình đã chọn, phụ thuộc quy ước trục và gốc thời gian, không tự thay đổi trong cùng phương trình.",
+          "reason": "Phân biệt pha ban đầu với pha tức thời."
+        },
+        {
+          "before": "Một vật dao động điều hòa có đồ thị li độ - thời gian đi qua các điểm sau: Tại $t = 0$, vật ở vị trí biên dương $x = 40$ mm. Tại thời điểm $t = 2$ s, vật lần đầu tiên đến vị trí biên âm $x = -40$ mm. Hãy xác định biên độ dao động và pha ban đầu của vật.",
+          "after": "Đồ thị mô hình dưới đây biểu diễn vật xuất phát ở biên dương40mm tại t=0 và lần đầu đến biên âm−40mm tại t=2s. Hãy xác định biên độ và pha ban đầu theo dạng cosin của bài. Hình là mô hình tính toán từ dữ kiện, không phải ảnh đo thực nghiệm.\n\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 340\" role=\"img\" aria-label=\"Đồ thị mô hình x bằng 40 cos pi t trên 2 milimét, t từ 0 đến 4 giây\" style=\"display:block;width:100%;height:auto;background:transparent;color:#2671b7\"><g fill=\"none\" stroke=\"currentColor\"><path d=\"M60 170H750 M90 290V35\"/><path d=\"M400 170V260H90 M710 170V80H90\" stroke-dasharray=\"5 5\" opacity=\"0.7\"/><path d=\"M90.00,80.00 L93.10,80.04 L96.20,80.18 L99.30,80.40 L102.40,80.71 L105.50,81.11 L108.60,81.59 L111.70,82.17 L114.80,82.83 L117.90,83.57 L121.00,84.40 L124.10,85.32 L127.20,86.32 L130.30,87.40 L133.40,88.57 L136.50,89.81 L139.60,91.13 L142.70,92.53 L145.80,94.01 L148.90,95.56 L152.00,97.19 L155.10,98.89 L158.20,100.65 L161.30,102.49 L164.40,104.39 L167.50,106.36 L170.60,108.39 L173.70,110.48 L176.80,112.63 L179.90,114.84 L183.00,117.10 L186.10,119.41 L189.20,121.78 L192.30,124.19 L195.40,126.64 L198.50,129.14 L201.60,131.68 L204.70,134.26 L207.80,136.87 L210.90,139.51 L214.00,142.19 L217.10,144.89 L220.20,147.62 L223.30,150.37 L226.40,153.14 L229.50,155.92 L232.60,158.72 L235.70,161.53 L238.80,164.35 L241.90,167.17 L245.00,170.00 L248.10,172.83 L251.20,175.65 L254.30,178.47 L257.40,181.28 L260.50,184.08 L263.60,186.86 L266.70,189.63 L269.80,192.38 L272.90,195.11 L276.00,197.81 L279.10,200.49 L282.20,203.13 L285.30,205.74 L288.40,208.32 L291.50,210.86 L294.60,213.36 L297.70,215.81 L300.80,218.22 L303.90,220.59 L307.00,222.90 L310.10,225.16 L313.20,227.37 L316.30,229.52 L319.40,231.61 L322.50,233.64 L325.60,235.61 L328.70,237.51 L331.80,239.35 L334.90,241.11 L338.00,242.81 L341.10,244.44 L344.20,245.99 L347.30,247.47 L350.40,248.87 L353.50,250.19 L356.60,251.43 L359.70,252.60 L362.80,253.68 L365.90,254.68 L369.00,255.60 L372.10,256.43 L375.20,257.17 L378.30,257.83 L381.40,258.41 L384.50,258.89 L387.60,259.29 L390.70,259.60 L393.80,259.82 L396.90,259.96 L400.00,260.00 L403.10,259.96 L406.20,259.82 L409.30,259.60 L412.40,259.29 L415.50,258.89 L418.60,258.41 L421.70,257.83 L424.80,257.17 L427.90,256.43 L431.00,255.60 L434.10,254.68 L437.20,253.68 L440.30,252.60 L443.40,251.43 L446.50,250.19 L449.60,248.87 L452.70,247.47 L455.80,245.99 L458.90,244.44 L462.00,242.81 L465.10,241.11 L468.20,239.35 L471.30,237.51 L474.40,235.61 L477.50,233.64 L480.60,231.61 L483.70,229.52 L486.80,227.37 L489.90,225.16 L493.00,222.90 L496.10,220.59 L499.20,218.22 L502.30,215.81 L505.40,213.36 L508.50,210.86 L511.60,208.32 L514.70,205.74 L517.80,203.13 L520.90,200.49 L524.00,197.81 L527.10,195.11 L530.20,192.38 L533.30,189.63 L536.40,186.86 L539.50,184.08 L542.60,181.28 L545.70,178.47 L548.80,175.65 L551.90,172.83 L555.00,170.00 L558.10,167.17 L561.20,164.35 L564.30,161.53 L567.40,158.72 L570.50,155.92 L573.60,153.14 L576.70,150.37 L579.80,147.62 L582.90,144.89 L586.00,142.19 L589.10,139.51 L592.20,136.87 L595.30,134.26 L598.40,131.68 L601.50,129.14 L604.60,126.64 L607.70,124.19 L610.80,121.78 L613.90,119.41 L617.00,117.10 L620.10,114.84 L623.20,112.63 L626.30,110.48 L629.40,108.39 L632.50,106.36 L635.60,104.39 L638.70,102.49 L641.80,100.65 L644.90,98.89 L648.00,97.19 L651.10,95.56 L654.20,94.01 L657.30,92.53 L660.40,91.13 L663.50,89.81 L666.60,88.57 L669.70,87.40 L672.80,86.32 L675.90,85.32 L679.00,84.40 L682.10,83.57 L685.20,82.83 L688.30,82.17 L691.40,81.59 L694.50,81.11 L697.60,80.71 L700.70,80.40 L703.80,80.18 L706.90,80.04 L710.00,80.00\" stroke=\"#2563eb\" stroke-width=\"3\"/></g><g fill=\"currentColor\" font-family=\"sans-serif\" font-size=\"15\"><text x=\"34\" y=\"30\">x (mm)</text><text x=\"743\" y=\"199\">t (s)</text><text x=\"59\" y=\"190\">0</text><text x=\"51\" y=\"84\">40</text><text x=\"43\" y=\"266\">−40</text><text x=\"237\" y=\"193\">1</text><text x=\"395\" y=\"193\">2</text><text x=\"549\" y=\"193\">3</text><text x=\"705\" y=\"193\">4</text><text x=\"101\" y=\"62\">(0; 40)</text><text x=\"354\" y=\"287\">(2; −40)</text><text x=\"659\" y=\"62\">(4; 40)</text></g></svg>",
+          "reason": "Có hình thực đúng dữ kiện, đơn vị mm hiện đọc; nền trong suốt, nhãn tách và gióng hai trục."
+        },
+        {
+          "before": "    - Từ dữ kiện $x_{max} = 40$ mm, suy ra $A$.\n    - Thay $t=0$ và $x=40$ vào phương trình $40 = A\\cos(\\varphi)$, kết hợp với giá trị $A$ vừa tìm được để tìm $\\cos(\\varphi)$, từ đó suy ra $\\varphi$.",
+          "after": "    - Đáp án: $A=40$mm. Tại t=0, $40=40\\cos\\varphi$ nên $\\cos\\varphi=1$, do đó $\\varphi=2k\\pi$rad với k nguyên; có thể chọn $\\varphi=0$rad. Không coi0 là đại diện duy nhất khi chưa quy định khoảng pha. Rubric: A và đơn vị 1 điểm, suy cosphi1 1 điểm, nghiệm pha tương đương 1 điểm.",
+          "reason": "Có đáp số và họ pha tương đương, không ép nghiệm duy nhất."
+        },
+        {
+          "before": "    - Tính cụ thể giá trị: $5\\pi \\cdot 0,1 - \\frac{\\pi}{6} = \\dots$ (rad).\n    - Tính $x = 6 \\cdot \\cos(\\dots)$ (cm).",
+          "after": "    - Pha: $5\\pi\\cdot0.1-\\frac{\\pi}{6}=\\frac{\\pi}{3}$rad.\n    - Li độ: $x=6\\cos(\\pi/3)=3$cm. Phân biệt pha có đơn vịrad và li độ có đơn vịcm. Rubric: tính pha 1 điểm, tính cos 1 điểm, li độ và đơn vị 1 điểm.",
+          "reason": "Điền đủ lời giải thay dấu chấm."
+        },
+        {
+          "before": "Qua bài học về Dao động điều hòa, chúng ta thấy rằng mọi sự biến động trong tự nhiên, dù phức tạp đến đâu, thường có xu hướng lặp lại và có thể đưa về những mô hình cân bằng, trật tự. Giống như con lắc luôn quay về vị trí cân bằng,",
+          "after": "Bài học cho ta một mô hình hữu ích trong phạm vi điều kiện xác định; không phải mọi biến động tự nhiên đều lặp lại hoặc quy về dao động điều hòa. Liên hệ nhân sinh sau đây chỉ là phép ví von, không phải định luật vật lí:",
+          "reason": "Không biến phép ẩn dụ đạo đức thành khẳng định tự nhiên phổ quát."
+        },
+        {
+          "before": "pha $\\Phi$ (bao gồm cả xu hướng chuyển động và lịch sử thời gian)",
+          "after": "pha $\\Phi$ trong mô hình đã xác định (giúp mô tả trạng thái cùng các tham số khác; không phải lịch sử chuyển động tổng quát hoặc mặc nhiên góc quay thực của vật)",
+          "reason": "Giữ giới hạn ý nghĩa pha khi dùng phép ví von nhân sinh; không biến pha thành lịch sử tổng quát."
+        }
+      ],
+      "assessment_proposals": [
+        {
+          "question": "Một vật dao động điều hòa với phương trình $x = 4\\cos(10\\pi t + \\frac{\\pi}{2})$ (cm). Pha ban đầu của dao động là:",
+          "level": "NB",
+          "reason": "Đọc trực tiếp pha ban đầu trong biểu thức, chưa yêu cầu lập luận nhiều bước."
+        },
+        {
+          "question": "Đồ thị li độ - thời gian của một dao động điều hòa là một đường:",
+          "level": "NB",
+          "reason": "Nhận biết trực tiếp dạng đồ thị đã nêu trong định nghĩa."
+        }
+      ]
     }
   ]
 }

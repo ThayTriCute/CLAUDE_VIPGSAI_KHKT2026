@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110803
+T1_CONTEXT_REVISION = 2026110804
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -849,6 +849,7 @@ def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
 
 
 ACADEMIC_GROUNDING_GUIDANCE = """[BỘ LỌC CHƯƠNG TRÌNH VÀ NGUỒN — DÙNG CHUNG]
+Đồ thị, phương trình, bảng và Lab phải dùng cùng hệ số, dấu, đơn vị và phiên bản nguồn; không làm tròn hệ số rồi vẫn ghi dấu bằng với mô hình khác. Giữ biểu thức chính xác khi có căn cứ; nếu chỉ trình bày số gần đúng, ghi rõ gần đúng và độ chính xác. Không trộn số liệu hoặc đơn vị từ bản mẫu với bản tái bản.
 Với mô hình tăng trưởng, lãi kép hoặc suy giảm, phải nêu đại lượng, đơn vị thời gian, tham số và giả thiết; phân biệt số kì với số năm, không áp quy tắc kì nguyên sang thời gian lẻ khi chưa cho mô hình. Không biến phép ví von toán học thành dự báo định lượng mức tiến bộ, phẩm chất hoặc năng lực thực của con người.
 KIỂM CHỨNG TOÀN HỆ THỐNG: Áp dụng cho mọi môn/lớp, Trạm1–2–3 và model dự phòng. Trước trả nội dung, kiểm đủ dữ kiện/điều kiện áp dụng và sự nhất quán giữa ngữ liệu, câu hỏi, phương án, khóa, lời giải và hình; không đưa sẵn đáp án vào gợi ý. Dùng nguồn thực sự được truyền trong ngữ cảnh, báo rõ điểm thiếu hoặc mâu thuẫn, không suy có link là đã đọc. Kết quả kiểm tự động chỉ xác nhận đúng các quy tắc đã kiểm, không thay nghiệm thu kiến thức; không tự nhận đã chạy kiểm local, tính toán độc lập hoặc được chủ dự án duyệt khi không có bằng chứng đó.
 Mọi bài giảng, đề, lời giải, gia sư và Lab phải đúng môn/lớp/chủ đề/nhánh sách trong ngữ cảnh. Khi nguồn cho ranh giới đoạn, số câu/dòng hoặc dữ liệu, giữ đúng phạm vi đó thay vì bản trích quen thuộc; phân biệt lời người kể, nhân vật, tác giả và diễn giải. Câu hỏi, gợi ý, đáp án phải trỏ đúng phần học sinh thấy; không gán số câu hoặc chi tiết theo trí nhớ. Với ngôn ngữ, kiểm thì, dạng từ và tính chất hành động trong cả câu; từ khóa thời gian không tự bảo đảm một phương án đúng. Nếu mọi phương án đều sai hoặc thiếu ngữ cảnh để có đáp án duy nhất, phải sửa câu và kiểm lại toàn bộ phương án, không chọn phương án gần đúng. Tên thì, từ vựng, câu ngoại ngữ và cấu trúc ngôn ngữ dùng chữ thường hoặc backtick, không bọc từng từ trong LaTeX. Không suy từ lời tự báo đã hiểu thành trình độ người bản xứ hoặc đã thành thạo; phân biệt ghi nhận lời nói với kết quả đánh giá thực tế. Bài tự luận cần lời giải gợi ý và tiêu chí đánh giá có nội dung, không chỉ ghi học sinh tự viết; chấp nhận cách lập luận khác có bằng chứng phù hợp. Khi đúc kết nhiều sự kiện, giữ đúng cặp thời gian–địa điểm–nhân vật của từng sự kiện; không gộp một địa điểm hoặc chủ thể cho tất cả các mốc chỉ vì chúng xuất hiện trong cùng câu.
