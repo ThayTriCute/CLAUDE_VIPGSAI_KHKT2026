@@ -29,6 +29,17 @@ class Station1ExportReloadTests(unittest.TestCase):
                 scope['_refresh_t1_context_services']()
                 self.assertEqual(refresh.call_count, 2)
 
+    def test_retained_closure_module_refreshes_shared_guidance(self):
+        from services import philosophy_rotation
+        _, scope = self.namespace()
+        with patch.object(philosophy_rotation, 'T1_CONTEXT_REVISION', 0):
+            with patch('importlib.reload', wraps=__import__('importlib').reload) as refresh:
+                scope['_refresh_t1_context_services']()
+                self.assertEqual([call.args[0] for call in refresh.call_args_list], [philosophy_rotation])
+                self.assertIn('Một ví dụ đúng chỉ chứng minh được ví dụ đó', philosophy_rotation.GUIDANCE)
+                scope['_refresh_t1_context_services']()
+                self.assertEqual(refresh.call_count, 1)
+
     def test_cached_approximate_section_is_replaced_once(self):
         _, scope = self.namespace()
         old = self.old_page.replace('<p>KEEP SOURCE</p>', '<p>KEEP SOURCE</p><section class="verified-function-visuals"><svg><text>≈1.414</text></svg></section>')

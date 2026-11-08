@@ -1,10 +1,11 @@
 def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
-    from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
-    for module, revision in ((lesson_sources, 2026110801), (curriculum_policy, 2026110802),
+    from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation
+    for module, revision in ((lesson_sources, 2026110801), (curriculum_policy, 2026110803),
                              (lab_scope, 2026110803), (lesson_export, 2026110604),
-                             (text_boundaries, 2026110701), (socratic_context, 2026110704)):
+                             (text_boundaries, 2026110701), (socratic_context, 2026110704),
+                             (philosophy_rotation, 2026110801)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
@@ -12042,7 +12043,7 @@ if selected_station == station_labels[0]:
                                         f"Học sinh {student_name} phản hồi: \"{t1_input}\"\n\n"
                                         f"CHỐT CUỘC ĐỐI THOẠI TRẠM 1:\n"
                                         f"1. Học sinh cho biết đã hiểu hoặc muốn kết thúc lượt hỏi. Không hỏi thêm. Đây là ý định kết thúc đối thoại, chưa phải bằng chứng đã thành thạo bài '{st.session_state.get('current_topic', subject)}'.\n"
-                                        f"2. Chỉ ghi nhận đúng ý học sinh đã nói, ví dụ 'Em cho biết không còn câu hỏi.' Không tự thêm ý muốn chuyển sang luyện tập khi học sinh chưa nói vậy. Không tự thêm đánh giá rằng học sinh đã làm chủ, phân biệt được hay thấu suốt kiến thức; lời thầy hoặc lời tổng kết trước đó không phải bằng chứng học sinh đã trả lời.\n"
+                                        f"2. Chỉ ghi nhận đúng ý học sinh đã nói, ví dụ 'Em cho biết không còn câu hỏi.' Nếu em tự báo đã hiểu, ghi rõ đây là lời tự báo và chỉ tóm tắt chính xác phần em đã giải thích; không khẳng định em đã hiểu rõ bản chất, thành thạo, có tư duy như người bản xứ hay hiểu thấu mọi khía cạnh. Một ví dụ đúng chỉ chứng minh được ví dụ đó. Không tự thêm ý muốn chuyển sang luyện tập khi học sinh chưa nói vậy. Không tự thêm đánh giá rằng học sinh đã làm chủ, phân biệt được hay thấu suốt kiến thức; lời thầy hoặc lời tổng kết trước đó không phải bằng chứng học sinh đã trả lời.\n"
                                         f"3. Nhắc cách tự kiểm khi luyện tập: nêu căn cứ từ bài học và kiểm tra kết quả. Không bổ sung kết luận khoa học mới, không mô tả pH là linh hồn/chìa khóa chính xác nhất, không gán acid mạnh hay base dịu êm. Không dùng ẩn dụ trong nội dung chuyên môn.{science_closure}\n"
                                         f"4. BẮT BUỘC có một bài giảng triết lý nhân sinh và đạo đức, ngoài lời khen, theo tinh thần DƯỠNG THIỆN TÂM – ƯƠM NHÂN TÀI. "
                                         f"Viết thành 2–3 đoạn có chiều sâu, phù hợp tuổi; lấy tình huống và điều học sinh vừa nói làm điểm tựa để bàn về cách sống lương thiện, trung thực, trách nhiệm và điều có thể thực hành trong đời sống. "

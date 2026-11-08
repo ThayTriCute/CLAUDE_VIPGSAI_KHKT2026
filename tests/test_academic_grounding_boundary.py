@@ -17,6 +17,9 @@ class AcademicGroundingBoundaryTests(unittest.TestCase):
         self.assertIn('phân biệt số kì với số năm', prepared)
         self.assertIn('giữ đúng phạm vi đó thay vì bản trích quen thuộc', prepared)
         self.assertIn('lời giải gợi ý và tiêu chí đánh giá có nội dung', prepared)
+        self.assertIn('từ khóa thời gian không tự bảo đảm một phương án đúng', prepared)
+        self.assertIn('không bọc từng từ trong LaTeX', prepared)
+        self.assertIn('Không suy từ lời tự báo đã hiểu', prepared)
         self.assertIn('Không biến phép ví von toán học thành dự báo định lượng', prepared)
         for clause in ('mọi môn/lớp, Trạm1–2–3 và model dự phòng',
                        'không thay nghiệm thu kiến thức',

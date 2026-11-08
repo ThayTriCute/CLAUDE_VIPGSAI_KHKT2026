@@ -8,6 +8,20 @@ from tests.test_expert_patch_regressions import load_function
 
 
 class Station1ClosureTests(unittest.TestCase):
+    def test_closure_attributes_self_report_without_upgrading_to_mastery(self):
+        self.run_reply(
+            reply='Đúc kết theo yêu cầu.', subject='Tiếng Anh', grade=11,
+            message='Em đã hiểu past simple và present perfect: phải xét ngữ cảnh, không chỉ nhìn for/since. Em không còn câu hỏi, thầy đúc kết giúp em.')
+        self.assertIn('Nếu em tự báo đã hiểu, ghi rõ đây là lời tự báo', self.last_prompt)
+        self.assertIn('Một ví dụ đúng chỉ chứng minh được ví dụ đó', self.last_prompt)
+        self.assertNotIn('đã chạm đến tư duy ngôn ngữ của người bản xứ', self.last_prompt)
+
+    def test_shared_closure_guidance_bounds_self_report_claims(self):
+        from services.philosophy_rotation import GUIDANCE
+        self.assertIn('Khi học sinh tự báo đã hiểu', GUIDANCE)
+        self.assertIn('Một ví dụ đúng chỉ chứng minh được ví dụ đó', GUIDANCE)
+        self.assertIn('không nâng thành kết luận', GUIDANCE)
+
     def test_closure_does_not_invent_a_request_to_practice(self):
         self.run_reply(reply='Đúc kết theo yêu cầu.')
         self.assertIn('Không tự thêm ý muốn chuyển sang luyện tập', self.last_prompt)

@@ -1271,6 +1271,148 @@
           }
         ]
       }
+    },
+    {
+      "id": "kntt-anh11-unit1-language-20261108",
+      "subject": "Tiếng Anh",
+      "grade": 11,
+      "topics": [
+        "A long and healthy life — Tiếng Anh 11 Global Success, Unit 1: Language"
+      ],
+      "reviewed_on": "2026-11-08",
+      "scope": "Đãsinh1bàithật40.78s,noappException; reviewsource8–10pháthiệnMCQ2hasstartedfor2years/luyentậpthiếungữcảnh/lờigiảithiếu,đangválocal. Chưaquiz/tutor/Lab/owner/3nguồn/YCCĐ/audio.",
+      "sources": [
+        {
+          "title": "Tiếng Anh11 Global Success — Sách học sinh, NXBGDVN/Pearson",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-tieng-anh-11-global-success.4879788302",
+          "locator": "Trang tên sách in1, mục lục2, lời nói đầu3, Unit1Gettingstarted8–9 vàLanguage9–10 đã đọc ảnh nguồn lưu F. Audio chưa nghe; không chứng nhận năng lực nghe/phát âm từ văn bản.",
+          "edition_note": "Tái bản lầnthứba theo trang tênsách; chưa xác minh năm/đínhchính. Cổng khai báo61trangtải,132reader; chỉlưu phầnchọnlọc trongphạmvi đó,không toàn sách. Chưa đủ3nguồn/YCCĐ phápquy.",
+          "criteria": [
+            "Phân biệt past simple với present perfect dựa ngữ cảnh và mốc thời gian; không chỉ nhận diện từ khóa hoặc nói present perfect luôn còn tiếp diễn.",
+            "Dùng ngữ liệu tự đặt có nhãn rõ khi không cung cấp toàn văn SGK; câu hỏi phải tự đủ ngữ cảnh/đáp án, không bịa bài nghe hoặc kết quả nghe.",
+            "Từ vựng sức khỏe là học ngôn ngữ, không chẩn đoán, khuyến cáo điều trị, liều thuốc hoặc bảo đảm tuổi thọ."
+          ]
+        }
+      ],
+      "grounded_facts": [
+        "Unit1tên A long and healthy life, mụcLanguage gồm strong/weak forms auxiliaryverbs, health/fitnessvocabulary, pastsimplevs presentperfect. Chỉ dạy phần đãcó căn cứ, khôngclaimđủ4kĩnăngtoànUnit.",
+        "Đối thoạiMark–Nam: Nam từngănfastfood/thức khuya, nayđổi thóiquen; Namthămôngvàokìnghỉhènămtrước, ôngvừamừngsinhnhật90. Đây là chuyệncủanhânvật,khôngđủchứngminhchếđộănnhấtđịnhbảođảmsống90.",
+        "Trang10: pastsimple mô tả việc bắtđầu/kếtthúctrongquákhứ, thườngđimốcquákhứđãkếtthúc; presentperfect dùng choquátrìnhbắtđầutrongquákhứcòntiếpdiễn (since/for/sofar) hoặcviệcvừahoànthành (just/recently). Khôngbiếndấuhiệuthànhđiềukiệnđủbấtbiến; ngữcảnhquyếtđịnh.",
+        "Trang9: trợđộngtừđầucâuhỏiYes/No thườngkhôngnhấnvàdùngweakform,trongshortanswerscuốicâuthườngnhấnvàdùngstrongform. Đây làthườnggặp,khôngquytắctuyệtđối; audiocủasáchchưanghe.",
+        "Từvựng10gồmtreatment/strength/muscles/sufferfrom/examine. Khôngnhầmexaminekhámvớitreatmentđiềutrị; câu tựđặtphảirõthờiđiểm/vai trò."
+      ],
+      "content_corrections": [
+        {
+          "before": "Em hãy nhớ lại cuộc đối thoại giữa Mark và Nam trong phần *Getting Started*. Nam đã từng có những thói quen chưa tốt nào (ăn đồ ăn nhanh, thức khuya) và cậu ấy đã thay đổi ra sao để có một cuộc sống khỏe mạnh hơn?",
+          "after": "Tóm tắt diễn giải hội thoại SGKtrang8 (không nguyên văn): Mark gặp Nam; Nam cho biết từng ăn nhiều đồ ăn nhanh và thức khuya, nay đã thay đổi thói quen sau lần thăm ông vào mùa hè trước. Dựa vào tóm tắt này, hãy phân biệt việc đã xảy ra ở thời điểm quá khứ với thay đổi còn liên quan hiện tại.",
+          "reason": "Cungcấpngữliệuthấyđược,khônggiảđịnhHSđãđọchộithoạikhônghiệntrongbài."
+        },
+        {
+          "before": "We (live) _______ in this city for ten years.",
+          "after": "We (live) _______ in this city for ten years, and we still live here now.",
+          "reason": "Bổsungngữcảnhđểkhôngchỉdựavàofortwo/tenyears."
+        },
+        {
+          "before": "but he ________ a healthy diet for two years.",
+          "after": "but he ________ a healthy diet for two years and still follows it now.",
+          "reason": "Nêuviệcduytrìkéo dàiđếnhiệntại,khôngcoistartlàhànhđộngduytrì."
+        },
+        {
+          "before": "C. ate / has started",
+          "after": "C. ate / has followed",
+          "reason": "ĐápánCđúngvềthìvàtínhchấthànhđộng;khôngchỉchọnpresentperfecttheofor."
+        },
+        {
+          "before": "Vế sau dùng \"has started\" (Hiện tại hoàn thành) vì có \"for two years\" (kéo dài đến hiện tại).",
+          "after": "Vế sau dùng \"has followed\": việc duy trì chế độ ăn bắt đầu trong quá khứ và còn tiếp diễn theo ngữ cảnh. \"Start\" chỉ sự bắt đầu, nên không dùng \"has started ... for two years\" để diễn tả duy trì. Không chỉ dựa vào từ \"for\" để chọn thì.",
+          "reason": "Kiểmngữcảnhvàthểtìnhhuống,khóaCvẫngiữnguyên."
+        },
+        {
+          "before": "*   **Bước 3: Thực hiện kế hoạch.** Viết lại câu theo cấu trúc đã lập.",
+          "after": "*   **Bước 3: Thực hiện kế hoạch.** Đáp án: I have not suffered from a bad cold for two years. Trong ngữ cảnh bài, người nói không bị lại từ lần cuối hai năm trước tới nay. Rubric tham khảo: have not suffered đúng1đ; for two years đúng1đ; giữ ý và chính tả1đ. Không dùng since two years.",
+          "reason": "Thêmlờigiảithực,khôngchỉyêucầuHSviết."
+        },
+        {
+          "before": "*   **Bước 3: Thực hiện kế hoạch.** Viết các câu thoại bằng tiếng Anh.",
+          "after": "*   **Bước 3: Thực hiện kế hoạch.** Hội thoại tự đặt để luyện ngôn ngữ (không phải tư vấn y tế): Doctor: Can I examine your arm? Patient: Yes, you can. Doctor: I will explain the treatment after the examination. Patient: Thank you. Trợ động từ can ở câu trả lời ngắn thường đọc mạnh /kæn/; chưa nghe audio không coi là đã chấm phát âm. Rubric tham khảo: đúng ít nhất2từ vựng1đ; câu hỏi/trả lời phù hợp1đ; chỉ đúng can và dạng mạnh1đ; mạch lạc và không đưa chỉ định điều trị1đ.",
+          "reason": "Thêmmẫutựđặt/rubric,khôngbịađãngheaudiohayđưachỉđịnhthuốc."
+        },
+        {
+          "before": "(sùng \"suffer from\" hoặc \"examine\")",
+          "after": "(dùng \"suffer from\" hoặc \"examine\")",
+          "reason": "Sửalỗigõtừ."
+        },
+        {
+          "before": "($S + have/has + not + V3/ed$)",
+          "after": "(`S + have/has + not + V3/ed`)",
+          "reason": "Kýhiệucấutrúcngônngữdùngcode,khôngLaTeXchochữthôngthường."
+        },
+        {
+          "before": "In the dialogue: \"Can you exercise every morning?\"",
+          "after": "In this teacher-created dialogue: \"Can you exercise every morning?\"",
+          "reason": "KhônggánhộithoạitựđặtchoSGK/audio."
+        },
+        {
+          "before": "3. The doctor (examine) _______ Nam yesterday morning.",
+          "after": "3. The doctor (examine) _______ Nam yesterday morning.\n\nĐáp án luyện tập: 1. celebrated (last week); 2. have lived (ngữ cảnh vẫn sống tại đây); 3. examined (yesterday morning). Mốc thời gian và ý nghĩa phải được xét cùng nhau.",
+          "reason": "CóbảnkiểmđápsốchoHS tựhọc."
+        },
+        {
+          "before": "Thường đi kèm: *since, for, so far, just, recently...*",
+          "after": "Thường đi kèm: *since, for, so far, just, recently...* Đây là dấu hiệu gợi ý, không tự quyết định thì: cần xét mốc thời gian, ý nghĩa và tính chất hành động. Hiện tại hoàn thành không phải lúc nào cũng là hành động còn tiếp diễn.",
+          "reason": "Khôngbiếndấuhiệunhậnbiếtthànhđiềukiệnđủ."
+        }
+      ],
+      "source_workshop": {
+        "title": "Language Lab: Time, context and meaning",
+        "scope": "Tình huống tự đặt theo LanguageSGK9–10; chỉ luyện đọc/ngữ pháp và nhận biết quy tắc phát âm qua chữ, không audio/chấm nói hoặc tư vấn sức khỏe.",
+        "cards": [
+          {
+            "title": "A — Finished past",
+            "text": "Mina visited her grandfather last Saturday. The visit is finished; last Saturday is a finished past time."
+          },
+          {
+            "title": "B — Continuing situation",
+            "text": "Mina began following a balanced diet two years ago and still follows it today. Focus on the continuing activity, not just the instant when it started."
+          },
+          {
+            "title": "C — Short answer",
+            "text": "A teacher-created exchange: Can I help? — Yes, you can. The auxiliary in this short answer is usually stressed. No recording has been supplied."
+          }
+        ],
+        "questions": [
+          {
+            "prompt": "In A, choose the verb for the completed visit last Saturday.",
+            "options": [
+              "visited",
+              "has visited",
+              "have visit"
+            ],
+            "correct": 0,
+            "feedback": "Visited fits the completed past visit and finished time. Do not choose by a keyword without reading the whole context."
+          },
+          {
+            "prompt": "In B: Mina ___ a balanced diet for two years and still does so.",
+            "options": [
+              "has started",
+              "has followed",
+              "started since"
+            ],
+            "correct": 1,
+            "feedback": "Has followed describes the continuing activity. Has started for two years does not express this intended duration of maintaining the diet."
+          },
+          {
+            "prompt": "What can be assessed from C without an audio recording?",
+            "options": [
+              "The learner has pronounced every sound correctly.",
+              "The exact pitch of the recorded speaker.",
+              "Recognition that can in the short answer is usually in its strong form."
+            ],
+            "correct": 2,
+            "feedback": "Written recognition of the rule is possible; actual listening/pronunciation performance requires suitable audio or speech evidence."
+          }
+        ]
+      }
     }
   ]
 }
