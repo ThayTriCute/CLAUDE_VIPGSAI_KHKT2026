@@ -3,7 +3,7 @@ def _refresh_t1_context_services():
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
     for module, revision in ((lesson_sources, 2026110801), (curriculum_policy, 2026110702),
-                             (lab_scope, 2026110802), (lesson_export, 2026110604),
+                             (lab_scope, 2026110803), (lesson_export, 2026110604),
                              (text_boundaries, 2026110701), (socratic_context, 2026110704)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
@@ -5517,6 +5517,33 @@ def render_smart_lab(data, current_subject=""):
         return f"{name}__{control_scope}"
 
     dtype = data.get("type")
+
+    if dtype == 'geo_fixed_offset_clock':
+        from datetime import date, time
+        from services.lab_scope import fixed_offset_clock
+        st.markdown('### Cùng một thời điểm — ba đồng hồ và ngày lịch')
+        st.caption('Mô hình đổi giờ theo độ lệch UTC được cho; không tự suy giờ pháp định của thành phố, giờ mùa hè hoặc múi giờ từ kinh độ. Chạy local, không gọi AI.')
+        inputs = st.columns(2)
+        with inputs[0]:
+            local_date = st.date_input('Ngày tại điểm A:', value=date(2022, 1, 1), key=lab_key('clock_date'))
+            local_time = st.time_input('Giờ tại điểm A:', value=time(7, 0), key=lab_key('clock_time'))
+        with inputs[1]:
+            source_minutes = st.number_input('Độ lệch UTC tại A (phút):', -720, 840, 420, 15, key=lab_key('clock_source'))
+            target_minutes = st.number_input('Độ lệch UTC tại B (phút):', -720, 840, -360, 15, key=lab_key('clock_target'))
+        st.caption('Ví dụ: UTC+7 = +420 phút; UTC−6 = −360 phút; UTC+5:30 = +330 phút. Nhập dấu của độ lệch, không nhập hướng đi.')
+        try:
+            result = fixed_offset_clock(local_date, local_time, source_minutes, target_minutes)
+            for column, label, value in zip(st.columns(3), ('Điểm A', 'UTC', 'Điểm B'),
+                                           (result['source'], result['utc'], result['target'])):
+                column.metric(label, value.strftime('%H:%M'))
+                column.caption(value.strftime('%d/%m/%Y'))
+            st.success(f"Ngày tại B so với A: {result['day_change']:+d} ngày. Chênh lệch giờ theo dữ kiện: {result['difference_minutes']:+d} phút.")
+            st.write('Cách kiểm: từ giờ A trừ độ lệch A để ra UTC, rồi cộng độ lệch B; giữ cả phần ngày khi qua 0 giờ.')
+            st.info('Thử dự đoán trước khi đổi dữ kiện: giữ A ở 07:00 ngày01/01/2022, UTC+7; chuyển B từ UTC−6 sang UTC+14. Ngày tại B thay đổi ra sao?')
+        except ValueError as error:
+            st.warning(str(error))
+        st.caption('Căn cứ bài học: SGK Địa lí10 KNTT, Bài5 trang18 — giờ và chuyển ngày. Các độ lệch trong công cụ là giả thiết bài tập, không phải bảng giờ pháp định hiện hành.')
+        return
 
     if dtype == 'source_workshop':
         from services.lab_scope import evaluate_source_workshop
@@ -12672,6 +12699,8 @@ if selected_station == station_labels[0]:
 
 
     from services.lab_scope import preset_lab_label, preset_lab_note, resolve_preset_lab
+    if subject == 'Địa lý':
+        available_labs = {'Đổi giờ và ngày theo UTC (KNTT 10)': {'type': 'geo_fixed_offset_clock'}, **available_labs}
     manual_lab = st.selectbox("Mô phỏng có sẵn (không cần API):", list(available_labs), index=None,
         placeholder='Chọn mẫu tham khảo; có công cụ mở rộng ngoài bài học',
         format_func=lambda label: preset_lab_label(label, subject, grade_num))

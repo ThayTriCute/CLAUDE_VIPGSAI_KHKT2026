@@ -4,7 +4,26 @@ import math
 
 from services.academic_context import academic_context, canonical_subject
 
-T1_CONTEXT_REVISION = 2026110802
+T1_CONTEXT_REVISION = 2026110803
+
+
+def fixed_offset_clock(local_date, local_time, source_minutes, target_minutes):
+    """Convert one instant using GIVEN offsets, never infer a city's legal zone."""
+    from datetime import date, datetime, time, timedelta
+    if (type(local_date) is not date or type(local_time) is not time
+            or local_time.tzinfo is not None
+            or any(type(v) is not int or not -720 <= v <= 840
+                   for v in (source_minutes, target_minutes))):
+        raise ValueError('Cần ngày/giờ hợp lệ và độ lệch UTC nguyên phút từ −720 đến +840.')
+    source = datetime.combine(local_date, local_time)
+    try:
+        utc = source - timedelta(minutes=source_minutes)
+        target = utc + timedelta(minutes=target_minutes)
+    except OverflowError as error:
+        raise ValueError('Kết quả vượt phạm vi ngày được hỗ trợ.') from error
+    return dict(source=source, utc=utc, target=target,
+                difference_minutes=target_minutes-source_minutes,
+                day_change=(target.date()-source.date()).days)
 
 
 def osmosis_state(inside, outside, plant=False):
