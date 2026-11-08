@@ -2,8 +2,8 @@ def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation
-    for module, revision in ((lesson_sources, 2026110801), (curriculum_policy, 2026110803),
-                             (lab_scope, 2026110803), (lesson_export, 2026110604),
+    for module, revision in ((lesson_sources, 2026110802), (curriculum_policy, 2026110803),
+                             (lab_scope, 2026110804), (lesson_export, 2026110604),
                              (text_boundaries, 2026110701), (socratic_context, 2026110704),
                              (philosophy_rotation, 2026110801)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
@@ -5544,6 +5544,40 @@ def render_smart_lab(data, current_subject=""):
         except ValueError as error:
             st.warning(str(error))
         st.caption('Căn cứ bài học: SGK Địa lí10 KNTT, Bài5 trang18 — giờ và chuyển ngày. Các độ lệch trong công cụ là giả thiết bài tập, không phải bảng giờ pháp định hiện hành.')
+        return
+
+    if dtype == 'binary_logic':
+        from services.lab_scope import binary_logic_state
+        st.markdown('### Bit Lab — dự đoán rồi đổi đầu vào để tự kiểm')
+        st.caption(data['scope'] + ' Sơ đồ khối quy ước, không phải sơ đồ điện tử hay đo thời gian thật. Không gọi AI.')
+        left, right = st.columns(2)
+        a = left.radio('Bit A:', [0, 1], horizontal=True, key=lab_key('binary_a'))
+        b = right.radio('Bit B:', [0, 1], horizontal=True, key=lab_key('binary_b'))
+        model = binary_logic_state(a, b)
+        for column, label, key in zip(st.columns(4), ['AND', 'OR', 'XOR / S', 'Carry C'],
+                                      ['and_bit', 'or_bit', 'sum_bit', 'carry_bit']):
+            column.metric(label, model[key])
+        for column, label, key in zip(st.columns(3), ['NOT A', 'NOT B', 'A AND NOT B'],
+                                      ['not_a', 'not_b', 'a_and_not_b']):
+            column.metric(label, model[key])
+        st.markdown(f"**Kết quả cộng:** `{a} + {b} = {model['binary_sum']}` (nhị phân, thứ tự `C S`); "
+                    f"kiểm giá trị: `2C + S = {2*model['carry_bit']+model['sum_bit']}`.")
+        st.markdown(f'''<svg viewBox="0 0 850 330" role="img" aria-label="Mạch cộng hai bit: XOR tạo S, AND tạo C, không có nhớ vào" style="width:100%;max-width:850px;background:transparent">
+<g fill="none" stroke="#22b8cf" stroke-width="3"><rect x="300" y="30" width="180" height="105" rx="12"/><rect x="300" y="195" width="180" height="105" rx="12"/>
+<path d="M150 55H300M150 110H300M480 82H720M150 220H300M150 275H300M480 247H720"/></g>
+<g fill="currentColor" font-family="sans-serif" font-size="23" text-anchor="middle">
+<text x="92" y="63">A = {a}</text><text x="92" y="118">B = {b}</text><text x="390" y="90">XOR</text><text x="750" y="90">S = {model['sum_bit']}</text>
+<text x="92" y="228">A = {a}</text><text x="92" y="283">B = {b}</text><text x="390" y="255">AND</text><text x="750" y="255">C = {model['carry_bit']}</text></g></svg>''', unsafe_allow_html=True)
+        st.dataframe([dict(A=x, B=y, AND=binary_logic_state(x,y)['and_bit'],
+                          OR=binary_logic_state(x,y)['or_bit'], S=binary_logic_state(x,y)['sum_bit'],
+                          C=binary_logic_state(x,y)['carry_bit'], Y=binary_logic_state(x,y)['a_and_not_b'])
+                      for x in (0,1) for y in (0,1)], hide_index=True)
+        st.info('Tự kiểm: thử đủ00,01,10,11. Khi nào xuất hiện nhớ? Vì sao XOR khác OR ở11? '
+                'So Y=A AND NOT(B) với bảng trước khi đổi đầu vào. Mô hình không có carry-in; không suy đây là toàn bộ bộ cộng củaCPU.')
+        with st.expander('Căn cứ và phạm vi của bài thực hành'):
+            for source in data['sources']:
+                st.markdown('[' + source['title'] + '](' + source['url'] + ')')
+                st.caption(source['locator'])
         return
 
     if dtype == 'source_workshop':
@@ -12723,18 +12757,19 @@ if selected_station == station_labels[0]:
     from services.lab_scope import horizontal_throw_request
     from services.lab_scope import reaction_rate_table_request
     from services.lab_scope import osmosis_lab_request
-    from services.lab_scope import reviewed_workshop_request, is_local_workshop_command
+    from services.lab_scope import reviewed_workshop_request, is_local_workshop_command, reviewed_logic_lab_request, is_local_logic_command
     explicit_local_model = (explicit_light_model or soil_ph_lab_request(lab_command, subject)
                             or horizontal_throw_request(lab_command, subject)
                             or reaction_rate_table_request(lab_command, subject, grade_num, st.session_state.get('current_topic', ''))
                             or osmosis_lab_request(lab_command, subject, grade_num, st.session_state.get('current_topic', ''))
+                            or reviewed_logic_lab_request(lab_command, subject, grade_num, st.session_state.get('current_topic', ''))
                             or reviewed_workshop_request(lab_command, subject, grade_num, st.session_state.get('current_topic', '')))
     lab_clicked = st.button("✨ Khởi chạy Phòng Lab", key=f"btn_lab_{current_context_key}")
     if lab_clicked and lab_command.strip() and explicit_local_model is not None:
         st.session_state[f'lab_intent_command_{current_context_key}'] = lab_command
         st.session_state.lab_request_revision = st.session_state.get("lab_request_revision", 0) + 1
         st.session_state.lab_data = explicit_local_model
-    local_workshop_requested = is_local_workshop_command(lab_command)
+    local_workshop_requested = is_local_workshop_command(lab_command) or is_local_logic_command(lab_command)
     if lab_clicked and local_workshop_requested and explicit_local_model is None:
         st.warning('Bài này chưa có đủ cấu hình thực hành theo nguồn; chưa gọi AI thay thế.')
     if lab_clicked and lab_command.strip() and explicit_local_model is None and not local_workshop_requested:

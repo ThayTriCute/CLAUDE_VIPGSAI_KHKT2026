@@ -1413,6 +1413,125 @@
           }
         ]
       }
+    },
+    {
+      "id": "kntt-tin11-cs-bai4-20261108",
+      "subject": "Tin học",
+      "grade": 11,
+      "topics": [
+        "Tin học 11 - Định hướng Khoa học máy tính, KNTT, Bài 4: Bên trong máy tính"
+      ],
+      "reviewed_on": "2026-11-08",
+      "scope": "NguồnVniTeachliênkếtPDFđãđọc21–26;1bàithật38.71s,cấutrúckhôngfindingnhưngreviewpháthiệnsuyhiệunăngthiếudữkiện/lờigiảithiếu. Chưađủ3nguồn/ấn bản/owner/toànCT.",
+      "sources": [
+        {
+          "title": "SGK Tin học 11 - Định hướng Khoa học máy tính, Kết nối tri thức (PDF preview embedded by VniTeach)",
+          "url": "https://www.vniteach.com/2022/12/06/sgk-tin-hoc-11-cs-bo-sach-kntt/",
+          "locator": "Lời nói đầu printed p.3/PDF p.4; mục lục printed p.4/PDF p.5; Bài 4 printed pp.21-26/PDF pp.22-27, visually read. PDF metadata reports 149 pages. Cover/title page was not inspected.",
+          "edition_note": "The VniTeach entry and read introductory page identify Tin học 11, KNTT, Computer Science direction. The embedded Drive copy's exact publisher edition/revision and completeness were not verified. This packet records only the pages read and does not imply the whole book or curriculum was reviewed.",
+          "criteria": [
+            "Phân biệt vai trò CPU, RAM, ROM và lưu trữ; không xếp hạng hiệu năng chỉ theo tuổi CPU, dung lượngSSD hoặc xungnhịp.",
+            "Giải thích AND/OR/NOT/XOR bằng bảng chân trị, cộng2bit với sum/carry và điều kiện không có carry-in.",
+            "Có lời giải/đáp số/rubric tự học; dữ liệu chưa đủ phải nói chưa đủ, không ép chọn nâng cấp phần cứng."
+          ]
+        }
+      ],
+      "grounded_facts": [
+        "Paraphrase of the bounded pages: the lesson introduces internal computer components, with a motherboard linking the processor, internal memory, external storage and expansion devices. It distinguishes CPU arithmetic/logic and control roles, describes clock rate and mentions registers/cache and multi-core processors. It contrasts volatile RAM with non-volatile ROM and long-term external storage, focusing on capacity and average access time. The second part models binary values with 0/1, gives AND/OR/NOT/XOR behavior, relates gates and simple relay circuits to logic operations, and explains binary addition with carry; the two-bit adder output is split into sum (XOR) and carry (AND). The page set ends with review exercises and one application prompt. The stated outcomes are identifying internal components/performance measures and explaining logic-circuit roles in binary computation. No claims beyond printed pages 21-26 are included."
+      ],
+      "content_corrections": [
+        {
+          "before": "Tại sao một chiếc máy tính có CPU đời mới lại chạy nhanh hơn máy tính cũ?",
+          "after": "Có thể chỉ dựa vào CPU đời mới để kết luận máy tính chạy nhanh hơn không? Cần xét tác vụ, bộ xử lí, bộ nhớ và lưu trữ cùng nhau.",
+          "reason": "KhôngkhẳngđịnhthếhệCPUquyếtđịnhmọitácvụ."
+        },
+        {
+          "before": "Mọi dữ liệu trong máy tính được biểu diễn bằng hệ nhị phân (0 và 1), tương ứng với trạng thái đóng/ngắt của mạch điện.",
+          "after": "Ở mức xử lí số đang xét, dữ liệu được biểu diễn bằng các bit0/1. Trong mô hình mạch của bài, trạng thái mạch được dùng để minh họa giá trị logic; không coi0/1 là quy tắc đóng/ngắt vật lí duy nhất cho mọi thiết bị.",
+          "reason": "Phânbiệtmôhìnhlogicvớicáchmãhóavậtlí."
+        },
+        {
+          "before": "Phép cộng 2 bit $a$ và $b$ cho kết quả",
+          "after": "Mạch cộng hai bit $a,b$ không có bit nhớ vào (half-adder) cho kết quả",
+          "reason": "Nêuđúngphạmvimạchcộnghaibit,khôngnhầmfulladder."
+        },
+        {
+          "before": "Hãy hoàn thành bảng trạng thái cho cổng logic AND với hai đầu vào $A, B$:\n*   Nếu $A=0, B=0 \\rightarrow$ Kết quả?\n*   Nếu $A=1, B=1 \\rightarrow$ Kết quả?\n*(Gợi ý: Cổng AND chỉ cho kết quả là 1 khi tất cả đầu vào đều là 1).*",
+          "after": "Hãy hoàn thành cả bốn trường hợp của cổng AND với hai bit $A,B$.\n\n| A | B | AND |\n|---|---|---|\n|0|0|0|\n|0|1|0|\n|1|0|0|\n|1|1|1|\n\nĐáp án được ghi trong bảng để tự kiểm; AND bằng1 chỉ khi cả hai bit bằng1.",
+          "reason": "Tựhọccóbảngđủ4cakhôngchỉ2cabiên."
+        },
+        {
+          "before": "Nếu bạn định nâng cấp máy tính để chơi game hoặc thiết kế đồ họa, giữa việc tăng dung lượng ổ cứng (SSD) từ 256GB lên 512GB và việc tăng tốc độ CPU, yếu tố nào sẽ giúp ứng dụng khởi động và phản hồi nhanh hơn? Tại sao?",
+          "after": "Một máy có SSD256GB, máy khác có SSD512GB nhưng chưa biết tốc độ đọc/ghi, CPU, RAM và tác vụ. Có thể kết luận máy nào khởi động ứng dụng nhanh hơn không?\n\nGợi ý giải: Chưa đủ dữ kiện. Dung lượng nói về khả năng lưu trữ, không trực tiếp xác định tốc độ; xung nhịpCPU cũng không là yếu tố duy nhất. Cần so đúng tác vụ và cấu hình, không buộc chọn một phương án nâng cấp khi thiếu thông tin.",
+          "reason": "Bỏlựachọnnhịnguyênthiếudữkiện,phânbiệtdunglượng/tốcđộ."
+        },
+        {
+          "before": "Bạn hãy thực hiện phép tính: $3.5 \\times 10^9$. Sau đó, hãy viết một đoạn văn ngắn nêu rõ: Tốc độ này càng cao thì CPU có khả năng xử lý các lệnh như thế nào?",
+          "after": "Ở tần số giả định không đổi3,5GHz trong1giây: $3.5 \\times 10^9 = 3\\,500\\,000\\,000$ chu kì. Đây là số chu kì xung nhịp, không phải mặc nhiên số lệnh hoặc thước đo hiệu năng toàn máy. Cần xét thêm kiến trúc, bộ nhớ và tác vụ khi so sánh. Rubric tham khảo: đổiđơnvị1đ, sốchu kì1đ, phânbiệtvớisốlệnh/hiệunăng1đ.",
+          "reason": "Đáp sốđộc lập3.5e9chu kỳ,khôngsuy1chu kỳ=1lệnh."
+        },
+        {
+          "before": "Giả sử bạn có 3 cổng logic: một cổng AND, một cổng OR và một cổng NOT. Hãy thiết kế",
+          "after": "Cho phép chọn các cổng cần dùng từ ba loại AND, OR, NOT (không bắt buộc dùng hết). Hãy thiết kế",
+          "reason": "LàmrõcổngORcóthểkhôngdùng,khôngéplắpmạchthừa."
+        },
+        {
+          "before": "Hãy mô tả lại sơ đồ này.",
+          "after": "Đáp án: $Y=A \\land \\lnot B$. Sơ đồ: B→NOT, đầu ra NOT cùng A→AND→Y; không cầnOR. Bảng kiểm theo thứ tự(A,B)=(0,0),(0,1),(1,0),(1,1) choY=0,0,1,0. Rubric tham khảo: NOTđúngđầuB1đ, ANDvớiA1đ, bảngđủ4ca1đ, nêuORkhôngcần1đ.",
+          "reason": "Lờigiảicóbảngvàrubricđầyđủ."
+        }
+      ],
+      "source_workshop": {
+        "interactive_model": "binary_logic",
+        "title": "Bit Lab: dự đoán, đổi đầu vào và kiểm chứng",
+        "scope": "Mô hình logic lý tưởng hai bit; không mô phỏng điện áp/thời gian hoặc cấu trúc vật lí CPU. Cộnghai bit khôngcarry-in.",
+        "cards": [
+          {
+            "title": "Hai bit",
+            "text": "A vàB chỉ nhận0/1; thử đủbốn cặp trước kết luận."
+          },
+          {
+            "title": "Hai đầu ra",
+            "text": "S=XOR(A,B), C=AND(A,B), giá trị phép cộng bằng2C+S."
+          },
+          {
+            "title": "Mạch ghép",
+            "text": "Y=A AND NOT(B); NOTtácđộnglênBtrước khi đưa vàoAND."
+          }
+        ],
+        "questions": [
+          {
+            "prompt": "A=B=1, cặp(C,S) nào đúng?",
+            "options": [
+              "(0,1)",
+              "(1,0)",
+              "(1,1)"
+            ],
+            "correct": 1,
+            "feedback": "1+1=10nhịphân,carry1vàsum0."
+          },
+          {
+            "prompt": "Y=A AND NOT(B) bằng1 ở cặp nào?",
+            "options": [
+              "(A,B)=(1,0)",
+              "(A,B)=(0,1)",
+              "Mọi cặp đầu vào"
+            ],
+            "correct": 0,
+            "feedback": "A=1vàB=0mới choNOT(B)=1vàAND=1."
+          },
+          {
+            "prompt": "Có thể suy số lệnh/giây đúng bằng3.5tỉ từCPU3.5GHz không?",
+            "options": [
+              "Luôn luôn đúng.",
+              "Chỉ cần biết dung lượngSSD.",
+              "Không; đó là số chu kì, thiếu dữ kiện về thực thi lệnh."
+            ],
+            "correct": 2,
+            "feedback": "Khôngđồngnhấtchu kìvớilệnhhoặchiệunăngtoànmáy."
+          }
+        ]
+      }
     }
   ]
 }
