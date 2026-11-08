@@ -51,6 +51,23 @@ class LessonSourceReviewTests(unittest.TestCase):
         self.assertEqual(sources._review_registry.cache_info().misses, 1)
         self.assertGreater(sources._review_registry.cache_info().hits, 0)
 
+    def test_new_grade10_source_profiles_reach_exact_lesson_only(self):
+        topics=[('Địa lý','Hệ quả địa lí các chuyển động của Trái Đất — Địa lí 10, KNTT, Bài 5','17–20'),
+                ('Giáo dục kinh tế và pháp luật','Khái niệm, đặc điểm và vai trò của pháp luật — GDKT&PL 10, KNTT, Bài 11','78–83')]
+        for subject,topic,pages in topics:
+            _,prompt=lesson_generation_request(subject,10,topic)
+            context=json.loads(prompt.splitlines()[0]);review=context['reviewed_requirements_source']
+            self.assertIn(pages,review['sources'][0]['locator'])
+            self.assertNotIn('accepted', review)
+            self.assertTrue(review['scope'])
+            if subject.startswith('Giáo dục'):
+                self.assertIn('Chưa chứng nhận',review['scope'])
+                self.assertIn('THSQGcatalog không thấy link',review['scope'])
+                self.assertIn('Điều8(1)',review['sources'][1]['criteria'][0])
+                self.assertIn('Không sao chép mức phạt',review['sources'][0]['criteria'][4])
+            _,other=lesson_generation_request(subject,11,topic)
+            self.assertNotIn('reviewed_requirements_source',json.loads(other.splitlines()[0]))
+
     def test_generation_receives_reviewed_criteria_only_for_matching_lesson(self):
         _, prompt = lesson_generation_request('Ngữ văn', 6, TOPIC)
         context = json.loads(prompt.splitlines()[0])

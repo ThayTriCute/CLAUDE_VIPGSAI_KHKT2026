@@ -103,16 +103,15 @@
       "checked_at": "2026-10-24"
     },
     {
-      "code": "13/2026/TT-BGDĐT",
-      "effective_from": "2026-04-24",
-      "scope": "graduation",
-      "status": "active",
-      "url": "https://vanban.chinhphu.vn/?docid=206343&pageid=27160",
-      "note": "Sửa Quy chế thi tốt nghiệp THPT; ban hành 09/03/2026.",
-      "checked_at": "2026-11-02",
-      "original_copy_url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2022/08/13-bgddt.signed.pdf",
-      "verification_scope": "signed_original_pages1_3_read; Article1_general_upper_secondary_plan_and_Article2_History; no_replacement_of_mathematics_subject_appendix_in_these_articles"
-    },
+  "code": "13/2026/TT-BGDĐT",
+  "effective_from": "2026-04-24",
+  "scope": "graduation",
+  "status": "active",
+  "url": "https://vanban.chinhphu.vn/?docid=217189&pageid=27160&typegroupid=6",
+  "note": "Sửa Quy chế thi tốt nghiệp THPT; ban hành 09/03/2026.",
+  "checked_at": "2026-11-07",
+  "verification_scope": "official_document_identity_checked_20261107; not_full_text_article_mapping; removed_misattributed_2022_original"
+},
     {
       "code": "764/QĐ-BGDĐT",
       "effective_from": "2024-03-08",

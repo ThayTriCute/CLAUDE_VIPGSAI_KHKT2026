@@ -47,3 +47,18 @@ class FullLessonArchiveTests(unittest.TestCase):
         exec(compile(ast.Module(body=block,type_ignores=[]),'<actual-full-download>','exec'),ns)
         self.assertEqual(len(calls),1)
         self.assertEqual(decode_full_lesson(calls[0][0][1],'Tiếng Anh',10)['text'],TEXT)
+        # Exercise the same actual download block with a source-backed repair:
+        # the old path downloaded uncorrected text while UI showed a repair.
+        from services.lesson_sources import reviewed_lesson_sources
+        topic='Trao đổi chất qua màng tế bào — Sinh học 10, KNTT, Bài 10'
+        rule=next(r for r in reviewed_lesson_sources('Sinh học',10,topic)['content_corrections']
+                  if r['before'].startswith('Sự vận chuyển glucose'))
+        st.session_state.update(current_lesson=rule['before']+'\nCORRECT: B',current_topic=topic)
+        ns.update(subject='Sinh học',grade_num=10)
+        calls.clear()
+        exec(compile(ast.Module(body=block,type_ignores=[]),'<actual-full-download-reviewed>','exec'),ns)
+        restored=decode_full_lesson(calls[0][0][1],'Sinh học',10)['text']
+        self.assertIn(rule['after'],restored)
+        self.assertIn('CORRECT: B',restored)
+        import hashlib
+        self.assertEqual(calls[0][1]['file_name'],'Bai_hoc_day_du_'+hashlib.sha256(restored.encode()).hexdigest()[:12]+'.json')

@@ -17,6 +17,36 @@ def source_text_html(value):
                    else html.escape(chunk) for index, chunk in enumerate(chunks))
 
 
+def teaching_text_html(value):
+    """Use the shared step layout in answer sheets, retaining literal code/math."""
+    from services.lesson_export import _TOKENS
+    from services.text_boundaries import polya_display_markdown
+    def prose(text):
+        escaped = html.escape(text)
+        escaped = re.sub(r'\*\*((?:Bước|Step)\s+\d+:[^*\n]*?)\*\*', r'<strong>\1</strong>', escaped, flags=re.I)
+        return escaped.replace('\n\n', '<br><br>')
+    chunks = _TOKENS.split(polya_display_markdown(value))
+    return ''.join(source_text_html(chunk) if index % 2 else prose(chunk)
+                   for index, chunk in enumerate(chunks))
+
+
+def teaching_text_latex(value, converter):
+    """Insert TeX paragraphs only outside protected code and math spans."""
+    from services.text_boundaries import polya_display_markdown, preserve_math_and_code
+    formatted = polya_display_markdown(value)
+    marker = 'GSAISTEPPARAGRAPH'
+    while marker in formatted:
+        marker += 'X'
+    separated = preserve_math_and_code(formatted, lambda text: text.replace('\n\n', marker))
+    parts = []
+    for part in separated.split(marker):
+        # The label is display markup; preserve its words in the TeX output.
+        part = preserve_math_and_code(part, lambda text: re.sub(
+            r'\*\*((?:Bước|Step)\s+\d+:[^*\n]*?)\*\*', r'\1', text, flags=re.I))
+        parts.append(converter(part))
+    return r'\par\smallskip '.join(parts)
+
+
 def code_text_latex(block):
     replacements = {"\\": r"\textbackslash{}", "{": r"\{", "}": r"\}",
                     "&": r"\&", "%": r"\%", "_": r"\_", "#": r"\#",

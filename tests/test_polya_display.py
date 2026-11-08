@@ -1,10 +1,66 @@
 import unittest
 
 from services.lesson_export import lesson_body_html
-from services.text_boundaries import polya_display_markdown, student_essay_text
+from services.text_boundaries import chemical_display_markdown, polya_display_markdown, student_essay_text
 
 
 class PolyaDisplayTests(unittest.TestCase):
+    def test_complete_bold_step_titles_do_not_leave_literal_delimiters(self):
+        source = ('**Bước 1: Đặt vấn đề** Em đã tính $T$ và $L$.\n\n'
+                  '**Bước 2: Gợi mở tư duy** Tăng $v_0$ thì sao?')
+        result = polya_display_markdown(source)
+        self.assertIn('**Bước 1:** Đặt vấn đề Em', result)
+        self.assertNotIn('vấn đề**', result)
+        self.assertNotIn('tư duy**', result)
+        self.assertEqual(polya_display_markdown(result), result)
+        self.assertIn('$v_0$', result)
+        self.assertNotIn('**', lesson_body_html(source))
+        self.assertIn('**Bước 2: keep**', polya_display_markdown('`**Bước 2: keep**`'))
+
+    def test_plain_example_steps_are_separate_in_live_and_export(self):
+        source = ('Ví dụ: Đối chiếu số đo.\nHướng dẫn:\n'
+                  '- Bước 1: So sánh $pH=5,5$ với ngưỡng.\n'
+                  '- Bước 2: Xét điều kiện trước khi kết luận.')
+        for render in (polya_display_markdown, chemical_display_markdown):
+            result = render(source)
+            self.assertIn('\n\n**Bước 1:** So sánh $pH=5,5$', result)
+            self.assertIn('\n\n**Bước 2:** Xét điều kiện', result)
+            self.assertEqual(render(result), result)
+            self.assertNotIn('Tìm hiểu đề', result)
+        page = lesson_body_html(source)
+        self.assertIn('<p><strong>Bước 1:</strong>', page)
+        self.assertIn('<p><strong>Bước 2:</strong>', page)
+
+    def test_arbitrary_step_count_inline_english_and_protected_content(self):
+        source = ('Quy trình: Step 1: Read the data. Step 5: Check the result.\n'
+                  'Bước 6: Viết báo cáo.\n'
+                  '`Bước 1: literal`\n$\\text{Step 2: keep}$\n'
+                  '<svg><text>Bước 3: Nhãn hình</text></svg>')
+        result = chemical_display_markdown(source)
+        for label in ('Step 1', 'Step 5', 'Bước 6'):
+            self.assertIn('\n\n**' + label + ':**', result)
+        for protected in ('`Bước 1: literal`', '$\\text{Step 2: keep}$',
+                          '<svg><text>Bước 3: Nhãn hình</text></svg>'):
+            self.assertIn(protected, result)
+        option = 'A. Bước 1: So sánh rồi kết luận.'
+        self.assertEqual(chemical_display_markdown(option, separate_steps=False), option)
+
+    def test_exam_answer_html_and_tex_reuse_step_layout_without_editing_code(self):
+        from services.exam_code_text import teaching_text_html, teaching_text_latex
+        source = ('Bước 1: Xét $x<2$. Bước 2: Kết luận.\n\n'
+                  '```text\n**Bước 9:** literal\n```\n'
+                  '$\\text{Bước 8: keep}$')
+        page = teaching_text_html(source)
+        self.assertIn('<strong>Bước 1:</strong>', page)
+        self.assertIn('<br><br><strong>Bước 2:</strong>', page)
+        self.assertIn('**Bước 9:** literal', page)
+        self.assertNotIn('<strong>Bước 9:', page)
+        tex = teaching_text_latex(source, lambda value: value)
+        self.assertIn(r'\par\smallskip Bước 2:', tex)
+        self.assertIn('**Bước 9:** literal', tex)
+        self.assertIn('$\\text{Bước 8: keep}$', tex)
+        self.assertIn('$x<2$', tex)
+
     source = ('Câu 1. Em hãy kể một trải nghiệm.\n\n'
               'Bước 1: Tìm hiểu đề: Em kể điều gì? Bước 2: Lập kế hoạch: Chọn trình tự. '
               'Bước 3: Thực hiện kế hoạch: Tự viết bài. Bước 4: Kiểm tra và nhìn lại: Tự sửa.')

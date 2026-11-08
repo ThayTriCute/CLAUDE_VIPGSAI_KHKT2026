@@ -4,7 +4,160 @@ import math
 
 from services.academic_context import academic_context, canonical_subject
 
-T1_CONTEXT_REVISION = 2026110202
+T1_CONTEXT_REVISION = 2026110803
+
+
+def fixed_offset_clock(local_date, local_time, source_minutes, target_minutes):
+    """Convert one instant using GIVEN offsets, never infer a city's legal zone."""
+    from datetime import date, datetime, time, timedelta
+    if (type(local_date) is not date or type(local_time) is not time
+            or local_time.tzinfo is not None
+            or any(type(v) is not int or not -720 <= v <= 840
+                   for v in (source_minutes, target_minutes))):
+        raise ValueError('Cần ngày/giờ hợp lệ và độ lệch UTC nguyên phút từ −720 đến +840.')
+    source = datetime.combine(local_date, local_time)
+    try:
+        utc = source - timedelta(minutes=source_minutes)
+        target = utc + timedelta(minutes=target_minutes)
+    except OverflowError as error:
+        raise ValueError('Kết quả vượt phạm vi ngày được hỗ trợ.') from error
+    return dict(source=source, utc=utc, target=target,
+                difference_minutes=target_minutes-source_minutes,
+                day_change=(target.date()-source.date()).days)
+
+
+def osmosis_state(inside, outside, plant=False):
+    """Initial net direction for impermeant effective osmoles, equal pressure/T.
+
+    No physical time, volume curve or lysis threshold is inferred from SGK.
+    Later plant wall pressure can balance osmosis; this is not an endpoint model.
+    """
+    inside, outside = float(inside), float(outside)
+    if any(not math.isfinite(x) or x < 0 for x in (inside, outside)):
+        raise ValueError('Nồng độ phải hữu hạn và không âm.')
+    delta = inside-outside
+    if abs(delta) <= 1e-9:
+        direction, environment = 'balanced', 'isotonic'
+        result = 'Không có dòng nước thuần; nước vẫn trao đổi hai chiều.'
+    elif delta > 0:
+        direction, environment = 'inward', 'hypotonic'
+        result = ('Nước vào ban đầu; thành tế bào tạo sức trương, áp suất tăng có thể cân bằng dòng nước.'
+                  if plant else 'Nước vào ban đầu; tế bào có thể trương và vỡ tùy điều kiện, không suy ngưỡng từ mô hình này.')
+    else:
+        direction, environment = 'outward', 'hypertonic'
+        result = ('Mất nước, giảm sức trương; đủ mất nước có thể co nguyên sinh, màng tách khỏi thành.'
+                  if plant else 'Mất nước và co lại; không gọi là co nguyên sinh ở tế bào động vật.')
+    return dict(direction=direction, environment=environment, delta=delta,
+                result=result, bidirectional_exchange=True)
+
+
+def osmosis_lab_request(command, subject, grade, topic):
+    from services.academic_context import folded
+    from services.lesson_sources import reviewed_lesson_sources
+    if canonical_subject(subject) != 'Sinh học' or int(grade) != 10 or 'tham thau' not in folded(command):
+        return None
+    review = reviewed_lesson_sources(subject, grade, topic)
+    if review.get('id') != 'kntt-sinh10-membrane-20261107' or review['status'] != 'reviewed_requirements_source':
+        return None
+    return dict(type='bio_osmosis', source_url=review['sources'][0]['url'])
+
+
+def reaction_rate_table_request(command, subject, grade, topic):
+    """Route only the explicitly requested, reviewed H2O2 source table."""
+    from services.academic_context import folded
+    from services.lesson_sources import reviewed_lesson_sources
+    if canonical_subject(subject) != 'Hóa học' or int(grade) != 10:
+        return None
+    if 'bang 19 1' not in folded(command) or 'h2o2' not in folded(command):
+        return None
+    review = reviewed_lesson_sources(subject, grade, topic)
+    if review.get('id') != 'kntt-hoa10-tocdo-20261107' or review['status'] != 'reviewed_requirements_source':
+        return None
+    return {'type': 'chem_rate_table', 'times_h': [0, 3, 6, 9, 12],
+            'concentrations_M': [1.000, .707, .500, .354, .250],
+            'source_url': review['sources'][0]['url'], 'source_locator': 'SGK Hóa10 Bảng19.1, trang93'}
+
+
+def average_reactant_rate(times, concentrations, start, end, coefficient=1):
+    if (len(times) != len(concentrations) or len(times) < 2
+            or not all(math.isfinite(v) for v in (*times, *concentrations, coefficient))
+            or any(b <= a for a, b in zip(times, times[1:]))
+            or any(c < 0 for c in concentrations) or coefficient <= 0
+            or not (type(start) is int and type(end) is int and 0 <= start < end < len(times))):
+        raise ValueError('Cần dữ liệu hữu hạn, thời gian tăng và hai mốc khác nhau; hệ số dương.')
+    loss = (concentrations[start] - concentrations[end]) / (times[end] - times[start])
+    return {'loss_rate': loss, 'normalized_rate': loss / coefficient,
+            'delta_t': times[end] - times[start], 'delta_c': concentrations[end] - concentrations[start]}
+
+
+def experimental_rate_ratio(no_ratio, oxygen_ratio):
+    if not all(math.isfinite(x) and x >= 0 for x in (no_ratio, oxygen_ratio)):
+        raise ValueError('Tỉ lệ nồng độ phải không âm, hữu hạn.')
+    return no_ratio ** 2 * oxygen_ratio
+
+
+def temperature_rate_ratio(gamma, low, high):
+    if not all(math.isfinite(x) for x in (gamma, low, high)) or gamma <= 0:
+        raise ValueError('Hệ số nhiệt độ phải dương và dữ kiện hữu hạn.')
+    return gamma ** ((high - low) / 10)
+
+
+def horizontal_throw_request(command, subject):
+    """Use only explicit SI parameters; never substitute an unrelated preset."""
+    from services.academic_context import folded
+    import unicodedata
+    text = ''.join(c for c in unicodedata.normalize('NFD', str(command).casefold())
+                   if not unicodedata.combining(c)).replace('đ', 'd')
+    if canonical_subject(subject) not in ('Vật lý', 'Khoa học tự nhiên') or 'nem ngang' not in folded(command):
+        return None
+    patterns = {'height': r'\bh\s*=\s*(\d+(?:[.,]\d+)?)\s*m(?![/a-z])',
+                'speed': r'\bv[_ ]?0\s*=\s*(\d+(?:[.,]\d+)?)\s*m\s*/\s*s\b',
+                'gravity': r'\bg\s*=\s*(\d+(?:[.,]\d+)?)\s*m\s*/\s*s(?:\^?2|²)'}
+    values = {}
+    for key, pattern in patterns.items():
+        matches = re.findall(pattern, text)
+        if len(matches) != 1:
+            return None
+        values[key] = float(matches[0].replace(',', '.'))
+    if not all(math.isfinite(v) and 0 < v <= 10000 for v in values.values()):
+        return None
+    return dict(values, type='horizontal_throw')
+
+
+def horizontal_throw_state(height, speed, gravity, fraction):
+    """Ideal near-Earth motion, height measured up from a flat ground plane."""
+    if (not all(math.isfinite(v) and v > 0 for v in (height, speed, gravity))
+            or not math.isfinite(fraction) or not 0 <= fraction <= 1):
+        raise ValueError('Cần H, v₀, g dương hữu hạn và tiến trình từ 0 đến 1.')
+    total = math.sqrt(2 * height / gravity)
+    t = total * fraction
+    return {'T': total, 'L': speed * total, 't': t, 'x': speed * t,
+            'z': max(0.0, height * (1 - fraction * fraction)),
+            'vx': speed, 'vz': -gravity * t, 'speed': math.hypot(speed, gravity * t)}
+
+
+def classify_closed_band(value, low, high):
+    """Classify an explicit inclusive numeric band, without inferring its limits."""
+    if not all(math.isfinite(v) for v in (value, low, high)) or low >= high:
+        raise ValueError('Giá trị phải hữu hạn và ngưỡng dưới nhỏ hơn ngưỡng trên.')
+    return 'below' if value < low else ('above' if value > high else 'within')
+
+
+def soil_ph_lab_request(command, subject):
+    import unicodedata
+    if canonical_subject(subject) not in ('Công nghệ', 'Khoa học tự nhiên', 'Hóa học'):
+        return None
+    text = ''.join(c for c in unicodedata.normalize('NFD', str(command).lower())
+                   if unicodedata.category(c) != 'Mn').replace('đ', 'd')
+    if not ('dat' in text and re.search(r'\bph\b', text)):
+        return None
+    match = re.search(r'trung tinh\s+tu\s+(\d+(?:[.,]\d+)?)\s+den\s+(\d+(?:[.,]\d+)?)', text)
+    if not match:
+        return None
+    low, high = (float(v.replace(',', '.')) for v in match.groups())
+    if not 0 <= low < high <= 14:
+        return None
+    return {'type': 'soil_ph_band', 'low': low, 'high': high}
 
 
 def is_proposition_request(command, subject):
@@ -195,3 +348,50 @@ def preset_lab_note(subject, grade):
             'Giữ các công cụ mở rộng; nhãn lớp lấy từ cấu hình mẫu, chưa phải đối chiếu SGK. '
             'Mẫu có sẵn không tự lấy hàm số hoặc dữ kiện từ bài học. '
             'Muốn mô phỏng theo bài, hãy nêu rõ dữ kiện trong lệnh mô phỏng bên dưới.')
+
+
+def is_local_workshop_command(command):
+    from services.academic_context import folded
+    return folded(command) == 'doi chieu tu lieu theo bai hoc'
+
+
+def reviewed_workshop_request(command, subject, grade, topic):
+    """Route an explicit source-comparison workshop without a model call."""
+    from copy import deepcopy
+    from services.academic_context import folded
+    from services.lesson_sources import reviewed_lesson_sources
+    if not is_local_workshop_command(command):
+        return None
+    review = reviewed_lesson_sources(subject, grade, topic)
+    config = review.get('source_workshop')
+    if review['status'] != 'reviewed_requirements_source' or not isinstance(config, dict):
+        return None
+    cards, questions = config.get('cards'), config.get('questions')
+    if (not isinstance(config.get('title'), str) or not isinstance(cards, list)
+            or not 2 <= len(cards) <= 6 or not isinstance(questions, list)
+            or not 1 <= len(questions) <= 6):
+        return None
+    if any(not isinstance(c, dict) or not all(isinstance(c.get(k), str) and c[k].strip()
+                                            for k in ('title', 'text')) for c in cards):
+        return None
+    for question in questions:
+        if (not isinstance(question, dict) or not isinstance(question.get('prompt'), str)
+                or not isinstance(question.get('options'), list)
+                or not 2 <= len(question['options']) <= 6
+                or not all(isinstance(x, str) and x.strip() for x in question['options'])
+                or type(question.get('correct')) is not int
+                or not 0 <= question['correct'] < len(question['options'])
+                or not isinstance(question.get('feedback'), str)):
+            return None
+    return dict(type='source_workshop', workshop=deepcopy(config),
+                sources=deepcopy(review['sources']), review_id=review['id'])
+
+
+def evaluate_source_workshop(questions, choices):
+    """Return feedback only after every practice choice is provided."""
+    if len(questions) != len(choices) or any(type(x) is not int or
+            not 0 <= x < len(q['options']) for q, x in zip(questions, choices)):
+        raise ValueError('Hãy chọn nhận xét cho tất cả câu trước khi đối chiếu.')
+    correct = [choice == question['correct'] for question, choice in zip(questions, choices)]
+    return dict(score=sum(correct), total=len(correct), correct=correct,
+                feedback=[q['feedback'] for q in questions])

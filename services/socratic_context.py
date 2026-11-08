@@ -3,7 +3,51 @@ import re
 
 from services.academic_context import canonical_subject, folded
 
-T1_CONTEXT_REVISION = 2026110506
+T1_CONTEXT_REVISION = 2026110704
+
+
+def complete_verified_quote_reference(reply, references):
+    """Complete supplied provenance only for a full matching quote and author.
+
+    No invented quotation or attribution, and no AI retry for missing formatting.
+    Code examples do not count as a quotation in the teaching prose.
+    """
+    from services.philosophy_rotation import GUIDANCE
+    marker = GUIDANCE.splitlines()[0]
+    parts = re.split(r'(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`)', str(reply or ''))
+    text = ''.join(part if i % 2 else re.sub(
+        r'(?m)^[ \t]*(?:#+[ \t]*)?(?:\*\*)?' + re.escape(marker) + r'(?:\*\*)?[ \t]*(?:\n|$)', '', part)
+        for i, part in enumerate(parts))
+    prose = re.sub(r'```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`', '', text)
+    normalized = folded(prose)
+    for reference in references:
+        quote, author = reference.get('quote', ''), reference.get('author', '')
+        url, locator = reference.get('source_url', ''), reference.get('source_locator', '')
+        if (reference.get('source_verified') is True and quote and author and locator
+                and url.startswith('https://') and folded(quote) in normalized
+                and folded(author) in normalized):
+            if url not in text:
+                text += '\n\nNguồn đối chiếu: [' + str(author) + ' — ' + str(locator) + '](' + url + ').'
+            note = reference.get('translation_note', '')
+            if note and note not in text:
+                text += '\n\n' + note
+    return text
+
+
+def label_verified_quote_translation(reply, references):
+    """Attach supplied provenance only when quote, author and URL all match."""
+    text = str(reply or '')
+    normalized = folded(text)
+    for reference in references:
+        quote = reference.get('quote', '')
+        author = reference.get('author', '')
+        url = reference.get('source_url', '')
+        note = reference.get('translation_note', '')
+        if (reference.get('source_verified') is True and quote and author and url and note
+                and folded(quote) in normalized and folded(author) in normalized and url in text
+                and note not in text):
+            text += '\n\n' + note
+    return text
 
 
 def repair_reviewed_station1_closing(reply, student_message, subject, grade, closing=False):
@@ -19,6 +63,12 @@ def repair_reviewed_station1_closing(reply, student_message, subject, grade, clo
         text = text.replace(first,
             'Thầy ghi nhận em đã tự kiểm tra dấu đạo hàm ở hai phía điểm xét và trình bày lập luận của mình. '
             'Việc đối chiếu kết quả thay vì chỉ nhớ công thức là thói quen học tập đáng khuyến khích.', 1)
+    # This precise English quotation was checked against MIT Book VI. Label
+    # the accompanying Vietnamese gloss, without inventing another citation.
+    if ('Marcus Aurelius' in text and 'meditations.6.six.html' in text
+            and 'I seek the truth by which no man was ever injured' in text):
+        text = text.replace('(Tôi tìm kiếm sự thật, điều chưa từng làm hại ai',
+                            '(Diễn nghĩa tiếng Việt từ bản dịch tiếng Anh của George Long: Tôi tìm kiếm sự thật, điều chưa từng làm hại ai')
     if 'Marcus Aurelius' in text and 'Meditations' in text and 'George Long' in text:
         text = text.replace('theo bản dịch của George Long',
                             'diễn nghĩa tiếng Việt từ bản dịch tiếng Anh của George Long')

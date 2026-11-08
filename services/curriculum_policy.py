@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110602
+T1_CONTEXT_REVISION = 2026110801
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -789,11 +789,15 @@ def lesson_generation_request(subject, grade, topic):
     full = lesson_prompt(subject, grade, topic)
     if not full.startswith(prefix):
         raise ValueError("Lesson instruction boundary changed; review request builder.")
-    from services.lesson_sources import reviewed_lesson_sources
-    context = {"lesson_topic": str(topic)}
+    from services.lesson_sources import reviewed_lesson_sources, local_textbook_grounding
+    context = {"lesson_topic": str(topic),
+               "textbook_grounding": local_textbook_grounding(subject, grade, topic)}
     review = reviewed_lesson_sources(subject, grade, topic)
     if review['status'] == 'reviewed_requirements_source':
-        context['reviewed_requirements_source'] = review
+        # Repairs/answer keys belong to local delivery. Keep source criteria and
+        # grounded facts, without paying to send old faulty drafts back to AI.
+        local_only = {'source_workshop', 'content_corrections', 'assessment_proposals'}
+        context['reviewed_requirements_source'] = {k: v for k, v in review.items() if k not in local_only}
     return system, json.dumps(context, ensure_ascii=False) + "\n" + full[len(prefix):]
 
 
@@ -842,3 +846,113 @@ def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
             + structure + WEB_QUESTION_INSTRUCTION + "\nYêu cầu tùy biến trong phạm vi môn/lớp đã chọn: " + str(custom)
             + "\nTự giải và đối chiếu đáp án với giả thiết; thiếu hình thì không đặt câu yêu cầu đọc hình đó. Không sao chép nguồn thiếu bằng chứng hoặc tự nhận là đề thật."
             + "\nChỉ xuất JSON hợp lệ theo schema sau (mở rộng số câu theo cấu hình):\n" + json.dumps(schema, ensure_ascii=False))
+
+
+ACADEMIC_GROUNDING_GUIDANCE = """[BỘ LỌC CHƯƠNG TRÌNH VÀ NGUỒN — DÙNG CHUNG]
+Mọi bài giảng, đề, lời giải, gia sư và Lab phải đúng môn/lớp/chủ đề/nhánh sách trong ngữ cảnh. Khi đúc kết nhiều sự kiện, giữ đúng cặp thời gian–địa điểm–nhân vật của từng sự kiện; không gộp một địa điểm hoặc chủ thể cho tất cả các mốc chỉ vì chúng xuất hiện trong cùng câu.
+Trạm1 sinh bài phải căn cứ nguồn local XZ trước. Đọc textbook_grounding trong ngữ cảnh: chỉ dùng reviewed_excerpt_packet_loaded như phần trích diễn giải đã đối chiếu đúng bài, không coi là toàn cuốn hay đã đủ cả ba nguồn. API không tự mở ổ F hoặc tra web; không tuyên bố đã đọc sách khi chỉ nhận danh mục/link hoặc trạng thái thiếu/invalid/archive_unavailable. Khi căn cứ chưa đủ, nêu rõ phần chưa xác minh trong nội dung hiện có, không bịa trang/YCCĐ/kiến thức như thể có nguồn. Chỉ bổ sung từ VniTeach, Tập huấn NXBGDVN, Trường Học Số Quốc Gia sau khi kiểm kho thiếu đúng phần cần dùng hoặc có điểm cụ thể cần xác tín; không tự gọi thêm AI/retry. Chủ dự án xác nhận nhãn Bộ sách Thống Nhất trong kho/THSQG là KNTT thống nhất; không dùng khác nhãn làm lỗi hoặc lý do tra lại. CT GDPT2018 và sửa đổi còn hiệu lực là chuẩn chương trình; sách và bộ lọc tương lai không tự chứng minh mọi đầu ra đều đúng. Không thay bài owner đã duyệt chỉ vì thêm quy tắc này.
+Với vận chuyển qua màng (Sinh học/KHTN), không dùng riêng dấu hiệu “không dùng ATP trực tiếp” để kết luận thụ động: phải xét chiều gradient và nguồn năng lượng ghép, phân biệt chủ động thứ cấp. Ion chịu gradient điện hóa. Thẩm thấu cần nêu tính thấm màng/chất tan và điều kiện áp suất; phân biệt chuyển động hai chiều với dòng thuần. Chỉ đưa phần mở rộng đủ để bảo đảm câu hỏi không mơ hồ, không biến kiến thức ngoài phạm vi thành yêu cầu bắt buộc của lớp.
+Lấy CT GDPT 2018 cùng sửa đổi còn hiệu lực làm chuẩn YCCĐ; Kết nối tri thức với cuộc sống (KNTT) làm trục sách. Không đồng nhất mục tiêu do AI tự viết với YCCĐ nguyên văn của Bộ.
+Trước trả kết quả, tự đối chiếu từng mục tiêu–kiến thức–ví dụ–câu hỏi–đáp án với YCCĐ và nguồn đúng bài đã cung cấp. Phân biệt yêu cầu bắt buộc, kiến thức nền và phần mở rộng; không dùng phần mở rộng làm chuẩn bắt buộc của lớp.
+Chỉ xác nhận đã đối chiếu khi có nội dung nguồn, vị trí và phiên bản thực sự trong ngữ cảnh. Link/danh mục sách, trí nhớ model hoặc prompt này không phải nội dung SGK hay phụ lục chương trình. Thiếu nguồn thì nói rõ phạm vi chưa xác minh, không bịa trang, mã YCCĐ, trích dẫn hoặc chứng nhận đúng chuẩn.
+Văn bản áp dụng phải đúng ngày hiệu lực, đối tượng, môn/lớp và mục đích; đọc bản sửa đổi cùng bản gốc. Không áp dự thảo hoặc văn bản chưa hiệu lực; không biến công văn hướng dẫn thành quy phạm chung, không áp định dạng thi tốt nghiệp cho mọi lớp/môn.
+Nếu nguồn mâu thuẫn hoặc thiếu căn cứ, không khẳng định đáp án pháp lý/chương trình là đã xác minh; nêu giới hạn trong trường giải thích hiện có. Giữ nguyên schema JSON, không thêm trường bắt buộc hoặc văn bản ngoài JSON. Không tự gọi thêm AI, tăng retry hoặc bỏ bài hợp lệ.
+Với Lịch sử, GDCD và Giáo dục kinh tế và pháp luật ở mọi lớp/trạm: rà kỹ các khẳng định về đường lối, chính sách, chính trị và pháp luật Việt Nam. Ba nguồn sách chủ dự án yêu cầu là VniTeach, Nền tảng Tập huấn NXBGDVN và Trường Học Số Quốc Gia, đúng ba cột thư viện trong ứng dụng; không hiểu thành ba loại SGK/SGV/SBT hoặc ba bộ sách. Rà soát bài liên quan qua cả ba nguồn này, xác minh đúng môn/lớp/bộ KNTT/ấn bản và phạm vi đã đọc. Cùng một cuốn được dẫn lại ở nhiều cổng không phải ba bằng chứng độc lập; ghi rõ nguồn trùng, thiếu hoặc không truy cập được, không tự coi đã đọc. Bài mẫu không đại diện toàn cuốn. Tách sự kiện/tư liệu gốc, diễn giải lịch sử, nội dung sách và quy định pháp luật hiện hành; không tự gán tác giả, động cơ, lập trường hoặc lời trích cho tư liệu. Nhận thức có góc nhìn khác nhau không có nghĩa mọi nhận định đều đúng hoặc tùy tiện. Khẳng định pháp lý phải có văn bản chính thức đã đọc, điều/khoản liên quan, ngày hiệu lực, sửa đổi và phạm vi áp dụng tại ngày đánh giá; phân biệt bối cảnh lịch sử với luật hiện hành. Thiếu một nguồn bắt buộc thì ghi rõ chưa đối chiếu đủ, không chứng nhận đạt pháp luật Việt Nam hoặc đã đối chiếu đủ ba nguồn sách. Không tự sửa bài đã được chủ dự án duyệt chỉ vì bổ sung hướng dẫn này.
+Danh mục văn bản dưới đây chỉ là metadata tra cứu, không phải toàn văn hay chứng nhận đã rà soát toàn bộ pháp luật ngành.
+"""
+
+
+def correct_reviewed_horizontal_throw(text, subject, grade, topic=""):
+    """Reviewed VL10 specimen edits; no answer permutation or new AI request."""
+    if (canonical_subject(subject) != 'Vật lý' or normalize_grade(grade) != 10
+            or folded(topic) != folded('Chuyển động ném ngang — Vật lí 10, KNTT, Bài 12 mục I')):
+        return text
+    value = str(text)
+    marker = 'Chuyển động ném ngang là chuyển động của một vật có vận tốc ban đầu theo phương nằm ngang và sau đó chỉ chịu tác dụng của trọng lực.'
+    value = value.replace(marker, marker + ' Mô hình xét gần mặt đất, bỏ qua sức cản không khí, gia tốc trọng trường không đổi; H > 0, g > 0 và vận tốc ném ngang v₀ > 0. Chỉ xét từ lúc thả tới lần chạm đất đầu tiên: 0 ≤ t ≤ T. Không có lực ném tiếp tục đẩy vật sau khi rời tay.')
+    # Idempotence when formatted content is passed through the gate again.
+    sentence = ' Mô hình xét gần mặt đất, bỏ qua sức cản không khí, gia tốc trọng trường không đổi; H > 0, g > 0 và vận tốc ném ngang v₀ > 0. Chỉ xét từ lúc thả tới lần chạm đất đầu tiên: 0 ≤ t ≤ T. Không có lực ném tiếp tục đẩy vật sau khi rời tay.'
+    while sentence + sentence in value:
+        value = value.replace(sentence + sentence, sentence)
+    value = value.replace('Vật không chịu tác dụng của lực nào (bỏ qua sức cản không khí)',
+                          'Thành phần hợp lực theo phương ngang bằng không (vật vẫn chịu trọng lực theo phương đứng)')
+    old = 'Trong môn bóng chuyền, khi cầu thủ thực hiện cú đập bóng (coi như ném ngang tại thời điểm chạm tay), các yếu tố nào về phía cầu thủ (chiều cao bật nhảy, lực đập) sẽ quyết định quả bóng có thể sang sân đối phương và nằm trong vạch quy định?'
+    value = value.replace(old, 'Trong mô hình giả định, bóng rời tay theo phương ngang từ độ cao H với vận tốc ban đầu v₀; bỏ qua cản không khí và coi mặt đất phẳng. H và v₀ ảnh hưởng thế nào tới thời gian rơi, tầm xa? Một cú đập bóng thực có thể có vận tốc hướng xuống, xoáy và lực cản nên không mặc nhiên là ném ngang. Không suy vận tốc từ lực đập khi thiếu thời gian tác dụng và dữ kiện tương tác; không dùng mô hình này để bảo đảm bóng qua lưới.')
+    value = value.replace('Một quả bóng tennis được ném ngang từ độ cao $H$. Sau 1 giây',
+                          'Trong mô hình bỏ qua cản không khí, một quả bóng tennis được ném ngang từ độ cao $H > 5$ m so với mặt đất phẳng. Sau 1 giây')
+    value = value.replace('**Câu 2. [Mức độ: VDC]**\nMột quả bóng tennis',
+                          '**Câu 2. [Mức độ: VD]**\nMột quả bóng tennis')
+    value = value.replace('**Câu 2. [Mức độ: VDC]**\nTrong mô hình bỏ qua cản không khí, một quả bóng tennis',
+                          '**Câu 2. [Mức độ: VD]**\nTrong mô hình bỏ qua cản không khí, một quả bóng tennis')
+    value = value.replace('OUTCOME: [KNTT-VL10-12.I]', 'OUTCOME: [Mục tiêu AI đề xuất, không phải mã YCCĐ chính thức]')
+    return value
+
+
+def correct_reviewed_reaction_rate(text, subject, grade, topic=""):
+    """Source-reviewed Bài19 repairs, retaining original MCQ keys and numbers."""
+    if (canonical_subject(subject) != 'Hóa học' or normalize_grade(grade) != 10
+            or folded(topic) != folded('Tốc độ phản ứng — Hóa học 10, KNTT, Bài 19')):
+        return text
+    def repair(value):
+        broken = (r'$aA + bB \rightarrow cC + dD$v_{tb} = -$\frac{1}{a}$ \cdot '
+                  r'$\frac{\Delta C_A}{\Delta t}$ = -$\frac{1}{b}$ \cdot '
+                  r'$\frac{\Delta C_B}{\Delta t}$ = $\frac{1}{c}$ \cdot '
+                  r'$\frac{\Delta C_C}{\Delta t}$ = $\frac{1}{d}$ \cdot $\frac{\Delta C_D}{\Delta t}$')
+        fixed = (r'$aA+bB\rightarrow cC+dD$. Ở thể tích không đổi, tốc độ trung bình chuẩn hóa theo phương trình là:'
+                 '\n\n' + r'$$v_{tb}=-\frac{1}{a}\frac{\Delta C_A}{\Delta t}=-\frac{1}{b}\frac{\Delta C_B}{\Delta t}=\frac{1}{c}\frac{\Delta C_C}{\Delta t}=\frac{1}{d}\frac{\Delta C_D}{\Delta t}$$' + '\n\n')
+        value = value.replace(broken, fixed)
+        additions = {
+            '**b. Các yếu tố ảnh hưởng đến tốc độ phản ứng**':
+                '**b. Các yếu tố ảnh hưởng đến tốc độ phản ứng**\n\n'
+                'Khi so sánh một yếu tố, giữ các yếu tố khác phù hợp và không đổi. '
+                'Phân biệt tốc độ mất một chất với tốc độ phản ứng đã chia hệ số; công thức dùng nồng độ giả thiết thể tích không đổi.',
+            'Tăng áp suất tương đương với tăng nồng độ khí $\\rightarrow$ tốc độ phản ứng tăng.':
+                'Nén hỗn hợp khí ở nhiệt độ không đổi làm tăng nồng độ chất phản ứng khí, thường làm tăng tốc độ phản ứng. Không suy mọi cách tăng áp suất tổng đều có tác dụng này; thêm khí trơ ở thể tích và nhiệt độ không đổi không làm tăng nồng độ các chất phản ứng.',
+            'Quy tắc Van\'t Hoff:':
+                'Quy tắc Van\'t Hoff (giả thiết hệ số nhiệt độ không đổi trong khoảng đang xét):',
+            'Làm tăng tốc độ phản ứng nhưng không bị biến đổi về lượng và chất sau phản ứng.':
+                'Tạo đường phản ứng có năng lượng hoạt hóa thấp hơn và được tái sinh sau chu trình. Với cùng điều kiện và lượng chất đầu, xúc tác không tự làm tăng lượng sản phẩm giới hạn hoặc thay đổi vị trí cân bằng.',
+            'Quạt cung cấp thêm $\\ce{O2}$ (tăng nồng độ) và đập nhỏ than (tăng diện tích tiếp xúc).':
+                'Quạt đưa thêm không khí tới vùng cháy, bổ sung oxygen bị tiêu thụ; không tự làm tăng phần mol oxygen của không khí cấp. Chia nhỏ cùng lượng than làm tăng diện tích tiếp xúc nếu các điều kiện khác tương đương. Chỉ phân tích tình huống, không giao học sinh tự nhóm lửa hoặc đập than; không khái quát dùng quạt cho mọi đám cháy.',
+            'Một phản ứng có hệ số nhiệt độ $\\gamma = 2$.':
+                'Một phản ứng có hệ số nhiệt độ $\\gamma = 2$ không đổi trong khoảng từ $20^\\circ C$ đến $50^\\circ C$.',
+            'Khi tăng nồng độ chất phản ứng, tốc độ phản ứng thường tăng là do':
+                'Giữ nhiệt độ và các điều kiện khác không đổi, khi tăng nồng độ chất phản ứng, tốc độ phản ứng thường tăng là do',
+            'Dữ liệu thực nghiệm cho thấy tại một thời điểm,':
+                'Trong một bộ dữ liệu giả định phục vụ bài tập, ở thể tích không đổi, tại một thời điểm,',
+            'Kết quả này cho biết trung bình mỗi giây có bao nhiêu $mol/L\\ce{H2O2}$ đã phản ứng?':
+                'Đây là tốc độ phản ứng đã chuẩn hóa theo hệ số. Nếu muốn suy tốc độ mất H₂O₂, em cần liên hệ với hệ số 2 trong phương trình như thế nào?',
+        }
+        for old, new in additions.items():
+            # Several replacements retain their heading as a prefix.
+            if new not in value:
+                value = value.replace(old, new)
+        heading = '**3. Ví dụ có lời giải**'
+        law = ('**Định luật tác dụng khối lượng và hằng số tốc độ:** Ở nhiệt độ và môi trường xác định, '
+               'biểu thức tốc độ được xác định từ thực nghiệm. Với phản ứng đơn giản được giả thiết phù hợp, '
+               'số mũ có thể bằng hệ số phương trình; không áp dụng cách suy này cho mọi phản ứng. '
+               'Ví dụ theo nguồn SGK: với $2NO+O_2\\rightarrow2NO_2$, thực nghiệm cho '
+               '$v=kC_{NO}^{2}C_{O_2}$. Trong các điều kiện đã cố định, $k$ không phụ thuộc nồng độ; '
+               'giá trị phụ thuộc phản ứng/nhiệt độ và đơn vị phụ thuộc tổng bậc. '
+               'Nếu dùng $v$ theo mol/(L·s) cho ví dụ này thì $k$ có đơn vị L²/(mol²·s). '
+               'Không đồng nhất định luật tốc độ với công thức tốc độ trung bình.\n\n')
+        if heading in value and '**Định luật tác dụng khối lượng và hằng số tốc độ:**' not in value:
+            value = value.replace(heading, law + heading, 1)
+        return value
+    # Edits intentionally repair mathematics, but never example source code.
+    parts = re.split(r'(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|<(?:pre|svg|script|style)\b[^>]*>[\s\S]*?</(?:pre|svg|script|style)\s*>)', str(text), flags=re.I)
+    return ''.join(part if i % 2 else repair(part) for i, part in enumerate(parts))
+
+
+def with_academic_grounding(system_instruction):
+    """Attach the same minimum contract at both model transports, including JSON."""
+    from services.philosophy_rotation import with_closure_guidance
+    value = with_closure_guidance(system_instruction)
+    if ACADEMIC_GROUNDING_GUIDANCE in value:
+        return value
+    rows = legal_references()
+    metadata = [{key: row.get(key) for key in ('code', 'scope', 'effective_from', 'url')}
+                for row in rows]
+    return (value + '\n\n' + ACADEMIC_GROUNDING_GUIDANCE
+            + 'Ngày áp dụng: ' + policy_evaluation_date() + '\n'
+            + json.dumps(metadata, ensure_ascii=False))

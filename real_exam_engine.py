@@ -646,8 +646,8 @@ def deep_clean_pua_and_artifacts(text: str) -> str:
     # 4. KaTeX \\middle| không có \\left
     text = re.sub(r'\\middle\s*\|', r'\\mid', text)
     # 5. Khử công thức rỗng
-    text = re.sub(r'\$\s*\$', '', text)
-    text = re.sub(r'\$\$\s*\$\$', '', text)
+    from services.text_boundaries import remove_empty_math
+    text = remove_empty_math(text)
     return text.strip()
 
 def detect_exam_grade_and_topics(raw_content: str, filename: str = "", current_grade = 12):

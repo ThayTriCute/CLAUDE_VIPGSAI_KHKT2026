@@ -1,4 +1,36 @@
+## Owner yêu cầu làm liên tục theo Goal — 07/11/2026
+
+Goal của chat đã được kích hoạt theo yêu cầu owner: tiếp công việc được giao qua các lượt, không dừng chỉ để báo trạng thái hoặc ghi bàn giao. Tự đọc/ghi checkpoint sau mốc rồi làm bước kế tiếp. Chỉ chờ khi đang có tác vụ phụ thuộc thực sự, cần đầu vào bắt buộc, hoặc giới hạn hệ thống; không tạo scheduler/chat/AI bổ sung. Không tuyên bố chạy nền nếu Goal/tác vụ không thực sự hoạt động. Các quy tắc nguồn, không gọi AI trùng, nghiệm thu đúng bằng chứng và phát hành theo khối vẫn giữ nguyên.
+## Quy tắc owner xác nhận 07/11/2026 — bảo toàn bài đã duyệt khi xây bộ lọc
+
+- Hoàn thành nghiệm thu tất cả môn khối 10, 11, 12 trước, sau đó mới hoàn thiện bộ lọc CT2018 – KNTT – YCCĐ – văn bản pháp quy.
+- Bài mới phải qua kiểm tra theo nguồn và phạm vi áp dụng trước khi nghiệm thu.
+- Bài đã được chủ dự án duyệt phải giữ nguyên nội dung, thứ tự/khóa đáp án, trạng thái nghiệm thu và bằng chứng đúng phiên bản. Bộ lọc mới không tự sửa, xóa, chặn sử dụng hoặc hủy nghiệm thu các bài này.
+- Rà soát lại bài đã duyệt chỉ ghi cảnh báo/điểm cần đối chiếu. Chỉ mở lại nghiệm thu khi phát hiện lỗi cụ thể có căn cứ; lưu bản cũ và bằng chứng trước/sau, không bắt duyệt lại toàn bộ chỉ vì thay bộ lọc.
+- Đây là quy tắc owner đã xác nhận, thay cho trạng thái “đề xuất thiết kế” trong các đoạn lịch sử. Quy tắc chưa phải bằng chứng cơ chế bảo toàn đã được code/kiểm hoàn chỉnh.
+- Bản chính nhật ký, bài lưu và bằng chứng nằm tại F:/FINAL KHKT 2026/qa_evidence/. Ca sau phải đọc checkpoint và quy tắc này trước sửa bộ lọc.
+## Lưu trữ thống nhất theo owner — 07/11/2026
+
+Bản chính của bài lưu, bản đã đối chiếu, báo cáo và bằng chứng dự án đặt trong F:/FINAL KHKT 2026/qa_evidence/. Chrome Downloads chỉ là vùng tải tạm; sau mỗi lần tải phải sao chép bản chính về F, kiểm dung lượng/hash và ghi đường dẫn F trong checkpoint/lời bàn giao. Không đổi cấu hình Downloads chung hoặc xóa bản cũ ngoài dự án. Mã nguồn tiếp tục trong release_station1_20261031. Không lưu khóa hay dữ liệu học sinh vào thư mục QA/Git; kho bí mật được mã hóa giữ nguyên cơ chế riêng.
+
+## Ưu tiên owner 07/11/2026 — bộ lọc làm sau nghiệm thu THPT
+
+Kiểm xong tất cả môn khối10,11,12 rồi mới tiếp tục hoàn thiện bộ lọc CT2018/KNTT/YCCĐ/văn bản. Phần ràng buộc API đã vá giữ nguyên; đọc docs/AI_CURRICULUM_GROUNDING.md trước sửa tiếp. Không coi prompt là bộ kiểm định học thuật hoàn chỉnh.
+
+## Quy tắc ưu tiên 07/11/2026 — AI sinh bài và bố cục bước
+
+- Trước sửa prompt/sinh bài/renderer/export, đọc checkpoint và `docs/AI_TEACHING_STEPS_LAYOUT_PROMPT.txt`. Owner đã duyệt bố cục xuống đoạn từng bước; giữ đóng bằng chứng đã duyệt khi không có lỗi mới.
+- API không mặc nhiên đọc tệp local. Mọi đường gọi model phải nhận quy tắc qua `with_teaching_step_layout` tại ranh giới API, gồm JSON/streaming/model dự phòng; không chỉ thêm hướng dẫn vào tài liệu. Đường/provider mới phải có kiểm thử contract tương ứng.
+- Giữ formatter dùng chung sau sinh, bảo toàn toán/mã/đáp án; không vá riêng một môn/lớp hoặc mẫu bài. Không thêm lượt AI, tăng retry hoặc sinh lại bài đã lưu để kiểm bố cục.
+- Phát hành theo quyết định owner mới nhất: hoàn thành local khối nào mới push đợt khối đó; quy tắc này ưu tiên các mục lịch sử yêu cầu push từng bản vá nhỏ.
+
 # Hướng dẫn bổ sung cho BBT và đồ thị
+
+## Chủ dự án nhắc lại 07/11/2026: mọi bản vá phải xét toàn hệ thống
+
+Yêu cầu nhân sinh mới nhất áp dụng đủ Trạm1, Trạm2, Trạm3: đọc docs/AI_CONTEXTUAL_PHILOSOPHY_CLOSURE.md trước sửa/sinh phản hồi gia sư. Khi HS hiểu và không còn hỏi, phải đúc kết rồi giảng nhân sinh sâu theo ngữ cảnh, đa dạng Á–Âu/cổ–hiện đại và tránh lặp qua phiên/trạm. Hướng dẫn phải vào API, không chỉ tồn tại trong file. Ghi rõ giới hạn lịch sử runtime/Cloud và kho nguồn hữu hạn; không tự tuyên bố mọi bài giảng đã mới/đúng từ test cơ chế.
+
+Trước vá/sinh bài, đọc docs/AI_CURRICULUM_GROUNDING.md và docs/AI_TEACHING_STEPS_LAYOUT_PROMPT.txt. Tìm nguyên nhân ở tầng dùng chung đa môn/đa lớp, không chỉ sửa ca mẫu rồi báo đạt toàn hệ thống. Quy tắc phải đi vào system instruction tại ranh giới API cho cả JSON/streaming/model dự phòng; không mặc định API đã đọc file local. Thêm provider phải kiểm contract này. Quy tắc chuyên môn chỉ áp trong ngữ cảnh thích hợp; giữ bài owner đã duyệt và phân biệt kiểm cơ chế với nghiệm thu kiến thức. Ghi nguyên nhân, phạm vi, bằng chứng trước/sau và phần chưa kiểm trong bàn giao.
 
 Bắt buộc trước mọi thao tác liên quan hình trong infographic: đọc `docs/AI_BBT_GRAPH_INFOGRAPHIC_PROMPT.txt`, đối chiếu yêu cầu mới nhất và bằng chứng đúng phiên bản. Mọi đồ thị, hình vẽ, BBT nằm trong infographic phải dùng nền trong suốt để hiện đúng nền infographic, kể cả nền quanh nhãn. Không chèn tấm nền trắng riêng. Giữ nét/nhãn tương phản và kiểm hình thực; đọc prompt không thay thế kiểm chứng. Quy tắc phải có cả trong prompt API và prompt phong cách tải về.
 
@@ -17,3 +49,46 @@ Yêu cầu chủ dự án 05/11/2026: phần Đồ thị phải có hình vẽ t
 - UI chỉ Chrome MCP đúng cửa sổ kiểm thử nền tím/avatar T, repoVIP và appVIP được giao. Không desktop, không profile/tab anh đang làm việc. Sau mất kết nối lấy inventory mới, không đoán tabID/profile. Quyền thao tác đã có; không hỏi lại quyền chung, chỉ hỏi khi không xác định được đúng tab hoặc thiếu điều kiện thực tế.
 - Kiểm local phù hợp, push tệp cụ thể khi bản vá đã đủ bằng chứng; theo CI/merge rồi xác minh Cloud. Không stage DB/cache/khóa/dữ liệu học sinh. Ghi riêng local/push/main/Cloud và phần chưa kiểm.
 - Sau mỗi mốc và trước kết thúc, cập nhật bàn giao ngắn ở đầu file, lưu bằng chứng và kiểm đã ghi thành công: mục hiện tại/đã đóng, nguyên nhân và tầng sửa, phạm vi môn/lớp, commit, test/log, AI pending, blocker và bước tiếp. Không hứa tiếp tục chạy khi không có tác vụ thật đang chạy.
+# Owner 08/11/2026 — tiếp việc khi đang chờ xác nhận tùy chọn
+
+Sau phần tự kiểm, lưu bằng chứng/mục chờ owner (như phân trang in), rồi tự tiếp công việc độc lập hoặc cặp tiếp theo; không chờ owner phản hồi mới tiến hành. Giữ nguyên pending trong nhật ký, không suy im lặng là duyệt. Quyết định này ưu tiên quy tắc cũ phải đóng mọi xác nhận cặp trước mới chuyển. Chỉ dừng bước phụ thuộc vì thiếu đầu vào bắt buộc thật hoặc giới hạn hệ thống. Không gọi AI trùng hoặc tự tạo scheduler/chat.
+
+## Owner 08/11/2026 — rà soát Lịch sử, GDCD, GDKT&PL
+
+Với Lịch sử, GDCD và Giáo dục kinh tế và pháp luật ở mọi lớp/trạm: rà kỹ các khẳng định về đường lối, chính sách, chính trị và pháp luật Việt Nam. Ba nguồn sách chủ dự án yêu cầu là VniTeach, Nền tảng Tập huấn NXBGDVN và Trường Học Số Quốc Gia, đúng ba cột thư viện trong ứng dụng; không hiểu thành ba loại SGK/SGV/SBT hoặc ba bộ sách. Rà soát bài liên quan qua cả ba nguồn này, xác minh đúng môn/lớp/bộ KNTT/ấn bản và phạm vi đã đọc. Cùng một cuốn được dẫn lại ở nhiều cổng không phải ba bằng chứng độc lập; ghi rõ nguồn trùng, thiếu hoặc không truy cập được, không tự coi đã đọc. Bài mẫu không đại diện toàn cuốn. Tách sự kiện/tư liệu gốc, diễn giải lịch sử, nội dung sách và quy định pháp luật hiện hành; không tự gán tác giả, động cơ, lập trường hoặc lời trích cho tư liệu. Nhận thức có góc nhìn khác nhau không có nghĩa mọi nhận định đều đúng hoặc tùy tiện. Khẳng định pháp lý phải có văn bản chính thức đã đọc, điều/khoản liên quan, ngày hiệu lực, sửa đổi và phạm vi áp dụng tại ngày đánh giá; phân biệt bối cảnh lịch sử với luật hiện hành. Thiếu một nguồn bắt buộc thì ghi rõ chưa đối chiếu đủ, không chứng nhận đạt pháp luật Việt Nam hoặc đã đối chiếu đủ ba nguồn sách. Không tự sửa bài đã được chủ dự án duyệt chỉ vì bổ sung hướng dẫn này.
+
+Quy tắc được truyền qua ACADEMIC_GROUNDING_GUIDANCE tại cả hai transport JSON/streaming trước model dự phòng. Đây là yêu cầu kiểm chứng, không phải bộ kiểm định tự động hoặc bằng chứng đã kiểm hết sách/pháp luật. Hồ sơ nghiệm thu phải lưu tên/ấn bản/phạm vi đã đọc, nguồn chính thức cho từng khẳng định cần đối chiếu, lỗi và trạng thái chưa xác minh. Giữ bản gốc và các phần owner đã duyệt.
+
+## Owner 08/11/2026 — ưu tiên kho nén ba nguồn tại local
+
+Ba nguồn VniTeach, Tập huấn NXBGDVN, Trường Học Số Quốc Gia đã có dữ liệu nén trong F:/FINAL KHKT 2026/textbook_archive_6_12. Trước tìm online/tải lại, đọc manifest.json, offline_book_inventory.json, book_index.json và metadata liên quan; kiểm cả .xz/.tar.xz, không chỉ .zip/.rar/.7z. Giải nén có chọn lọc để đọc đúng bài, giữ bản gốc. Phân biệt PDF/ảnh trang sách với HTML danh mục/liên kết; tên kho hoặc giải nén thành công không chứng minh đã đủ sách hay đã nghiệm thu nội dung. Evidence khám phá: F:/FINAL KHKT 2026/qa_evidence/THREE_SOURCE_LOCAL_ARCHIVE_DISCOVERY_20261108.json.
+
+## Quyết định owner 08/11/2026 — chỉ tra online khi có lý do cụ thể
+
+Bắt buộc dùng kho nén F:/FINAL KHKT 2026/textbook_archive_6_12 trước: tra chỉ mục/metadata và nội dung nén liên quan đúng môn, lớp, bộ, cuốn, bài; tái dùng bằng chứng còn đúng phiên bản. Chỉ tra VniTeach, Tập huấn NXBGDVN hoặc Trường Học Số Quốc Gia khi (1) kho thiếu đúng sách/nội dung cần dùng sau khi đã kiểm có mục tiêu, hoặc (2) cần xác tín thêm điểm cụ thể như ấn bản, trang cập nhật, mâu thuẫn nguồn. Trước tra online ghi ngắn phần local đã kiểm và lý do cần tra; sau tra lưu nguồn/bằng chứng về F để dùng lại. Không tìm link, tải lại, gọi AI hoặc đọc lại toàn cuốn chỉ vì chưa xem kỹ kho; không coi chỉ mục cũ là bằng chứng toàn kho thiếu. Không tự tăng retry hoặc sinh lại bài đã có. Đây là điều kiện bắt buộc, không chỉ khuyến nghị ưu tiên local. Giữ kiểm chứng cần thiết, không tự công bố kiến thức/pháp luật đã đạt.
+
+## Owner xác nhận 08/11/2026 — nhãn Bộ sách Thống Nhất
+
+Chủ dự án xác nhận “Bộ sách Thống Nhất” trong kho/THSQG này chính là KNTT thống nhất. Không coi khác nhãn Thống Nhất/KNTT tự nó là sai bộ sách hoặc lý do bắt buộc tra online. Dùng đối chiếu tiếp theo xác nhận này; vẫn kiểm đúng môn/lớp/cuốn/bài/trang và các cập nhật cụ thể khi có căn cứ cần xác tín.
+
+## Owner 08/11/2026 — căn cứ kho XZ khi Trạm1 sinh bài
+
+Mọi AI sinh bài Trạm1 phải dùng căn cứ đúng môn/lớp/cuốn/bài/trang từ kho local trước; chỉ bổ sung từ ba nguồn khi phần căn cứ còn thiếu hoặc cần xác tín điểm cụ thể. CT2018 cùng sửa đổi còn hiệu lực và KNTT/KNTT thống nhất là chuẩn; bộ lọc hoàn chỉnh làm sau nghiệm thu các môn/lớp, không coi prompt là đã hoàn thành bộ lọc. API không tự đọc filesystem hay tra web: ứng dụng phải truyền nội dung nguồn vào request.
+
+Cơ chế hiện tại: lesson_generation_request gọi local_textbook_grounding trước API và đưa kết quả vào textbook_grounding trong user context. Đọc index.json và đúng một gói json.xz đã đối chiếu ở textbook_archive_6_12/reviewed_lesson_packets, kiểm SHA/đường dẫn/đúng môn-lớp-bài/trạng thái/phạm vi, giới hạn kích thước. Biến GSAI_TEXTBOOK_ARCHIVE_ROOT chỉ nơi mount kho trên máy khác; không có kho thì archive_unavailable, không giả vờ Cloud truy cập F. Gói là trích diễn giải theo bằng chứng đã đọc, không phải toàn văn sách. Không tự biến HTMLcatalog/PDF chưa đọc thành kiến thức chuẩn. Thiếu gói ghi no_exact_reviewed_packet; gói lỗi ghi invalid_reviewed_packet, không đưa nguồn lỗi vào API. Hướng dẫn chung cả hai transport yêu cầu phân biệt thiếu căn cứ và nội dung đã đọc, không tự tuyên bố đủ ba nguồn/YCCĐ/luật.
+
+Mới có gói Bài1 Lịch sử10 từ bằng chứng SGK6–10/SGV23–31 đã đọc; chưa đủ mọi môn/lớp, chưa có OCR/tự đọc ảnhPDF/XZ toàn kho hoặc bộ tra web tự động. Cần lần lượt lập gói đúng bài từ kho và lưu vị trí/phiên bản, kiểm nội dung thật. Không tự sinh lại bài đã duyệt để thử cơ chế. Bộ lọc tương lai phải bảo toàn bài owner-approved và chỉ mở lại khi có lỗi cụ thể có căn cứ.
+
+## 08/11/2026 — Lab đối chiếu nguồn local
+
+Lệnh chính xác “Đối chiếu tư liệu theo bài học” lấy cấu hình source_workshop từ hồ sơ đúng môn/lớp/bài. Cards là diễn giải sư phạm có phạm vi, không trích nguyên văn hoặc chứng nhận pháp lý. Renderer và chấm nhận xét chạy local, không AI; khi thiếu cấu hình của lệnh này phải báo thiếu, không tự chuyển sang API. Cấu hình hiện có cho Bài1 Lịch sử10, Bài5 Địa lí10, Bài11 GDKT&PL10. Kiểm cơ chế/renderer khác nghiệm thu nguồn toàn chương trình; UI từng bài phải có bằng chứng riêng. Không đưa bộ câu hỏi/đáp án workshop vào prompt sinh bài vì không cần trả token cho phần chạy local.
+
+## Owner08/11/2026 — kho khóa kiểm local được ủy quyền
+
+Owner cung cấp key mới và cho phép mã hóa để các ca AI kiểm local không phải chờ nhập lại. File duy nhất: C:/Users/pmtgi/AppData/Local/GSAI/credentials/gemini_qa.dpapi, Windows DPAPI theo tài khoản Windows hiện tại. Đã kiểm giải mã được; chưa coi là API đã xác thực trước khi có yêu cầu thật thành công. Khi cần, giải mã trong bộ nhớ của luồng thao tác rồi nhập đúng ô password của app local bằng Chrome MCP; tuyệt đối không in giá trị ra tool output, không lấy dump mọi input/DOM có password, không ghi vào QA/log/code/Git, không dùng lại key cũ đã lộ. Không tự động gọi AI chỉ để ping nếu có lượt bài cần làm thực sự. Ghi trạng thái pending trước yêu cầu và lưu full JSON sau nhận. Không đưa file DPAPI lên GitHub/Cloud: nó gắn với tài khoản Windows; Cloud dùng kho Secrets riêng khi triển khai được ủy quyền. Không khẳng định key cũ đã được thu hồi khi chưa có bằng chứng. Quyền sử dụng kiểm thử này tiếp tục qua ca theo checkpoint; không hỏi lại việc nhập key khi có thể dùng kho đã cấp.
+
+## Lab UTC local — 08/11/2026
+
+Công cụ Đổi giờ và ngày theo UTC nằm trong thư viện Lab của Địa lý mọi lớp, nhãn tham khảoKNTT10. fixed_offset_clock dùng chung kiểm ngày, độ lệch nguyên phút và tràn lịch; renderer hiển thị A/UTC/B và đổi ngày khi thay dữ kiện. Chỉ dùng độ lệch được cho, không tự suy giờ pháp định/DST theo tên thành phố, kinh độ hoặc hướng đi. Không phải mô phỏng chuyển động TráiĐất, không chứng nhận toànchươngtrình. Không gọiAI. Khi kiểm/sửa tái dùng tests/test_fixed_offset_clock.py và bằng chứng T1_DIALY10_UTC_*_UI_20261108.json; giữUI/tínhnăngkhác và không sinh lại bài đã lưu.
+
+Ngữ cảnh sinh bài chỉ gửi nguồn/tiêu chí/grounded_facts cần thiết; source_workshop, content_corrections và assessment_proposals là dữ liệu xử lý local, không gửi lại bản nháp sai/khóa câu hỏi trong request sinh bài. Giữ nguyên cơ chế sửa ở renderer/export/quiz; không xóa hồ sơ sửa để giảm token. Bằng chứng cấu trúc và so sánh số ký tự không phải số token hoặc chi phí API thực tế.

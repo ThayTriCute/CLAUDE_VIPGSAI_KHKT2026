@@ -287,6 +287,744 @@
           ]
         }
       ]
+    },
+    {
+      "id": "kntt-cn10-thietke-hethong-kithuat-20261107",
+      "subject": "Công nghệ",
+      "grade": 10,
+      "topics": [
+        "Hệ thống kĩ thuật - Công nghệ 10, Thiết kế và công nghệ, KNTT: cấu trúc đầu vào, xử lí, đầu ra; ví dụ đèn tự động và cảnh báo cháy. Phân biệt tín hiệu và năng lượng, cảm biến và bộ xử lí. Sơ đồ khối, câu hỏi và lời giải đầy đủ, không trộn trồng trọt hoặc bịa số trang."
+      ],
+      "reviewed_on": "2026-11-07",
+      "scope": "Đối chiếu khái niệm, cấu trúc và luồng vật liệu/năng lượng/thông tin của Bài 2; phân biệt mạch hở/mạch kín. Không chứng nhận mọi bài, câu hỏi, phản hồi AI, mô hình thực hoặc toàn bộ SGK.",
+      "sources": [
+        {
+          "title": "SGK Công nghệ 10 – Thiết kế và công nghệ, Kết nối tri thức với cuộc sống — NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-cong-nghe-10-thiet-ke-va-cong-nghe.4700882633",
+          "locator": "Bài 2: Hệ thống kĩ thuật, trang in 11–13; mục I, II, Hình 2.1–2.6 và vận dụng điều hòa. Đã đọc hình trang thực trong Chrome MCP ngày 07/11/2026.",
+          "edition_note": "Bản trực tuyến được cổng NXBGD xếp trong Bộ SGK thống nhất, ảnh lưu trên máy chủ tháng 04/2026; chưa xác minh năm tái bản. Đã đọc tài liệu thông tin cập nhật được chính cổng sách liên kết (Drive 1ZErzG8Cp-Rxn4nsWoNV99_ChB-KHB3xM): một mục tại trang 41, Tổng cục Thống kê đổi thành Cục Thống kê; không có mục sửa trang 11–13 trong tài liệu này.",
+          "criteria": [
+            "Xác định đầu vào, bộ phận xử lí, đầu ra theo ranh giới và nhiệm vụ của hệ thống.",
+            "Đầu vào và đầu ra có thể là vật liệu, năng lượng hoặc thông tin; xử lí không chỉ là vi điều khiển.",
+            "Phân biệt tín hiệu điều khiển với năng lượng cấp cho thiết bị chấp hành.",
+            "Mạch kín có tín hiệu phản hồi từ đầu ra; tự động bật/tắt chưa đủ để kết luận là mạch kín.",
+            "Ví dụ đèn theo ánh sáng, cảnh báo cháy và điều hòa phải giữ đúng vai trò của các khối và điều kiện áp dụng."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kntt-cn10-trongtrot-dattrong-20261107",
+      "subject": "Công nghệ",
+      "grade": 10,
+      "topics": [
+        "Giới thiệu về đất trồng — Công nghệ 10, Công nghệ trồng trọt, KNTT, Bài 3"
+      ],
+      "reviewed_on": "2026-11-07",
+      "scope": "Đối chiếu Bài 3 Giới thiệu về đất trồng: khái niệm, bốn thành phần, keo đất, thành phần cơ giới và phản ứng dung dịch đất. Không thay cho thí nghiệm đất thực tế hoặc toàn bộ chương trình.",
+      "sources": [
+        {
+          "title": "SGK Công nghệ 10 – Công nghệ trồng trọt, Kết nối tri thức với cuộc sống — NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-cong-nghe-10-cong-nghe-trong-trot.4715169808",
+          "locator": "Mục lục trang 4; Bài 3 trang in 19–22, mục I, II, III, Hình 3.1–3.3; đã đọc ảnh trang gốc NXBGD từ URL quan sát trên Chrome MCP.",
+          "edition_note": "Cổng Bộ SGK thống nhất, ảnh trang trên máy chủ NXBGD tháng 04/2026; không tự gán năm tái bản. Đã đọc thông tin cập nhật 1 trang do cổng sách liên kết (Drive 1DDEkjAt_nvba7l09DoowB6aJDnFHzI1s): các trang 8,9,26,57,106,116,117,136; không có mục sửa 19–22 trong tài liệu này.",
+          "criteria": [
+            "Đất trồng gồm phần lỏng, phần rắn, phần khí và sinh vật đất; nêu đúng vai trò, không đồng nhất đất với phân bón.",
+            "Keo đất có nhân và lớp điện kép; dấu điện tích do tầng ion quyết định điện, ion khuếch tán có khả năng trao đổi với dung dịch đất; không nói mọi keo đều âm.",
+            "Theo đúng quy ước SGK trang 22: cát 0,02–2 mm, limon 0,002–0,02 mm, sét dưới 0,002 mm; không trộn ngưỡng 0,05 mm của hệ phân loại khác. Tính giữ nước và dinh dưỡng có điều kiện, không tự suy càng nhiều sét càng tốt cho mọi cây.",
+            "Theo phân loại đất của SGK trang 22: chua pH dưới 6,6; trung tính 6,6–7,5; kiềm trên 7,5. Kiểm cả hai giá trị biên.",
+            "Phân biệt dải phân loại đất theo SGK với trung tính hóa học của dung dịch: không khẳng định H+ bằng OH− ở mọi pH trong dải 6,6–7,5. Với dung dịch nước ở 25°C trong mô hình phổ thông, trung tính hóa học ở pH xấp xỉ 7.",
+            "Bài tập phải có đáp án/lời giải và rubric, hướng dẫn tìm hiểu đất địa phương cần phép đo/nguồn thực tế; không bịa kết quả địa phương hoặc liều bón vôi khi thiếu dữ kiện."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kntt-vl10-nemngang-20261107",
+      "subject": "Vật lý",
+      "grade": 10,
+      "topics": [
+        "Chuyển động ném ngang — Vật lí 10, KNTT, Bài 12 mục I"
+      ],
+      "reviewed_on": "2026-11-07",
+      "scope": "Đối chiếu riêng mục I Chuyển động ném ngang, không gộp thành đã kiểm mục ném xiên hoặc toàn SGK.",
+      "sources": [
+        {
+          "title": "SGK Vật lí 10 — Kết nối tri thức với cuộc sống, NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-vat-li-10.4700746482",
+          "locator": "Mục lục trang4; Bài12 mụcI trang in49–51; Hình12.1–12.5, công thức12.1/12.2 và bài tập ví dụ. Đã đọc ảnh trang gốc NXBGD từ URL quan sát Chrome MCP.",
+          "edition_note": "Cổng Bộ SGK thống nhất dẫn reader4700746482, ảnh trang lưu trên máy chủ04/2026. Không dùng portal939934811 thuộc SGK khác; không tự gán năm tái bản. Chưa thấy mục cập nhật trên portal940250226 đã kiểm, không suy thành không có đính chính ở nơi khác.",
+          "criteria": [
+            "Ném ngang có vận tốc ban đầu nằm ngang, vy ban đầu bằng0. Giả thiết bỏ cản không khí, g không đổi và chuyển động sau rời tay chỉ chịu trọng lực; không có lực ném tiếp tục đẩy vật.",
+            "Chọn hệ quy chiếu gần mặt đất, gốc và chiều trục rõ ràng; không trộn độ rơi hướng xuống với độ cao so mặt đất hướng lên.",
+            "Vận tốc ngang vx=v0 không đổi; chuyển động đứng là rơi tự do, hai thành phần độc lập. Nếu chiều xuống dương từ điểm ném: x=v0*t, y=g*t^2/2; nếu dùng độ cao từ mặt đất: z=H-g*t^2/2.",
+            "Thời gian tới mặt đất T=sqrt(2H/g), tầm xa L=v0*T với H>0,g>0; khối lượng không ảnh hưởng trong mô hình lý tưởng. Cùng độ cao, thời điểm phóng và vy0=0 mới có cùng thời gian rơi.",
+            "Quỹ đạo là nhánh parabol khi v0>0; mô hình thực dùng0<=t<=T và0<=x<=L, không kéo dài xuống dưới mặt đất rồi gọi đó là quỹ đạo bay.",
+            "Ví dụ SGK H40m,v0=12m/s,g9.8m/s^2 cho T xấp xỉ2.86s,L xấp xỉ34.3m. Số liệu ví dụ tự đặt phải ghi rõ, giữ g/đơn vị/độ chính xác nhất quán; không bịa kết quả thí nghiệm.",
+            "Bài tập tự luận có kết quả, lời giải thật và rubric; hình thực đúng dữ kiện và nhãn không đè nhau, gợi ý riêng không lộ đáp án. Không yêu cầu học sinh thử ném vật từ nơi cao."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kntt-hoa10-tocdo-20261107",
+      "subject": "Hóa học",
+      "grade": 10,
+      "topics": [
+        "Tốc độ phản ứng — Hóa học 10, KNTT, Bài 19"
+      ],
+      "reviewed_on": "2026-11-07",
+      "scope": "Đối chiếu Bài19 SGK trang92–100 và phần mục tiêu/thông tin bổ sung SGV124–125; không phải toàn SGK hoặc toàn phụ lục YCCĐ pháp quy.",
+      "sources": [
+        {
+          "title": "SGK Hóa học 10 — Kết nối tri thức với cuộc sống, NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-hoa-hoc-10.4700854983",
+          "locator": "Mục lục trang4–5; Bài19 trang in92–100, Hình19.1–19.7, Bảng19.1. Đã đọc ảnh gốc từ URL quan sát Chrome MCP, lưu HOA10_OFFICIAL_p92..100_20261107.png.",
+          "edition_note": "Portal Bộ SGK thống nhất 940249942; ảnh máy chủ tháng04/2026. Không tự gán năm tái bản; chưa tìm thấy liên kết đính chính trên portal đã xem, không suy không có đính chính.",
+          "criteria": [
+            "Tốc độ trung bình cần nêu chất theo dõi, khoảng thời gian, dấu và đơn vị. Khi chuẩn hóa theo phương trình $aA+bB\\to cC+dD$ ở thể tích không đổi:\n\n$$v=-\\frac{\\Delta C_A}{a\\Delta t}=-\\frac{\\Delta C_B}{b\\Delta t}=\\frac{\\Delta C_C}{c\\Delta t}=\\frac{\\Delta C_D}{d\\Delta t}$$\n\n Không lẫn tốc độ mất một chất với tốc độ đã chia hệ số.",
+            "Bảng 19.1 dùng $\\ce{H2O2 -> H2O + 1/2 O2}$ với nồng độ 1.000, 0.707, 0.500, 0.354, 0.250 mol/L tại 0, 3, 6, 9, 12 h. Khoảng 0–3 h: tốc độ mất $\\ce{H2O2} \\approx 0.0977\\,\\mathrm{mol/(L\\cdot h)}$. Nếu đổi sang $\\ce{2H2O2 -> 2H2O + O2}$ thì tốc độ phản ứng chuẩn hóa bằng một nửa; không gọi hai quy ước là mâu thuẫn.",
+            "Biểu thức tốc độ phải có căn cứ thực nghiệm hoặc giả thiết phản ứng đơn giản. Không lấy mọi hệ số phương trình làm số mũ. Ví dụ $\\ce{2NO + O2 -> 2NO2}$ được cho $v=kC_{\\ce{NO}}^2C_{\\ce{O2}}$; không suy cơ chế đơn giản chỉ từ phương trình tổng.",
+            "Giữ nhiệt độ/môi trường/xúc tác khi so sánh nồng độ. k không đổi theo nồng độ trong điều kiện đã cố định; đơn vị k phụ thuộc bậc phản ứng. Nén hỗn hợp khí tăng nồng độ, không đồng nhất mọi cách tăng áp suất tổng với tăng áp suất riêng phần chất phản ứng.",
+            "Hệ số nhiệt độ gamma áp dụng trong khoảng nhiệt độ và điều kiện đã cho; không khẳng định mọi phản ứng luôn tăng 2–4 lần mỗi 10°C. Dùng $\\frac{v_2}{v_1}=\\gamma^{(T_2-T_1)/10}$ khi đề giả định gamma không đổi.",
+            "Diện tích tiếp xúc so sánh cùng lượng chất và các điều kiện khác tương đương. Xúc tác thay đường phản ứng/năng lượng hoạt hóa, được tái sinh; không làm tăng lượng sản phẩm giới hạn hoặc dịch cân bằng chỉ vì tăng tốc.",
+            "Chỉ mô phỏng/đọc số liệu hoặc quan sát thí nghiệm giáo viên tổ chức; không giao tự làm phản ứng sinh $\\ce{SO2}$, trộn acid, nung Mg hoặc thao tác $\\ce{H2O2}$ tại nhà. Không bịa thời gian thí nghiệm/độ đục/hằng số tốc độ rồi gắn cho SGK. Lab cần có điều khiển và kết quả nhất quán, phân biệt dữ liệu mô phỏng với phép đo thật."
+          ]
+        },
+        {
+          "title": "SGV Hóa học 10 — Kết nối tri thức với cuộc sống, NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgv-hoa-hoc-10.4923888216",
+          "locator": "Mục lục4–5, Bài19 trang in124–125 đã đọc: mục tiêu, chuẩn bị, định nghĩa/phương trình tốc độ và định tính/định lượng. Không tuyên bố đã đọc126–133.",
+          "edition_note": "Reader từ cùng portal SGK; ảnh máy chủ05/2026; không tự gán năm tái bản.",
+          "criteria": [
+            "SGV125 nêu rõ điều kiện thể tích không đổi khi dùng nồng độ, chuẩn hóa theo hệ số phản ứng; theo dõi thể tích khí là phương pháp phù hợp chương trình. Mục tiêu SGV124 khớp phạm vi Bài19; không biến mục tiêu sách thành trích dẫn YCCĐ pháp quy."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kntt-sinh10-membrane-20261107",
+      "subject": "Sinh học",
+      "grade": 10,
+      "topics": [
+        "Trao đổi chất qua màng tế bào — Sinh học 10, KNTT, Bài 10"
+      ],
+      "reviewed_on": "2026-11-07",
+      "scope": "Đối chiếu một bài: SGK64–70 và SGV79–83 qua ảnh reader NXBGD; không phải toàn SGK hoặc toàn YCCĐ pháp quy.",
+      "sources": [
+        {
+          "title": "SGK Sinh học 10 — Kết nối tri thức với cuộc sống, NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-sinh-hoc-10.4700819489",
+          "locator": "Mục lục in4: Bài10 bắt đầu64, Bài11 bắt đầu71. Đã xem trực quan các cặp64–65,66–67,68–69 và trang70 qua Chrome MCP.",
+          "edition_note": "Được liên kết từ portal Bộ SGK thống nhất sinh-hoc-10-939773641.939773641; ảnh máy chủ04/2026, không tự suy năm tái bản.",
+          "criteria": [
+            "Vận chuyển thụ động không trực tiếp tiêu tốn năng lượng tế bào. Dòng thuần theo gradient thích hợp; các phân tử vẫn chuyển động hai chiều, cân bằng động không có nghĩa mọi phân tử dừng.",
+            "Khuếch tán đơn giản qua lớp kép phospholipid phù hợp phân tử nhỏ không phân cực; ion/chất phân cực thường cần protein kênh hoặc chất mang đặc hiệu. Không khẳng định mọi chất nhỏ đều xuyên lipid tự do. Ion chịu gradient điện hóa; không chỉ so nồng độ.",
+            "Thẩm thấu là vận chuyển nước qua màng thấm chọn lọc. Khi mô hình dùng chất tan không qua màng, so nồng độ hạt tan hiệu dụng hai bên và nêu điều kiện nhiệt độ/áp suất; không đồng nhất mọi chất tan với độ trương. Nước đi thuần về phía có thế nước thấp hơn trong điều kiện đã nêu.",
+            "Ưu/nhược/đẳng trương là tương đối với tế bào và tính thấm màng. Tế bào động vật có thể co hoặc trương/vỡ tùy điều kiện; tế bào thực vật có thành nên trương nước tạo sức trương, mất nước có thể co nguyên sinh; không gọi thành tế bào là màng bán thấm chủ yếu.",
+            "Vận chuyển chủ động cần năng lượng và protein phù hợp, có thể ngược gradient. Bơm Na/K là ví dụ dùng ATP; không suy mọi dạng chủ động đều trực tiếp thủy phân ATP. Nhập/xuất bào dùng biến dạng màng và năng lượng; không đồng nhất với phân tử đi qua kênh.",
+            "Lab cần cho đổi nồng độ trong/ngoài và loại tế bào, hiện dòng nước thuần và trạng thái tương ứng. Mọi đường cong/thời gian là mô phỏng định tính hoặc dữ liệu giả định ghi rõ, không gán số đo SGK. Không biến mô hình thành chỉ dẫn truyền dịch hoặc điều trị; không giao lấy máu hay tự thao tác sinh học nguy hiểm.",
+            "Khung Khoa học và đời sống trang67 có cách ghi nồng độ và diễn giải sức khỏe cần kiểm độc lập trước dùng; không sao chép thành lời khuyên y tế. Chỉ dùng hiện tượng thẩm thấu có điều kiện cho bài này."
+          ]
+        },
+        {
+          "title": "SGV Sinh học 10 — Kết nối tri thức với cuộc sống, NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgv-sinh-hoc-10.4923915253",
+          "locator": "Mục lục in5 định vị Bài10 ở79; đã đọc79–83 (đầu hoạt động, đáp án/so sánh thụ động–chủ động, thẩm thấu, nhập/xuất bào). Chưa đọc84, không nhận đã đọc cả79–84.",
+          "edition_note": "Liên kết SGV cùng portal chính thức; không tự gán năm tái bản.",
+          "criteria": [
+            "SGV80–81 phân biệt lớp lipid với protein, độ đặc hiệu/bão hòa, gradient điện hóa; giải thích thành tế bào và sức trương. SGV82–83 mô tả nhập/xuất bào và trường hợp rau muống cuộn do mặt trong/ngoài hút nước khác nhau; không suy mọi mô có đáp ứng giống nhau."
+          ]
+        }
+      ],
+      "content_corrections": [
+        {
+          "before": "Các chất đi từ nơi có nồng độ cao đến nơi có nồng độ thấp (theo gradient nồng độ), không tiêu tốn năng lượng ($ATP$).",
+          "after": "Dòng vận chuyển thuần của chất thụ động đi theo gradient nồng độ thích hợp; với ion cần xét gradient điện hóa. Quá trình không trực tiếp dùng năng lượng chuyển hóa tế bào. Các phân tử vẫn chuyển động hai chiều; cân bằng động không có nghĩa chúng dừng lại.",
+          "reason": "SGK65–66, SGV80–81: ion chịu gradient điện hóa; phân biệt chuyển động và dòng thuần."
+        },
+        {
+          "before": "Sự khuếch tán của các phân tử nước qua màng. Nước di chuyển từ nơi có thế nước cao (nồng độ chất tan thấp) sang nơi có thế nước thấp (nồng độ chất tan cao).",
+          "after": "Sự vận chuyển nước qua màng thấm chọn lọc. Trong mô hình cùng nhiệt độ, ban đầu cùng áp suất và chất tan không qua màng, nước đi thuần từ phía loãng sang phía đậm đặc hơn. Tổng quát nước đi từ thế nước cao tới thấp; áp suất và tính thấm đối với từng chất tan đều có vai trò.",
+          "reason": "SGK66–67; bổ sung giả thiết để không đồng nhất mọi nồng độ với độ trương."
+        },
+        {
+          "before": "Nồng độ trong và ngoài cân bằng.",
+          "after": "Trong mô hình chất tan không qua màng, hai phía có nồng độ hạt tan hiệu dụng bằng nhau nên không có dòng nước thuần; nước vẫn trao đổi hai chiều.",
+          "reason": "Không nhầm cân bằng động với ngừng chuyển động."
+        },
+        {
+          "before": "Cần năng lượng ($ATP$) và protein vận chuyển; đi ngược gradient nồng độ (từ thấp đến cao).",
+          "after": "Cần nguồn năng lượng và protein vận chuyển thích hợp, cho phép vận chuyển ngược gradient. Chủ động sơ cấp có thể dùng ATP trực tiếp; chủ động thứ cấp ghép với gradient ion đã được tạo nhờ năng lượng, không nhất thiết thủy phân ATP ngay tại chất mang đó. Với ion cần xét gradient điện hóa.",
+          "reason": "Phân biệt năng lượng trực tiếp/gián tiếp; không loại chủ động thứ cấp chỉ vì không dùng ATP trực tiếp."
+        },
+        {
+          "before": "Khi bón nhiều phân, nồng độ chất tan ở dịch đất trở nên cao hơn so với dịch bào trong rễ cây (môi trường ưu trương). Theo nguyên lý thẩm thấu, nước sẽ từ trong rễ cây đi ra ngoài đất. Tế bào mất nước làm cây bị héo.",
+          "after": "Nếu bón phân làm dịch đất đủ đậm đặc, hạ thế nước bên ngoài rễ xuống thấp hơn bên trong, rễ sẽ khó hút nước hoặc có thể mất nước ra ngoài. Mất sức trương làm cây héo; ngày nóng còn tăng thoát hơi nước. Không kết luận mọi lần bón nhiều phân đều lập tức tạo dòng nước ra rễ nếu chưa biết điều kiện.",
+          "reason": "Ví dụ cần giả thiết và phân biệt khó hút nước với chắc chắn mất nước."
+        },
+        {
+          "before": "Sự vận chuyển glucose vào tế bào thông qua các protein mang mà không tiêu tốn ATP được gọi là gì?",
+          "after": "Glucose được vận chuyển vào tế bào qua protein mang theo chiều từ nơi có nồng độ glucose cao tới thấp, không ghép với gradient ion hay nguồn năng lượng khác. Cơ chế này được gọi là gì?",
+          "reason": "Không dùng tiêu chí thiếu ATP trực tiếp để loại vận chuyển chủ động thứ cấp; giữ khóa B."
+        },
+        {
+          "before": "Glucose là phân tử phân cực, không đi qua được lớp lipid nên cần protein hỗ trợ (protein mang). Vì không tốn ATP nên đây là vận chuyển thụ động (khuếch tán tăng cường).",
+          "after": "Trong điều kiện đề đã cho, glucose đi theo gradient của chính nó qua protein mang và không ghép nguồn năng lượng khác, nên là khuếch tán tăng cường. Không chỉ dựa vào việc không thủy phân ATP trực tiếp: vận chuyển chủ động thứ cấp có thể ghép gradient ion. Glucose không khuếch tán trực tiếp đáng kể qua lớp lipid trong mô hình này.",
+          "reason": "Giải thích phải theo đủ giả thiết; không phát biểu tuyệt đối mọi glucose transport."
+        },
+        {
+          "before": "Tại sao khi muối dưa cải, sau một thời gian, nước trong hũ muối dưa lại tăng lên và lá dưa bị teo lại?",
+          "after": "Xét giai đoạn đầu muối dưa cải trong hũ kín, không thêm nước, bỏ qua bay hơi và coi nước muối bên ngoài ưu trương đối với tế bào lá. Hãy giải thích vì sao nước thoát khỏi lá vào dịch muối và lá giảm sức trương, teo lại.",
+          "reason": "Nêu điều kiện giai đoạn đầu, không suy mực nước luôn tăng từ thẩm thấu trong mọi hũ dưa."
+        },
+        {
+          "before": "**Câu 3. [Mức độ: VD]**",
+          "after": "**Câu 3. [Mức độ: TH]**",
+          "reason": "Hạ nhãn đề xuất cho đúng thao tác phân loại cơ chế; giữ nguyên đáp án B và trạng thái cần giáo viên duyệt."
+        },
+        {
+          "before": "Học sinh vận dụng kiến thức về tính chất của glucose (phân cực) và điều kiện không tốn ATP để phân loại.",
+          "after": "Học sinh hiểu đặc điểm chất mang và chiều gradient đã cho để phân loại khuếch tán tăng cường; không suy từ riêng việc không dùng ATP trực tiếp. Nhãn TH là đề xuất cần giáo viên duyệt.",
+          "reason": "Lý do mức độ phải khớp giả thiết đã sửa, không lẫn chủ động thứ cấp."
+        }
+      ],
+      "assessment_proposals": [
+        {
+          "question": "Glucose được vận chuyển vào tế bào qua protein mang theo chiều từ nơi có nồng độ glucose cao tới thấp, không ghép với gradient ion hay nguồn năng lượng khác. Cơ chế này được gọi là gì?",
+          "level": "TH",
+          "reason": "Phân loại trực tiếp cơ chế từ chiều gradient và protein đã cho; không có tình huống chuyển giao mới. Đây là đề xuất sau đối chiếu SGK65–66/SGV80–81, chưa phải thẩm định YCCĐ hoặc chứng nhận của Bộ."
+        }
+      ]
+    },
+    {
+      "id": "kntt-lichsu10-hienthuc-20261108",
+      "subject": "Lịch sử",
+      "grade": 10,
+      "topics": [
+        "Hiện thực lịch sử và lịch sử được con người nhận thức — Lịch sử 10, KNTT, Bài 1"
+      ],
+      "reviewed_on": "2026-11-08",
+      "scope": "Đã đọc Bài1 SGK in6–10 và SGV23–31; không phải toàn SGK hay toàn YCCĐ pháp quy.",
+      "sources": [
+        {
+          "title": "SGK Lịch sử 10 — Kết nối tri thức với cuộc sống, NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-lich-su-10.4755748913",
+          "locator": "Bài1 trang in6–10; mục lục2, title và imprint112 đã xem qua Chrome MCP.",
+          "edition_note": "Title explicitly tái bản lần thứ ba,có chỉnh lí,bổ sung. Imprint copyright2023 and registration line contains2026; printing date blanks not inferred. Current portal source; not legal certification or assertion all 2026 changes mapped.",
+          "criteria": [
+            "Phân biệt sự kiện quá khứ thực sự diễn ra với việc con người thuật lại/giải thích, không dùng cách hỏi mơ hồ khiến một phát biểu có thể mang hai nghĩa.",
+            "Hiện thực quá khứ khách quan không thay theo quan điểm; nhận thức có thể khác/được bổ sung theo tư liệu và phương pháp. Không suy mọi diễn giải đều đúng hoặc nhận thức có thể khôi phục hoàn toàn quá khứ.",
+            "SGK7–8 mũi tên/khuôn đúc Cổ Loa và truyện thể hiện các dạng tư liệu/tái hiện khác nhau; không dùng truyền thuyết như bằng chứng tự xác minh sự kiện.",
+            "SGK8/SGV26–29 hai bia La-pu-la-pu/Ma-gien-lăng: so sánh cùng sự kiện, góc nhìn và mục đích khác; tách sự kiện với đánh giá. Không viết Ma-gien-lăng còn sống hoàn tất hành trình1522; SGK8 nêu Ê-ca-nô trở về.",
+            "Sử học nghiên cứu quá khứ loài người nhiều quy mô; phân biệt chức năng khoa học/xã hội với nhiệm vụ nhận thức/giáo dục/dự báo. Dự báo dựa bài học/bối cảnh, không tiên tri hoặc áp quy luật máy móc.",
+            "Mục tiêu SGK/SGV đã đọc không tự là nguyên văn YCCĐ pháp quy. Không dùng đó làm chứng nhận toàn bộ kiến thức của môn."
+          ]
+        },
+        {
+          "title": "SGV Lịch sử 10 — Kết nối tri thức với cuộc sống, NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgv-lich-su-10.4923893701",
+          "locator": "Mục lục4, mục tiêu5; hướng dẫn Bài1 in23–31 đã đọc.",
+          "edition_note": "Reader cùng portal NXBGD hiện đang cung cấp; không tự gán năm in từ ngày ảnh máy chủ.",
+          "criteria": [
+            "SGV nhấn mạnh khai thác tư liệu và thảo luận để phân biệt hiện thực/nhận thức, tránh áp đặt một chiều và quá nhấn phương pháp luận trừu tượng cho HS. Mục tiêu SGV không tự là YCCĐ nguyên văn pháp quy."
+          ]
+        }
+      ],
+      "content_corrections": [
+        {
+          "before": "**3. Ví dụ có lời giải**\n*Ví dụ:* Sự kiện Ngô Quyền đánh tan quân Nam Hán trên sông Bạch Đằng năm 938.\n*   **Hiện thực lịch sử:** Diễn biến trận đánh, thời gian, địa điểm, kết quả chiến thắng thực tế đã xảy ra năm 938.\n*   **Nhận thức lịch sử:** Các bài viết trong sử cũ (như *Đại Việt sử ký toàn thư*), các truyền thuyết dân gian, hay các công trình nghiên cứu hiện đại về nghệ thuật quân sự của Ngô Quyền.\n*   **Giải thích:** Trận đánh là có thật và duy nhất (Hiện thực). Những gì chúng ta đọc được trong sách là kết quả quá trình tìm hiểu, ghi chép lại của các sử gia (Nhận thức).\n\n**4. Luyện tập**\nEm hãy phân loại các dữ liệu sau vào nhóm \"Hiện thực lịch sử\" hoặc \"Nhận thức lịch sử\":\n1. Những chiếc cọc gỗ tại di tích bãi cọc Cao Quỳ (Hải Phòng).\n2. Nhận định: \"Chiến thắng Bạch Đằng năm 938 mở ra thời đại độc lập tự chủ lâu dài cho dân tộc\".\n*(Gợi ý: Vật chất cụ thể tồn tại từ quá khứ thường là hiện thực/tư liệu; các lời bình luận, đánh giá là nhận thức).*\n\n**5. Vận dụng**\nTìm hiểu về một nhân vật lịch sử tại địa phương em (hoặc tên đường, tên trường). Hãy chỉ ra một thông tin em cho là \"hiện thực\" (ví dụ: năm sinh) và một thông tin thể hiện \"nhận thức\" của mọi người về nhân vật đó (ví dụ: danh hiệu \"người anh hùng\").",
+          "after": "**3. Ví dụ có lời giải**\n*Ví dụ:* SGK Bài 1 dùng cầu Long Biên để gợi tìm hiểu quá khứ.\n*   **Hiện thực lịch sử:** Quá trình xây dựng cầu đã thực sự diễn ra trong quá khứ, độc lập với lời kể về nó.\n*   **Tư liệu:** Di tích, ảnh, hồ sơ hoặc lời ghi chép liên quan cung cấp dấu vết/thông tin để tìm hiểu quá trình đó; cần kiểm xuất xứ và độ tin cậy.\n*   **Nhận thức lịch sử:** Bài viết giới thiệu, giải thích về quá trình xây cầu là kết quả tìm hiểu của con người, có thể được bổ sung khi có tư liệu và phương pháp mới.\n*   **Giải thích:** Phân biệt việc đã xảy ra với dấu vết còn lại và cách thuật lại; không đồng nhất một hiện vật hoặc một lời kể với toàn bộ hiện thực quá khứ.\n\n**4. Luyện tập**\nHãy phân biệt ba yếu tố: (1) quá trình xây dựng cầu Long Biên thực sự diễn ra; (2) một bức ảnh có xuất xứ đã kiểm về quá trình xây cầu; (3) bài viết của người nghiên cứu giải thích quá trình ấy.\n*Gợi ý:* (1) thuộc hiện thực quá khứ; (2) được sử dụng như tư liệu để nghiên cứu, không tự cho biết toàn bộ sự kiện; (3) thể hiện nhận thức lịch sử và cần được kiểm bằng tư liệu. Cần hỏi ảnh chụp khi nào, ở đâu, do ai tạo/lưu giữ trước khi kết luận.\n\n**5. Vận dụng**\nChọn một công trình hoặc nhân vật lịch sử ở địa phương. Nêu một sự việc quá khứ cần tìm hiểu, một nguồn tư liệu có xuất xứ và một nhận định của người viết về sự việc đó. Phân biệt sự việc với phát biểu ghi lại nó: một năm sinh được ghi trong tài liệu là thông tin cần kiểm chứng, không mặc nhiên đúng chỉ vì được in ra. Ghi rõ điều đã có căn cứ và điều chưa xác minh.",
+          "reason": "SGK6–8/SGV25–29: dùng ví dụ đã đọc, bỏ liên hệ Cao Quỳ cạnh938 không có nguồn và phân biệt hiện thực/tư liệu/nhận thức."
+        },
+        {
+          "before": "*   **Tại sao có sự khác biệt?** Do mục đích nghiên cứu, nguồn tư liệu (đầy đủ hay thiếu sót), quan điểm tiếp cận và phương pháp của người tìm hiểu.",
+          "after": "*   **Tại sao có sự khác biệt?** Do mục đích nghiên cứu, nguồn tư liệu (đầy đủ hay thiếu sót), quan điểm tiếp cận và phương pháp của người tìm hiểu. Có góc nhìn khác nhau không có nghĩa mọi nhận định đều đúng; cần đối chiếu tư liệu, phương pháp và bằng chứng.\n*   **Sử học:** Là khoa học nghiên cứu quá khứ của loài người; đối tượng gồm hoạt động của con người và xã hội loài người trong quá khứ, ở các quy mô cá nhân, cộng đồng, dân tộc và thế giới.\n*   **Chức năng của Sử học:** Chức năng khoa học giúp tìm hiểu, khôi phục và giải thích quá khứ trên cơ sở tư liệu; chức năng xã hội góp phần rút ra bài học phục vụ cuộc sống hiện tại.\n*   **Nhiệm vụ của Sử học:** Nhận thức, giáo dục và dự báo. Dự báo dựa trên hiểu biết quá khứ, bài học kinh nghiệm và điều kiện cụ thể; không phải tiên tri hoặc áp dụng máy móc một mô hình cho mọi hoàn cảnh.",
+          "reason": "SGK9/SGV30: bổ sung nội dung Sử học/chức năng/nhiệm vụ còn thiếu; SGV tránh áp đặt diễn giải."
+        },
+        {
+          "before": "Nhận thức lịch sử phụ thuộc vào người nghiên cứu (quan điểm, thái độ, mục đích). Hiện thực lịch sử (A) là cố định; phương án C sai vì lịch sử dựa trên sự thật; phương án D sai vì vẫn có tư liệu nhưng cách giải thích khác nhau.",
+          "after": "Nhận thức lịch sử chịu ảnh hưởng của mục đích, quan điểm, nguồn tư liệu và phương pháp nghiên cứu; B là phương án phù hợp. Điều đó không cho phép tùy ý tưởng tượng hoặc coi mọi đánh giá đều đúng. A nhầm việc thay đổi nhận thức với thay đổi quá khứ; C phủ nhận cơ sở sự thật; D phủ nhận sự tồn tại của tư liệu.",
+          "reason": "SGK7–8/SGV26–29: góc nhìn khác nhau vẫn cần kiểm bằng chứng; giữ khóaB."
+        },
+        {
+          "before": "[\"So sánh tính chất 'khách quan' vs 'chủ quan'\", \"So sánh tính chất 'duy nhất' vs 'đa dạng/thay đổi'\"]",
+          "after": "[\"Phân biệt việc quá khứ đã xảy ra với tri thức của con người về quá khứ\", \"Giải thích khả năng bổ sung nhận thức khi có tư liệu hoặc phương pháp mới\"]",
+          "reason": "SGK7–8: tránh hiểu chủ quan thành tùy tiện; giữ mức TH đề xuất."
+        },
+        {
+          "before": "Hiện thực lịch sử là khách quan, duy nhất; trong khi nhận thức lịch sử là chủ quan, có thể thay đổi và bổ sung.",
+          "after": "Hiện thực quá khứ tồn tại khách quan, không thay đổi theo lời kể. Nhận thức là kết quả con người tìm hiểu quá khứ và có thể được bổ sung, điều chỉnh theo tư liệu và phương pháp; không đồng nghĩa tùy tiện hoặc mọi cách hiểu đều có giá trị như nhau. Vì vậy chọn C.",
+          "reason": "SGK7–8: sửa diễn đạt chủ quan dễ hiểu sai; giữ khóaC."
+        },
+        {
+          "before": "[\"Xác định yếu tố chung (hiện thực)\", \"Phân tích góc nhìn của hai phía (Phi-líp-pin và Tây Ban Nha)\", \"Kết luận về tính chủ quan của nhận thức\"]",
+          "after": "[\"Xác định sự kiện chung được hai tư liệu nhắc tới\", \"So sánh nhân vật và chi tiết được nhấn mạnh trong nội dung hai bia\", \"Phân biệt sự kiện với cách ghi nhớ, đánh giá và kiểm căn cứ của từng nhận định\"]",
+          "reason": "SGK8/SGV26–29: không tự gán người dựng bia/quốc tịch từ góc nhìn."
+        },
+        {
+          "before": "Xem xét tấm bia phía Phi-líp-pin ca ngợi ai? Tấm bia phía Tây Ban Nha tưởng niệm ai?",
+          "after": "Đọc lại hai tư liệu bia ở SGK trang 8: bia La-pu-la-pu nhấn mạnh nhân vật và hành động nào; bia Ma-gien-lăng nhắc điều gì về hành trình và kết cục của ông? Không tự suy quốc tịch người dựng bia từ tên nhân vật.",
+          "reason": "SGK8: so sánh nội dung thực có, không bịa xuất xứ bia."
+        },
+        {
+          "before": "Nhận thức khác nhau vì một bên coi La-pu-la-pu là anh hùng dân tộc, một bên coi Ma-gien-lăng là người có công truyền bá văn minh.",
+          "after": "Bia La-pu-la-pu nhấn mạnh cuộc chiến đấu chống lực lượng của Ma-gien-lăng và tôn vinh La-pu-la-pu; bia Ma-gien-lăng ghi nhớ ông và hành trình đoàn thám hiểm. Cần phân biệt chi tiết sự kiện với sự lựa chọn chi tiết và đánh giá trong từng tư liệu. Không thêm nhận định “truyền bá văn minh” khi tư liệu đã đọc không nêu; không viết Ma-gien-lăng sống để hoàn thành hành trình năm 1522, vì tư liệu nhắc Ê-ca-nô trở về.",
+          "reason": "SGK8/SGV26–29: bỏ nhận định truyền bá văn minh không có trong tư liệu; bảo toàn sự kiện1521."
+        },
+        {
+          "before": "Chọn ví dụ về một sự kiện/nhân vật còn đang tranh cãi hoặc có nhiều cách hiểu (như sự biến mất của nhà nước Âu Lạc).",
+          "after": "Chọn ngay ví dụ hai bia Mác-tan đã đọc ở SGK trang 8; chỉ rõ hai tư liệu chọn nhấn mạnh những chi tiết khác nhau của cùng sự kiện, không suy từ đó rằng mọi lời kể đều sai hoặc không thể nhận thức quá khứ.",
+          "reason": "SGK8/SGV26–29: tái dùng ví dụ có nguồn, bỏ ví dụ Âu Lạc mơ hồ chưa đối chiếu."
+        },
+        {
+          "before": "D. Chỉ có nhận thức lịch sử mới cần đến nguồn tư liệu để chứng minh.",
+          "after": "D. Nhận thức lịch sử không cần đối chiếu với bất kỳ nguồn tư liệu nào.",
+          "reason": "SGK7–8/SGV26–29: phương án D cũ có thể được hiểu là phân biệt tồn tại của sự kiện với cách chứng minh nhận thức, làm câu hỏi có phương án gây tranh luận. Đổi riêng diễn đạt distractor thành sai rõ ràng, giữ thứ tự và khóaC; bài chưa owner-approved."
+        },
+        {
+          "before": "(như sự kiện năm $1521$ và $1522$ tại đảo Mác-tan)",
+          "after": "(như trận Mác-tan năm $1521$ và việc Ê-ca-nô trở về Tây Ban Nha năm $1522$)",
+          "reason": "Actual unapproved tutor recap grouped two event locations. SGK8/THSQG8 differentiates Magellan death1521 atMactan and Elcano return1522 toSpain. Preserve original UI and source-backed before/after; no AI retry."
+        }
+      ],
+      "source_workshop": {
+        "title": "Xưởng đối chiếu hai tư liệu Mác-tan",
+        "scope": "Diễn giải SGK8/SGV26–29 đã đọc. Không tự gán quốc tịch người dựng bia, không suy mọi cách đánh giá đều đúng.",
+        "cards": [
+          {
+            "title": "Tư liệu A — bia La-pu-la-pu",
+            "text": "Diễn giải: bia nhắc trận chiến ngày27/4/1521, Ma-gien-lăng tử trận và tôn vinh La-pu-la-pu trong việc chống lực lượng xâm lược châu Âu."
+          },
+          {
+            "title": "Tư liệu B — bia Ma-gien-lăng",
+            "text": "Diễn giải: bia nhắc việc Ma-gien-lăng tử trận ở Mác-tan và hành trình đoàn thám hiểm; Ê-ca-nô cùng đoàn trở về năm1522."
+          }
+        ],
+        "questions": [
+          {
+            "prompt": "Điểm chung có căn cứ trong hai tư liệu là gì?",
+            "options": [
+              "Ma-gien-lăng tử trận tại Mác-tan năm1521.",
+              "Ma-gien-lăng trở về Tây Ban Nha năm1522.",
+              "Hai bia do cùng một tác giả dựng."
+            ],
+            "correct": 0,
+            "feedback": "Hai tư liệu cùng nhắc kết cục năm1521. Người trở về năm1522 được nhắc là Ê-ca-nô; chưa có căn cứ xác định cùng tác giả."
+          },
+          {
+            "prompt": "Có thể kết luận bia B gọi Ma-gien-lăng là người truyền bá văn minh không?",
+            "options": [
+              "Có, vì đó là cách mọi sử gia đều đánh giá.",
+              "Chưa đủ căn cứ từ nội dung tư liệu đã đọc."
+            ],
+            "correct": 1,
+            "feedback": "Không thêm động cơ hoặc lời đánh giá không xuất hiện trong tư liệu. Phải tách nội dung văn bản với suy đoán của người đọc."
+          },
+          {
+            "prompt": "Hai cách nhấn mạnh khác nhau cho thấy điều gì?",
+            "options": [
+              "Hiện thực quá khứ thay đổi theo người kể.",
+              "Mọi nhận định đều đúng như nhau.",
+              "Nhận thức có lựa chọn/góc nhìn; vẫn cần đối chiếu bằng chứng."
+            ],
+            "correct": 2,
+            "feedback": "Quá khứ không đổi theo lời kể. Sự khác biệt trong nhận thức cần được xem xét bằng tư liệu và phương pháp, không cho phép suy diễn tùy tiện."
+          }
+        ]
+      },
+      "grounded_facts": [
+        "Ngày27/4/1521, Ma-gien-lăng tử trận tại Mác-tan.",
+        "Năm1522, Ê-ca-nô trở về Tây Ban Nha sau hành trình đoàn thám hiểm; không gộp địa điểm Mác-tan cho cả hai mốc.",
+        "Chỉ kết luận theo tư liệu đã đọc; phân biệt sự kiện với cách nhấn mạnh hoặc đánh giá."
+      ]
+    },
+    {
+      "id": "kntt-dialy10-chuyendong-20261108",
+      "subject": "Địa lý",
+      "grade": 10,
+      "topics": [
+        "Hệ quả địa lí các chuyển động của Trái Đất — Địa lí 10, KNTT, Bài 5"
+      ],
+      "reviewed_on": "2026-11-08",
+      "scope": "Đã đọc phạm vi SGK đúng bài; mới chuẩn bị nguồn, chưa có bài sinh/quiz/UI/tutor/Lab, chưa đủ3nguồn hoặc nghiệm thu kiến thức/pháp lý/YCCĐ.",
+      "sources": [
+        {
+          "title": "SGK Địa lí10 — KNTT, NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-dia-li-10.4700970617",
+          "locator": "SGK Bài5 trang in17–20, mục lục3 đã đọc trực quan Chrome MCP.",
+          "edition_note": "Portal NXBGD current observed; serverpath2026/0410 is not printing-date proof. Not every update verified.",
+          "criteria": [
+            "Luân phiên ngày đêm gắn với dạng cầu và chuyển động tự quay từ tây sang đông; phân biệt giờ địa phương theo kinh độ với giờ múi và giờ pháp định.",
+            "24 múi giờ lí thuyết rộng 15 độ; ranh giới thực có điều chỉnh theo quốc gia. Bài tính giờ phải cho múi giờ/UTC offset và ngày cụ thể; không suy giờ pháp định từ kinh độ khi chưa có dữ kiện.",
+            "Qua đường chuyển ngày từ tây sang đông lùi một ngày lịch, đông sang tây tăng một ngày; đường thực tế không hoàn toàn trùng kinh tuyến 180 độ.",
+            "Trục giữ hướng nghiêng khi chuyển động quanh Mặt Trời; góc 66 độ 33 phút trong sách được đo với mặt phẳng quỹ đạo, không phải với pháp tuyến.",
+            "Hai bán cầu có mùa ngược nhau; độ dài ngày đêm phụ thuộc vĩ độ và mùa, gần bằng nhau ở Xích đạo, có ngày/đêm kéo dài tại vùng cực. Các ngày 21/3, 22/6, 23/9, 22/12 là mốc quy ước minh họa của sách, không khẳng định ngày thiên văn cố định cho mọi năm.",
+            "Không giải thích mùa chủ yếu bằng khoảng cách tới Mặt Trời. Phân biệt bốn mùa ôn đới với biểu hiện mùa ở từng vùng Việt Nam; không áp cùng một mô tả cho mọi nơi."
+          ]
+        }
+      ],
+      "source_workshop": {
+        "title": "Xưởng đối chiếu múi giờ và mùa",
+        "scope": "Bài thực hành tự đặt theo SGK17–20. UTCoffset là dữ kiện giả định đã cho, không đại diện mọi địa điểm trong một quốc gia hoặc mọi ngày trong năm.",
+        "cards": [
+          {
+            "title": "Điều kiện bài tính giờ",
+            "text": "Điểm A dùngUTC+7, đang7giờ ngày1/1/2022. Điểm B được choUTC−6; hai điểm được xét cùng thời điểm, không có thay đổi giờ mùa hè trong bài."
+          },
+          {
+            "title": "Căn cứ về mùa",
+            "text": "Khi Trái Đất chuyển động quanh Mặt Trời, hướng nghiêng của trục không đổi trong mô hình bài học. Hai bán cầu thay nhau hướng nhiều hơn về Mặt Trời; mùa hai bán cầu ngược nhau."
+          }
+        ],
+        "questions": [
+          {
+            "prompt": "Cùng thời điểm ở thẻ A, điểm B có giờ và ngày nào?",
+            "options": [
+              "20giờ ngày1/1/2022.",
+              "18giờ ngày31/12/2021.",
+              "18giờ ngày1/1/2022."
+            ],
+            "correct": 1,
+            "feedback": "Chênh lệch−6−7=−13giờ. Lấy7giờ trừ13giờ phải lùi ngày:18giờ ngày31/12/2021."
+          },
+          {
+            "prompt": "Lời giải thích nào phù hợp với thẻ về mùa?",
+            "options": [
+              "Mùa hè xảy ra đồng thời ở cả hai bán cầu vì Trái Đất gần Mặt Trời.",
+              "Độ nghiêng trục và sự thay đổi chiếu sáng trong năm làm hai bán cầu có mùa ngược nhau."
+            ],
+            "correct": 1,
+            "feedback": "Dùng hướng nghiêng trục và góc/thời gian chiếu sáng. Không dùng riêng khoảng cách Trái Đất–Mặt Trời để giải thích mùa."
+          }
+        ]
+      },
+      "content_corrections": [
+        {
+          "before": "Do Trái Đất có dạng hình cầu và tự quay quanh trục từ Tây sang Đông, nên mọi nơi trên bề mặt Trái Đất đều lần lượt được Mặt Trời chiếu sáng rồi lại chìm vào bóng tối.",
+          "after": "Trong mô hình bài học, Trái Đất có dạng cầu và tự quay từ tây sang đông, tạo sự luân phiên ngày đêm theo chu kì ngày ở phần lớn địa điểm. Không hiểu rằng mọi nơi đều đổi ngày sang đêm trong mỗi24giờ: vùng cực có thời kì ngày hoặc đêm kéo dài.",
+          "reason": "SGK17/19: connect day-night model with polar exceptions, no universal24h claim."
+        },
+        {
+          "before": "Để tiện cho giao tế, bề mặt Trái Đất được chia làm 24 múi giờ (mỗi múi rộng 15 độ kinh tuyến). Giờ ở kinh tuyến trung tâm của múi được lấy làm giờ chung cho cả múi đó.",
+          "after": "Trong mô hình múi giờ lí thuyết, Trái Đất được chia thành24múi, mỗi múi15độ kinh tuyến; giờ kinh tuyến giữa múi làm giờ chung. Ranh giới giờ pháp định thực tế có thể điều chỉnh theo quốc gia. Khi tính, dùng UTCoffset đề cho, không tự suy giờ pháp định hoặc chế độ đổi giờ mùa hè chỉ từ vị trí trên bản đồ.",
+          "reason": "SGK17–18: distinguish theoretical zones, legal boundaries and explicitly supplied offsets."
+        },
+        {
+          "before": "Kinh tuyến $180^\\circ$ đi qua giữa múi giờ số 12 ở Thái Bình Dương. Đi từ Tây sang Đông qua đường này phải lùi 1 ngày lịch; đi từ Đông sang Tây phải tăng 1 ngày lịch.",
+          "after": "Đường chuyển ngày quốc tế nằm chủ yếu gần kinh tuyến $180^\\circ$, giữa múi số12 ở Thái Bình Dương, nhưng có đoạn điều chỉnh theo lãnh thổ quốc gia. Qua đường chuyển ngày từ tây sang đông lùi1ngày lịch; chiều ngược lại tăng1ngày. Không đồng nhất mọi điểm kinh tuyến180độ với đường thực tế.",
+          "reason": "SGK18: the actual date line is not a straight180meridian."
+        },
+        {
+          "before": "Ở Xích đạo: Ngày và đêm luôn bằng nhau quanh năm.",
+          "after": "Ở Xích đạo: mô hình học tập coi ngày và đêm bằng nhau; trong quan sát thực tế hiểu xấp xỉ12giờ/12giờ, không khẳng định mọi phép đo bình minh–hoàng hôn luôn chính xác bằng nhau.",
+          "reason": "SGK19 and ideal-model vs observation scope; not an extra compulsory astronomy outcome."
+        },
+        {
+          "before": "Càng xa Xích đạo về hai cực: Độ chênh lệch giữa ngày và đêm càng lớn.",
+          "after": "Nhìn chung, càng xa Xích đạo thì biên độ thay đổi độ dài ngày qua các mùa càng lớn. Phải xét thời kì trong năm; không hiểu rằng ở mọi thời điểm đều có chênh lệch lớn, kể cả các thời điểm phân trong mô hình lí tưởng.",
+          "reason": "SGK19: latitude effect depends on season, avoid universal statement."
+        },
+        {
+          "before": "Một trận bóng đá diễn ra tại London (múi giờ 0) lúc 20 giờ ngày 10/10. Hỏi tại Hà Nội (múi giờ 7) lúc đó là mấy giờ, ngày nào?",
+          "after": "Bài toán cho London dùngUTC+0 và Hà Nội dùngUTC+7 tại cùng thời điểm; đây là offset giả định đã cho để luyện tính, không phải khẳng định giờ pháp định London vào mọi ngày10/10. Khi London là20giờ ngày10/10 theo dữ kiện đó, Hà Nội là mấy giờ, ngày nào?",
+          "reason": "SGK17–18: explicit given offset; do not pretend an actual October legal-clock lookup."
+        },
+        {
+          "before": "Hà Nội ở phía Đông so với London nên giờ Hà Nội sẽ muộn hơn (cộng thêm).",
+          "after": "Theo dữ kiện UTC+7 so vớiUTC+0, cộng7giờ vào giờ ở London để tính giờ hiển thị tại Hà Nội; tránh dùng từ sớm/muộn khi chưa nói rõ đang so đồng hồ hay thời điểm sự kiện.",
+          "reason": "Make offset arithmetic explicit rather than ambiguous earlier/later wording."
+        },
+        {
+          "before": "Tại sao vào mùa hè ở các nước ôn đới (như Nga hay Anh), 9 giờ tối trời vẫn còn sáng (hiện tượng \"đêm trắng\"), trong khi ở Việt Nam trời đã tối hẳn từ sớm?",
+          "after": "SGK20 nêu ví dụ đêm trắng tại Xanh Pê-téc-bua vào mùa hạ. Hãy giải thích vai trò của vĩ độ và mùa đối với thời gian còn ánh sáng buổi tối. Không gọi mọi trường hợp21giờ còn sáng ở mọi nước ôn đới là đêm trắng; không đồng nhất đêm trắng với ngày địa cực24giờ.",
+          "reason": "SGK20 scoped named example; distinguish late sunset/twilight and polar day."
+        },
+        {
+          "before": "Nếu bạn có một người bạn đang sống ở California, Mỹ (múi giờ -8). Bạn muốn gọi điện chúc mừng sinh nhật bạn mình vào đúng 0 giờ ngày 01/01 tại Mỹ. Vậy tại Việt Nam (múi giờ +7), bạn phải gọi vào lúc mấy giờ, ngày nào?",
+          "after": "Trong bài toán giả định, điểm B ở California được choUTC−8 và điểm A ở Việt Nam được choUTC+7. Muốn cuộc gọi đến đúng0giờ ngày01/01 theo giờ tạiB thì đồng hồ tạiA chỉ mấy giờ, ngày nào? Chỉ dùng offset đề cho; không đồng nhất giờ tạiB với giờ của toàn nước Mỹ.",
+          "reason": "SGK18: countries can span multiple zones; distinguish scenario from current legal-clock claims."
+        },
+        {
+          "before": "Nguyên nhân chính dẫn đến hiện tượng luân phiên ngày và đêm trên Trái Đất là do:",
+          "after": "Trong mô hình bài học, nguyên nhân chính tạo sự luân phiên ngày đêm theo chu kì ngày trên Trái Đất là:",
+          "reason": "Scope MCQ1 to the daily rotation effect; keep keyA."
+        },
+        {
+          "before": "Trái Đất hình cầu nên chỉ được chiếu sáng một nửa; việc tự quay khiến mọi nơi lần lượt được chiếu sáng rồi khuất sáng, tạo ra sự luân phiên.",
+          "after": "Trong mô hình, dạng cầu làm một nửa bề mặt được chiếu sáng tại một thời điểm; tự quay tạo chu kì ngày đêm thông thường. Vùng cực có ngoại lệ ngày/đêm kéo dài theo mùa, nên không suy mọi nơi đều sáng/tối luân phiên trong mỗi24giờ.",
+          "reason": "Keep explanation consistent with polar-day section and preserve keyA."
+        },
+        {
+          "before": "Khi đi từ phía Tây sang phía Đông qua đường chuyển ngày quốc tế (kinh tuyến $180^\\circ$), chúng ta cần phải thực hiện điều chỉnh thời gian như thế nào?",
+          "after": "Theo quy ước trong bài học, khi đi qua đường chuyển ngày quốc tế từ phía tây sang phía đông, cần điều chỉnh ngày lịch như thế nào?",
+          "reason": "Date-line convention is about the actual boundary, not every point of180meridian; keep keyB."
+        },
+        {
+          "before": "**Câu 2. [Mức độ: TH]**\nTheo quy ước trong bài học, khi đi qua đường chuyển ngày quốc tế từ phía tây sang phía đông, cần điều chỉnh ngày lịch như thế nào?",
+          "after": "**Câu 2. [Mức độ: NB]**\nTheo quy ước trong bài học, khi đi qua đường chuyển ngày quốc tế từ phía tây sang phía đông, cần điều chỉnh ngày lịch như thế nào?",
+          "reason": "Label is a proposal: exact stem only recalls the taught direction/date convention, not a causal explanation or multi-step problem."
+        },
+        {
+          "before": "Theo quy ước, khi đi từ Tây sang Đông qua kinh tuyến $180^\\circ$ (đi vào vùng có giờ sớm hơn về mặt lịch), ta phải lùi lại 1 ngày lịch.",
+          "after": "Theo quy ước đã học, qua đường chuyển ngày quốc tế từ tây sang đông thì lùi1ngày lịch; chiều ngược lại tăng1ngày. Đường thực tế có đoạn không trùng kinh tuyến180độ.",
+          "reason": "SGK18 exact boundary rule, avoid ambiguous local-clock language."
+        },
+        {
+          "before": "C. Do độ nghiêng của trục Trái Đất khiến diện tích được chiếu sáng thay đổi mạnh theo mùa.",
+          "after": "C. Do trục nghiêng khiến tỉ lệ cung của vĩ tuyến nằm trong vùng sáng thay đổi theo mùa khác nhau ở các vĩ độ.",
+          "reason": "SGK19: clarify the daylit fraction of a parallel, not the globally illuminated area; keep keyC and current shuffled position."
+        },
+        {
+          "before": "Trục Trái Đất nghiêng làm cho đường phân chia sáng tối (vòng sáng) không trùng với trục Trái Đất, cắt các vĩ tuyến ở những tỉ lệ khác nhau. Càng xa Xích đạo, sự chênh lệch này càng lớn.",
+          "after": "Ngoài các thời điểm phân trong mô hình lí tưởng, độ nghiêng làm tỉ lệ cung vĩ tuyến trong vùng sáng biến đổi theo mùa. Ở vĩ độ cao, biên độ thay đổi độ dài ngày qua năm nhìn chung lớn hơn; không nói tổng diện tích toàn Trái Đất được chiếu sáng thay đổi mạnh.",
+          "reason": "SGK19: distinguish illuminated parallel arc and global half-sphere; scope equinox conditions."
+        },
+        {
+          "before": "Tân Sơn Nhất (Hà Nội, múi giờ số 7)",
+          "after": "Tân Sơn Nhất (TP.Hồ Chí Minh; trong bài choUTC+7)",
+          "reason": "Official VietnamAirlines release14/5/2025 explicitly placesTanSonNhat inHoChiMinhCity; retain original archive and correct new generated error."
+        },
+        {
+          "before": "London (Anh, múi giờ số 0)",
+          "after": "London (Anh; trong bài choUTC+0)",
+          "reason": "This flight exercise uses explicitly provided offsets, not a current legal time lookup."
+        },
+        {
+          "before": "Một máy bay cất cánh từ sân bay Tân Sơn Nhất",
+          "after": "Trong bài toán chuyến bay giả định, một máy bay cất cánh từ sân bay Tân Sơn Nhất",
+          "reason": "12-hour flight duration is an exercise datum, not a claimed real timetable."
+        },
+        {
+          "before": "Kiểm tra xem giờ hạ cánh có vượt quá 24 giờ để chuyển ngày hay không.",
+          "after": "Kiểm tra giờ thuộc khoảng0đến dưới24; nếu đạt24giờ hoặc vượt24giờ phải đổi ngày, và nếu âm phải lùi ngày.",
+          "reason": "Calendar arithmetic boundary includes exactly24, not only greater than24."
+        },
+        {
+          "before": "Câu tục ngữ nói về hiện tượng ngày dài - đêm ngắn vào mùa hè (tháng Năm) và ngày ngắn - đêm dài vào mùa đông (tháng Mười) ở Việt Nam.",
+          "after": "Câu tục ngữ nhắc tháng Năm và tháng Mười âm lịch, thể hiện nhận xét khái quát về thời kì ngày dài/đêm ngắn và ngược lại ở Việt Nam thuộc Bắc bán cầu. Mức chênh lệch tùy vĩ độ, thường rõ hơn ở phía bắc; không tự đổi thành tháng5/tháng10 dương lịch hoặc bốn mùa khí hậu giống nhau trên toàn quốc.",
+          "reason": "SGK20 folk-calendar application: preserve lunar-calendar scope and latitude dependence."
+        },
+        {
+          "before": "Vào khoảng tháng 5 (mùa hè Bắc bán cầu), nửa cầu Bắc ngả về phía nào của Mặt Trời? Diện tích chiếu sáng ra sao?",
+          "after": "Vào thời kì tháng Năm âm lịch được nhắc trong tục ngữ, hướng nghiêng trục và phần cung vĩ tuyến nằm trong vùng sáng ở Bắc bán cầu liên hệ thế nào với ngày dài hơn đêm?",
+          "reason": "Do not silently change lunarMay to GregorianMay; use illuminated arc reasoning."
+        },
+        {
+          "before": "Vào khoảng tháng 10 (mùa đông Bắc bán cầu), tình hình ngược lại như thế nào?",
+          "after": "Đến thời kì tháng Mười âm lịch được nhắc trong tục ngữ, độ dài ngày đêm ở Bắc bán cầu thay đổi theo xu thế nào? Không lấy tháng10 dương lịch làm đồng nghĩa với mùa đông.",
+          "reason": "Keep lunar/Gregorian and daylength/climate distinctions."
+        },
+        {
+          "before": "Học sinh cần phân biệt được hướng di chuyển và quy ước cộng/trừ ngày.",
+          "after": "Câu yêu cầu nhớ và nhận diện quy ước đổi ngày đã được trình bày; đây là căn cứ đề xuất NB, chưa phải kết luận được Bộ duyệt.",
+          "reason": "Keep the revised exact-stem label proposal and rationale consistent."
+        },
+        {
+          "before": "[\"Xác định hướng di chuyển (Tây sang Đông)\", \"Áp dụng quy ước đường chuyển ngày\"]",
+          "after": "[\"Nhớ lại quy ước đổi ngày\", \"Nhận diện chiều tây sang đông trong câu hỏi\"]",
+          "reason": "Use the actual operations requested by the recall stem; keep keyB."
+        },
+        {
+          "before": "khi quay quanh Mặt Trời, cho đến cách tính toán múi giờ",
+          "after": "so với mặt phẳng quỹ đạo, với hướng trục gần như giữ nguyên trong năm khi Trái Đất chuyển động quanh Mặt Trời; cho đến cách tính toán múi giờ",
+          "reason": "SGK Bài5: hình5.1 trang17 và phần mùa trang20 nêu góc66độ33phút so với mặt phẳng quỹ đạo; hướng trục gần như không đổi trong năm. Bổ sung recap thật, không gọi AI lại."
+        }
+      ],
+      "assessment_proposals": [
+        {
+          "question": "Theo quy ước trong bài học, khi đi qua đường chuyển ngày quốc tế từ phía tây sang phía đông, cần điều chỉnh ngày lịch như thế nào?",
+          "level": "NB",
+          "reason": "Câu chỉ yêu cầu nhớ và nhận diện quy ước đổi ngày đã được nêu, chưa yêu cầu giải thích nguyên nhân hay giải tình huống giờ nhiều bước; nhãn đề xuất cần giáo viên duyệt."
+        }
+      ],
+      "grounded_facts": [
+        "UTCoffset trong bài tính là dữ kiện giả định cho cùng thời điểm; giờ pháp định và đổi giờ mùa hè thực tế phải có nguồn riêng nếu được khẳng định.",
+        "Độ dài ngày là độ dài cung vĩ tuyến nằm trong vùng sáng, không suy toàn bộ diện tích bề mặt được Mặt Trời chiếu sáng thay đổi mạnh theo mùa.",
+        "Tân Sơn Nhất ởTP.Hồ Chí Minh; không gán sân bay này vàoHà Nội.",
+        "Tục ngữ thángNăm/thángMười dùng lịch âm và nói xu thế ngày đêm, không phải mọi vùngViệtNam có bốn mùa giống nhau.",
+        "Góc nghiêng trục66độ33phút được đo với mặt phẳng quỹ đạo, không phải với pháp tuyến; hướng trục gần như giữ nguyên trong năm. Khi nêu góc phải nêu mốc đo."
+      ],
+      "external_fact_checks": [
+        {
+          "url": "https://www.vietnamairlines.com/sa/en/vietnam-airlines/press-room/press-release/2025/0514-VI-VNA-chinh-thuc-chuyen-toan-bo-chuyen-bay-noi-dia-sang-nha-ga-T3-Tan-Son-Nhat-ngay-17-5",
+          "claim": "TanSonNhat Airport is inHoChiMinhCity",
+          "read_scope": "Official press release14May2025 opening paragraph; only location fact used. ACV catalogue WAFblocked; no bypass attempted."
+        }
+      ],
+      "supplemental_provider_checks": [
+        {
+          "provider": "VniTeach",
+          "url": "https://www.vniteach.com/2022/07/13/bo-sach-kntt-sgk-dia-li-10/",
+          "scope": "118pagePDF; TOCprinted3 and Bài5 printed17–20 read Chrome; notentirebook/currenteditioncert."
+        },
+        {
+          "provider": "THSQG",
+          "url": "https://www.thsqg.vn/sach?lop=10",
+          "scope": "Selected livegrade10 catalogue checked; exactGeo10booklink not listed. Not proof service has no suchbook anywhere."
+        }
+      ]
+    },
+    {
+      "id": "kntt-gdktpl10-phapluat-20261108",
+      "subject": "Giáo dục kinh tế và pháp luật",
+      "grade": 10,
+      "topics": [
+        "Khái niệm, đặc điểm và vai trò của pháp luật — GDKT&PL 10, KNTT, Bài 11"
+      ],
+      "reviewed_on": "2026-11-08",
+      "scope": "Bài thật đã sửa11 điểm, quizUI3/3, workshop/tutor/3HTML kiểm local; SGK NXBGD78–83 và Vni71–75 đã đọc. THSQGcatalog không thấy link sách này. Chưa chứng nhận toàn chương trình, mọi luật, đủ3bản sách hoặc ownerprintpagination.",
+      "sources": [
+        {
+          "title": "SGK Giáo dục kinh tế và pháp luật10 — KNTT, NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-giao-duc-kinh-te-va-phap-luat-10.4756644900",
+          "locator": "SGK Bài11 trang in78–83, mục lục4 đã đọc trực quan Chrome MCP.",
+          "edition_note": "Page81 explicitly Constitution2013 amended2025; source serverpath2026/0507 not publication date proof.",
+          "criteria": [
+            "Pháp luật là hệ thống quy tắc xử sự bắt buộc chung do Nhà nước ban hành, được bảo đảm thực hiện bằng quyền lực nhà nước; phân biệt với nội quy công ty, đạo đức và điều lệ đoàn thể.",
+            "Ba đặc điểm: tính quy phạm phổ biến, tính quyền lực bắt buộc chung, tính xác định chặt chẽ về hình thức. Không suy mọi văn bản nhà nước hoặc công văn đều là văn bản quy phạm pháp luật.",
+            "Hai vai trò: phương tiện để Nhà nước quản lí xã hội; phương tiện để công dân thực hiện và bảo vệ quyền, lợi ích hợp pháp. Không suy người dưới 18 tuổi không phải chấp hành pháp luật, hoặc mọi độ tuổi đều chịu cùng chế tài.",
+            "Phân biệt kiến thức SGK với điều khoản luật hiện hành: từ ví dụ sách không tự kết luận mức phạt hoặc hình thức xử lí tại ngày hiện tại.",
+            "SGK83 nêu tình huống nồng độ cồn 0,4 mg/l và mức phạt/GPLX; chưa xác minh đủ loại xe, mức đo và điều khoản hiện hành. Không sao chép mức phạt vào bài mới như luật hiện hành. Đây là điểm cần đối chiếu, chưa đủ căn cứ kết luận SGK sai.",
+            "SGK81 dẫn Bộ luật Lao động2019, Điều37/39/41; vận dụng tình huống tai nạn lao động phải đủ loại hợp đồng, thời hạn điều trị và ngoại lệ. Chưa kiểm đầy đủ các điều này; không kết luận mọi trường hợp chấm dứt khi đau ốm đều trái luật."
+          ]
+        },
+        {
+          "title": "Hiến pháp — VBHN52/VBHN-VPQH ngày21/7/2025",
+          "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2025/7/52-vbhn-vpqh.pdf",
+          "locator": "PDFpage1 basis; page3 Điều8(1); page10 Điều39/46 đã đọc. Không đọc/chứng nhận toàn bộ33trang.",
+          "edition_note": "Constitution2013 in force1/1/2014, amended byNQ203/2025/QH15 effective16/6/2025 perPDFpage1. Later changes/other statute examples not exhaustively checked.",
+          "criteria": [
+            "Điều8(1) là căn cứ cho vai trò Nhà nước tổ chức/hoạt động và quản lý xã hội bằng Hiến pháp/pháp luật. Không lấy văn bản hợp nhất làm luật mới hoặc ngày21/7 làm ngày hiệu lực Hiến pháp."
+          ]
+        },
+        {
+          "title": "Luật64/2025/QH15 — bản gốc, Điều2/3(1)/7(1)",
+          "url": "https://xaydungchinhsach.chinhphu.vn/toan-van-luat-so-64-2025-qh15-ban-hanh-van-ban-quy-pham-phap-luat-119250311155839688.htm",
+          "locator": "Đã đọc đúng Điều2,3(1),7(1); đối chiếu Luật sửa đổi87/2025, không xem bản gốc là chưa từng sửa đổi.",
+          "edition_note": "Luật64 hiệu lực1/4/2025; sửa bởi87 hiệu lực1/7/2025. Không xác nhận toàn bộ hệ thống pháp luật.",
+          "criteria": [
+            "QPPL có phạm vi cả nước hoặc đơn vị hành chính nhất định; VBQPPL đúng thẩm quyền, hình thức, trình tự và thủ tục."
+          ]
+        },
+        {
+          "title": "Luật87/2025/QH15 — sửa đổi Luật Ban hành VBQPPL",
+          "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2025/7/87qh.signed.pdf",
+          "locator": "ChromeMCP đã đọc PDF1–11; Điều1 có25khoản sửa các Điều4,9,21–64 liên quan; không sửa Điều2/3/7. Điều2 hiệu lực1/7/2025, Điều3 chuyển tiếp.",
+          "edition_note": "Ngàybanhành25/6/2025 khác ngàyupload/chữkýcổng16/7/2025; cacheXZ cóSHA.",
+          "criteria": [
+            "Không coi ngày tải lên là ngày luật có hiệu lực; không đồng nhất nội quy công ty với VBQPPL. Không suy chuyển tiếp văn bản cấp huyện thành mọi quy phạm chỉ có hiệu lực cả nước."
+          ]
+        }
+      ],
+      "source_workshop": {
+        "title": "Xưởng phân biệt căn cứ pháp luật và nội quy",
+        "scope": "Tình huống B tự đặt để luyện phân biệt, không phải văn bản pháp luật thật. Căn cứ A chỉ Điều8(1) đã đọc trong VBHN52/2025; không phải tư vấn xử phạt hoặc chứng nhận toàn bộ luật hiện hành.",
+        "cards": [
+          {
+            "title": "Căn cứ A — Hiến pháp",
+            "text": "Diễn giải Điều8(1): việc tổ chức, hoạt động và quản lý xã hội của Nhà nước dựa trên Hiến pháp và pháp luật."
+          },
+          {
+            "title": "Tình huống B — nội quy tự đặt",
+            "text": "Công ty Y thông báo nhân viên phải gửi báo cáo công việc trước16giờ thứSáu. Thẻ không cung cấp một văn bản quy phạm pháp luật ban hành quy tắc này cho mọi người."
+          }
+        ],
+        "questions": [
+          {
+            "prompt": "Thông báo B có tự trở thành quy phạm pháp luật bắt buộc mọi công dân không?",
+            "options": [
+              "Có, mọi quy tắc có chữ phải đều là pháp luật.",
+              "Không thể suy như vậy từ một nội quy công ty."
+            ],
+            "correct": 1,
+            "feedback": "Phân biệt quy tắc nội bộ với quy phạm do Nhà nước ban hành theo thẩm quyền/hình thức và bảo đảm thực hiện. Không suy một thông báo công ty có phạm vi bắt buộc với toàn xã hội."
+          },
+          {
+            "prompt": "Chỉ với hai thẻ này, có đủ căn cứ kết luận mức phạt giao thông cho một người lái xe không?",
+            "options": [
+              "Có thể tự chọn mức phạt thường gặp.",
+              "Chưa đủ; cần hành vi, loại xe, thời điểm và điều khoản áp dụng."
+            ],
+            "correct": 1,
+            "feedback": "Bài học khái niệm không cung cấp mọi dữ kiện xử phạt. Phải kiểm văn bản và điều kiện cụ thể; không biến ví dụ sách thành kết luận pháp lý cho mọi tình huống."
+          }
+        ]
+      },
+      "content_corrections": [
+        {
+          "before": "cần có những \"quy tắc trò chơi\" chung. Đó chính là pháp luật.",
+          "after": "cần có những quy tắc chung. Đây chỉ là phép so sánh để mở đầu: luật chơi bóng đá không tự trở thành pháp luật. Phải phân biệt pháp luật với các quy tắc xã hội khác theo chủ thể ban hành, phạm vi và cơ chế bảo đảm thực hiện.",
+          "reason": "SGK78–80: phân biệt quy tắc xã hội với pháp luật; phép ví von không phải định nghĩa."
+        },
+        {
+          "before": "được áp dụng nhiều lần, ở nhiều nơi, đối với mọi đối tượng trong phạm vi cả nước.",
+          "after": "được áp dụng đối với các chủ thể thuộc phạm vi điều chỉnh khi có điều kiện áp dụng. Không phải mọi quy định đều áp dụng cho mọi người ở mọi nơi: cần xét đối tượng, địa bàn và hiệu lực của quy định; có quy phạm áp dụng trong cả nước, có quy phạm trong đơn vị hành chính nhất định.",
+          "reason": "SGK79 và Điều3(1) Luật64/2025: cả nước hoặc đơn vị hành chính nhất định; không đồng nhất tính phổ biến với phạm vi vô hạn."
+        },
+        {
+          "before": "mọi cá nhân, tổ chức đều phải tuân thủ, nếu vi phạm sẽ bị xử lý theo quy định.",
+          "after": "cá nhân, tổ chức phải tuân thủ quy định thuộc phạm vi áp dụng đối với mình. Việc xác định vi phạm và trách nhiệm pháp lý phải có căn cứ, đúng thẩm quyền, điều kiện và thủ tục; không suy mọi độ tuổi hoặc mọi tình huống đều chịu cùng chế tài.",
+          "reason": "SGK79; yêu cầu phạm vi và điều kiện, không đưa mức phạt chưa kiểm chứng."
+        },
+        {
+          "before": "Nội dung pháp luật phải được thể hiện trong các văn bản quy phạm pháp luật với ngôn ngữ chính xác, rõ ràng, một nghĩa để tránh hiểu lầm.",
+          "after": "Trong phạm vi bài học về văn bản quy phạm pháp luật, nội dung cần được diễn đạt chính xác, rõ ràng; văn bản phải đúng thẩm quyền, hình thức, trình tự và thủ tục ban hành. Không phải mọi thông báo, công văn hoặc văn bản của một cơ quan đều là văn bản quy phạm pháp luật.",
+          "reason": "SGK80 và Điều2 Luật64/2025; không suy mọi văn bản nhà nước là VBQPPL."
+        },
+        {
+          "before": "*Tình huống:* Anh A lái xe máy vượt đèn đỏ và bị Cảnh sát giao thông lập biên bản xử phạt. Hành vi của anh A vi phạm đặc điểm nào của pháp luật?\n*Lời giải:* Hành vi này vi phạm **tính quyền lực, bắt buộc chung**. Pháp luật quy định mọi người khi tham gia giao thông đều phải chấp hành tín hiệu đèn (quy tắc chung). Khi anh A không tuân thủ, cơ quan nhà nước (Cảnh sát giao thông) đã sử dụng quyền lực nhà nước để xử phạt nhằm đảm bảo tính nghiêm minh.",
+          "after": "*Tình huống giả định:* Anh A có hành vi không chấp hành tín hiệu giao thông đã được cơ quan có thẩm quyền xác định là vi phạm theo quy định áp dụng. Việc xử lý đúng thẩm quyền và thủ tục minh họa đặc điểm nào của pháp luật?\n*Lời giải:* Anh A vi phạm một quy tắc giao thông cụ thể, không phải “vi phạm một đặc điểm”. Việc Nhà nước bảo đảm thực hiện quy tắc và xử lý vi phạm theo pháp luật minh họa **tính quyền lực, bắt buộc chung**. Bài tập không đủ dữ kiện để xác định mức phạt hay kết luận một vụ việc thực tế.",
+          "reason": "Sửa nhầm lẫn quy tắc/đặc điểm theo SGK79; không tự tư vấn giao thông hoặc khẳng định mức phạt."
+        },
+        {
+          "before": "*(Gợi ý: Ai ban hành nội quy trường học? Nội quy trường học có áp dụng cho tất cả mọi người dân trong thành phố không?)*",
+          "after": "*(Gợi ý: Ai ban hành nội quy trường học? Phạm vi áp dụng là ai? Nội quy không tự trở thành văn bản quy phạm pháp luật, nhưng vẫn có thể đặt nghĩa vụ nội bộ hợp pháp cho thành viên; không được suy rằng không phải pháp luật thì có thể tùy ý bỏ qua.)*",
+          "reason": "Phân biệt nguồn gốc/phạm vi không đồng nghĩa phủ nhận nghĩa vụ nội bộ hợp pháp."
+        },
+        {
+          "before": "Hãy liệt kê 3 quyền của học sinh được quy định trong pháp luật mà em biết (ví dụ: quyền được học tập) và cho biết pháp luật đã bảo vệ quyền đó như thế nào nếu có người ngăn cản em đến trường.",
+          "after": "Điều39 Hiến pháp quy định công dân có quyền và nghĩa vụ học tập. Từ căn cứ này, em hãy tìm thêm hai quyền liên quan đến học sinh trong nguồn pháp luật chính thức, ghi đúng điều khoản và đối tượng áp dụng. Với tình huống bị cản trở học tập, trước hết xác định dữ kiện và căn cứ, rồi đề xuất cách nhờ người lớn đáng tin cậy hoặc cơ quan có thẩm quyền hỗ trợ theo đúng quy định. Không tự suy mọi học sinh THPT đều thuộc cùng một nhóm tuổi pháp lý.",
+          "reason": "Hiến pháp VBHN52/2025 Điều39 đã đọc; không mặc định học sinh THPT đều là trẻ em dưới16."
+        },
+        {
+          "before": "Tính tự nguyện thường thuộc về các quy tắc đạo đức hoặc điều lệ hội nhóm, còn pháp luật mang tính bắt buộc chung do Nhà nước bảo đảm.",
+          "after": "Tính tự nguyện tham gia một tổ chức không phải đặc điểm của pháp luật. Cần phân biệt việc tự nguyện gia nhập với nghĩa vụ tuân thủ điều lệ hoặc nội quy hợp pháp sau khi gia nhập; pháp luật được Nhà nước bảo đảm thực hiện trong phạm vi áp dụng.",
+          "reason": "SGK79; tránh quy mọi điều lệ là tùy chọn."
+        },
+        {
+          "before": "Văn bản pháp luật phải được diễn đạt chính xác, một nghĩa để bất kỳ ai khi đọc cũng hiểu và thực hiện đúng.",
+          "after": "Văn bản quy phạm pháp luật cần được diễn đạt chính xác, rõ ràng nhằm hạn chế cách hiểu sai.",
+          "reason": "SGK80: yêu cầu ngôn ngữ không bảo đảm mọi người luôn hiểu đúng tuyệt đối."
+        },
+        {
+          "before": "Pháp luật xác lập quyền (ví dụ: quyền sở hữu tài sản) và quy định cách thức để công dân đòi lại quyền khi bị xâm phạm (ví dụ: khởi kiện).",
+          "after": "Pháp luật quy định quyền và các cơ chế bảo vệ quyền, lợi ích hợp pháp. Cách yêu cầu bảo vệ phải phù hợp loại vụ việc, điều kiện, thẩm quyền và thủ tục; không suy chỉ có khởi kiện hoặc được tự ý dùng vũ lực lấy lại tài sản.",
+          "reason": "SGK81–82: vai trò bảo vệ quyền, không giới hạn mọi vụ việc vào một thủ tục."
+        },
+        {
+          "before": "Trình bày việc không đồng ý. Giải thích bằng cách nêu sự khác biệt về nguồn gốc (Nhà nước vs Cộng đồng/Tổ chức) và biện pháp bảo đảm thực hiện (Cưỡng chế vs Dư luận/Kỷ luật nội bộ).",
+          "after": "Chọn một quy tắc cụ thể rồi tự đối chiếu: ai ban hành, áp dụng với ai, được bảo đảm bằng cơ chế nào? Từ kết quả so sánh, em tự đưa ra nhận định và dẫn chứng. Lưu ý nghĩa vụ nội bộ hợp pháp không tự trở thành pháp luật chỉ vì có tính bắt buộc với thành viên.",
+          "reason": "Phần3 chỉ hướng dẫn Socratic, không cho sẵn kết luận; tránh phân đôi máy móc pháp luật/nội quy."
+        }
+      ],
+      "grounded_facts": [
+        "Điều39 Hiến pháp: công dân có quyền và nghĩa vụ học tập; không đồng nhất mọi học sinh THPT với trẻ em dưới16.",
+        "Phân biệt vi phạm quy tắc cụ thể với đặc điểm pháp luật được minh họa qua cơ chế bảo đảm thực hiện.",
+        "Tính phổ biến không có nghĩa mọi quy phạm áp dụng cho mọi đối tượng ở mọi địa bàn; phải xét phạm vi và hiệu lực."
+      ],
+      "supplemental_provider_checks": [
+        {
+          "provider": "VniTeach",
+          "url": "https://www.vniteach.com/2022/07/13/bo-sach-kntt-sgk-giao-duc-ktpl-10/",
+          "scope": "158pagePDF; Bài11 printed71–75 read Chrome; differs currentNXBGD78–83. Historical examples not treated as current law."
+        },
+        {
+          "provider": "THSQG",
+          "url": "https://www.thsqg.vn/sach?lop=10",
+          "scope": "Selected grade10 livecatalogue lacks exactGDKTPL10link; no completebook comparison claimed."
+        }
+      ]
     }
   ]
 }

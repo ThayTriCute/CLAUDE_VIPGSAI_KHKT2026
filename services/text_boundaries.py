@@ -5,7 +5,21 @@ import re
 
 from services.lesson_export import _TOKENS
 
-T1_CONTEXT_REVISION = 2026110603
+T1_CONTEXT_REVISION = 2026110701
+
+TEACHING_STEP_LAYOUT_GUIDANCE = r"""BỐ CỤC CÁC BƯỚC — QUY TẮC DÙNG CHUNG:
+Áp dụng mọi môn/lớp cho bài học, đề, lời giải, gợi ý và gia sư: mỗi nhãn Bước N: hoặc Step N: phải bắt đầu một đoạn riêng, có một dòng trống giữa các bước; in đậm nhãn nếu đầu ra dùng Markdown. Không dồn các bước vào một đoạn, kể cả ví dụ chỉ có hai bước hoặc có nhiều hơn bốn bước.
+Giữ tên và số bước phù hợp nhiệm vụ; không tự ép quy trình khác thành bốn bước Pólya. Giữ nguyên công thức, mã, số liệu, điều kiện và nội dung từng bước; không ngắt bên trong công thức hay khối mã để tạo bố cục.
+Với một đẳng thức dài gồm nhiều phân thức, dùng một cặp dấu toán bao trọn công thức (ưu tiên khối $$...$$ riêng). Không bọc từng phân thức rời rồi để tên biến, dấu bằng hoặc phép nhân ở ngoài; tách phương trình và lời dẫn bằng khoảng trắng hoặc xuống đoạn.
+Nếu đầu ra là JSON, giữ đúng schema và JSON hợp lệ: biểu diễn xuống đoạn bằng \n\n bên trong giá trị chuỗi, không chèn Markdown hoặc văn bản bên ngoài JSON. Quy tắc bố cục không thay thế kiểm chứng kiến thức, đáp án hoặc nguồn."""
+
+
+def with_teaching_step_layout(system_instruction):
+    """Attach the same rule once at the actual model-call boundary."""
+    value = str(system_instruction or '')
+    if TEACHING_STEP_LAYOUT_GUIDANCE in value:
+        return value
+    return value + '\n\n' + TEACHING_STEP_LAYOUT_GUIDANCE
 
 
 def _chemical_macros(text, convert):
@@ -70,6 +84,13 @@ def _chemical_core_tex(body):
             output.append(('{}' if not output else '') + char + '{' + value + '}')
             i += match.end(); previous = 'script'
             continue
+        fraction = re.match(r'(\d+)\s*/\s*(\d+)', body[i:])
+        if fraction and previous not in ('atom', 'number', ')', ']', 'script'):
+            if int(fraction[2]) == 0:
+                raise ValueError('Invalid fractional coefficient')
+            output.append(r'\frac{' + fraction[1] + '}{' + fraction[2] + '}')
+            previous = 'number'; i += fraction.end()
+            continue
         match = re.match(r'[A-Za-z]+|\d+(?:\.\d+)?', body[i:])
         if match:
             token = match[0]
@@ -97,9 +118,11 @@ def _chemical_core_tex(body):
     return ''.join(output)
 
 
-def chemical_display_markdown(text):
+def chemical_display_markdown(text, *, separate_steps=True):
     """Display-only conversion; stored lesson/answers/source remain unchanged."""
     value = wrap_naked_chemistry(str(text or ''))
+    if separate_steps:
+        value = polya_display_markdown(value)
     def token(match):
         raw = match[0]
         if raw.startswith(('`', '~~~')):
@@ -136,6 +159,18 @@ def preserve_math_and_code(text, normalize_prose):
     return result
 
 
+def remove_empty_math(text):
+    """Remove complete empty math tokens, never a valid display delimiter pair."""
+    def clean(match):
+        raw = match[0]
+        if raw.startswith('$$') and not raw[2:-2].strip():
+            return ''
+        if raw.startswith('$') and not raw.startswith('$$') and not raw[1:-1].strip():
+            return ''
+        return raw
+    return _TOKENS.sub(clean, str(text))
+
+
 def option_markdown_label(option):
     """Display naked numeric intervals containing infinity as Markdown math.
 
@@ -150,9 +185,19 @@ def option_markdown_label(option):
 
 
 def polya_display_markdown(text):
-    """Put recognized Polya stages in separate paragraphs without editing tasks."""
+    """Separate explicit teaching steps; preserve the established Polya headings."""
     def format_prose(value):
-        value = re.sub(r'(?m)^[ \t]*[-*][ \t]+(?=(?:\*\*|__)?Bước[ \t]+[1-4]\s*:)', '', value)
+        # Consume a complete bold label before splitting its numeric prefix.
+        # Otherwise **Bước 1: Đặt vấn đề** leaves the closing ** as prose.
+        value = re.sub(
+            r'(\*\*|__)((?:Bước|Step)[ \t]+\d+[ \t]*:)[ \t]*([^\n]*?)\1',
+            lambda m: '**' + m[2] + '** ' + m[3], value, flags=re.I)
+        value = re.sub(r'(?mi)^[ \t]*[-*][ \t]+(?=(?:\*\*|__)?(?:Bước|Step)[ \t]+\d+\s*:)', '', value)
+        # Newlines alone are soft breaks in Markdown. A paragraph boundary is
+        # required even when a step has no canonical Polya stage title.
+        value = re.sub(
+            r'(?:\*\*|__)?\b(Bước|Step)[ \t]+(\d+)[ \t]*:[ \t]*(?:\*\*|__)?[ \t]*',
+            lambda m: '\n\n**' + m[1] + ' ' + m[2] + ':** ', value, flags=re.I)
         heading = re.compile(
             r'(?:\*\*|__)?Bước[ \t]+([1-4])[ \t]*:[ \t]*(?:\*\*|__)?[ \t]*'
             r'(Tìm hiểu đề|Lập kế hoạch|Thực hiện kế hoạch|Kiểm tra và nhìn lại)'
@@ -165,7 +210,11 @@ def polya_display_markdown(text):
             return '\n\n**Bước ' + match[1] + ': ' + titles[match[1]] + ':** '
         value = heading.sub(separate, value)
         return re.sub(r'\n{3,}', '\n\n', value)
-    return preserve_math_and_code(text, format_prose).strip()
+    # Product-rendered figures and code-like HTML blocks are already formatted.
+    # Do not inject Markdown into SVG labels or HTML source examples.
+    blocks = re.split(r'(<(?:svg|pre|script|style)\b[^>]*>[\s\S]*?</(?:svg|pre|script|style)\s*>)', str(text or ''), flags=re.I)
+    return ''.join(block if i % 2 else preserve_math_and_code(block, format_prose)
+                   for i, block in enumerate(blocks)).strip()
 
 
 def student_essay_text(text):

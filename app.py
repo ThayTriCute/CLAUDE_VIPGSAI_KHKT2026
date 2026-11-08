@@ -2,9 +2,9 @@ def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
-    for module, revision in ((lesson_sources, 2026110205), (curriculum_policy, 2026110602),
-                             (lab_scope, 2026110202), (lesson_export, 2026110604),
-                             (text_boundaries, 2026110603), (socratic_context, 2026110506)):
+    for module, revision in ((lesson_sources, 2026110801), (curriculum_policy, 2026110801),
+                             (lab_scope, 2026110803), (lesson_export, 2026110604),
+                             (text_boundaries, 2026110701), (socratic_context, 2026110704)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
@@ -1422,7 +1422,10 @@ available_subjects = (
 
 )
 
-subject = st.sidebar.selectbox("📚 Môn học cần hỗ trợ:", available_subjects)
+from services.widget_state import retained_subject_index
+subject = st.sidebar.selectbox("📚 Môn học cần hỗ trợ:", available_subjects,
+                              index=retained_subject_index(st.session_state.get('active_context_key'), available_subjects),
+                              key="subject_selector")
 
 
 
@@ -2041,19 +2044,19 @@ def get_cross_station_pedagogical_context(current_station: int) -> str:
     # Thông tin Trạm 1
     t1_topic = st.session_state.get('current_topic', '')
     if st.session_state.get('tram1_understood', False):
-        ctx_parts.append(f"• Trạm 1 (Lý thuyết): Em đã làm chủ hoàn toàn kiến thức cốt lõi chuyên đề '{t1_topic}'.")
+        ctx_parts.append(f"• Trạm 1 (Lý thuyết): Em đã báo hiểu phần vừa trao đổi của '{t1_topic}'; đây là trạng thái đối thoại, chưa chứng nhận toàn bộ chuyên đề.")
     elif t1_topic:
         ctx_parts.append(f"• Trạm 1 (Lý thuyết): Em đang tìm hiểu chuyên đề '{t1_topic}'.")
 
     # Thông tin Trạm 2
     if st.session_state.get('tram2_understood', False):
-        ctx_parts.append("• Trạm 2 (Bài tập): Em đã tự mình tháo gỡ thành công nút thắt bài tập, nhận diện và khắc phục trọn vẹn các lỗi sai.")
+        ctx_parts.append("• Trạm 2 (Bài tập): Em đã báo hiểu phần vừa trao đổi; chỉ tổng kết thao tác và lỗi có bằng chứng, không suy đã sửa hết mọi câu.")
     elif st.session_state.get('tram2_count', 0) > 0:
         ctx_parts.append("• Trạm 2 (Bài tập): Em đã nộp bài làm và đang đối thoại cùng Thầy tháo gỡ các chỗ khuất tất.")
 
     # Thông tin Trạm 3
     if st.session_state.get('tram3_understood', False):
-        ctx_parts.append("• Trạm 3 (Khảo thí): Em đã hoàn thành đề thi và nắm chắc phương pháp xử lý các câu khó/bẫy đề.")
+        ctx_parts.append("• Trạm 3 (Khảo thí): Em đã kết thúc lượt trao đổi sau thi; không suy nắm vững cả đề chỉ từ tín hiệu kết thúc hoặc điểm số.")
     elif st.session_state.get('tram3_count', 0) > 0 or len(st.session_state.get('tram3_chat_messages', [])) > 0:
         ctx_parts.append("• Trạm 3 (Khảo thí): Em đã tham gia thi thử và đang lắng nghe phân tích sau thi.")
 
@@ -2063,44 +2066,10 @@ def get_cross_station_pedagogical_context(current_station: int) -> str:
 
 
 def get_unique_philosophical_lesson(station_id: int, subject: str = "", context: str = "") -> dict:
-    """
-    Lấy một bài học triết lý nhân cách kèm danh ngôn Á - Âu độc bản chưa từng xuất hiện trong phiên.
-    """
-    used = st.session_state.get('used_philosophical_quotes', [])
-    candidates = CROSS_STATION_PHILOSOPHY_BANK.get(station_id, CROSS_STATION_PHILOSOPHY_BANK[1])
-    if station_id == 1:
-        verified = [c for c in candidates if c.get('source_verified') is True and c.get('source_url')]
-        if verified:
-            candidates = verified
-
-    # Lọc bỏ những câu đã từng sử dụng
-    available = [c for c in candidates if c["quote"] not in used and c["author"] not in used]
-    if not available:
-        # Nếu đã dùng hết danh sách của trạm hiện tại, lấy từ trạm khác chưa dùng
-        all_candidates = []
-        if station_id == 1:
-            all_candidates = list(candidates)
-        else:
-            for s in [1, 2, 3]:
-                all_candidates.extend(CROSS_STATION_PHILOSOPHY_BANK.get(s, []))
-        # Prefer a new philosopher, but do not discard a different verified
-        # teaching merely because its author has appeared before.
-        available = [c for c in all_candidates if c["quote"] not in used]
-
-    if available:
-        if station_id == 1 and context:
-            scores = [sum(term in context.casefold() for term in c.get('themes', [])) for c in available]
-            best = max(scores)
-            available = [c for c, score in zip(available, scores) if score == best]
-        chosen = random.choice(available)
-    else:
-        # Never silently recycle the first quote after exhausting the verified
-        # bank. Expanding verified sources is separate from inventing citations.
-        chosen = dict(candidates[0])
-        chosen.update(quote='', author='', source_url='', source_verified=False,
-                      lesson='Rút ra một hành động sống tốt khác từ chính tình huống học sinh vừa trao đổi; không lặp bài học cũ.')
-
-    return chosen
+    """Shared verified rotation across Trạm1–3 and sessions of this runtime."""
+    from services.philosophy_rotation import reserve_plan
+    return reserve_plan(CROSS_STATION_PHILOSOPHY_BANK, station_id,
+                        prior=st.session_state.get('philosophical_teaching_history', []))
 
 
 def detect_student_concluded_intent(user_input: str, history: list = None) -> bool:
@@ -2125,7 +2094,20 @@ def detect_student_concluded_intent(user_input: str, history: list = None) -> bo
     if re.search(r"(?:chưa|không)\s+hết\s+(?:thắc\s+mắc|câu\s+hỏi)|không\s+hiểu", txt):
         return False
     question_scan = txt
-    for settled in ("không còn thắc mắc", "không có thắc mắc", "hết thắc mắc"):
+    # Reported understanding may coordinate several embedded why/how clauses.
+    # Mask that complete statement, but preserve questions and contrast turns.
+    def reported_understanding(match):
+        clause = match[0]
+        if re.search(r'\b(?:nhưng|tuy nhiên|còn|muốn hỏi|cho em hỏi|cho con hỏi|giải thích giúp)\b', clause):
+            return clause
+        return 'em báo đã hiểu nội dung'
+    question_scan = re.sub(
+        r'\b(?:em|con|mình|tôi)\s+(?:(?:đã|cũng|hoàn toàn|thật sự)\s+)*(?:hiểu|biết rõ|nắm rõ)\s+(?:vì sao|tại sao|như thế nào|làm sao)\b[^.!?;\n]*',
+        reported_understanding, question_scan)
+    for settled in ("không còn câu hỏi thêm", "không có câu hỏi thêm", "không còn câu hỏi",
+                    "không có câu hỏi", "hết câu hỏi",
+                    "không còn thắc mắc", "không có thắc mắc", "hết thắc mắc",
+                    "không còn hỏi thêm", "không hỏi gì thêm", "không hỏi thêm"):
         question_scan = question_scan.replace(settled, "")
 
     # 1. NẾU CÂU CÓ DẤU HIỆU ĐẶT CÂU HỎI MỚI -> CHẮC CHẮN VẪN ĐANG HỎI, CHƯA PHẢI CLOSURE
@@ -2142,7 +2124,8 @@ def detect_student_concluded_intent(user_input: str, history: list = None) -> bo
     # 2. XÉT CÁC MẪU NGỮ NGHĨA BIỂU ĐẠT THẤU HIỂU & KHÔNG CÒN CÂU HỎI
     concluded_signals = [
         "không còn thắc mắc", "hết thắc mắc", "không còn gì để hỏi", "không còn gì hỏi",
-        "không có thắc mắc", "không còn câu hỏi", "hết câu hỏi", "không hỏi gì thêm",
+        "không có thắc mắc", "không còn câu hỏi", "không có câu hỏi", "hết câu hỏi", "không hỏi gì thêm",
+        "không còn hỏi thêm", "không hỏi thêm",
         "thông suốt rồi", "thấu suốt rồi", "thông rồi", "đã thông", "hiểu rõ rồi",
         "nắm chắc rồi", "nắm vững rồi", "hiểu bài rồi", "em hiểu hết rồi", "con hiểu hết rồi",
         "em đã hiểu bài", "em đã hiểu và muốn chuyển sang luyện tập",
@@ -2167,6 +2150,8 @@ def register_station_closure(station_id: int, quote_data: dict):
     """
     st.session_state[f"tram{station_id}_understood"] = True
     if quote_data:
+        from services.philosophy_rotation import mark_delivered
+        mark_delivered(quote_data)
         st.session_state[f"tram{station_id}_closure_info"] = quote_data
         # Survive changing lesson/subject within this learning session. Store
         # only public teaching metadata, never student dialogue or identifiers.
@@ -2456,6 +2441,11 @@ def call_gemini_with_fallback(prompt_or_contents, system_instruction=None, json_
     else:
         effective_si = f"{DEFAULT_PEDAGOGICAL_SYSTEM_INSTRUCTION}\n\n{system_instruction}" if system_instruction else DEFAULT_PEDAGOGICAL_SYSTEM_INSTRUCTION
 
+    from services.text_boundaries import with_teaching_step_layout
+    effective_si = with_teaching_step_layout(effective_si)
+    from services.curriculum_policy import with_academic_grounding
+    effective_si = with_academic_grounding(effective_si)
+
     with st.status("Gia sư AI đang tiếp nhận yêu cầu...", expanded=True) as status_box:
 
         for current_model in model_queue:
@@ -2640,6 +2630,10 @@ def stream_gemini_with_fallback(prompt_or_contents, system_instruction=None):
     deadline = time.monotonic() + 180
 
     effective_si = f"{DEFAULT_PEDAGOGICAL_SYSTEM_INSTRUCTION}\n\n{system_instruction}" if system_instruction else DEFAULT_PEDAGOGICAL_SYSTEM_INSTRUCTION
+    from services.text_boundaries import with_teaching_step_layout
+    effective_si = with_teaching_step_layout(effective_si)
+    from services.curriculum_policy import with_academic_grounding
+    effective_si = with_academic_grounding(effective_si)
 
 
 
@@ -3652,7 +3646,7 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
                        quote_author="THẦY PHAN MINH TRÍ",
                        show_support_qr=True):
     import datetime
-    from services.exam_code_text import source_text_html
+    from services.exam_code_text import source_text_html, teaching_text_html, teaching_text_latex
     from services.exam_delivery import question_solution_text
     from services.official_paper import original_print_context, original_question_number
     original_context = original_print_context(exam)
@@ -4059,10 +4053,10 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
                 ans_expl_html = f"""
                 <div style="background-color: #f0fdf4; border-left: 3.5px solid #16a34a; padding: 5px 10px; margin: 4px 0 6px 0; border-radius: 4px; font-size: 13px; line-height: 1.45;">
                     <div style="font-weight: bold; color: #15803d; margin-bottom: 2px;">✅ ĐÁP ÁN: {html.escape(str(answer))}</div>
-                    <div style="color: #1e293b;">💡 <strong>Hướng dẫn tư duy Bình dân học vụ (Bản chất sư phạm Socratic):</strong><br>{html.escape(expl_q)}</div>
+                    <div style="color: #1e293b;">💡 <strong>Hướng dẫn tư duy Bình dân học vụ (Bản chất sư phạm Socratic):</strong><br>{teaching_text_html(expl_q)}</div>
                 </div>
                 """
-                tex.append(r"\vspace{0.15cm}\noindent\fbox{\parbox{0.96\textwidth}{\textbf{Đáp án:} " + latex_text(str(answer)) + r" \\ \textit{\textbf{💡 Hướng dẫn tư duy Bình dân học vụ:}} " + latex_text(expl_q) + r"}}\par\vspace{0.25cm}")
+                tex.append(r"\vspace{0.15cm}\noindent\fbox{\parbox{0.96\textwidth}{\textbf{Đáp án:} " + latex_text(str(answer)) + r" \\ \textit{\textbf{💡 Hướng dẫn tư duy Bình dân học vụ:}} " + teaching_text_latex(expl_q, latex_text) + r"}}\par\vspace{0.25cm}")
 
             blocks.append(f"<article style='margin-bottom: 8px; break-inside: avoid;'>{body_html}{ans_expl_html}</article>")
 
@@ -4590,7 +4584,12 @@ def render_mermaid(code: str):
 
 
 
+        // A tree must preserve every source node and cannot contain shared parents/cycles.
+        const visited = new Set();
+        let invalidTree = false;
         function build(id, depth) {
+            if (visited.has(id)) { invalidTree = true; return {id, name: nodeLabels[id] || id, depth}; }
+            visited.add(id);
 
             const item = { id: id, name: nodeLabels[id] || id, depth: depth };
 
@@ -4606,7 +4605,8 @@ def render_mermaid(code: str):
 
         }
 
-        return build(rootId, 0);
+        const result = build(rootId, 0);
+        return invalidTree || visited.size !== allIds.length ? null : result;
 
     }
 
@@ -4720,9 +4720,18 @@ def render_mermaid(code: str):
 
     if (!treeData || !treeData.children || treeData.children.length === 0) {
 
-        console.warn("Kích hoạt Auto-Healer Tree Generator cho sơ đồ tư duy!");
-
-        treeData = generateAutoHealerTree(rawCode);
+        const failed = document.getElementById("mindmap-container");
+        failed.style.height = 'auto';
+        failed.style.cursor = 'default';
+        const notice = document.createElement('p');
+        notice.textContent = 'Chưa dựng được sơ đồ theo dữ liệu đã nhận. Nội dung gốc được giữ bên dưới; không thay bằng sơ đồ mẫu hoặc coi đây là mô phỏng đã kiểm chứng.';
+        notice.style.color = '#fbbf24';
+        const original = document.createElement('pre');
+        original.textContent = rawCode;
+        original.style.cssText = 'white-space:pre-wrap;color:#e2e8f0;overflow-wrap:anywhere';
+        failed.replaceChildren(notice, original);
+        failed.parentElement.querySelectorAll('button').forEach(button => button.disabled = true);
+        throw new Error('Unsupported mindmap structure; original data preserved without fabricated branches.');
 
     }
 
@@ -5508,6 +5517,250 @@ def render_smart_lab(data, current_subject=""):
         return f"{name}__{control_scope}"
 
     dtype = data.get("type")
+
+    if dtype == 'geo_fixed_offset_clock':
+        from datetime import date, time
+        from services.lab_scope import fixed_offset_clock
+        st.markdown('### Cùng một thời điểm — ba đồng hồ và ngày lịch')
+        st.caption('Mô hình đổi giờ theo độ lệch UTC được cho; không tự suy giờ pháp định của thành phố, giờ mùa hè hoặc múi giờ từ kinh độ. Chạy local, không gọi AI.')
+        inputs = st.columns(2)
+        with inputs[0]:
+            local_date = st.date_input('Ngày tại điểm A:', value=date(2022, 1, 1), key=lab_key('clock_date'))
+            local_time = st.time_input('Giờ tại điểm A:', value=time(7, 0), key=lab_key('clock_time'))
+        with inputs[1]:
+            source_minutes = st.number_input('Độ lệch UTC tại A (phút):', -720, 840, 420, 15, key=lab_key('clock_source'))
+            target_minutes = st.number_input('Độ lệch UTC tại B (phút):', -720, 840, -360, 15, key=lab_key('clock_target'))
+        st.caption('Ví dụ: UTC+7 = +420 phút; UTC−6 = −360 phút; UTC+5:30 = +330 phút. Nhập dấu của độ lệch, không nhập hướng đi.')
+        try:
+            result = fixed_offset_clock(local_date, local_time, source_minutes, target_minutes)
+            for column, label, value in zip(st.columns(3), ('Điểm A', 'UTC', 'Điểm B'),
+                                           (result['source'], result['utc'], result['target'])):
+                column.metric(label, value.strftime('%H:%M'))
+                column.caption(value.strftime('%d/%m/%Y'))
+            st.success(f"Ngày tại B so với A: {result['day_change']:+d} ngày. Chênh lệch giờ theo dữ kiện: {result['difference_minutes']:+d} phút.")
+            st.write('Cách kiểm: từ giờ A trừ độ lệch A để ra UTC, rồi cộng độ lệch B; giữ cả phần ngày khi qua 0 giờ.')
+            st.info('Thử dự đoán trước khi đổi dữ kiện: giữ A ở 07:00 ngày01/01/2022, UTC+7; chuyển B từ UTC−6 sang UTC+14. Ngày tại B thay đổi ra sao?')
+        except ValueError as error:
+            st.warning(str(error))
+        st.caption('Căn cứ bài học: SGK Địa lí10 KNTT, Bài5 trang18 — giờ và chuyển ngày. Các độ lệch trong công cụ là giả thiết bài tập, không phải bảng giờ pháp định hiện hành.')
+        return
+
+    if dtype == 'source_workshop':
+        from services.lab_scope import evaluate_source_workshop
+        workshop = data['workshop']
+        st.markdown('### ' + workshop['title'])
+        st.caption('Bài thực hành đối chiếu theo nguồn đã đọc; thẻ là diễn giải sư phạm, không phải trích nguyên văn hoặc chứng nhận pháp lý. Không gọi AI.')
+        for column, card in zip(st.columns(len(workshop['cards'])), workshop['cards']):
+            column.markdown('**' + card['title'] + '**')
+            column.write(card['text'])
+        choices = [st.radio(question['prompt'], range(len(question['options'])),
+                    format_func=lambda i, options=question['options']: options[i], index=None,
+                    key=lab_key('source_workshop_' + str(i)))
+                   for i, question in enumerate(workshop['questions'])]
+        if st.button('Đối chiếu nhận xét với tư liệu', key=lab_key('source_workshop_check')):
+            try:
+                result = evaluate_source_workshop(workshop['questions'], choices)
+                st.success(f"Kết quả đối chiếu: {result['score']}/{result['total']}")
+                for i, (correct, feedback) in enumerate(zip(result['correct'], result['feedback']), 1):
+                    st.write(f"Câu {i} — {'Phù hợp' if correct else 'Cần xem lại'}: {feedback}")
+            except ValueError as error:
+                st.warning(str(error))
+        with st.expander('Căn cứ và phạm vi của bài thực hành'):
+            st.caption(workshop.get('scope', 'Chỉ phạm vi bài đại diện, chưa phải toàn chương trình.'))
+            for source in data['sources']:
+                st.markdown('[' + source['title'] + '](' + source['url'] + ')')
+                st.caption(source['locator'])
+        return
+
+    if dtype == 'bio_osmosis':
+        from services.lab_scope import osmosis_state
+        st.markdown('### Thẩm thấu — dự đoán, đổi điều kiện và giải thích')
+        st.caption('Mô hình định tính theo SGK Sinh10 trang66–67, không phải phép đo hoặc phim tế bào thật. Xét ban đầu cùng nhiệt độ/áp suất, màng cho nước qua và không cho chất tan đang xét qua. Nồng độ là số hạt tan hiệu dụng; không đồng nhất mọi mol chất tan với độ trương.')
+        cell = st.radio('Loại tế bào:', ['Động vật', 'Thực vật có thành'], horizontal=True, key=lab_key('osmosis_cell'))
+        c1, c2 = st.columns(2)
+        inside = c1.slider('Hạt tan hiệu dụng bên trong (đơn vị tương đối)', 0, 600, 300, 25, key=lab_key('osmosis_inside'))
+        outside = c2.slider('Hạt tan hiệu dụng bên ngoài (đơn vị tương đối)', 0, 600, 300, 25, key=lab_key('osmosis_outside'))
+        model = osmosis_state(inside, outside, cell.startswith('Thực vật'))
+        names = {'balanced': 'Không có dòng thuần', 'inward': 'Vào tế bào ban đầu', 'outward': 'Ra khỏi tế bào ban đầu'}
+        environments = {'isotonic': 'Đẳng trương', 'hypotonic': 'Nhược trương', 'hypertonic': 'Ưu trương'}
+        m1, m2 = st.columns(2)
+        m1.metric('Môi trường ngoài so với tế bào', environments[model['environment']])
+        m2.metric('Chiều nước thuần', names[model['direction']])
+        st.info(model['result'])
+        # Two arrows always remain: equal net flux never means no molecular motion.
+        inward_width = 8 if model['direction'] == 'inward' else 3
+        outward_width = 8 if model['direction'] == 'outward' else 3
+        plant = cell.startswith('Thực vật')
+        wall = '<rect x="265" y="60" width="250" height="190" rx="16" fill="none" stroke="#22c55e" stroke-width="9"/>' if plant else ''
+        membrane = ('<rect x="290" y="85" width="200" height="140" rx="18" fill="#38bdf822" stroke="#38bdf8" stroke-width="3"/>' if plant
+                    else '<ellipse cx="390" cy="155" rx="112" ry="85" fill="#38bdf822" stroke="#38bdf8" stroke-width="3"/>')
+        st.markdown(f'''<svg viewBox="0 0 780 310" role="img" aria-label="Hai chiều trao đổi nước qua màng; độ đậm mũi tên chỉ chiều dòng thuần ban đầu" style="width:100%;max-width:900px">
+<defs><marker id="osmosis_arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#38bdf8"/></marker></defs>
+{wall}{membrane}<g fill="currentColor" font-family="sans-serif" font-size="18"><text x="390" y="35" text-anchor="middle">Bên trong: {inside}</text><text x="80" y="65">Bên ngoài: {outside}</text><text x="390" y="160" text-anchor="middle">Màng tế bào</text><text x="390" y="290" text-anchor="middle">Sơ đồ quy ước, không biểu diễn thể tích hoặc thời gian thực</text></g>
+<path d="M90 120H310" stroke="#38bdf8" stroke-width="{inward_width}" marker-end="url(#osmosis_arrow)"/><path d="M310 205H90" stroke="#38bdf8" stroke-width="{outward_width}" marker-end="url(#osmosis_arrow)"/></svg>''', unsafe_allow_html=True)
+        st.markdown('**Tự kiểm chứng:** Đặt hai phía bằng nhau: còn hai mũi tên nhưng dòng thuần bằng không. Giữ bên trong 300, đổi bên ngoài 150 rồi 450: chiều nào đổi? Đổi loại tế bào: thành tế bào làm hậu quả khác nhau thế nào?')
+        st.caption('Độ đậm mũi tên chỉ chiều ưu thế, không phải tốc độ định lượng. Kết quả ban đầu không dự báo trạng thái cân bằng cuối cùng: nồng độ, thể tích và áp suất có thể đổi theo thời gian. Không dùng để suy liều/nồng độ truyền dịch hay điều trị.')
+        import csv, io
+        stream = io.StringIO()
+        writer = csv.writer(stream)
+        writer.writerow(['cell_type', 'inside_effective_relative', 'outside_effective_relative', 'initial_net_direction', 'scope'])
+        writer.writerow([cell, inside, outside, model['direction'], 'qualitative_model_not_measurement'])
+        st.download_button('Tải cấu hình và kết quả mô hình (.csv)', stream.getvalue().encode('utf-8-sig'), 'Sinh10_tham_thau_mo_hinh.csv', 'text/csv', key=lab_key('osmosis_csv'))
+        st.markdown(f'[Nguồn SGK đã đối chiếu]({data["source_url"]})')
+        return
+
+    if dtype == 'chem_rate_table':
+        from services.lab_scope import average_reactant_rate, experimental_rate_ratio, temperature_rate_ratio
+        st.markdown('### Tốc độ phản ứng — đọc thí nghiệm và kiểm chứng dự đoán')
+        st.caption('Dữ liệu H₂O₂ lấy từ Bảng19.1 SGK Hóa10 trang93. Hai phần so sánh nồng độ/nhiệt độ dưới đây là bài toán mô hình riêng, không phải kết quả thí nghiệm mới hoặc phép đo của phản ứng H₂O₂.')
+        tabs = st.tabs(['Số liệu H₂O₂', 'Ảnh hưởng nồng độ', 'Ảnh hưởng nhiệt độ'])
+        times, concentrations = data['times_h'], data['concentrations_M']
+        with tabs[0]:
+            interval = st.select_slider('Chọn khoảng thời gian (giờ)', options=list(range(len(times))),
+                                        value=(0, 1), format_func=lambda i: str(times[i]), key=lab_key('rate_interval'))
+            coefficient = st.selectbox('Hệ số H₂O₂ trong phương trình dùng để chuẩn hóa', [1, 2], key=lab_key('rate_coefficient'))
+            st.latex(r'\mathrm{H_2O_2\rightarrow H_2O+\tfrac12 O_2}' if coefficient == 1 else r'\mathrm{2H_2O_2\rightarrow2H_2O+O_2}')
+            fig = go.Figure(go.Scatter(x=times, y=concentrations, mode='lines+markers', name='Số liệu SGK', line=dict(color='#38bdf8')))
+            if interval[0] < interval[1]:
+                result = average_reactant_rate(times, concentrations, *interval, coefficient)
+                fig.add_trace(go.Scatter(x=[times[i] for i in interval], y=[concentrations[i] for i in interval], mode='lines+markers', name='Dây cung của khoảng chọn', line=dict(color='#fbbf24', dash='dash')))
+                cols = st.columns(2)
+                cols[0].metric('Tốc độ mất H₂O₂ (mol/(L·h))', f"{result['loss_rate']:.6g}")
+                cols[1].metric('Tốc độ phản ứng chuẩn hóa (mol/(L·h))', f"{result['normalized_rate']:.6g}")
+                st.write(f"ΔC = {result['delta_c']:.6g} mol/L; Δt = {result['delta_t']:g} h. Tốc độ chuẩn hóa đổi sang mol/(L·s): {result['normalized_rate']/3600:.6g}.")
+                if result['loss_rate'] < 0:
+                    st.warning('Nồng độ tăng trong khoảng chọn: không gọi giá trị này là tốc độ mất chất dương.')
+            else:
+                st.info('Chọn hai mốc thời gian khác nhau để tính tốc độ trung bình; không chia cho khoảng thời gian bằng 0.')
+            fig.update_layout(xaxis_title='Thời gian (h)', yaxis_title='Nồng độ H₂O₂ (mol/L)', height=390,
+                              paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', legend=dict(orientation='h'))
+            st.plotly_chart(fig, width='stretch', key=lab_key('rate_table_chart'))
+            st.caption('Đoạn nối các điểm chỉ giúp đọc dữ liệu, không chứng minh đường động học tại mọi thời điểm. Thể tích không đổi; tốc độ mất H₂O₂ không đổi khi nhân đôi phương trình, còn tốc độ chuẩn hóa chia theo hệ số đã chọn.')
+            st.markdown('**Dự đoán rồi kiểm:** chọn các khoảng 0–3, 3–6 và 9–12 giờ. Khoảng nào chất giảm nhanh hơn? Đổi hệ số 1 thành 2: đại lượng nào thay đổi, đại lượng nào giữ nguyên?')
+            import csv, io
+            buffer = io.StringIO(); writer = csv.writer(buffer)
+            writer.writerow(['time_h', 'H2O2_mol_L'])
+            writer.writerows(zip(times, concentrations))
+            st.download_button('Tải dữ liệu nguồn để tự tính (CSV)', buffer.getvalue().encode('utf-8-sig'), file_name='Hoa10_Bang19_1_H2O2.csv', mime='text/csv', key=lab_key('rate_source_csv'))
+        with tabs[1]:
+            st.latex(r'2NO+O_2\rightarrow2NO_2,\qquad v=kC_{NO}^{2}C_{O_2}')
+            st.caption('Dùng biểu thức thực nghiệm được nêu ở SGK trang95. Giữ nhiệt độ, môi trường và k; tính tỉ số tốc độ, không tự cho một k thực nghiệm hoặc suy số mũ từ mọi phương trình.')
+            no_ratio = st.slider('Nồng độ NO so với ban đầu (lần)', 0.0, 3.0, 1.0, step=.1, key=lab_key('rate_no'))
+            oxygen_ratio = st.slider('Nồng độ O₂ so với ban đầu (lần)', 0.0, 3.0, 1.0, step=.1, key=lab_key('rate_o2'))
+            ratio = experimental_rate_ratio(no_ratio, oxygen_ratio)
+            st.metric('v mới / v ban đầu', f'{ratio:.4g}')
+            fig = go.Figure(go.Bar(x=['Ban đầu', 'Sau thay đổi'], y=[1, ratio], marker_color=['#94a3b8', '#38bdf8']))
+            fig.update_layout(yaxis_title='Tỉ số tốc độ', height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+            st.plotly_chart(fig, width='stretch', key=lab_key('rate_ratio_chart'))
+            st.markdown('**Kiểm chứng:** tăng riêng NO gấp đôi, rồi tăng riêng O₂ gấp đôi. Vì sao hai kết quả khác nhau? Đây là so sánh ở cùng điều kiện, không phải tăng áp suất tổng bằng khí trơ.')
+        with tabs[2]:
+            st.caption('Bài toán giả định riêng: γ không đổi từ 20 đến 50°C; không gán hệ số này thành kết quả đo cho H₂O₂ hoặc NO ở hai phần trước.')
+            gamma = st.slider('Hệ số nhiệt độ γ giả định', 1.0, 4.0, 2.0, step=.1, key=lab_key('rate_gamma'))
+            temperature = st.slider('Nhiệt độ so với mốc 20°C', 20, 50, 20, key=lab_key('rate_temperature'))
+            factor = temperature_rate_ratio(gamma, 20, temperature)
+            st.metric('v(T) / v(20°C)', f'{factor:.5g}')
+            st.latex(r'\frac{v(T)}{v(20)}=\gamma^{(T-20)/10}')
+            fig = go.Figure(go.Scatter(x=list(range(20, 51)), y=[temperature_rate_ratio(gamma, 20, t) for t in range(20, 51)], mode='lines', name='Mô hình γ không đổi'))
+            fig.add_trace(go.Scatter(x=[temperature], y=[factor], mode='markers', name='Đang xét'))
+            fig.update_layout(xaxis_title='T (°C)', yaxis_title='v(T)/v(20°C)', height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+            st.plotly_chart(fig, width='stretch', key=lab_key('rate_temperature_chart'))
+            st.markdown('**Thử dự đoán:** γ = 2, tăng 30°C thì tốc độ tăng bao nhiêu lần? Vì sao không lấy 30 nhân với 2? Không ngoại suy ra ngoài khoảng đã cho.')
+        st.caption('Lab phân tích số liệu/mô hình; không hướng dẫn tự pha hóa chất hay thực hiện thí nghiệm tại nhà. Nguồn: ' + data['source_locator'])
+        return
+
+    if dtype == 'horizontal_throw':
+        from services.lab_scope import horizontal_throw_state
+        st.markdown('### Ném ngang — tách hai chuyển động thành phần')
+        st.caption('Mô hình gần mặt đất: bỏ cản không khí, g không đổi, mặt đất phẳng. Gốc ở mặt đất dưới điểm ném; x hướng ngang, z hướng lên. Chỉ xét tới lần chạm đất đầu tiên, không mô phỏng va chạm hoặc độ nảy.')
+        height = st.number_input('Độ cao H (m)', min_value=0.01, max_value=10000.0, value=float(data['height']), key=lab_key('throw_h'))
+        speed = st.number_input('Vận tốc ngang ban đầu v₀ (m/s)', min_value=0.01, max_value=10000.0, value=float(data['speed']), key=lab_key('throw_v'))
+        gravity = st.number_input('Gia tốc trọng trường g (m/s²)', min_value=0.01, max_value=10000.0, value=float(data['gravity']), key=lab_key('throw_g'))
+        fraction = st.slider('Tiến trình bay (%)', 0, 100, 0, key=lab_key('throw_progress')) / 100
+        compare = st.checkbox('So sánh với vật thả rơi cùng lúc, cùng độ cao', value=True, key=lab_key('throw_compare'))
+        state = horizontal_throw_state(height, speed, gravity, fraction)
+        columns = st.columns(3)
+        columns[0].metric('Thời gian tới đất T (s)', f"{state['T']:.4g}")
+        columns[1].metric('Tầm xa L (m)', f"{state['L']:.4g}")
+        columns[2].metric('Thời điểm đang xét t (s)', f"{state['t']:.4g}")
+        points = [horizontal_throw_state(height, speed, gravity, i / 100) for i in range(101)]
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=[p['x'] for p in points], y=[p['z'] for p in points], name='Quỹ đạo ném ngang', mode='lines'))
+        fig.add_trace(go.Scatter(x=[state['x']], y=[state['z']], name='Vật ném ngang', mode='markers', marker=dict(size=14)))
+        if compare:
+            fig.add_trace(go.Scatter(x=[0, 0], y=[height, 0], name='Đường thả rơi', mode='lines', line=dict(dash='dot')))
+            fig.add_trace(go.Scatter(x=[0], y=[state['z']], name='Vật thả rơi cùng lúc', mode='markers', marker=dict(size=11, symbol='diamond')))
+        fig.add_shape(type='line', x0=0, x1=state['L'], y0=0, y1=0, line=dict(color='#94a3b8', width=2))
+        fig.update_layout(xaxis_title='x (m)', yaxis_title='z: độ cao so với mặt đất (m)',
+                          xaxis=dict(range=[-0.05*state['L'], 1.1*state['L']]), yaxis=dict(range=[-0.08*height, 1.15*height]),
+                          paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=440,
+                          legend=dict(orientation='h', y=1.18), margin=dict(t=80), uirevision=lab_key('throw_plot'))
+        st.plotly_chart(fig, width='stretch', key=lab_key('throw_chart'))
+        st.caption('Hai trục có đơn vị mét; tỉ lệ hiển thị có thể khác nhau. Các số hiển thị làm tròn; tính toán dùng giá trị đầy đủ.')
+        st.write(f"x = {state['x']:.4g} m; z = {state['z']:.4g} m; vₓ = {state['vx']:.4g} m/s; v_z = {state['vz']:.4g} m/s; độ lớn vận tốc = {state['speed']:.4g} m/s.")
+        if fraction == 1:
+            st.info('Vật vừa chạm mặt đất: mô hình bay dừng tại đây. Vận tốc ngay trước va chạm không phải vận tốc sau va chạm.')
+        st.markdown('**Thử dự đoán rồi kiểm:** giữ H và g, tăng gấp đôi v₀: T có đổi không, L đổi ra sao? Giữ v₀ và g, tăng H gấp bốn: T và L thay đổi thế nào? Vì sao hai vật trong phép so sánh luôn cùng độ cao?')
+        st.caption('Đây là mô phỏng từ phương trình, không phải dữ liệu thí nghiệm đo thật. Không thử ném vật từ nơi cao.')
+        import csv, io
+        buffer = io.StringIO()
+        writer = csv.writer(buffer)
+        writer.writerow(['t_s', 'x_m', 'z_m', 'vx_m_s', 'vz_m_s'])
+        writer.writerows((p['t'], p['x'], p['z'], p['vx'], p['vz']) for p in points)
+        st.download_button('Tải bảng dữ liệu mô phỏng (CSV)', buffer.getvalue().encode('utf-8-sig'), file_name='Nem_ngang_mo_phong.csv', mime='text/csv', key=lab_key('throw_csv'))
+        return
+
+    if dtype == 'soil_ph_band':
+        from html import escape
+        from services.lab_scope import classify_closed_band
+        st.markdown('### Phân loại đất theo khoảng pH đã nêu')
+        st.caption('Mô hình đọc số đo giả định trong phạm vi 0–14, không đo đất thật hoặc tính liều cải tạo. Hai ngưỡng lấy nguyên từ lệnh, gồm cả hai đầu khoảng trung tính theo quy ước phân loại đất.')
+        low, high = data['low'], data['high']
+        ph = st.slider('pH mẫu đất giả định', 0.0, 14.0, 7.0, step=0.01, key=lab_key('soil_ph'))
+        band = classify_closed_band(ph, low, high)
+        names = {'below': 'Đất chua', 'within': 'Đất trung tính theo khoảng đã nêu', 'above': 'Đất kiềm'}
+        st.write(f'pH = {ph:g}: {names[band]}. Khoảng trung tính: {low:g} ≤ pH ≤ {high:g}.')
+        st.info('Tên dải phân loại đất không đồng nghĩa mọi giá trị trong dải đều trung tính hóa học. Trong mô hình dung dịch nước ở 25 °C, trung tính hóa học có pH xấp xỉ 7. Một số đo pH chưa đủ để quyết định bón vôi hay chọn liều; còn phụ thuộc cây, cách đo và khả năng đệm của đất.')
+        cards = []
+        for index, (key, label, interval) in enumerate((
+                ('below', 'Đất chua', f'pH < {low:g}'),
+                ('within', 'Dải đất trung tính', f'{low:g} ≤ pH ≤ {high:g}'),
+                ('above', 'Đất kiềm', f'pH > {high:g}'))):
+            x = 15 + index * 280
+            active = key == band
+            fill, ink = ('#bbf7d0', '#0f172a') if active else ('none', 'currentColor')
+            cards.append(f'<rect x="{x}" y="20" width="250" height="85" rx="8" fill="{fill}" stroke="currentColor"/><g text-anchor="middle" fill="{ink}"><text x="{x+125}" y="53">{escape(label)}</text><text x="{x+125}" y="83">{escape(interval)}</text></g>')
+        diagram = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 125" role="img" aria-label="Sơ đồ phân loại pH đất" style="font:16px sans-serif">' + ''.join(cards) + '</svg>'
+        st.markdown(diagram, unsafe_allow_html=True)
+        st.caption('Sơ đồ nhóm phân loại, chiều rộng ô không biểu diễn độ dài khoảng pH.')
+        exported = diagram.replace('currentColor', '#0f172a')
+        st.download_button('Tải sơ đồ phân loại đất (SVG)', exported.encode('utf-8'), file_name='Phan_loai_pH_dat.svg', mime='image/svg+xml', key=lab_key('soil_ph_svg'))
+        return
+
+    if dtype == 'light_threshold_control':
+        from services.threshold_control import light_controller_step
+        st.markdown('### Đèn tự động — điều khiển hai ngưỡng')
+        st.caption('Mô hình định tính, độ sáng quy ước 0–100; không phải lux hay hướng dẫn đấu điện. Ngưỡng lấy từ yêu cầu, vùng giữa giữ trạng thái trước đó.')
+        state_key = lab_key('light_on')
+        light = st.slider('Độ sáng quy ước', 0.0, 100.0, 50.0, key=lab_key('light_level'))
+        power = st.checkbox('Có nguồn điện', value=True, key=lab_key('light_power'))
+        if st.button('Đặt lại trạng thái đèn', key=lab_key('light_reset')):
+            st.session_state[state_key] = False
+        on = light_controller_step(light, data['low'], data['high'], power, st.session_state.get(state_key, False))
+        st.session_state[state_key] = on
+        st.write(f"Đèn: {'BẬT' if on else 'TẮT'} — bật khi độ sáng < {data['low']:g}, tắt khi > {data['high']:g}; tại hai ngưỡng giữ trạng thái. Mất nguồn luôn tắt.")
+        lamp_color = '#facc15' if on else '#94a3b8'
+        diagram = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 230" role="img" aria-label="Sơ đồ tín hiệu và nguồn điện">
+        <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#334155"/></marker></defs>
+        <g fill="none" stroke="#334155" stroke-width="2"><rect x="15" y="65" width="185" height="70" rx="8"/><rect x="300" y="65" width="220" height="70" rx="8"/><rect x="650" y="65" width="170" height="70" rx="8" fill="{lamp_color}"/>
+        <path d="M200 100 H300 M520 100 H650" marker-end="url(#arrow)"/>
+        <path d="M410 205 V135 M410 190 H735 V135" stroke-dasharray="6 4" marker-end="url(#arrow)"/></g>
+        <g font-family="sans-serif" font-size="16" text-anchor="middle" fill="#0f172a"><text x="108" y="95">Cảm biến ánh sáng</text><text x="108" y="120">Đầu vào thông tin</text><text x="410" y="95">Bộ điều khiển + đóng cắt</text><text x="410" y="120">Xử lí, giữ trạng thái</text><text x="735" y="95">Đèn — đầu ra</text><text x="735" y="120">{'Phát sáng' if on else 'Không sáng'}</text><text x="250" y="75">Tín hiệu</text><text x="585" y="75">Lệnh bật/tắt</text><text x="410" y="225">Nguồn điện — đường năng lượng (nét đứt)</text></g></svg>'''
+        # Follow the app theme on screen; keep dark ink in the standalone export.
+        screen_diagram = diagram.replace('#334155', 'currentColor').replace('#0f172a', 'currentColor')
+        screen_diagram = screen_diagram.replace('<text x="735"', '<text fill="#0f172a" x="735"')
+        st.markdown(screen_diagram, unsafe_allow_html=True)
+        st.download_button('Tải sơ đồ điều khiển (SVG)', diagram.encode('utf-8'), file_name='So_do_dieu_khien_den.svg', mime='image/svg+xml', key=lab_key('light_svg'))
+        return
 
     if dtype == 'proposition_quadratic':
         from services.lab_scope import evaluate_proposition
@@ -10527,7 +10780,8 @@ def render_math_graph_to_webp_base64(graph_data, extra_points=None, xlabel=r'$x$
     except Exception:
         return ""
 
-@st.cache_data(show_spinner=False, max_entries=256)
+# Read reviewed-source corrections on each render; the registry has its own mtime cache.
+# Caching this gate by lesson text alone hides later source-backed repairs.
 def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán học", grade: int = 12, topic: str = "", policy_revision: int = CURRICULUM_POLICY_REVISION) -> str:
     """Validate the selected curriculum context and normalize display syntax.
 
@@ -10559,6 +10813,12 @@ def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán h�
     t = correct_reviewed_cubic_prior_knowledge(t, subject, grade, topic)
     from services.curriculum_policy import correct_reviewed_english_family_guidance
     t = correct_reviewed_english_family_guidance(t, subject, grade, topic)
+    from services.curriculum_policy import correct_reviewed_horizontal_throw
+    t = correct_reviewed_horizontal_throw(t, subject, grade, topic)
+    from services.curriculum_policy import correct_reviewed_reaction_rate
+    t = correct_reviewed_reaction_rate(t, subject, grade, topic)
+    from services.lesson_sources import apply_reviewed_content_corrections
+    t = apply_reviewed_content_corrections(t, subject, grade, topic)
 
     # 2. Quét & chuẩn hóa KaTeX
     t = sanitize_katex_latex(t)
@@ -11595,11 +11855,14 @@ if selected_station == station_labels[0]:
     if st.session_state.get("current_lesson"):
         lesson_text = station1_master_sovereign_brain_gate(st.session_state.current_lesson, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''), policy_revision=CURRICULUM_POLICY_REVISION)
         from services.lesson_archive import encode_full_lesson
+        from services.lesson_sources import apply_reviewed_content_corrections
         import hashlib as _lesson_archive_hash
-        full_lesson_bytes = encode_full_lesson(st.session_state.current_lesson, subject, grade_num,
+        archive_lesson_text = apply_reviewed_content_corrections(
+            st.session_state.current_lesson, subject, grade_num, st.session_state.get('current_topic', ''))
+        full_lesson_bytes = encode_full_lesson(archive_lesson_text, subject, grade_num,
                                              st.session_state.get('current_topic', ''), CURRICULUM_POLICY_REVISION)
         st.download_button("📦 Tải đầy đủ bài học và câu hỏi (.json)", full_lesson_bytes,
-                           file_name="Bai_hoc_day_du_" + _lesson_archive_hash.sha256(st.session_state.current_lesson.encode('utf-8')).hexdigest()[:12] + ".json",
+                           file_name="Bai_hoc_day_du_" + _lesson_archive_hash.sha256(archive_lesson_text.encode('utf-8')).hexdigest()[:12] + ".json",
                            mime="application/json", key="t1_download_full_" + current_context_key)
 
         part2_split = re.split(r'(?i)(?:###\s*)?PHẦN 2[\:\.]?', lesson_text)
@@ -11689,11 +11952,19 @@ if selected_station == station_labels[0]:
                                 from services.curriculum_policy import correct_reviewed_myth_guidance
                                 chat_display = correct_reviewed_myth_guidance(
                                     chat_display, subject, grade_num, st.session_state.get('current_topic', ''))
+                                from services.lesson_sources import apply_reviewed_content_corrections
+                                chat_display = apply_reviewed_content_corrections(
+                                    chat_display, subject, grade_num, st.session_state.get('current_topic', ''))
                                 if t1_msg_index and st.session_state.tram1_chat_history[t1_msg_index-1]['role'] == 'user':
                                     from services.socratic_context import repair_reviewed_station1_closing
                                     chat_display = repair_reviewed_station1_closing(
                                         chat_display, st.session_state.tram1_chat_history[t1_msg_index-1]['content'],
                                         subject, grade_num, closing=True)
+                                    # Only this unapproved, reproduced specimen needs a
+                                    # retrospective note; leave approved old chats alone.
+                                    if (subject == 'Hóa học' and grade_num == 10 and st.session_state.get('current_topic') == 'Tốc độ phản ứng — Hóa học 10, KNTT, Bài 19'):
+                                        from services.socratic_context import label_verified_quote_translation
+                                        chat_display = label_verified_quote_translation(chat_display, CROSS_STATION_PHILOSOPHY_BANK[1])
                                     t1_msg["content"] = chat_display
                             st.markdown(chemical_display_markdown(chat_display))
 
@@ -11740,8 +12011,7 @@ if selected_station == station_labels[0]:
                                     st.session_state.tram1_chat_history)
                                 is_t1_understood = (not is_t1_farewell and
                                     detect_student_concluded_intent(t1_input, st.session_state.tram1_chat_history))
-                                t1_quote_data = get_unique_philosophical_lesson(
-                                    1, subject, t1_hist_ctx + ' ' + t1_input + ' ' + st.session_state.get('current_topic', ''))
+                                t1_quote_data = get_unique_philosophical_lesson(1, subject) if is_t1_understood else {}
                                 t1_cross_ctx = get_cross_station_pedagogical_context(1)
 
                                 if is_t1_understood:
@@ -11799,6 +12069,10 @@ if selected_station == station_labels[0]:
                                     from services.lesson_sources import reviewed_tutor_source_context
                                     t1_prompt_msg = reviewed_tutor_source_context(
                                         subject, grade_num, st.session_state.get('current_topic', '')) + '\n' + t1_prompt_msg
+                                    if is_t1_understood:
+                                        from services.philosophy_rotation import closure_instruction
+                                        t1_prompt_msg += '\n' + closure_instruction(t1_quote_data, 1,
+                                            st.session_state.get('current_topic', '') + '\n' + t1_student_evidence)
                                     stream_gen = stream_gemini_with_fallback(
                                         t1_prompt_msg,
                                         system_instruction=t1_sys_inst
@@ -11812,9 +12086,15 @@ if selected_station == station_labels[0]:
                                 from services.curriculum_policy import correct_reviewed_myth_guidance
                                 t1_ans_clean = correct_reviewed_myth_guidance(
                                     t1_ans_clean, subject, grade_num, st.session_state.get('current_topic', ''))
+                                from services.lesson_sources import apply_reviewed_content_corrections
+                                t1_ans_clean = apply_reviewed_content_corrections(
+                                    t1_ans_clean, subject, grade_num, st.session_state.get('current_topic', ''))
                                 from services.socratic_context import repair_reviewed_station1_closing
                                 t1_ans_clean = repair_reviewed_station1_closing(
                                     t1_ans_clean, t1_input, subject, grade_num, closing=is_t1_understood)
+                                if is_t1_understood:
+                                    from services.socratic_context import complete_verified_quote_reference
+                                    t1_ans_clean = complete_verified_quote_reference(t1_ans_clean, [t1_quote_data])
                                 t1_reply_slot.markdown(chemical_display_markdown(t1_ans_clean))
                                 st.session_state.tram1_chat_history.append({"role": "assistant", "content": t1_ans_clean})
                                 if is_t1_understood and isinstance(t1_ans_clean, str) and t1_ans_clean.strip():
@@ -11834,6 +12114,9 @@ if selected_station == station_labels[0]:
         from services.curriculum_policy import repair_reviewed_english_family_question
         quiz_list = [repair_reviewed_english_family_question(
             q, subject, grade_num, st.session_state.get("current_topic", "")) for q in quiz_list]
+        from services.lesson_sources import apply_reviewed_quiz_proposal
+        quiz_list = [apply_reviewed_quiz_proposal(
+            q, subject, grade_num, st.session_state.get('current_topic', '')) for q in quiz_list]
         st.session_state.parsed_quiz = quiz_list
         quiz_recovery_key = (st.session_state.get('current_lesson', ''), 2026110202)
         if (quiz_list and any(q.get('correct') not in ('A', 'B', 'C', 'D') for q in quiz_list)
@@ -11880,6 +12163,12 @@ if selected_station == station_labels[0]:
                 clean_q_display = correct_reviewed_myth_guidance(
                     clean_q_display, subject, grade_num, st.session_state.get('current_topic', ''))
                 clean_q_display = sanitize_katex_latex(clean_q_display)
+                from services.curriculum_policy import correct_reviewed_reaction_rate
+                clean_q_display = correct_reviewed_reaction_rate(
+                    clean_q_display, subject, grade_num, st.session_state.get('current_topic', ''))
+                from services.lesson_sources import apply_reviewed_content_corrections
+                clean_q_display = apply_reviewed_content_corrections(
+                    clean_q_display, subject, grade_num, st.session_state.get('current_topic', ''))
                 st.markdown(chemical_display_markdown(f"**Câu {idx+1}:** `[{level_caption(q, quiz_cognitive_audits[idx] if idx < len(quiz_cognitive_audits) else None)}]`\n\n{clean_q_display}"))
 
                 # 3. Hiển thị Bảng Biến Thiên (BBT) WebP siêu nét chuẩn Bộ GD&ĐT (Trạm 3 Master Quality):
@@ -11927,7 +12216,7 @@ if selected_station == station_labels[0]:
                 if widget_key not in st.session_state and previous_choice in q['options']:
                     st.session_state[widget_key] = previous_choice
                 user_choice = st.radio(f"Chọn đáp án câu {idx+1}:", q['options'], key=widget_key, label_visibility="collapsed", index=None,
-                    format_func=lambda option: chemical_display_markdown(option_markdown_label(option)))
+                    format_func=lambda option: chemical_display_markdown(option_markdown_label(option), separate_steps=False))
                 if user_choice is not None:
                     st.session_state.quiz_selections[idx] = user_choice
 
@@ -12410,6 +12699,8 @@ if selected_station == station_labels[0]:
 
 
     from services.lab_scope import preset_lab_label, preset_lab_note, resolve_preset_lab
+    if subject == 'Địa lý':
+        available_labs = {'Đổi giờ và ngày theo UTC (KNTT 10)': {'type': 'geo_fixed_offset_clock'}, **available_labs}
     manual_lab = st.selectbox("Mô phỏng có sẵn (không cần API):", list(available_labs), index=None,
         placeholder='Chọn mẫu tham khảo; có công cụ mở rộng ngoài bài học',
         format_func=lambda label: preset_lab_label(label, subject, grade_num))
@@ -12425,7 +12716,27 @@ if selected_station == station_labels[0]:
 
 
 
-    if st.button("✨ Khởi chạy Phòng Lab", key=f"btn_lab_{current_context_key}") and lab_command.strip():
+    from services.threshold_control import light_controller_request
+    explicit_light_model = light_controller_request(lab_command) if subject in ('Công nghệ', 'Vật lý', 'Khoa học tự nhiên') else None
+    from services.lab_scope import soil_ph_lab_request
+    from services.lab_scope import horizontal_throw_request
+    from services.lab_scope import reaction_rate_table_request
+    from services.lab_scope import osmosis_lab_request
+    from services.lab_scope import reviewed_workshop_request, is_local_workshop_command
+    explicit_local_model = (explicit_light_model or soil_ph_lab_request(lab_command, subject)
+                            or horizontal_throw_request(lab_command, subject)
+                            or reaction_rate_table_request(lab_command, subject, grade_num, st.session_state.get('current_topic', ''))
+                            or osmosis_lab_request(lab_command, subject, grade_num, st.session_state.get('current_topic', ''))
+                            or reviewed_workshop_request(lab_command, subject, grade_num, st.session_state.get('current_topic', '')))
+    lab_clicked = st.button("✨ Khởi chạy Phòng Lab", key=f"btn_lab_{current_context_key}")
+    if lab_clicked and lab_command.strip() and explicit_local_model is not None:
+        st.session_state[f'lab_intent_command_{current_context_key}'] = lab_command
+        st.session_state.lab_request_revision = st.session_state.get("lab_request_revision", 0) + 1
+        st.session_state.lab_data = explicit_local_model
+    local_workshop_requested = is_local_workshop_command(lab_command)
+    if lab_clicked and local_workshop_requested and explicit_local_model is None:
+        st.warning('Bài này chưa có đủ cấu hình thực hành theo nguồn; chưa gọi AI thay thế.')
+    if lab_clicked and lab_command.strip() and explicit_local_model is None and not local_workshop_requested:
         st.session_state[f'lab_intent_command_{current_context_key}'] = lab_command
         st.session_state.lab_request_revision = st.session_state.get("lab_request_revision", 0) + 1
 
@@ -12762,7 +13073,7 @@ QUY TẮC PHÂN LOẠI MÔ HÌNH:
         if is_proposition_request(st.session_state[intent_key], subject) and predicate_data is None:
             st.warning('Chưa dựng được phép gán biến theo biểu thức này. Không thay bằng đồ thị hoặc mô hình mẫu khác bài.')
         else:
-            st.success("✨ Đã khởi tạo mô phỏng Phòng Lab liên môn thành công!")
+            st.caption("Dữ liệu trực quan đã được nhận. Sơ đồ không tự có chức năng mô phỏng; cần kiểm nội dung và các điều khiển theo yêu cầu.")
             render_smart_lab(data, subject)
 
 
@@ -13321,10 +13632,17 @@ if selected_station == station_labels[1]:
         st.session_state.messages = [{"role": "assistant", "content": welcome_intro}]
 
     for idx_m, m in enumerate(st.session_state.get("messages", [])):
+        # Complete the latest new-runtime closure from its verified plan only;
+        # earlier approved histories are left untouched.
+        if m.get('role') == 'assistant' and idx_m == len(st.session_state.messages)-1:
+            closure_plan = st.session_state.get('tram2_closure_info', {})
+            if isinstance(closure_plan, dict) and closure_plan.get('plan_id'):
+                from services.socratic_context import complete_verified_quote_reference
+                m['content'] = complete_verified_quote_reference(m['content'], [closure_plan])
 
         with st.chat_message(m["role"]):
 
-            st.markdown(m["content"])
+            st.markdown(chemical_display_markdown(m["content"]))
 
             if m["role"] == "assistant" and len(m.get("content", "")) > 15:
 
@@ -13464,7 +13782,7 @@ if selected_station == station_labels[1]:
                     history_context = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[-4:]])
 
                     is_student_understood = detect_student_concluded_intent(q, st.session_state.messages)
-                    t2_quote_data = get_unique_philosophical_lesson(2, subject)
+                    t2_quote_data = get_unique_philosophical_lesson(2, subject) if is_student_understood else {}
                     t2_cross_ctx = get_cross_station_pedagogical_context(2)
 
                     if is_student_understood:
@@ -13474,13 +13792,14 @@ if selected_station == station_labels[1]:
                             f"Lịch sử đối thoại trước đó:\n{history_context}\n"
                             f"Học sinh {student_name} phản hồi: \"{q}\"\n\n"
                             f"🎯 MỆNH LỆNH SƯ PHẠM ĐỈNH CAO - CHỐT ĐIỂM CHẠM SƯ PHẠM TRẠM 2 (CLOSURE) & TRAO TRUYỀN TRIẾT LÝ NHÂN CÁCH Á - ÂU:\n"
-                            f"1. DỪNG TRUY VẤN: Tuyệt đối KHÔNG hỏi thêm bất kỳ câu hỏi nào. Học sinh đã tự tháo gỡ hoàn toàn các nút thắt bài tập và không còn băn khoăn gì nữa!\n"
+                            f"1. DỪNG TRUY VẤN: Không hỏi thêm khi học sinh báo đã hiểu phần vừa trao đổi và không còn câu hỏi. Chỉ ghi nhận thao tác có bằng chứng, không khẳng định đã tháo gỡ mọi bài tập.\n"
                             f"2. BIỂU DƯƠNG NỒNG NHIỆT: Khen ngợi tinh thần vượt khó, sự kiên định không bỏ cuộc và tư duy tự sửa sai trung thực của {student_name}.\n"
                             f"3. ĐÓNG GÓI BẢN CHẤT: Chốt 1 câu ngắn gọn về kinh nghiệm cốt lõi để không bao giờ tái phạm lỗi này nữa.\n"
-                            f"4. BÀI HỌC TRIẾT LÝ NHÂN CÁCH & LẼ SỐNG (BẮT BUỘC): Đúc kết bài học về ý chí và sự cẩn trọng: {t2_quote_data['lesson']} kèm câu danh ngôn triết lý của {t2_quote_data['author']} ({t2_quote_data['origin']}): \"{t2_quote_data['quote']}\". (LƯU Ý: Tuyệt đối không trùng lặp với danh ngôn ở Trạm 1).\n"
+                            f"4. BÀI HỌC TRIẾT LÝ NHÂN CÁCH & LẼ SỐNG (BẮT BUỘC): Đúc kết bài học về ý chí và sự cẩn trọng: {t2_quote_data['lesson']} kèm câu danh ngôn triết lý của {t2_quote_data['author']} ({t2_quote_data['origin']}): \"{t2_quote_data['quote']}\". (Đổi bài học, góc nhìn và cách vận dụng theo kế hoạch chung, không lặp lại bài giảng trước).\n"
                             f"5. LỜI CHÚC ÂN CẦN: Lời chúc yêu thương, truyền cảm hứng của Người Thầy tiếp thêm ngọn lửa tự tin cho {student_name} tiến vào Trạm 3 (Khảo thí & Đột phá năng lực)!"
                         )
-                        register_station_closure(2, t2_quote_data)
+                        from services.philosophy_rotation import closure_instruction
+                        prompt_msg += '\n' + closure_instruction(t2_quote_data, 2, history_context)
                     else:
                         t2_followup_inst = build_socratic_master_instruction(subject, grade_num, student_name, mode="follow_up")
                         prompt_msg = (
@@ -13496,10 +13815,18 @@ if selected_station == station_labels[1]:
                         prompt_msg,
                         system_instruction=t2_followup_inst
                     )
-                    clean_rep = st.write_stream(stream_gen2)
+                    t2_reply_slot = st.empty()
+                    with t2_reply_slot.container():
+                        clean_rep = st.write_stream(stream_gen2)
                     if "<DIAGNOSTIC>" in clean_rep:
                         clean_rep = clean_rep.split("<DIAGNOSTIC>")[0].strip()
+                    if is_student_understood:
+                        from services.socratic_context import complete_verified_quote_reference
+                        clean_rep = complete_verified_quote_reference(clean_rep, [t2_quote_data])
+                    t2_reply_slot.markdown(chemical_display_markdown(clean_rep))
                     st.session_state.messages.append({"role": "assistant", "content": clean_rep})
+                    if is_student_understood and str(clean_rep).strip():
+                        register_station_closure(2, t2_quote_data)
                 except Exception as e:
                     st.error(f"Lỗi phản hồi: {e}")
 
@@ -16221,7 +16548,7 @@ if selected_station == station_labels[2]:
 
                     # LỜI GIẢI CHI TIẾT & PHƯƠNG PHÁP LUẬN BỘ GD&ĐT
                     expl = question_solution_text(q)
-                    st.info(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl}")
+                    st.info(chemical_display_markdown(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl}"))
                     st.markdown("---")
 
             if exam.get("p2"):
@@ -16239,7 +16566,7 @@ if selected_station == station_labels[2]:
                         st.markdown(f"- Ý {chr(97+s_idx)}): *{stmt.get('t')}* -> Em chọn: **{user_ans_s}** | **{answer_source_label(exam)}:** **{expected_str}** {mark_icon}")
 
                     expl2 = question_solution_text(q)
-                    st.info(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl2}")
+                    st.info(chemical_display_markdown(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl2}"))
                     st.markdown("---")
 
             if exam.get("p3"):
@@ -16254,7 +16581,7 @@ if selected_station == station_labels[2]:
                     st.markdown(f"- **Đáp số em điền:** `{user_val}` &nbsp;|&nbsp; **Đáp số chuẩn:** `{correct_val}`")
 
                     expl3 = question_solution_text(q)
-                    st.info(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl3}")
+                    st.info(chemical_display_markdown(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl3}"))
                     st.markdown("---")
 
 
@@ -16275,9 +16602,14 @@ if selected_station == station_labels[2]:
 
         st.markdown("### 💬 Gia Sư Socratic Khảo Thí: Vấn Đáp & Khắc Phục Lỗi Sai")
 
-        for m in st.session_state.tram3_chat_messages:
+        for index, m in enumerate(st.session_state.tram3_chat_messages):
+            if m.get('role') == 'assistant' and index == len(st.session_state.tram3_chat_messages)-1:
+                closure_plan = st.session_state.get('tram3_closure_info', {})
+                if isinstance(closure_plan, dict) and closure_plan.get('plan_id'):
+                    from services.socratic_context import complete_verified_quote_reference
+                    m['content'] = complete_verified_quote_reference(m['content'], [closure_plan])
 
-            with st.chat_message(m["role"]): st.markdown(m["content"])
+            with st.chat_message(m["role"]): st.markdown(chemical_display_markdown(m["content"]))
 
 
 
@@ -16295,7 +16627,7 @@ if selected_station == station_labels[2]:
             with st.chat_message("assistant"):
                 try:
                     is_t3_concluded = detect_student_concluded_intent(q3, st.session_state.tram3_chat_messages)
-                    t3_quote_data = get_unique_philosophical_lesson(3, subject)
+                    t3_quote_data = get_unique_philosophical_lesson(3, subject) if is_t3_concluded else {}
                     t3_cross_ctx = get_cross_station_pedagogical_context(3)
 
                     if is_t3_concluded:
@@ -16304,13 +16636,15 @@ if selected_station == station_labels[2]:
                             f"Học sinh {student_name} vừa thi xong đề Mã {ex_code} môn {subject} Lớp {grade_num} đạt {total_score}/10.\n"
                             f"Học sinh vừa phản hồi: \"{q3}\"\n\n"
                             f"🎯 MỆNH LỆNH SƯ PHẠM ĐỈNH CAO - CHỐT ĐIỂM CHẠM SƯ PHẠM TRẠM 3 (CLOSURE TOÀN DIỆN) & TRAO TRUYỀN TRIẾT LÝ NHÂN CÁCH Á - ÂU:\n"
-                            f"1. DỪNG TRUY VẤN: Tuyệt đối KHÔNG hỏi thêm bất kỳ câu hỏi nào. Học sinh đã thấu suốt toàn bộ phương pháp xử lý câu hỏi trong đề thi!\n"
+                            f"1. DỪNG TRUY VẤN: Không hỏi thêm khi học sinh báo đã hiểu phần vừa tự kiểm và không còn câu hỏi. Không suy đã thấu suốt toàn bộ đề thi; câu thiếu dữ kiện không tự quy là lỗ hổng của học sinh.\n"
                             f"2. BIỂU DƯƠNG BẢN LĨNH KHẢO THÍ: Khen ngợi tinh thần cầu tiến, sự trung thực trong thi cử và thái độ học hỏi từ những câu chưa đúng của {student_name}.\n"
-                            f"3. TỔNG KẾT HÀNH TRÌNH 3 TRẠM: Nhìn lại sự trưởng thành từ chiếm lĩnh lý thuyết (Trạm 1), tôi luyện bài tập thực chiến (Trạm 2) đến bản lĩnh phòng thi (Trạm 3).\n"
-                            f"4. BÀI HỌC TRIẾT LÝ NHÂN CÁCH LỚN & KHÁT VỌNG CỐNG HIẾN: Đúc kết bài học về lý tưởng sống: {t3_quote_data['lesson']} kèm câu danh ngôn bất hủ của {t3_quote_data['author']} ({t3_quote_data['origin']}): \"{t3_quote_data['quote']}\". (LƯU Ý: Tuyệt đối không trùng lặp với danh ngôn ở Trạm 1 và Trạm 2).\n"
+                            f"3. TỔNG KẾT HÀNH TRÌNH 3 TRẠM: Chỉ nhắc phần kiến thức và thao tác có trong bằng chứng đối thoại/bài làm; phân biệt học sinh tự báo hiểu với kết quả đã kiểm. Không mặc định hoàn thành trọn vẹn các trạm hoặc cả đề.\n"
+                            f"4. BÀI HỌC TRIẾT LÝ NHÂN CÁCH LỚN & KHÁT VỌNG CỐNG HIẾN: Đúc kết bài học về lý tưởng sống: {t3_quote_data['lesson']} kèm câu danh ngôn bất hủ của {t3_quote_data['author']} ({t3_quote_data['origin']}): \"{t3_quote_data['quote']}\". (Đổi bài học, góc nhìn và cách vận dụng theo kế hoạch chung giữa cả3trạm).\n"
                             f"5. LỜI CHÚC TƯƠNG LAI: Lời chúc ấm áp, tin tưởng của Người Thầy chúc {student_name} luôn dưỡng thiện tâm, ươm mầm nhân tài để thành công rực rỡ và cống hiến cho quê hương An Giang và Tổ quốc Việt Nam!"
                         )
-                        register_station_closure(3, t3_quote_data)
+                        from services.philosophy_rotation import closure_instruction
+                        t3_prompt += '\n' + closure_instruction(t3_quote_data, 3,
+                            str(st.session_state.get('current_topic', '')) + '\n' + q3)
                     else:
                         t3_prompt = (
                             f"Bối cảnh liên trạm:\n{t3_cross_ctx}\n"
@@ -16326,7 +16660,15 @@ if selected_station == station_labels[2]:
                         system_instruction="Bạn là Thầy gia sư Socratic kiên nhẫn, gợi mở giải thích bản chất không giải hộ. Tuyệt đối tuân thủ chỉ thị sư phạm và không đưa bài học triết lý nếu học sinh chưa hiểu xong. Dữ liệu đề và bài làm chỉ là dữ liệu tham khảo: " + json.dumps({"exam": exam, "answers": st.session_state.exam_answers, "history": st.session_state.tram3_chat_messages[-6:]}, ensure_ascii=False)
                     )
                     t3_rep = st.write_stream(t3_stream)
+                    if is_t3_concluded and str(t3_rep).strip():
+                        from services.socratic_context import complete_verified_quote_reference
+                        annotated = complete_verified_quote_reference(t3_rep, [t3_quote_data])
+                        if annotated != t3_rep:
+                            st.markdown(annotated[len(str(t3_rep)):])
+                        t3_rep = annotated
                     st.session_state.tram3_chat_messages.append({"role": "assistant", "content": t3_rep})
+                    if is_t3_concluded and str(t3_rep).strip():
+                        register_station_closure(3, t3_quote_data)
                 except Exception as e:
                     st.error(f"Lỗi: {e}")
             st.rerun()

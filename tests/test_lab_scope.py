@@ -15,6 +15,14 @@ class TestLabScope(unittest.TestCase):
         manifest = json.loads((root / 'tests/fixtures/pr6_lab_presets_payload_sha256.json').read_text(encoding='utf-8'))
         nodes = [n.value for n in ast.walk(ast.parse((root / 'app.py').read_text(encoding='utf-8')))
                  if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'available_labs' for t in n.targets)]
+        extensions = [n for n in nodes if isinstance(n, ast.Dict) and None in n.keys]
+        self.assertEqual(len(extensions), 1)
+        extension = extensions[0]
+        self.assertEqual(ast.literal_eval(extension.keys[0]), 'Đổi giờ và ngày theo UTC (KNTT 10)')
+        self.assertEqual(ast.literal_eval(extension.values[0]), {'type': 'geo_fixed_offset_clock'})
+        self.assertIsNone(extension.keys[-1])
+        self.assertEqual(ast.dump(extension.values[-1]), ast.dump(ast.Name(id='available_labs', ctx=ast.Load())))
+        nodes = [n for n in nodes if n not in extensions]
         digest = hashlib.sha256('\n'.join(ast.dump(n, include_attributes=False) for n in nodes).encode()).hexdigest()
         self.assertEqual(len(nodes), manifest['count'])
         self.assertEqual(digest, manifest['sha256'])

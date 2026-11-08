@@ -15,8 +15,10 @@ class Station1ClosureTests(unittest.TestCase):
         self.assertIn('2–3 đoạn', self.last_prompt)
         self.assertNotIn('tối đa 160 từ', self.last_prompt)
 
-    def test_station1_selects_verified_asian_and_european_thinkers_by_context(self):
+    def test_station1_selects_verified_asian_and_european_thinkers_with_shared_rotation(self):
         import random
+        import os
+        import tempfile
         tree = ast.parse((Path(__file__).resolve().parents[1] / 'app.py').read_text(encoding='utf-8'))
         node = next(n for n in tree.body if isinstance(n, ast.Assign)
                     and any(isinstance(t, ast.Name) and t.id == 'CROSS_STATION_PHILOSOPHY_BANK' for t in n.targets))
@@ -24,17 +26,35 @@ class Station1ClosureTests(unittest.TestCase):
         state = {}
         choose = load_function('get_unique_philosophical_lesson', st=SimpleNamespace(session_state=state),
                                random=random, CROSS_STATION_PHILOSOPHY_BANK=bank)
-        east = choose(1, 'Ngữ văn', 'Em chưa biết, chưa hiểu và còn thắc mắc')
-        west = choose(1, 'Tin học', 'Em kiểm bằng chứng, sửa sai rồi thử lại')
+        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ,
+                GSAI_PHILOSOPHY_LEDGER_PATH=str(Path(folder)/'rotation.sqlite3')):
+            east = choose(1, 'Ngữ văn', 'Em đã hiểu và không hỏi thêm')
+            west = choose(1, 'Tin học', 'Em kiểm bằng chứng, sửa sai rồi thử lại')
+            state['philosophical_teaching_history'] = [east]
+            self.assertNotEqual(choose(1, 'Ngữ văn', 'đã hiểu')['author'], east['author'])
         self.assertEqual(east['author'], 'Khổng Tử')
-        self.assertEqual(west['author'], 'Marcus Aurelius')
+        self.assertEqual(west['author'], 'John Stuart Mill')
         for item in (east, west):
             self.assertTrue(item['source_verified'])
-            self.assertTrue(item['source_url'].startswith('https://classics.mit.edu/'))
+            self.assertTrue(item['source_url'].startswith(('https://classics.mit.edu/', 'https://www.gutenberg.org/')))
             self.assertTrue(item['source_locator'])
             self.assertTrue(item['translation_note'])
-        state['used_philosophical_quotes'] = [east['quote'], east['author']]
-        self.assertNotEqual(choose(1, 'Ngữ văn', 'chưa hiểu')['author'], east['author'])
+
+    def test_reported_understanding_is_not_a_new_question_across_subjects(self):
+        detect = load_function('detect_student_concluded_intent')
+        for message in (
+                'Em cũng hiểu vì sao thành tế bào làm thực vật khác động vật. Em đã hiểu và không còn câu hỏi nữa.',
+                'Em đã hiểu vì sao nước đi vào hay ra ở các điều kiện của mô hình và vì sao thành tế bào tạo khác biệt. Em đã hiểu bài và không còn câu hỏi thêm.',
+                'Em đã hiểu tại sao đạo hàm đổi dấu. Em không hỏi thêm.',
+                'Em cũng đã hiểu như thế nào là vòng lặp. Không còn câu hỏi.',
+                'Con đã hiểu vì sao nhân vật lựa chọn vậy. Con không hỏi gì thêm.'):
+            self.assertTrue(detect(message), message)
+        for message in (
+                'Em cũng hiểu vì sao tế bào co lại nhưng tại sao màng tách khỏi thành?',
+                'Em đã hiểu tại sao đạo hàm đổi dấu chưa?',
+                'Em chưa hiểu vì sao màng tách khỏi thành, em không hỏi thêm.',
+                'Em hiểu vì sao ở bài cũ nhưng thầy cho em hỏi về bài mới.'):
+            self.assertFalse(detect(message), message)
 
     def test_negated_or_past_mastery_is_not_a_closure(self):
         detect = load_function('detect_student_concluded_intent')
@@ -56,6 +76,33 @@ class Station1ClosureTests(unittest.TestCase):
                         'Em đã hiểu bài nhưng tại sao quỳ đổi màu?'):
             with self.subTest(message=message):
                 self.assertFalse(detect(message))
+
+    def test_negated_ask_more_preserves_actual_followup_questions(self):
+        detect = load_function('detect_student_concluded_intent')
+        for message in (
+                'Em đã hiểu và không còn hỏi thêm.',
+                'Em hiểu đất có bốn thành phần. Em không hỏi gì thêm.',
+                'Em hiểu vòng phản hồi rồi, không hỏi thêm.'):
+            with self.subTest(message=message):
+                self.assertTrue(detect(message))
+        for message in (
+                'Em không còn hỏi thêm phần đầu nhưng vì sao pH lại khác?',
+                'Em đã hiểu nhưng vẫn muốn hỏi thêm về vòng lặp.',
+                'Em không hỏi gì thêm vì chưa hiểu để đặt câu hỏi.',
+                'Em không hỏi thêm nhưng chỗ này vẫn còn băn khoăn.'):
+            with self.subTest(message=message):
+                self.assertFalse(detect(message))
+
+    def test_no_additional_questions_after_real_explanation(self):
+        detect = load_function('detect_student_concluded_intent')
+        message = ('Em hiểu rồi thầy. Trong mô hình bỏ qua cản không khí, g không đổi, '
+                   'vật ném ngang có vx=v0 và vy=gt; từ H=20m với v0=15m/s, g=10m/s² '
+                   'thì T=2s và L=30m. Vật chỉ còn chịu trọng lực sau khi rời tay, '
+                   'không có lực ném tiếp tục đẩy. Em không còn câu hỏi thêm về bài này.')
+        self.assertTrue(detect(message))
+        self.assertTrue(detect('Em đã hiểu bài, không có câu hỏi thêm.'))
+        self.assertFalse(detect('Em không còn câu hỏi thêm phần cũ nhưng tại sao T không đổi?'))
+        self.assertFalse(detect('Em không có câu hỏi thêm vì em chưa hiểu để hỏi.'))
 
     def closure_try(self):
         tree = ast.parse((Path(__file__).resolve().parents[1] / 'app.py').read_text(encoding='utf-8'))
