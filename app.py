@@ -3,7 +3,7 @@ def _refresh_t1_context_services():
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
     for module, revision in ((lesson_sources, 2026110801), (curriculum_policy, 2026110702),
-                             (lab_scope, 2026110703), (lesson_export, 2026110604),
+                             (lab_scope, 2026110802), (lesson_export, 2026110604),
                              (text_boundaries, 2026110701), (socratic_context, 2026110704)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
@@ -5517,6 +5517,33 @@ def render_smart_lab(data, current_subject=""):
         return f"{name}__{control_scope}"
 
     dtype = data.get("type")
+
+    if dtype == 'source_workshop':
+        from services.lab_scope import evaluate_source_workshop
+        workshop = data['workshop']
+        st.markdown('### ' + workshop['title'])
+        st.caption('Bài thực hành đối chiếu theo nguồn đã đọc; thẻ là diễn giải sư phạm, không phải trích nguyên văn hoặc chứng nhận pháp lý. Không gọi AI.')
+        for column, card in zip(st.columns(len(workshop['cards'])), workshop['cards']):
+            column.markdown('**' + card['title'] + '**')
+            column.write(card['text'])
+        choices = [st.radio(question['prompt'], range(len(question['options'])),
+                    format_func=lambda i, options=question['options']: options[i], index=None,
+                    key=lab_key('source_workshop_' + str(i)))
+                   for i, question in enumerate(workshop['questions'])]
+        if st.button('Đối chiếu nhận xét với tư liệu', key=lab_key('source_workshop_check')):
+            try:
+                result = evaluate_source_workshop(workshop['questions'], choices)
+                st.success(f"Kết quả đối chiếu: {result['score']}/{result['total']}")
+                for i, (correct, feedback) in enumerate(zip(result['correct'], result['feedback']), 1):
+                    st.write(f"Câu {i} — {'Phù hợp' if correct else 'Cần xem lại'}: {feedback}")
+            except ValueError as error:
+                st.warning(str(error))
+        with st.expander('Căn cứ và phạm vi của bài thực hành'):
+            st.caption(workshop.get('scope', 'Chỉ phạm vi bài đại diện, chưa phải toàn chương trình.'))
+            for source in data['sources']:
+                st.markdown('[' + source['title'] + '](' + source['url'] + ')')
+                st.caption(source['locator'])
+        return
 
     if dtype == 'bio_osmosis':
         from services.lab_scope import osmosis_state
@@ -12660,16 +12687,21 @@ if selected_station == station_labels[0]:
     from services.lab_scope import horizontal_throw_request
     from services.lab_scope import reaction_rate_table_request
     from services.lab_scope import osmosis_lab_request
+    from services.lab_scope import reviewed_workshop_request, is_local_workshop_command
     explicit_local_model = (explicit_light_model or soil_ph_lab_request(lab_command, subject)
                             or horizontal_throw_request(lab_command, subject)
                             or reaction_rate_table_request(lab_command, subject, grade_num, st.session_state.get('current_topic', ''))
-                            or osmosis_lab_request(lab_command, subject, grade_num, st.session_state.get('current_topic', '')))
+                            or osmosis_lab_request(lab_command, subject, grade_num, st.session_state.get('current_topic', ''))
+                            or reviewed_workshop_request(lab_command, subject, grade_num, st.session_state.get('current_topic', '')))
     lab_clicked = st.button("✨ Khởi chạy Phòng Lab", key=f"btn_lab_{current_context_key}")
     if lab_clicked and lab_command.strip() and explicit_local_model is not None:
         st.session_state[f'lab_intent_command_{current_context_key}'] = lab_command
         st.session_state.lab_request_revision = st.session_state.get("lab_request_revision", 0) + 1
         st.session_state.lab_data = explicit_local_model
-    if lab_clicked and lab_command.strip() and explicit_local_model is None:
+    local_workshop_requested = is_local_workshop_command(lab_command)
+    if lab_clicked and local_workshop_requested and explicit_local_model is None:
+        st.warning('Bài này chưa có đủ cấu hình thực hành theo nguồn; chưa gọi AI thay thế.')
+    if lab_clicked and lab_command.strip() and explicit_local_model is None and not local_workshop_requested:
         st.session_state[f'lab_intent_command_{current_context_key}'] = lab_command
         st.session_state.lab_request_revision = st.session_state.get("lab_request_revision", 0) + 1
 

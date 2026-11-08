@@ -4,7 +4,7 @@ import math
 
 from services.academic_context import academic_context, canonical_subject
 
-T1_CONTEXT_REVISION = 2026110703
+T1_CONTEXT_REVISION = 2026110802
 
 
 def osmosis_state(inside, outside, plant=False):
@@ -329,3 +329,50 @@ def preset_lab_note(subject, grade):
             'Giữ các công cụ mở rộng; nhãn lớp lấy từ cấu hình mẫu, chưa phải đối chiếu SGK. '
             'Mẫu có sẵn không tự lấy hàm số hoặc dữ kiện từ bài học. '
             'Muốn mô phỏng theo bài, hãy nêu rõ dữ kiện trong lệnh mô phỏng bên dưới.')
+
+
+def is_local_workshop_command(command):
+    from services.academic_context import folded
+    return folded(command) == 'doi chieu tu lieu theo bai hoc'
+
+
+def reviewed_workshop_request(command, subject, grade, topic):
+    """Route an explicit source-comparison workshop without a model call."""
+    from copy import deepcopy
+    from services.academic_context import folded
+    from services.lesson_sources import reviewed_lesson_sources
+    if not is_local_workshop_command(command):
+        return None
+    review = reviewed_lesson_sources(subject, grade, topic)
+    config = review.get('source_workshop')
+    if review['status'] != 'reviewed_requirements_source' or not isinstance(config, dict):
+        return None
+    cards, questions = config.get('cards'), config.get('questions')
+    if (not isinstance(config.get('title'), str) or not isinstance(cards, list)
+            or not 2 <= len(cards) <= 6 or not isinstance(questions, list)
+            or not 1 <= len(questions) <= 6):
+        return None
+    if any(not isinstance(c, dict) or not all(isinstance(c.get(k), str) and c[k].strip()
+                                            for k in ('title', 'text')) for c in cards):
+        return None
+    for question in questions:
+        if (not isinstance(question, dict) or not isinstance(question.get('prompt'), str)
+                or not isinstance(question.get('options'), list)
+                or not 2 <= len(question['options']) <= 6
+                or not all(isinstance(x, str) and x.strip() for x in question['options'])
+                or type(question.get('correct')) is not int
+                or not 0 <= question['correct'] < len(question['options'])
+                or not isinstance(question.get('feedback'), str)):
+            return None
+    return dict(type='source_workshop', workshop=deepcopy(config),
+                sources=deepcopy(review['sources']), review_id=review['id'])
+
+
+def evaluate_source_workshop(questions, choices):
+    """Return feedback only after every practice choice is provided."""
+    if len(questions) != len(choices) or any(type(x) is not int or
+            not 0 <= x < len(q['options']) for q, x in zip(questions, choices)):
+        raise ValueError('Hãy chọn nhận xét cho tất cả câu trước khi đối chiếu.')
+    correct = [choice == question['correct'] for question, choice in zip(questions, choices)]
+    return dict(score=sum(correct), total=len(correct), correct=correct,
+                feedback=[q['feedback'] for q in questions])

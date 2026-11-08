@@ -582,7 +582,52 @@
           "after": "D. Nhận thức lịch sử không cần đối chiếu với bất kỳ nguồn tư liệu nào.",
           "reason": "SGK7–8/SGV26–29: phương án D cũ có thể được hiểu là phân biệt tồn tại của sự kiện với cách chứng minh nhận thức, làm câu hỏi có phương án gây tranh luận. Đổi riêng diễn đạt distractor thành sai rõ ràng, giữ thứ tự và khóaC; bài chưa owner-approved."
         }
-      ]
+      ],
+      "source_workshop": {
+        "title": "Xưởng đối chiếu hai tư liệu Mác-tan",
+        "scope": "Diễn giải SGK8/SGV26–29 đã đọc. Không tự gán quốc tịch người dựng bia, không suy mọi cách đánh giá đều đúng.",
+        "cards": [
+          {
+            "title": "Tư liệu A — bia La-pu-la-pu",
+            "text": "Diễn giải: bia nhắc trận chiến ngày27/4/1521, Ma-gien-lăng tử trận và tôn vinh La-pu-la-pu trong việc chống lực lượng xâm lược châu Âu."
+          },
+          {
+            "title": "Tư liệu B — bia Ma-gien-lăng",
+            "text": "Diễn giải: bia nhắc việc Ma-gien-lăng tử trận ở Mác-tan và hành trình đoàn thám hiểm; Ê-ca-nô cùng đoàn trở về năm1522."
+          }
+        ],
+        "questions": [
+          {
+            "prompt": "Điểm chung có căn cứ trong hai tư liệu là gì?",
+            "options": [
+              "Ma-gien-lăng tử trận tại Mác-tan năm1521.",
+              "Ma-gien-lăng trở về Tây Ban Nha năm1522.",
+              "Hai bia do cùng một tác giả dựng."
+            ],
+            "correct": 0,
+            "feedback": "Hai tư liệu cùng nhắc kết cục năm1521. Người trở về năm1522 được nhắc là Ê-ca-nô; chưa có căn cứ xác định cùng tác giả."
+          },
+          {
+            "prompt": "Có thể kết luận bia B gọi Ma-gien-lăng là người truyền bá văn minh không?",
+            "options": [
+              "Có, vì đó là cách mọi sử gia đều đánh giá.",
+              "Chưa đủ căn cứ từ nội dung tư liệu đã đọc."
+            ],
+            "correct": 1,
+            "feedback": "Không thêm động cơ hoặc lời đánh giá không xuất hiện trong tư liệu. Phải tách nội dung văn bản với suy đoán của người đọc."
+          },
+          {
+            "prompt": "Hai cách nhấn mạnh khác nhau cho thấy điều gì?",
+            "options": [
+              "Hiện thực quá khứ thay đổi theo người kể.",
+              "Mọi nhận định đều đúng như nhau.",
+              "Nhận thức có lựa chọn/góc nhìn; vẫn cần đối chiếu bằng chứng."
+            ],
+            "correct": 2,
+            "feedback": "Quá khứ không đổi theo lời kể. Sự khác biệt trong nhận thức cần được xem xét bằng tư liệu và phương pháp, không cho phép suy diễn tùy tiện."
+          }
+        ]
+      }
     },
     {
       "id": "kntt-dialy10-chuyendong-20261108",
@@ -608,7 +653,42 @@
             "Không giải thích mùa chủ yếu bằng khoảng cách tới Mặt Trời. Phân biệt bốn mùa ôn đới với biểu hiện mùa ở từng vùng Việt Nam; không áp cùng một mô tả cho mọi nơi."
           ]
         }
-      ]
+      ],
+      "source_workshop": {
+        "title": "Xưởng đối chiếu múi giờ và mùa",
+        "scope": "Bài thực hành tự đặt theo SGK17–20. UTCoffset là dữ kiện giả định đã cho, không đại diện mọi địa điểm trong một quốc gia hoặc mọi ngày trong năm.",
+        "cards": [
+          {
+            "title": "Điều kiện bài tính giờ",
+            "text": "Điểm A dùngUTC+7, đang7giờ ngày1/1/2022. Điểm B được choUTC−6; hai điểm được xét cùng thời điểm, không có thay đổi giờ mùa hè trong bài."
+          },
+          {
+            "title": "Căn cứ về mùa",
+            "text": "Khi Trái Đất chuyển động quanh Mặt Trời, hướng nghiêng của trục không đổi trong mô hình bài học. Hai bán cầu thay nhau hướng nhiều hơn về Mặt Trời; mùa hai bán cầu ngược nhau."
+          }
+        ],
+        "questions": [
+          {
+            "prompt": "Cùng thời điểm ở thẻ A, điểm B có giờ và ngày nào?",
+            "options": [
+              "20giờ ngày1/1/2022.",
+              "18giờ ngày31/12/2021.",
+              "18giờ ngày1/1/2022."
+            ],
+            "correct": 1,
+            "feedback": "Chênh lệch−6−7=−13giờ. Lấy7giờ trừ13giờ phải lùi ngày:18giờ ngày31/12/2021."
+          },
+          {
+            "prompt": "Lời giải thích nào phù hợp với thẻ về mùa?",
+            "options": [
+              "Mùa hè xảy ra đồng thời ở cả hai bán cầu vì Trái Đất gần Mặt Trời.",
+              "Độ nghiêng trục và sự thay đổi chiếu sáng trong năm làm hai bán cầu có mùa ngược nhau."
+            ],
+            "correct": 1,
+            "feedback": "Dùng hướng nghiêng trục và góc/thời gian chiếu sáng. Không dùng riêng khoảng cách Trái Đất–Mặt Trời để giải thích mùa."
+          }
+        ]
+      }
     },
     {
       "id": "kntt-gdktpl10-phapluat-20261108",
@@ -643,7 +723,41 @@
             "Điều8(1) là căn cứ cho vai trò Nhà nước tổ chức/hoạt động và quản lý xã hội bằng Hiến pháp/pháp luật. Không lấy văn bản hợp nhất làm luật mới hoặc ngày21/7 làm ngày hiệu lực Hiến pháp."
           ]
         }
-      ]
+      ],
+      "source_workshop": {
+        "title": "Xưởng phân biệt căn cứ pháp luật và nội quy",
+        "scope": "Tình huống B tự đặt để luyện phân biệt, không phải văn bản pháp luật thật. Căn cứ A chỉ Điều8(1) đã đọc trong VBHN52/2025; không phải tư vấn xử phạt hoặc chứng nhận toàn bộ luật hiện hành.",
+        "cards": [
+          {
+            "title": "Căn cứ A — Hiến pháp",
+            "text": "Diễn giải Điều8(1): việc tổ chức, hoạt động và quản lý xã hội của Nhà nước dựa trên Hiến pháp và pháp luật."
+          },
+          {
+            "title": "Tình huống B — nội quy tự đặt",
+            "text": "Công ty Y thông báo nhân viên phải gửi báo cáo công việc trước16giờ thứSáu. Thẻ không cung cấp một văn bản quy phạm pháp luật ban hành quy tắc này cho mọi người."
+          }
+        ],
+        "questions": [
+          {
+            "prompt": "Thông báo B có tự trở thành quy phạm pháp luật bắt buộc mọi công dân không?",
+            "options": [
+              "Có, mọi quy tắc có chữ phải đều là pháp luật.",
+              "Không thể suy như vậy từ một nội quy công ty."
+            ],
+            "correct": 1,
+            "feedback": "Phân biệt quy tắc nội bộ với quy phạm do Nhà nước ban hành theo thẩm quyền/hình thức và bảo đảm thực hiện. Không suy một thông báo công ty có phạm vi bắt buộc với toàn xã hội."
+          },
+          {
+            "prompt": "Chỉ với hai thẻ này, có đủ căn cứ kết luận mức phạt giao thông cho một người lái xe không?",
+            "options": [
+              "Có thể tự chọn mức phạt thường gặp.",
+              "Chưa đủ; cần hành vi, loại xe, thời điểm và điều khoản áp dụng."
+            ],
+            "correct": 1,
+            "feedback": "Bài học khái niệm không cung cấp mọi dữ kiện xử phạt. Phải kiểm văn bản và điều kiện cụ thể; không biến ví dụ sách thành kết luận pháp lý cho mọi tình huống."
+          }
+        ]
+      }
     }
   ]
 }

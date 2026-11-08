@@ -794,7 +794,8 @@ def lesson_generation_request(subject, grade, topic):
                "textbook_grounding": local_textbook_grounding(subject, grade, topic)}
     review = reviewed_lesson_sources(subject, grade, topic)
     if review['status'] == 'reviewed_requirements_source':
-        context['reviewed_requirements_source'] = review
+        # Local Lab exercises are rendered deterministically, not sent as extra model context.
+        context['reviewed_requirements_source'] = {k: v for k, v in review.items() if k != 'source_workshop'}
     return system, json.dumps(context, ensure_ascii=False) + "\n" + full[len(prefix):]
 
 
