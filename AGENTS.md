@@ -90,3 +90,5 @@ Owner cung cấp key mới và cho phép mã hóa để các ca AI kiểm local 
 ## Lab UTC local — 08/11/2026
 
 Công cụ Đổi giờ và ngày theo UTC nằm trong thư viện Lab của Địa lý mọi lớp, nhãn tham khảoKNTT10. fixed_offset_clock dùng chung kiểm ngày, độ lệch nguyên phút và tràn lịch; renderer hiển thị A/UTC/B và đổi ngày khi thay dữ kiện. Chỉ dùng độ lệch được cho, không tự suy giờ pháp định/DST theo tên thành phố, kinh độ hoặc hướng đi. Không phải mô phỏng chuyển động TráiĐất, không chứng nhận toànchươngtrình. Không gọiAI. Khi kiểm/sửa tái dùng tests/test_fixed_offset_clock.py và bằng chứng T1_DIALY10_UTC_*_UI_20261108.json; giữUI/tínhnăngkhác và không sinh lại bài đã lưu.
+
+Ngữ cảnh sinh bài chỉ gửi nguồn/tiêu chí/grounded_facts cần thiết; source_workshop, content_corrections và assessment_proposals là dữ liệu xử lý local, không gửi lại bản nháp sai/khóa câu hỏi trong request sinh bài. Giữ nguyên cơ chế sửa ở renderer/export/quiz; không xóa hồ sơ sửa để giảm token. Bằng chứng cấu trúc và so sánh số ký tự không phải số token hoặc chi phí API thực tế.

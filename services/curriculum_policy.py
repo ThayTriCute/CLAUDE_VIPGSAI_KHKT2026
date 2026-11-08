@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110702
+T1_CONTEXT_REVISION = 2026110801
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -794,8 +794,10 @@ def lesson_generation_request(subject, grade, topic):
                "textbook_grounding": local_textbook_grounding(subject, grade, topic)}
     review = reviewed_lesson_sources(subject, grade, topic)
     if review['status'] == 'reviewed_requirements_source':
-        # Local Lab exercises are rendered deterministically, not sent as extra model context.
-        context['reviewed_requirements_source'] = {k: v for k, v in review.items() if k != 'source_workshop'}
+        # Repairs/answer keys belong to local delivery. Keep source criteria and
+        # grounded facts, without paying to send old faulty drafts back to AI.
+        local_only = {'source_workshop', 'content_corrections', 'assessment_proposals'}
+        context['reviewed_requirements_source'] = {k: v for k, v in review.items() if k not in local_only}
     return system, json.dumps(context, ensure_ascii=False) + "\n" + full[len(prefix):]
 
 

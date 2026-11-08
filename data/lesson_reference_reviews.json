@@ -828,7 +828,7 @@
         {
           "before": "khi quay quanh Mặt Trời, cho đến cách tính toán múi giờ",
           "after": "so với mặt phẳng quỹ đạo, với hướng trục gần như giữ nguyên trong năm khi Trái Đất chuyển động quanh Mặt Trời; cho đến cách tính toán múi giờ",
-          "reason": "SGK Bài5 trang18: góc66độ33phút phải nêu so với mặt phẳng quỹ đạo; hướng trục gần như không đổi trong năm. Bổ sung phạm vi cho recap gia sư thật, không gọi AI lại."
+          "reason": "SGK Bài5: hình5.1 trang17 và phần mùa trang20 nêu góc66độ33phút so với mặt phẳng quỹ đạo; hướng trục gần như không đổi trong năm. Bổ sung recap thật, không gọi AI lại."
         }
       ],
       "assessment_proposals": [
@@ -851,6 +851,18 @@
           "claim": "TanSonNhat Airport is inHoChiMinhCity",
           "read_scope": "Official press release14May2025 opening paragraph; only location fact used. ACV catalogue WAFblocked; no bypass attempted."
         }
+      ],
+      "supplemental_provider_checks": [
+        {
+          "provider": "VniTeach",
+          "url": "https://www.vniteach.com/2022/07/13/bo-sach-kntt-sgk-dia-li-10/",
+          "scope": "118pagePDF; TOCprinted3 and Bài5 printed17–20 read Chrome; notentirebook/currenteditioncert."
+        },
+        {
+          "provider": "THSQG",
+          "url": "https://www.thsqg.vn/sach?lop=10",
+          "scope": "Selected livegrade10 catalogue checked; exactGeo10booklink not listed. Not proof service has no suchbook anywhere."
+        }
       ]
     },
     {
@@ -861,7 +873,7 @@
         "Khái niệm, đặc điểm và vai trò của pháp luật — GDKT&PL 10, KNTT, Bài 11"
       ],
       "reviewed_on": "2026-11-08",
-      "scope": "SGK Bài11 trang78–83 đã đọc; sửa bản sinh thật bằng hồ sơ nguồn, còn kiểm UI/quiz/Lab/tutor/export và đối chiếu nguồn bổ sung. Chưa chứng nhận đủ ba nguồn/toàn bộ luật hoặc YCCĐ.",
+      "scope": "Bài thật đã sửa11 điểm, quizUI3/3, workshop/tutor/3HTML kiểm local; SGK NXBGD78–83 và Vni71–75 đã đọc. THSQGcatalog không thấy link sách này. Chưa chứng nhận toàn chương trình, mọi luật, đủ3bản sách hoặc ownerprintpagination.",
       "sources": [
         {
           "title": "SGK Giáo dục kinh tế và pháp luật10 — KNTT, NXBGD",
@@ -884,6 +896,24 @@
           "edition_note": "Constitution2013 in force1/1/2014, amended byNQ203/2025/QH15 effective16/6/2025 perPDFpage1. Later changes/other statute examples not exhaustively checked.",
           "criteria": [
             "Điều8(1) là căn cứ cho vai trò Nhà nước tổ chức/hoạt động và quản lý xã hội bằng Hiến pháp/pháp luật. Không lấy văn bản hợp nhất làm luật mới hoặc ngày21/7 làm ngày hiệu lực Hiến pháp."
+          ]
+        },
+        {
+          "title": "Luật64/2025/QH15 — bản gốc, Điều2/3(1)/7(1)",
+          "url": "https://xaydungchinhsach.chinhphu.vn/toan-van-luat-so-64-2025-qh15-ban-hanh-van-ban-quy-pham-phap-luat-119250311155839688.htm",
+          "locator": "Đã đọc đúng Điều2,3(1),7(1); đối chiếu Luật sửa đổi87/2025, không xem bản gốc là chưa từng sửa đổi.",
+          "edition_note": "Luật64 hiệu lực1/4/2025; sửa bởi87 hiệu lực1/7/2025. Không xác nhận toàn bộ hệ thống pháp luật.",
+          "criteria": [
+            "QPPL có phạm vi cả nước hoặc đơn vị hành chính nhất định; VBQPPL đúng thẩm quyền, hình thức, trình tự và thủ tục."
+          ]
+        },
+        {
+          "title": "Luật87/2025/QH15 — sửa đổi Luật Ban hành VBQPPL",
+          "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2025/7/87qh.signed.pdf",
+          "locator": "ChromeMCP đã đọc PDF1–11; Điều1 có25khoản sửa các Điều4,9,21–64 liên quan; không sửa Điều2/3/7. Điều2 hiệu lực1/7/2025, Điều3 chuyển tiếp.",
+          "edition_note": "Ngàybanhành25/6/2025 khác ngàyupload/chữkýcổng16/7/2025; cacheXZ cóSHA.",
+          "criteria": [
+            "Không coi ngày tải lên là ngày luật có hiệu lực; không đồng nhất nội quy công ty với VBQPPL. Không suy chuyển tiếp văn bản cấp huyện thành mọi quy phạm chỉ có hiệu lực cả nước."
           ]
         }
       ],
@@ -982,6 +1012,18 @@
         "Điều39 Hiến pháp: công dân có quyền và nghĩa vụ học tập; không đồng nhất mọi học sinh THPT với trẻ em dưới16.",
         "Phân biệt vi phạm quy tắc cụ thể với đặc điểm pháp luật được minh họa qua cơ chế bảo đảm thực hiện.",
         "Tính phổ biến không có nghĩa mọi quy phạm áp dụng cho mọi đối tượng ở mọi địa bàn; phải xét phạm vi và hiệu lực."
+      ],
+      "supplemental_provider_checks": [
+        {
+          "provider": "VniTeach",
+          "url": "https://www.vniteach.com/2022/07/13/bo-sach-kntt-sgk-giao-duc-ktpl-10/",
+          "scope": "158pagePDF; Bài11 printed71–75 read Chrome; differs currentNXBGD78–83. Historical examples not treated as current law."
+        },
+        {
+          "provider": "THSQG",
+          "url": "https://www.thsqg.vn/sach?lop=10",
+          "scope": "Selected grade10 livecatalogue lacks exactGDKTPL10link; no completebook comparison claimed."
+        }
       ]
     }
   ]

@@ -42,6 +42,12 @@ class SourceWorkshopTests(unittest.TestCase):
             _,prompt=lesson_generation_request(subject,10,topic)
             context=json.loads(prompt.splitlines()[0])
             self.assertNotIn('source_workshop',context['reviewed_requirements_source'])
+            self.assertNotIn('content_corrections',context['reviewed_requirements_source'])
+            self.assertNotIn('assessment_proposals',context['reviewed_requirements_source'])
+            from services.lesson_sources import reviewed_lesson_sources
+            original=reviewed_lesson_sources(subject,10,topic)
+            self.assertEqual(context['reviewed_requirements_source']['sources'],original['sources'])
+            self.assertEqual(context['reviewed_requirements_source'].get('grounded_facts'),original.get('grounded_facts'))
     def test_ui_renderer_runs_locally_with_clear_feedback_and_source_scope(self):
         from tests.test_expert_patch_regressions import load_function
         data=reviewed_workshop_request(COMMAND,'Lịch sử',10,TOPICS[0][1]);answers=[q['correct'] for q in data['workshop']['questions']]
