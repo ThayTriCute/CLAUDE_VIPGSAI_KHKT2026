@@ -698,7 +698,154 @@
             "feedback": "Dùng hướng nghiêng trục và góc/thời gian chiếu sáng. Không dùng riêng khoảng cách Trái Đất–Mặt Trời để giải thích mùa."
           }
         ]
-      }
+      },
+      "content_corrections": [
+        {
+          "before": "Do Trái Đất có dạng hình cầu và tự quay quanh trục từ Tây sang Đông, nên mọi nơi trên bề mặt Trái Đất đều lần lượt được Mặt Trời chiếu sáng rồi lại chìm vào bóng tối.",
+          "after": "Trong mô hình bài học, Trái Đất có dạng cầu và tự quay từ tây sang đông, tạo sự luân phiên ngày đêm theo chu kì ngày ở phần lớn địa điểm. Không hiểu rằng mọi nơi đều đổi ngày sang đêm trong mỗi24giờ: vùng cực có thời kì ngày hoặc đêm kéo dài.",
+          "reason": "SGK17/19: connect day-night model with polar exceptions, no universal24h claim."
+        },
+        {
+          "before": "Để tiện cho giao tế, bề mặt Trái Đất được chia làm 24 múi giờ (mỗi múi rộng 15 độ kinh tuyến). Giờ ở kinh tuyến trung tâm của múi được lấy làm giờ chung cho cả múi đó.",
+          "after": "Trong mô hình múi giờ lí thuyết, Trái Đất được chia thành24múi, mỗi múi15độ kinh tuyến; giờ kinh tuyến giữa múi làm giờ chung. Ranh giới giờ pháp định thực tế có thể điều chỉnh theo quốc gia. Khi tính, dùng UTCoffset đề cho, không tự suy giờ pháp định hoặc chế độ đổi giờ mùa hè chỉ từ vị trí trên bản đồ.",
+          "reason": "SGK17–18: distinguish theoretical zones, legal boundaries and explicitly supplied offsets."
+        },
+        {
+          "before": "Kinh tuyến $180^\\circ$ đi qua giữa múi giờ số 12 ở Thái Bình Dương. Đi từ Tây sang Đông qua đường này phải lùi 1 ngày lịch; đi từ Đông sang Tây phải tăng 1 ngày lịch.",
+          "after": "Đường chuyển ngày quốc tế nằm chủ yếu gần kinh tuyến $180^\\circ$, giữa múi số12 ở Thái Bình Dương, nhưng có đoạn điều chỉnh theo lãnh thổ quốc gia. Qua đường chuyển ngày từ tây sang đông lùi1ngày lịch; chiều ngược lại tăng1ngày. Không đồng nhất mọi điểm kinh tuyến180độ với đường thực tế.",
+          "reason": "SGK18: the actual date line is not a straight180meridian."
+        },
+        {
+          "before": "Ở Xích đạo: Ngày và đêm luôn bằng nhau quanh năm.",
+          "after": "Ở Xích đạo: mô hình học tập coi ngày và đêm bằng nhau; trong quan sát thực tế hiểu xấp xỉ12giờ/12giờ, không khẳng định mọi phép đo bình minh–hoàng hôn luôn chính xác bằng nhau.",
+          "reason": "SGK19 and ideal-model vs observation scope; not an extra compulsory astronomy outcome."
+        },
+        {
+          "before": "Càng xa Xích đạo về hai cực: Độ chênh lệch giữa ngày và đêm càng lớn.",
+          "after": "Nhìn chung, càng xa Xích đạo thì biên độ thay đổi độ dài ngày qua các mùa càng lớn. Phải xét thời kì trong năm; không hiểu rằng ở mọi thời điểm đều có chênh lệch lớn, kể cả các thời điểm phân trong mô hình lí tưởng.",
+          "reason": "SGK19: latitude effect depends on season, avoid universal statement."
+        },
+        {
+          "before": "Một trận bóng đá diễn ra tại London (múi giờ 0) lúc 20 giờ ngày 10/10. Hỏi tại Hà Nội (múi giờ 7) lúc đó là mấy giờ, ngày nào?",
+          "after": "Bài toán cho London dùngUTC+0 và Hà Nội dùngUTC+7 tại cùng thời điểm; đây là offset giả định đã cho để luyện tính, không phải khẳng định giờ pháp định London vào mọi ngày10/10. Khi London là20giờ ngày10/10 theo dữ kiện đó, Hà Nội là mấy giờ, ngày nào?",
+          "reason": "SGK17–18: explicit given offset; do not pretend an actual October legal-clock lookup."
+        },
+        {
+          "before": "Hà Nội ở phía Đông so với London nên giờ Hà Nội sẽ muộn hơn (cộng thêm).",
+          "after": "Theo dữ kiện UTC+7 so vớiUTC+0, cộng7giờ vào giờ ở London để tính giờ hiển thị tại Hà Nội; tránh dùng từ sớm/muộn khi chưa nói rõ đang so đồng hồ hay thời điểm sự kiện.",
+          "reason": "Make offset arithmetic explicit rather than ambiguous earlier/later wording."
+        },
+        {
+          "before": "Tại sao vào mùa hè ở các nước ôn đới (như Nga hay Anh), 9 giờ tối trời vẫn còn sáng (hiện tượng \"đêm trắng\"), trong khi ở Việt Nam trời đã tối hẳn từ sớm?",
+          "after": "SGK20 nêu ví dụ đêm trắng tại Xanh Pê-téc-bua vào mùa hạ. Hãy giải thích vai trò của vĩ độ và mùa đối với thời gian còn ánh sáng buổi tối. Không gọi mọi trường hợp21giờ còn sáng ở mọi nước ôn đới là đêm trắng; không đồng nhất đêm trắng với ngày địa cực24giờ.",
+          "reason": "SGK20 scoped named example; distinguish late sunset/twilight and polar day."
+        },
+        {
+          "before": "Nếu bạn có một người bạn đang sống ở California, Mỹ (múi giờ -8). Bạn muốn gọi điện chúc mừng sinh nhật bạn mình vào đúng 0 giờ ngày 01/01 tại Mỹ. Vậy tại Việt Nam (múi giờ +7), bạn phải gọi vào lúc mấy giờ, ngày nào?",
+          "after": "Trong bài toán giả định, điểm B ở California được choUTC−8 và điểm A ở Việt Nam được choUTC+7. Muốn cuộc gọi đến đúng0giờ ngày01/01 theo giờ tạiB thì đồng hồ tạiA chỉ mấy giờ, ngày nào? Chỉ dùng offset đề cho; không đồng nhất giờ tạiB với giờ của toàn nước Mỹ.",
+          "reason": "SGK18: countries can span multiple zones; distinguish scenario from current legal-clock claims."
+        },
+        {
+          "before": "Nguyên nhân chính dẫn đến hiện tượng luân phiên ngày và đêm trên Trái Đất là do:",
+          "after": "Trong mô hình bài học, nguyên nhân chính tạo sự luân phiên ngày đêm theo chu kì ngày trên Trái Đất là:",
+          "reason": "Scope MCQ1 to the daily rotation effect; keep keyA."
+        },
+        {
+          "before": "Trái Đất hình cầu nên chỉ được chiếu sáng một nửa; việc tự quay khiến mọi nơi lần lượt được chiếu sáng rồi khuất sáng, tạo ra sự luân phiên.",
+          "after": "Trong mô hình, dạng cầu làm một nửa bề mặt được chiếu sáng tại một thời điểm; tự quay tạo chu kì ngày đêm thông thường. Vùng cực có ngoại lệ ngày/đêm kéo dài theo mùa, nên không suy mọi nơi đều sáng/tối luân phiên trong mỗi24giờ.",
+          "reason": "Keep explanation consistent with polar-day section and preserve keyA."
+        },
+        {
+          "before": "Khi đi từ phía Tây sang phía Đông qua đường chuyển ngày quốc tế (kinh tuyến $180^\\circ$), chúng ta cần phải thực hiện điều chỉnh thời gian như thế nào?",
+          "after": "Theo quy ước trong bài học, khi đi qua đường chuyển ngày quốc tế từ phía tây sang phía đông, cần điều chỉnh ngày lịch như thế nào?",
+          "reason": "Date-line convention is about the actual boundary, not every point of180meridian; keep keyB."
+        },
+        {
+          "before": "**Câu 2. [Mức độ: TH]**\nTheo quy ước trong bài học, khi đi qua đường chuyển ngày quốc tế từ phía tây sang phía đông, cần điều chỉnh ngày lịch như thế nào?",
+          "after": "**Câu 2. [Mức độ: NB]**\nTheo quy ước trong bài học, khi đi qua đường chuyển ngày quốc tế từ phía tây sang phía đông, cần điều chỉnh ngày lịch như thế nào?",
+          "reason": "Label is a proposal: exact stem only recalls the taught direction/date convention, not a causal explanation or multi-step problem."
+        },
+        {
+          "before": "Theo quy ước, khi đi từ Tây sang Đông qua kinh tuyến $180^\\circ$ (đi vào vùng có giờ sớm hơn về mặt lịch), ta phải lùi lại 1 ngày lịch.",
+          "after": "Theo quy ước đã học, qua đường chuyển ngày quốc tế từ tây sang đông thì lùi1ngày lịch; chiều ngược lại tăng1ngày. Đường thực tế có đoạn không trùng kinh tuyến180độ.",
+          "reason": "SGK18 exact boundary rule, avoid ambiguous local-clock language."
+        },
+        {
+          "before": "C. Do độ nghiêng của trục Trái Đất khiến diện tích được chiếu sáng thay đổi mạnh theo mùa.",
+          "after": "C. Do trục nghiêng khiến tỉ lệ cung của vĩ tuyến nằm trong vùng sáng thay đổi theo mùa khác nhau ở các vĩ độ.",
+          "reason": "SGK19: clarify the daylit fraction of a parallel, not the globally illuminated area; keep keyC and current shuffled position."
+        },
+        {
+          "before": "Trục Trái Đất nghiêng làm cho đường phân chia sáng tối (vòng sáng) không trùng với trục Trái Đất, cắt các vĩ tuyến ở những tỉ lệ khác nhau. Càng xa Xích đạo, sự chênh lệch này càng lớn.",
+          "after": "Ngoài các thời điểm phân trong mô hình lí tưởng, độ nghiêng làm tỉ lệ cung vĩ tuyến trong vùng sáng biến đổi theo mùa. Ở vĩ độ cao, biên độ thay đổi độ dài ngày qua năm nhìn chung lớn hơn; không nói tổng diện tích toàn Trái Đất được chiếu sáng thay đổi mạnh.",
+          "reason": "SGK19: distinguish illuminated parallel arc and global half-sphere; scope equinox conditions."
+        },
+        {
+          "before": "Tân Sơn Nhất (Hà Nội, múi giờ số 7)",
+          "after": "Tân Sơn Nhất (TP.Hồ Chí Minh; trong bài choUTC+7)",
+          "reason": "Official VietnamAirlines release14/5/2025 explicitly placesTanSonNhat inHoChiMinhCity; retain original archive and correct new generated error."
+        },
+        {
+          "before": "London (Anh, múi giờ số 0)",
+          "after": "London (Anh; trong bài choUTC+0)",
+          "reason": "This flight exercise uses explicitly provided offsets, not a current legal time lookup."
+        },
+        {
+          "before": "Một máy bay cất cánh từ sân bay Tân Sơn Nhất",
+          "after": "Trong bài toán chuyến bay giả định, một máy bay cất cánh từ sân bay Tân Sơn Nhất",
+          "reason": "12-hour flight duration is an exercise datum, not a claimed real timetable."
+        },
+        {
+          "before": "Kiểm tra xem giờ hạ cánh có vượt quá 24 giờ để chuyển ngày hay không.",
+          "after": "Kiểm tra giờ thuộc khoảng0đến dưới24; nếu đạt24giờ hoặc vượt24giờ phải đổi ngày, và nếu âm phải lùi ngày.",
+          "reason": "Calendar arithmetic boundary includes exactly24, not only greater than24."
+        },
+        {
+          "before": "Câu tục ngữ nói về hiện tượng ngày dài - đêm ngắn vào mùa hè (tháng Năm) và ngày ngắn - đêm dài vào mùa đông (tháng Mười) ở Việt Nam.",
+          "after": "Câu tục ngữ nhắc tháng Năm và tháng Mười âm lịch, thể hiện nhận xét khái quát về thời kì ngày dài/đêm ngắn và ngược lại ở Việt Nam thuộc Bắc bán cầu. Mức chênh lệch tùy vĩ độ, thường rõ hơn ở phía bắc; không tự đổi thành tháng5/tháng10 dương lịch hoặc bốn mùa khí hậu giống nhau trên toàn quốc.",
+          "reason": "SGK20 folk-calendar application: preserve lunar-calendar scope and latitude dependence."
+        },
+        {
+          "before": "Vào khoảng tháng 5 (mùa hè Bắc bán cầu), nửa cầu Bắc ngả về phía nào của Mặt Trời? Diện tích chiếu sáng ra sao?",
+          "after": "Vào thời kì tháng Năm âm lịch được nhắc trong tục ngữ, hướng nghiêng trục và phần cung vĩ tuyến nằm trong vùng sáng ở Bắc bán cầu liên hệ thế nào với ngày dài hơn đêm?",
+          "reason": "Do not silently change lunarMay to GregorianMay; use illuminated arc reasoning."
+        },
+        {
+          "before": "Vào khoảng tháng 10 (mùa đông Bắc bán cầu), tình hình ngược lại như thế nào?",
+          "after": "Đến thời kì tháng Mười âm lịch được nhắc trong tục ngữ, độ dài ngày đêm ở Bắc bán cầu thay đổi theo xu thế nào? Không lấy tháng10 dương lịch làm đồng nghĩa với mùa đông.",
+          "reason": "Keep lunar/Gregorian and daylength/climate distinctions."
+        },
+        {
+          "before": "Học sinh cần phân biệt được hướng di chuyển và quy ước cộng/trừ ngày.",
+          "after": "Câu yêu cầu nhớ và nhận diện quy ước đổi ngày đã được trình bày; đây là căn cứ đề xuất NB, chưa phải kết luận được Bộ duyệt.",
+          "reason": "Keep the revised exact-stem label proposal and rationale consistent."
+        },
+        {
+          "before": "[\"Xác định hướng di chuyển (Tây sang Đông)\", \"Áp dụng quy ước đường chuyển ngày\"]",
+          "after": "[\"Nhớ lại quy ước đổi ngày\", \"Nhận diện chiều tây sang đông trong câu hỏi\"]",
+          "reason": "Use the actual operations requested by the recall stem; keep keyB."
+        }
+      ],
+      "assessment_proposals": [
+        {
+          "question": "Theo quy ước trong bài học, khi đi qua đường chuyển ngày quốc tế từ phía tây sang phía đông, cần điều chỉnh ngày lịch như thế nào?",
+          "level": "NB",
+          "reason": "Câu chỉ yêu cầu nhớ và nhận diện quy ước đổi ngày đã được nêu, chưa yêu cầu giải thích nguyên nhân hay giải tình huống giờ nhiều bước; nhãn đề xuất cần giáo viên duyệt."
+        }
+      ],
+      "grounded_facts": [
+        "UTCoffset trong bài tính là dữ kiện giả định cho cùng thời điểm; giờ pháp định và đổi giờ mùa hè thực tế phải có nguồn riêng nếu được khẳng định.",
+        "Độ dài ngày là độ dài cung vĩ tuyến nằm trong vùng sáng, không suy toàn bộ diện tích bề mặt được Mặt Trời chiếu sáng thay đổi mạnh theo mùa.",
+        "Tân Sơn Nhất ởTP.Hồ Chí Minh; không gán sân bay này vàoHà Nội.",
+        "Tục ngữ thángNăm/thángMười dùng lịch âm và nói xu thế ngày đêm, không phải mọi vùngViệtNam có bốn mùa giống nhau."
+      ],
+      "external_fact_checks": [
+        {
+          "url": "https://www.vietnamairlines.com/sa/en/vietnam-airlines/press-room/press-release/2025/0514-VI-VNA-chinh-thuc-chuyen-toan-bo-chuyen-bay-noi-dia-sang-nha-ga-T3-Tan-Son-Nhat-ngay-17-5",
+          "claim": "TanSonNhat Airport is inHoChiMinhCity",
+          "read_scope": "Official press release14May2025 opening paragraph; only location fact used. ACV catalogue WAFblocked; no bypass attempted."
+        }
+      ]
     },
     {
       "id": "kntt-gdktpl10-phapluat-20261108",

@@ -35,6 +35,27 @@ class ReviewedContentCorrectionTests(unittest.TestCase):
                                       ('Sinh học', 10, 'Bài khác')]:
             self.assertEqual(original, apply_reviewed_content_corrections(original, subject, grade, topic))
 
+    def test_geography_repairs_scope_clock_data_and_keep_shuffled_key(self):
+        from services.lesson_sources import apply_reviewed_quiz_proposal
+        topic='Hệ quả địa lí các chuyển động của Trái Đất — Địa lí 10, KNTT, Bài 5'
+        review=reviewed_lesson_sources('Địa lý',10,topic)
+        option=next(r for r in review['content_corrections'] if r['before'].startswith('C. Do độ nghiêng'))
+        q=dict(question='Why?',options=['A. Other','B. '+option['before'][3:],'C. Other','D. Other'],correct='B')
+        fixed=apply_reviewed_quiz_proposal(q,'Địa lý',10,topic)
+        self.assertEqual(fixed['correct'],'B');self.assertEqual(fixed['options'][1],'B. '+option['after'][3:])
+        self.assertEqual(q['options'][1],'B. '+option['before'][3:])
+        for rule in review['content_corrections']:
+            if 'Tân Sơn Nhất' in rule['before'] and 'Hà Nội' in rule['before']:
+                value=apply_reviewed_content_corrections(rule['before'],'Địa lý',10,topic)
+                self.assertIn('TP.Hồ Chí Minh',value)
+                self.assertEqual(value,apply_reviewed_content_corrections(value,'Địa lý',10,topic))
+                self.assertEqual(rule['before'],apply_reviewed_content_corrections(rule['before'],'Địa lý',11,topic))
+        stem=review['assessment_proposals'][0]['question']
+        q=dict(question=stem,correct='B',options=['A','B','C','D'],level='TH')
+        result=apply_reviewed_quiz_proposal(q,'Địa lý',10,topic)
+        self.assertEqual(result['level'],'NB');self.assertEqual(result['level_claimed'],'TH')
+        self.assertEqual(result['options'],q['options']);self.assertEqual(result['correct'],'B')
+
     def test_reviewed_tutor_keeps_distinct_event_locations_and_live_replay_share_rule(self):
         import ast
         from pathlib import Path
