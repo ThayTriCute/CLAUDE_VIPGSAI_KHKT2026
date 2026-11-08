@@ -824,6 +824,11 @@
           "before": "[\"Xác định hướng di chuyển (Tây sang Đông)\", \"Áp dụng quy ước đường chuyển ngày\"]",
           "after": "[\"Nhớ lại quy ước đổi ngày\", \"Nhận diện chiều tây sang đông trong câu hỏi\"]",
           "reason": "Use the actual operations requested by the recall stem; keep keyB."
+        },
+        {
+          "before": "khi quay quanh Mặt Trời, cho đến cách tính toán múi giờ",
+          "after": "so với mặt phẳng quỹ đạo, với hướng trục gần như giữ nguyên trong năm khi Trái Đất chuyển động quanh Mặt Trời; cho đến cách tính toán múi giờ",
+          "reason": "SGK Bài5 trang18: góc66độ33phút phải nêu so với mặt phẳng quỹ đạo; hướng trục gần như không đổi trong năm. Bổ sung phạm vi cho recap gia sư thật, không gọi AI lại."
         }
       ],
       "assessment_proposals": [
@@ -837,7 +842,8 @@
         "UTCoffset trong bài tính là dữ kiện giả định cho cùng thời điểm; giờ pháp định và đổi giờ mùa hè thực tế phải có nguồn riêng nếu được khẳng định.",
         "Độ dài ngày là độ dài cung vĩ tuyến nằm trong vùng sáng, không suy toàn bộ diện tích bề mặt được Mặt Trời chiếu sáng thay đổi mạnh theo mùa.",
         "Tân Sơn Nhất ởTP.Hồ Chí Minh; không gán sân bay này vàoHà Nội.",
-        "Tục ngữ thángNăm/thángMười dùng lịch âm và nói xu thế ngày đêm, không phải mọi vùngViệtNam có bốn mùa giống nhau."
+        "Tục ngữ thángNăm/thángMười dùng lịch âm và nói xu thế ngày đêm, không phải mọi vùngViệtNam có bốn mùa giống nhau.",
+        "Góc nghiêng trục66độ33phút được đo với mặt phẳng quỹ đạo, không phải với pháp tuyến; hướng trục gần như giữ nguyên trong năm. Khi nêu góc phải nêu mốc đo."
       ],
       "external_fact_checks": [
         {
