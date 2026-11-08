@@ -10427,6 +10427,149 @@ def render_bbt_to_webp_base64(raw_bbt: str) -> str:
 
         return ""
 
+from fractions import Fraction as _GFraction
+
+
+def _g_isqrt_free(n):
+    n = int(n)
+    if n < 0:
+        raise ValueError
+    if n == 0:
+        return 0, 1
+    k, s, i = 1, n, 2
+    while i * i <= s:
+        sq = i * i
+        while s % sq == 0:
+            s //= sq; k *= i
+        i += 1
+    return k, s
+
+
+def _g_frac(v):
+    return v if isinstance(v, _GFraction) else _GFraction(v).limit_denominator(100000)
+
+
+def _g_ftex(fr):
+    fr = _g_frac(fr)
+    if fr.denominator == 1:
+        return str(fr.numerator)
+    sg = '-' if fr < 0 else ''
+    return r'%s\dfrac{%d}{%d}' % (sg, abs(fr.numerator), fr.denominator)
+
+
+class _GER:
+    """Phần tử p + q*sqrt(s) của trường Q(sqrt(s)) — tọa độ cực trị chính xác (vô tỷ)."""
+    __slots__ = ('p', 'q', 's')
+
+    def __init__(self, p, q=0, s=1):
+        p = _g_frac(p); q = _g_frac(q)
+        if s == 0:
+            s = 1
+        if s == 1 or q == 0:
+            p, q, s = p + (q if s == 1 else _GFraction(0)), _GFraction(0), 1
+        self.p, self.q, self.s = p, q, s
+
+    @classmethod
+    def rat(cls, v):
+        return cls(_g_frac(v), 0, 1)
+
+    def _cs(self, o):
+        if self.q == 0:
+            return o.s
+        if o.q == 0:
+            return self.s
+        if self.s != o.s:
+            raise ValueError
+        return self.s
+
+    def __add__(self, o):
+        o = o if isinstance(o, _GER) else _GER.rat(o); ss = self._cs(o)
+        return _GER(self.p + o.p, self.q + o.q, ss)
+
+    def __mul__(self, o):
+        o = o if isinstance(o, _GER) else _GER.rat(o); ss = self._cs(o)
+        return _GER(self.p * o.p + self.q * o.q * ss, self.p * o.q + self.q * o.p, ss)
+
+    def __truediv__(self, o):
+        o = o if isinstance(o, _GER) else _GER.rat(o)
+        den = o.p * o.p - o.q * o.q * o.s
+        if den == 0:
+            raise ZeroDivisionError
+        num = self * _GER(o.p, -o.q, o.s)
+        return _GER(num.p / den, num.q / den, num.s)
+
+    def fval(self):
+        return float(self.p) + float(self.q) * math.sqrt(self.s)
+
+    def rational(self):
+        return self.q == 0
+
+    def tex(self):
+        if self.rational():
+            return _g_ftex(self.p)
+        q = self.q; rad = r'\sqrt{%d}' % self.s
+        if abs(q) == 1:
+            mag = rad
+        elif q.denominator == 1:
+            mag = r'%d%s' % (abs(q.numerator), rad)
+        else:
+            mag = r'\dfrac{%d%s}{%d}' % (abs(q.numerator), rad, q.denominator)
+        if self.p == 0:
+            return mag if q > 0 else '-' + mag
+        return _g_ftex(self.p) + (' + ' if q > 0 else ' - ') + mag
+
+
+def _g_quad_roots(A, B, C):
+    A = _g_frac(A); B = _g_frac(B); C = _g_frac(C)
+    if A == 0:
+        return []
+    disc = B * B - 4 * A * C
+    if disc < 0:
+        return []
+    k, s = _g_isqrt_free(disc.numerator * disc.denominator)
+    coef = _GFraction(k, disc.denominator)
+    p = -B / (2 * A); q = coef / (2 * A)
+    return [_GER(p, -q, s), _GER(p, q, s)]
+
+
+def _g_rat_tex_or_none(v):
+    fr = _GFraction(v).limit_denominator(1000)
+    return _g_ftex(fr) if abs(float(fr) - v) <= 1e-9 * max(1, abs(v)) else None
+
+
+def _g_approx(v):
+    t = ('%.3f' % v).rstrip('0').rstrip('.')
+    return r'\approx %s' % (t if t not in ('', '-0') else '0')
+
+
+def _graph_exact_point_labels(px, py, label, dtype, a, b, c, d, e):
+    """Nhãn (x_tex, y_tex) chính xác cho điểm quan trọng; vô tỷ giữ căn thức, không làm tròn."""
+    xt = _g_rat_tex_or_none(px); yt = _g_rat_tex_or_none(py)
+    if xt is not None and yt is not None:
+        return xt, yt
+    roots = []; fexact = None
+    if dtype in ('cubic', 'func_3') and label == 'CĐ/CT':
+        roots = _g_quad_roots(3 * a, 2 * b, c)
+        fexact = lambda X: _GER.rat(a) * X * X * X + _GER.rat(b) * X * X + _GER.rat(c) * X + _GER.rat(d)
+    elif dtype == 'func_2_1' and label == 'CĐ/CT':
+        roots = _g_quad_roots(a * d, 2 * a * e, b * e - c * d)
+        fexact = lambda X: (_GER.rat(a) * X * X + _GER.rat(b) * X + _GER.rat(c)) / (_GER.rat(d) * X + _GER.rat(e))
+    for r in roots:
+        if abs(r.fval() - px) < 1e-6:
+            try:
+                if xt is None:
+                    xt = r.tex()
+                if yt is None and abs(fexact(r).fval() - py) < 1e-6:
+                    yt = fexact(r).tex()
+            except Exception:
+                pass
+            break
+    if xt is None:
+        xt = _g_approx(px)
+    if yt is None:
+        yt = _g_approx(py)
+    return xt, yt
+
 @st.cache_data(show_spinner=False, max_entries=512)
 def render_math_graph_to_webp_base64(graph_data, extra_points=None, xlabel=r'$x$', ylabel=r'$y$') -> str:
 
@@ -10696,13 +10839,15 @@ def render_math_graph_to_webp_base64(graph_data, extra_points=None, xlabel=r'$x$
 
         # 3. Điền các con số nguyên NGAY TRÊN TRỤC Ox và Oy (ẩn số 0 ở gốc để không đè chữ O)
 
+        lab_x = [p[0] for p in key_points if p[3] and abs(p[0]) > 0.2 and x_low <= p[0] <= x_high and y_low <= p[1] <= y_high]
+        lab_y = [p[1] for p in key_points if p[3] and abs(p[1]) > 0.2 and x_low <= p[0] <= x_high and y_low <= p[1] <= y_high]
         ax.xaxis.set_major_locator(plt.MultipleLocator(step_x))
 
         ax.yaxis.set_major_locator(plt.MultipleLocator(step_y))
 
-        ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{int(v)}" if math.isclose(v, round(v), abs_tol=1e-4) and not math.isclose(v, 0, abs_tol=1e-4) and v <= x_high else ""))
+        ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: "" if (math.isclose(v, 0, abs_tol=1e-4) or v > x_high or not math.isclose(v, round(v), abs_tol=1e-4) or any(abs(v - lx) < 0.42 * step_x for lx in lab_x)) else f"{int(v)}"))
 
-        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{int(v)}" if math.isclose(v, round(v), abs_tol=1e-4) and not math.isclose(v, 0, abs_tol=1e-4) and v <= y_high else ""))
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: "" if (math.isclose(v, 0, abs_tol=1e-4) or v > y_high or not math.isclose(v, round(v), abs_tol=1e-4) or any(abs(v - ly) < 0.42 * step_y for ly in lab_y)) else f"{int(v)}"))
 
         ax.tick_params(axis='both', which='major', labelsize=9.5, pad=2)
 
@@ -10800,6 +10945,62 @@ def render_math_graph_to_webp_base64(graph_data, extra_points=None, xlabel=r'$x$
 
 
 
+        # NHÃN TỌA ĐỘ (owner 05/11): giao trục ghi tọa độ chính xác; chật thì chú giải ①②③
+        _CIRC = '①②③④⑤⑥⑦⑧⑨'
+        _seen_x = []; _seen_y = []; _legend = []; _nleg = 0
+        for _px, _py, _plabel, _pdong in key_points:
+            if not _pdong:
+                continue
+            if not (x_low <= _px <= x_high and y_low <= _py <= y_high):
+                continue
+            if abs(_px) < 0.25 * step_x and abs(_py) < 0.25 * step_y:
+                continue
+            _xt, _yt = _graph_exact_point_labels(_px, _py, _plabel, dtype, a, b, c, d, e)
+            _near_o = abs(_px) < 0.55 * step_x and abs(_py) < 0.55 * step_y
+            _clash_x = abs(_px) > 0.2 and any(abs(_px - s) < 0.42 * step_x for s in _seen_x)
+            _clash_y = abs(_py) > 0.2 and any(abs(_py - s) < 0.42 * step_y for s in _seen_y)
+            if _near_o or _clash_x or _clash_y:
+                _mark = _CIRC[_nleg] if _nleg < len(_CIRC) else '(%d)' % (_nleg + 1)
+                ax.annotate(_mark, xy=(_px, _py), xytext=(_px + 0.14 * step_x, _py + 0.16 * step_y),
+                            ha='left', va='bottom', fontsize=9, fontweight='bold', color='#b91c1c', annotation_clip=False)
+                _legend.append(_mark + " $(" + _xt + ";\\ " + _yt + ")$"); _nleg += 1
+                continue
+            if abs(_px) > 0.2:
+                ax.annotate("$" + _xt + "$", xy=(_px, 0), xytext=(_px, -0.16 * step_y),
+                            ha='center', va='top', fontsize=8.0, color='#b91c1c', annotation_clip=False)
+                _seen_x.append(_px)
+            if abs(_py) > 0.2:
+                ax.annotate("$" + _yt + "$", xy=(0, _py), xytext=(-0.14 * step_x, _py),
+                            ha='right', va='center', fontsize=8.0, color='#b91c1c', annotation_clip=False)
+                _seen_y.append(_py)
+        if _legend:
+            _xr = (x_low - 0.2, x_high + pad_x + 0.2); _yr = (y_low - 0.2, y_high + pad_y + 0.2)
+            def _gfrac(vx, vy):
+                return ((vx - _xr[0]) / (_xr[1] - _xr[0]), (vy - _yr[0]) / (_yr[1] - _yr[0]))
+            _curve = []
+            if dtype in ("func_1_1", "func_2_1") and asymptotes_v:
+                _xvv = asymptotes_v[0]
+                for _xb in (np.linspace(x_low, _xvv - 0.04, 120), np.linspace(_xvv + 0.04, x_high, 120)):
+                    _yb = f(_xb)
+                    for _xx, _yy in zip(_xb, _yb):
+                        if np.isfinite(_yy) and y_low <= _yy <= y_high:
+                            _curve.append(_gfrac(_xx, _yy))
+            else:
+                _xs = np.linspace(x_low, x_high, 240); _ys = f(_xs)
+                for _xx, _yy in zip(_xs, _ys):
+                    if np.isfinite(_yy) and y_low <= _yy <= y_high:
+                        _curve.append(_gfrac(_xx, _yy))
+            _w = 0.40; _h = min(0.5, 0.09 * max(1, len(_legend)) + 0.04)
+            _corners = {'tl': (0.02, 0.98, 'left', 'top'), 'tr': (0.98, 0.98, 'right', 'top'),
+                        'bl': (0.02, 0.02, 'left', 'bottom'), 'br': (0.98, 0.02, 'right', 'bottom')}
+            def _gcost(cc):
+                fx, fy, ha, va = cc
+                x0 = fx - (_w if ha == 'right' else 0); x1 = fx + (0 if ha == 'right' else _w)
+                y0 = fy - (_h if va == 'top' else 0); y1 = fy + (0 if va == 'top' else _h)
+                return sum(1 for cx, cy in _curve if x0 - 0.02 < cx < x1 + 0.02 and y0 - 0.02 < cy < y1 + 0.02)
+            _fx, _fy, _ha, _va = min(_corners.values(), key=_gcost)
+            ax.text(_fx, _fy, "\n".join(_legend), transform=ax.transAxes, ha=_ha, va=_va,
+                    fontsize=7.6, color='#b91c1c', linespacing=1.6)
         buf = io.BytesIO()
 
         plt.savefig(buf, format='webp', bbox_inches='tight', pad_inches=0.03, transparent=False, facecolor='#ffffff')
