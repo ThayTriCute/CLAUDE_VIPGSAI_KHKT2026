@@ -116,6 +116,79 @@ def paired_statistics(pre, post):
     return result
 
 
+def between_group_gain_statistics(pre_app, post_app, pre_control, post_control):
+    """So sánh mức tăng Δ=post−pre GIỮA hai nhóm độc lập (Trạm 4: dùng app vs không dùng app).
+
+    Bổ sung cho ``paired_statistics`` (phân tích TRONG một nhóm). Thiết kế có nhóm đối chứng
+    là điều kiện tối thiểu để bàn tới *tác động* của việc dùng GSAI thay vì chỉ ghi nhận tiến bộ.
+    Trả về:
+      - n/mean-gain mỗi nhóm; ``gain_difference`` = (mức tăng nhóm app) − (mức tăng nhóm chứng)
+      - ``hake_app`` / ``hake_control``: hệ số tiến bộ chuẩn hoá ⟨g⟩ của Hake mỗi nhóm
+      - ``t`` / ``p``: kiểm định t hai mẫu độc lập Welch (không giả định phương sai bằng nhau) trên Δ
+      - ``cohens_d``: cỡ hiệu ứng giữa hai nhóm trên Δ (SD gộp)
+      - ``mannwhitney_p``: kiểm định phi tham số dự phòng (Mann–Whitney U hai phía)
+      - ``pretest_p`` / ``baseline_equivalent``: kiểm tra hai nhóm có tương đương ở bài tiền-test không
+        (nếu lệch đáng kể, chênh lệch tiến bộ có thể do nền ban đầu, không hẳn do app).
+
+    Lưu ý khoa học: đây vẫn là bằng chứng tương quan trừ khi phân nhóm ngẫu nhiên và pre-test tương đương;
+    không tự kết luận quan hệ nhân quả. Không thay nghiệm thu nội dung.
+    """
+    import numpy as np
+    from scipy import stats
+
+    def _clean(pre, post, label):
+        pre_a = np.asarray(pre, dtype=float)
+        post_a = np.asarray(post, dtype=float)
+        if (pre_a.ndim != 1 or pre_a.shape != post_a.shape or len(pre_a) < 2
+                or not np.all(np.isfinite(pre_a)) or not np.all(np.isfinite(post_a))):
+            raise ValueError("Nhóm %s: cần ít nhất 2 cặp điểm hợp lệ của cùng học sinh." % label)
+        if np.any((pre_a < 0) | (pre_a > 10) | (post_a < 0) | (post_a > 10)):
+            raise ValueError("Nhóm %s: điểm phải nằm trong thang 0–10." % label)
+        return pre_a, post_a
+
+    pre_i, post_i = _clean(pre_app, post_app, "dùng app")
+    pre_c, post_c = _clean(pre_control, post_control, "không dùng app")
+    gain_i, gain_c = post_i - pre_i, post_c - pre_c
+    mean_i, mean_c = float(np.mean(gain_i)), float(np.mean(gain_c))
+
+    def _hake(pre_a, mean_gain):
+        base = float(np.mean(pre_a))
+        return mean_gain / (10 - base) if base < 10 else None
+
+    result = dict(
+        n_app=len(pre_i), n_control=len(pre_c),
+        gain_app=mean_i, gain_control=mean_c,
+        gain_difference=mean_i - mean_c,
+        hake_app=_hake(pre_i, mean_i), hake_control=_hake(pre_c, mean_c),
+        t=None, p=None, cohens_d=None, mannwhitney_p=None,
+        pretest_t=None, pretest_p=None, baseline_equivalent=None,
+    )
+
+    sd_i = float(np.std(gain_i, ddof=1))
+    sd_c = float(np.std(gain_c, ddof=1))
+    if sd_i > 1e-12 or sd_c > 1e-12:
+        welch = stats.ttest_ind(gain_i, gain_c, equal_var=False)
+        result.update(t=float(welch.statistic), p=float(welch.pvalue))
+        n1, n2 = len(gain_i), len(gain_c)
+        if n1 + n2 - 2 > 0:
+            pooled = math.sqrt(((n1 - 1) * sd_i ** 2 + (n2 - 1) * sd_c ** 2) / (n1 + n2 - 2))
+            if pooled > 1e-12:
+                result["cohens_d"] = (mean_i - mean_c) / pooled
+
+    if not (sd_i <= 1e-12 and sd_c <= 1e-12 and mean_i == mean_c):
+        try:
+            mw = stats.mannwhitneyu(gain_i, gain_c, alternative="two-sided")
+            result["mannwhitney_p"] = float(mw.pvalue)
+        except ValueError:
+            pass
+
+    if float(np.std(pre_i, ddof=1)) > 1e-12 or float(np.std(pre_c, ddof=1)) > 1e-12:
+        base_test = stats.ttest_ind(pre_i, pre_c, equal_var=False)
+        result.update(pretest_t=float(base_test.statistic), pretest_p=float(base_test.pvalue))
+        result["baseline_equivalent"] = bool(base_test.pvalue >= 0.05)
+    return result
+
+
 def parse_math_expression(source):
     """Construct SymPy nodes from a bounded AST; never evaluate Python strings."""
     import sympy as sp
