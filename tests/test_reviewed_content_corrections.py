@@ -59,6 +59,22 @@ class ReviewedContentCorrectionTests(unittest.TestCase):
         self.assertEqual(fixed,apply_reviewed_content_corrections(fixed,'Toán học',11,topic))
         self.assertEqual(original,apply_reviewed_content_corrections(original,'Toán học',12,topic))
 
+    def test_literature_actual_excerpt_boundary_error_keeps_answer_key_and_other_grade(self):
+        topic = 'Trao duyên (trích Truyện Kiều) — Ngữ văn 11, KNTT, Bài 6'
+        original = ('Từ câu 711 đến câu 758, thuộc phần "Đoàn viên". '
+                    'Trong 12 câu đầu, Kiều lạy và thưa. HINT: câu thơ thứ 712.'
+                    '\nCORRECT: C\nCORRECT: B\nCORRECT: A')
+        fixed = apply_reviewed_content_corrections(original, 'Ngữ văn', 11, topic)
+        self.assertIn('"Chia lìa"', fixed)
+        self.assertIn('các câu 723–734', fixed)
+        self.assertIn('câu thơ 724', fixed)
+        self.assertNotIn('712', fixed)
+        self.assertTrue(fixed.endswith('CORRECT: C\nCORRECT: B\nCORRECT: A'))
+        self.assertEqual(fixed, apply_reviewed_content_corrections(fixed, 'Ngữ văn', 11, topic))
+        for subject, grade, title in [('Ngữ văn', 10, topic), ('Lịch sử', 11, topic),
+                                      ('Ngữ văn', 11, 'Bài khác')]:
+            self.assertEqual(original, apply_reviewed_content_corrections(original, subject, grade, title))
+
     def test_geography_repairs_scope_clock_data_and_keep_shuffled_key(self):
         from services.lesson_sources import apply_reviewed_quiz_proposal
         topic='Hệ quả địa lí các chuyển động của Trái Đất — Địa lí 10, KNTT, Bài 5'

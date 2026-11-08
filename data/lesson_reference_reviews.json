@@ -1079,6 +1079,148 @@
           "reason": "Ẩn dụsưphạmkhôngphảidựbáođịnhlượngconngười;khôngsuy(1.01)^365thànhmứctiếnbộthật. Ápdụngnguyêntắckiểmđiềukiện/môhìnhchung."
         }
       ]
+    },
+    {
+      "id": "kntt-van11-traoduyen-20261108",
+      "subject": "Ngữ văn",
+      "grade": 11,
+      "topics": [
+        "Trao duyên (trích Truyện Kiều) — Ngữ văn 11, KNTT, Bài 6"
+      ],
+      "reviewed_on": "2026-11-08",
+      "scope": "ĐãđọcảnhSGKlocal1–5,14–16;1bàithậtsinhquaapp38.94s,cấutrúckhôngfindingnhưngreviewpháthiệnlỗiphạmvingữliệu/vịtrí/từ/đápán/rubric; đangválocal. Chưaowner/đủ3nguồn/YCCĐ/Cloud.",
+      "sources": [
+        {
+          "title": "Ngữ văn11 tập hai — Kết nối tri thức với cuộc sống, NXBGDVN",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-ngu-van-11-tap-hai.4701023518",
+          "locator": "Trang tên sách1; mục lục2–3; yêu cầu/tri thức4–5; văn bản Trao duyên và câu hỏi14–16. Ảnh index trùng số trang in trong phạm vi đã xem.",
+          "edition_note": "Trang tên sách ghi tái bản lần thứba; chưa xác minh năm. Manifest declared132/download132, hashverified132ảnh, full_book_archived=false giữ nguyên. Chỉ đọc các trang nêu trên, không chứng nhận hiện hành/toàn sách/đủ ba nguồn/YCCĐ pháp quy.",
+          "criteria": [
+            "Phân biệt lời người kể chuyện, lời đối thoại và độc thoại; phân tích diễn biến tâm trạng bằng chứng văn bản.",
+            "Đối chiếu lúc nhờ cậy, trao kỉ vật và mười dòng cuối; giải thích sự chuyển đối tượng tâm tình và giọng điệu.",
+            "Dùng từ ngữ/nghệ thuật và dẫn chứng đúng ngữ liệu, tránh gán lời Thúy Vân cho Kiều hay đồng nhất tiếng nhân vật với phát biểu trực tiếp của Nguyễn Du."
+          ]
+        }
+      ],
+      "grounded_facts": [
+        "Đoạn trích SGK này bắt đầu câu711 và kết thúc758, không chỉ phần thường trích từ723. Trang14có lời hỏi của ThúyVân; trang16kết thúc bằng lời người kể về Kiều lặng ngất.",
+        "Hoàn cảnh theo chú thích: sau gia biến, Kiều quyết định bán mình để cứu cha/em; trước lúc theo MãGiámSinh, nàng day dứt về lời thề với KimTrọng. Đoạn trích thuộc phần Chia lìa.",
+        "Lời nhờ cậy chuyển sang trao kỉ vật với mâu thuẫn giữ tình riêng và mong em nối duyên; cuối đoạn có lời hướng tới KimTrọng trong tưởng tượng. Cần phân tích diễn biến, không áp đặt một nhãn tâm lí đơn giản.",
+        "SGK yêu cầu kết nối đọc-viết khoảng150chữ về sự hiểu đời, thương đời thể hiện ở đoạn; đó là nhiệm vụ SGK, không biến thành quy định pháp luật.",
+        "Không diễn giải bi kịch/ý nghĩ về cái chết của nhân vật thành lời khuyên học sinh phải hi sinh bản thân hoặc chấp nhận ép duyên; phân biệt bối cảnh văn học lịch sử với cách ứng xử ngày nay."
+      ],
+      "content_corrections": [
+        {
+          "before": "thuộc phần \"Đoàn viên\"",
+          "after": "thuộc phần \"Chia lìa\"",
+          "reason": "Chú thích SGKtrang14 ghi rõ phầnChialìa."
+        },
+        {
+          "before": "*Lời nhờ cậy (12 câu đầu):*",
+          "after": "*Mở đầu (câu711–722):* Người kể giới thiệu đêm Kiều thao thức; Thúy Vân hỏi han và Kiều bộc lộ nỗi day dứt.\n    *Lời nhờ cậy (câu723–734):*",
+          "reason": "SGK14–16: phạmvi711–758, khôngthay bằngđoạn723–756quen thuộc."
+        },
+        {
+          "before": "12 câu đầu",
+          "after": "các câu 723–734",
+          "reason": "Bám đúng phạmvi nhờcậy sau12câu mởđầu, gồm câu723–734."
+        },
+        {
+          "before": "câu thơ thứ 712",
+          "after": "câu thơ 724",
+          "reason": "Câu724làlời lạy/thưa,câu712là miêutảđèn/lệ."
+        },
+        {
+          "before": "Chiếc thoa",
+          "after": "Chiếc vành",
+          "reason": "Văn bản vàchúthíchtrang15: chiếcvành (xuyến), khôngchiếcthoa."
+        },
+        {
+          "before": "chiếc thoa vàng",
+          "after": "chiếc vành",
+          "reason": "Giữđúng kỉvật ởtrang15, khôngbịangữliệu."
+        },
+        {
+          "before": "\"quá kỉ vật\", \"mất người còn chút\", \"đốt lò hương\", \"so tơ phím đàn\"",
+          "after": "\"Duyên này thì giữ, vật này của chung\", \"Mất người còn chút của tin\", \"Đốt lò hương ấy so tơ phím này\"",
+          "reason": "Bỏcụmtựđặttrongngoặckép; phânbiệtlờidặn/tưởngtượngvớicửchỉthựctạicủanhânvật."
+        },
+        {
+          "before": "các chi tiết miêu tả cử chỉ của Thúy Kiều khi trao kỉ vật",
+          "after": "các lời dặn của Thúy Kiều khi trao kỉ vật",
+          "reason": "Khôngcoihànhđộngtươnglaiđượctưởngtượnglàcửchỉhiệntại."
+        },
+        {
+          "before": "\"Xác định đối tượng ở 8 câu cuối\"",
+          "after": "\"Xác định lời Kiều trong mười dòng cuối và tách hai câu người kể ở cuối đoạn\"",
+          "reason": "SGK16yêucầumườidòngcuối, đầura8câutheobảntríchkhác."
+        },
+        {
+          "before": "\"cậy\" vừa là nhờ, vừa là tin tưởng tuyệt đối, có hàm ý thiết tha, ép buộc.",
+          "after": "\"cậy\" nhấn mạnh sự tin tưởng và nhờ vả thiết tha trong tình thế khó khăn; sắc thái gây sức nặng cần được lí giải từ ngữ cảnh, không phải mọi cách dùng từ đều có nghĩa ép buộc.",
+          "reason": "Ngữcảnhphânbiệtsắcthái,khônggánnghĩatuyệtđốichotừngtừ."
+        },
+        {
+          "before": "\"Nhận lời\" là sự tự nguyện; \"chịu lời\" mang sắc thái nài ép, buộc người nhận phải chấp nhận một điều khó khăn, thiệt thòi.",
+          "after": "\"Chịu lời\" trong ngữ cảnh này gợi việc chấp nhận một điều khó khăn; đối chiếu với cách nói \"nhận lời\" để thấy sức nặng của lời nhờ cậy. Không từ riêng một từ mà kết luận người nghe hoàn toàn không có quyền lựa chọn.",
+          "reason": "Khôngbiếnsắctháitừthànhquyluậtvềtựnguyện."
+        },
+        {
+          "before": "Kiều đã quên mất sự hiện diện của Thúy Vân do quá đau buồn.",
+          "after": "Nỗi đau khiến lời Kiều chuyển sang hướng tới Kim Trọng trong tâm tưởng.",
+          "reason": "Phân tíchđối tượnglời nói,khôngchẩnđoánnhớ/quênnhưsựkiệnkhẳngđịnh."
+        },
+        {
+          "before": "Kiều rơi vào bi kịch đau đớn tột cùng, nàng quên đi thực tại (Vân) để sống trọn với nỗi đau phụ tình (Kim).",
+          "after": "Lời gọi Kim Trọng trong tâm tưởng cho thấy nỗi đau và sự tự trách của Kiều; đối tượng lời nói chuyển từ người em đang có mặt sang người yêu vắng mặt. Đó là cách đọc diễn biến tâm trạng dựa vào ngôn ngữ, không phải kết luận y khoa về ý thức.",
+          "reason": "GiữđúngbằngchứngngônngữSGK16."
+        },
+        {
+          "before": "(Học sinh tự viết đoạn văn/bài văn dựa trên các ý trên).",
+          "after": "Gợi ý lập luận: các từ cậy, chịu, lạy, thưa làm nổi bật lời nhờ vừa tin tưởng vừa nặng nề; các lí lẽ về tình máu mủ và tuổi xuân đặt Vân trước một việc khó. Từ thế chị–em chuyển sang người cầu xin–người được nhờ cho thấy bi kịch của Kiều. Dẫn chứng ở câu723–734, không lấy nhầm lời hỏi của Vân ở câu715–718. Rubric tham khảo: đúng phạm vi/lời nhân vật 1đ; phân tích từ ngữ và cử chỉ 4đ; lí lẽ gắn hoàn cảnh 3đ; dẫn chứng, diễn đạt và không áp đặt 2đ. Đây là thang tham khảo, không phải quy định bắt buộc của Bộ.",
+          "reason": "Bổsunglờigiải/rubricthật,khôngchỉgiaohọcsinhtựviết."
+        },
+        {
+          "before": "(Học sinh tự triển khai bài viết).",
+          "after": "Gợi ý: có thể trân trọng trách nhiệm và lòng thương của Kiều đồng thời nhận ra sức ép khiến nàng không được tự quyết. Không đòi người phụ nữ phải chịu tổn thương để chứng tỏ vị tha. Tình yêu hôm nay cần sự tự nguyện, tôn trọng và bảo vệ phẩm giá của cả hai; liên hệ là quan điểm lập luận, không gán lời hiện đại cho Nguyễn Du. Chấp nhận cách nhìn khác khi có dẫn chứng hợp lí. Rubric tham khảo: hiểu bối cảnh/văn bản 3đ; quan điểm và lập luận có chứng cứ 4đ; phân biệt bối cảnh xưa/nay 2đ; diễn đạt 1đ.",
+          "reason": "Giữđềnghịluậnmởvàquyềntựquyết,khôngđápánđạođứccứngnhắc."
+        },
+        {
+          "before": "vẻ đẹp cao quý nhất của con người không nằm ở chỗ họ có được hạnh phúc cho riêng mình, mà ở cách họ đối xử tử tế và có trách nhiệm với những lời thề nguyền ngay cả trong nghịch cảnh.",
+          "after": "ta có thể trân trọng lòng thương và trách nhiệm đồng thời thấy được nỗi đau của người bị hoàn cảnh dồn ép. Không phải hi sinh hạnh phúc hay chịu tổn thương mới là tử tế; lời hứa cần được ứng xử trung thực, tôn trọng sự tự nguyện và phẩm giá của mỗi người.",
+          "reason": "Khôngápđặthy sinh bảnthânlàgiátrịcaoquýnhất."
+        },
+        {
+          "before": "    *Lời nhờ cậy (câu723–734):*",
+          "after": "    *   *Lời nhờ cậy (câu723–734):*",
+          "reason": "Giữ danh sách đúng định dạng xuống dòng."
+        },
+        {
+          "before": "Kiều quên sự có mặt của Vân, hướng về Kim Trọng trong tưởng tượng. Nàng tự coi mình là kẻ phụ tình, là người đã chết về mặt tâm hồn",
+          "after": "Lời Kiều chuyển hướng tới Kim Trọng trong tâm tưởng; nàng tự trách mình phụ tình, đồng thời những hình dung về cái chết và âm hồn bộc lộ nỗi đau",
+          "reason": "Phân biệt diễn giải văn học với khẳng định tuyệt đối về ý thức."
+        },
+        {
+          "before": "khi đẩy Vân vào tình huống \"không thể từ chối\"",
+          "after": "khi đặt lời nhờ cậy trước Vân với sức nặng của tình chị em và hoàn cảnh gia đình",
+          "reason": "Không kết luận sự không thể từ chối như một sự kiện bắt buộc."
+        },
+        {
+          "before": "để tạo thế buộc Thúy Vân phải nhận lời. Đây là sự khôn khéo trong đau đớn.",
+          "after": "làm lời nhờ cậy có sức nặng trong tình thế đau đớn; cần đọc cả sự tin tưởng, thuyết phục và giằng xé, tránh quy về thủ thuật đơn thuần.",
+          "reason": "Không áp một nhãn tâm lí đơn giản."
+        },
+        {
+          "before": "em sẽ chọn cách im lặng ra đi hay tìm cách gửi gắm niềm tin đó cho một người khác?",
+          "after": "em có thể trao đổi trung thực và tôn trọng lựa chọn của những người liên quan như thế nào?",
+          "reason": "Không tạo lựa chọn nhị nguyên hoặc biến trao duyên thành lời khuyên đời sống."
+        },
+        {
+          "before": "Theo em, hành động đó là sự vị kỉ hay vị tha?",
+          "after": "Hãy lí giải sự giằng xé giữa trách nhiệm và tình cảm, có dẫn chứng; không bắt buộc xếp nhân vật vào một trong hai nhãn vị kỉ/vị tha.",
+          "reason": "Giữ câu hỏi mở và phân tích có bằng chứng."
+        }
+      ]
     }
   ]
 }
