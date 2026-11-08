@@ -88,6 +88,18 @@ class ReviewedContentCorrectionTests(unittest.TestCase):
         self.assertEqual(fixed, apply_reviewed_content_corrections(fixed, 'Tiếng Anh', 11, topic))
         self.assertEqual(original, apply_reviewed_content_corrections(original, 'Tiếng Anh', 10, topic))
 
+    def test_tin11_performance_question_does_not_force_unsupported_hardware_choice(self):
+        topic = 'Tin học 11 - Định hướng Khoa học máy tính, KNTT, Bài 4: Bên trong máy tính'
+        review = reviewed_lesson_sources('Tin học',11,topic)
+        original = next(r['before'] for r in review['content_corrections'] if r['before'].startswith('Nếu bạn định nâng cấp'))
+        original += '\nCORRECT: B\nCORRECT: C\nCORRECT: C'
+        fixed = apply_reviewed_content_corrections(original,'Tin học',11,topic)
+        self.assertIn('Chưa đủ dữ kiện',fixed)
+        self.assertIn('không trực tiếp xác định tốc độ',fixed)
+        self.assertTrue(fixed.endswith('CORRECT: B\nCORRECT: C\nCORRECT: C'))
+        self.assertEqual(fixed,apply_reviewed_content_corrections(fixed,'Tin học',11,topic))
+        self.assertEqual(original,apply_reviewed_content_corrections(original,'Tin học',10,topic))
+
     def test_geography_repairs_scope_clock_data_and_keep_shuffled_key(self):
         from services.lesson_sources import apply_reviewed_quiz_proposal
         topic='Hệ quả địa lí các chuyển động của Trái Đất — Địa lí 10, KNTT, Bài 5'

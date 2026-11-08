@@ -4,7 +4,34 @@ import math
 
 from services.academic_context import academic_context, canonical_subject
 
-T1_CONTEXT_REVISION = 2026110803
+T1_CONTEXT_REVISION = 2026110804
+
+
+
+def binary_logic_state(a, b):
+    """Ideal two-input Boolean model; half adder has no carry-in."""
+    if any(type(v) is not int or v not in (0, 1) for v in (a, b)):
+        raise ValueError('Hai đầu vào phải là bit nguyên 0 hoặc 1.')
+    return dict(a=a, b=b, and_bit=a & b, or_bit=a | b, xor_bit=a ^ b,
+                not_a=1-a, not_b=1-b, sum_bit=a ^ b, carry_bit=a & b,
+                a_and_not_b=a & (1-b), binary_sum=f'{a & b}{a ^ b}')
+
+
+def is_local_logic_command(command):
+    from services.academic_context import folded
+    return folded(command) == folded('Cổng logic và cộng hai bit')
+
+
+def reviewed_logic_lab_request(command, subject, grade, topic):
+    from services.lesson_sources import reviewed_lesson_sources
+    if not is_local_logic_command(command) or canonical_subject(subject) != 'Tin học':
+        return None
+    review = reviewed_lesson_sources(subject, grade, topic)
+    config = review.get('source_workshop', {})
+    if (review['status'] != 'reviewed_requirements_source'
+            or not isinstance(config, dict) or config.get('interactive_model') != 'binary_logic'):
+        return None
+    return dict(type='binary_logic', sources=review['sources'], scope=config['scope'])
 
 
 def fixed_offset_clock(local_date, local_time, source_minutes, target_minutes):

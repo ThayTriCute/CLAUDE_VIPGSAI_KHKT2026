@@ -96,6 +96,25 @@ class LessonSourceReviewTests(unittest.TestCase):
             with self.subTest(subject=subject, grade=grade, topic=topic):
                 self.assertEqual(sources.reviewed_lesson_sources(subject, grade, topic)['status'], 'missing_lesson_review')
 
+    def test_owner_three_portal_provenance_keeps_exact_scope_and_rejects_spoofed_hosts(self):
+        entry = sources._review_registry(sources.REVIEW_REGISTRY.stat().st_mtime_ns)[0]
+        for url in ('https://www.vniteach.com/book', 'https://www.thsqg.vn/sach/book',
+                    'https://taphuan.nxbgd.vn/book'):
+            row = copy.deepcopy(entry)
+            row['sources'][0]['url'] = url
+            with patch.object(sources, '_review_registry', return_value=[row]):
+                result = sources.reviewed_lesson_sources('Ngữ văn', 6, TOPIC)
+                self.assertEqual(result['status'], 'reviewed_requirements_source')
+                self.assertEqual(result['scope'], entry['scope'])
+                self.assertNotIn('accepted', result)
+                self.assertEqual(sources.reviewed_lesson_sources('Ngữ văn', 7, TOPIC)['status'], 'missing_lesson_review')
+        for url in ('https://vniteach.com.evil.example/book', 'https://thsqg.vn.evil.example/book',
+                    'http://www.vniteach.com/book', 'https://user@www.thsqg.vn/book'):
+            row = copy.deepcopy(entry)
+            row['sources'][0]['url'] = url
+            with patch.object(sources, '_review_registry', return_value=[row]):
+                self.assertEqual(sources.reviewed_lesson_sources('Ngữ văn', 6, TOPIC)['status'], 'invalid_review_registry')
+
     def test_invalid_future_or_ambiguous_evidence_cannot_approve(self):
         entry = sources._review_registry(sources.REVIEW_REGISTRY.stat().st_mtime_ns)[0]
         for url in ('javascript:alert(1)', 'https://nxbgd.vn.example.org/book'):

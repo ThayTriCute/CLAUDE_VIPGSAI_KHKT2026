@@ -16,7 +16,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 PUBLISHER_PORTAL = "https://taphuan.nxbgd.vn/tap-huan?tab=public"
 PUBLISHER_DIGITAL_LIBRARY = "https://truonghocsoquocgia.nxbgd.vn/"
 NATIONAL_SCHOOL_TEXTBOOK_LIBRARY = "https://www.thsqg.vn/sach"
-T1_CONTEXT_REVISION = 2026110801
+T1_CONTEXT_REVISION = 2026110802
 REVIEW_REGISTRY = Path(__file__).resolve().parents[1] / 'data/lesson_reference_reviews.json'
 PUBLISHER_2026_NOTICE = "https://nxbgd.vn/bai-viet/nha-xuat-ban-giao-duc-viet-nam-thong-bao-ve-viec-su-dung-sach-giao-khoa-nam-hoc-2026-2027"
 
@@ -54,8 +54,10 @@ def reviewed_lesson_sources(subject, grade, topic):
         for source in row['sources']:
             url = urlparse(source.get('url', ''))
             host = (url.hostname or '').lower()
+            # Owner-approved textbook portals are provenance locations, not legal authorities
+            # or automatic evidence that a page/edition has been reviewed.
             official = any(host == domain or host.endswith('.' + domain)
-                           for domain in ('nxbgd.vn', 'moet.gov.vn', 'chinhphu.vn', 'vbpl.vn', 'moj.gov.vn', 'baochinhphu.vn'))
+                           for domain in ('nxbgd.vn', 'vniteach.com', 'thsqg.vn', 'moet.gov.vn', 'chinhphu.vn', 'vbpl.vn', 'moj.gov.vn', 'baochinhphu.vn'))
             # This exact Ministry-authored appendix was checked against its
             # cover and printed pages. Do not trust arbitrary .edu.vn sources.
             official = official or source.get('url') == (
