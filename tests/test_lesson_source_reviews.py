@@ -58,8 +58,11 @@ class LessonSourceReviewTests(unittest.TestCase):
             _,prompt=lesson_generation_request(subject,10,topic)
             context=json.loads(prompt.splitlines()[0]);review=context['reviewed_requirements_source']
             self.assertIn(pages,review['sources'][0]['locator'])
-            self.assertIn('chưa đủ3nguồn',review['scope'])
+            self.assertNotIn('accepted', review)
+            self.assertTrue(review['scope'])
             if subject.startswith('Giáo dục'):
+                self.assertIn('Chưa chứng nhận',review['scope'])
+                self.assertIn('THSQGcatalog không thấy link',review['scope'])
                 self.assertIn('Điều8(1)',review['sources'][1]['criteria'][0])
                 self.assertIn('Không sao chép mức phạt',review['sources'][0]['criteria'][4])
             _,other=lesson_generation_request(subject,11,topic)
