@@ -75,6 +75,19 @@ class ReviewedContentCorrectionTests(unittest.TestCase):
                                       ('Ngữ văn', 11, 'Bài khác')]:
             self.assertEqual(original, apply_reviewed_content_corrections(original, subject, grade, title))
 
+    def test_english_duration_requires_durative_verb_not_just_tense_keyword(self):
+        topic = 'A long and healthy life — Tiếng Anh 11 Global Success, Unit 1: Language'
+        original = ('Nam ________ a lot of fast food when he was younger, but he ________ a healthy diet for two years.\n'
+                    'C. ate / has started\nCORRECT: C\n'
+                    'Vế sau dùng "has started" (Hiện tại hoàn thành) vì có "for two years" (kéo dài đến hiện tại).')
+        fixed = apply_reviewed_content_corrections(original, 'Tiếng Anh', 11, topic)
+        self.assertIn('still follows it now', fixed)
+        self.assertIn('C. ate / has followed', fixed)
+        self.assertIn('CORRECT: C', fixed)
+        self.assertNotIn('Vế sau dùng "has started"', fixed)
+        self.assertEqual(fixed, apply_reviewed_content_corrections(fixed, 'Tiếng Anh', 11, topic))
+        self.assertEqual(original, apply_reviewed_content_corrections(original, 'Tiếng Anh', 10, topic))
+
     def test_geography_repairs_scope_clock_data_and_keep_shuffled_key(self):
         from services.lesson_sources import apply_reviewed_quiz_proposal
         topic='Hệ quả địa lí các chuyển động của Trái Đất — Địa lí 10, KNTT, Bài 5'
