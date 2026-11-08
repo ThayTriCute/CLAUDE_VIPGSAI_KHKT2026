@@ -203,5 +203,25 @@ class ReviewedContentCorrectionTests(unittest.TestCase):
             self.assertEqual(value, apply_reviewed_content_corrections(value, 'Toán học', 12, 'Fixture'))
 
 
+
+    def test_cn11_manufacturing_repairs_keep_quiz_and_other_branch_unchanged(self):
+        topic = 'Khái quát về cơ khí chế tạo — Công nghệ 11, Công nghệ cơ khí, KNTT, Bài 1'
+        review = reviewed_lesson_sources('Công nghệ', 11, topic)
+        original = '\n'.join(r['before'] for r in review['content_corrections']) + '\nCORRECT: B\nCORRECT: C\nCORRECT: D'
+        fixed = apply_reviewed_content_corrections(original, 'Công nghệ', 11, topic)
+        self.assertIn('cắt gọt là một nhóm phương pháp', fixed)
+        self.assertIn('Không xếp mọi composite', fixed)
+        self.assertIn('Lắp các chi tiết chốt', fixed)
+        self.assertIn('Rubric tham khảo', fixed)
+        self.assertNotIn('quan trọng nhất', fixed)
+        self.assertNotIn('phương pháp hóa học/điện hóa', fixed)
+        self.assertEqual([line for line in fixed.splitlines() if line.startswith('CORRECT:')],
+                         ['CORRECT: B', 'CORRECT: C', 'CORRECT: D'])
+        self.assertEqual(fixed, apply_reviewed_content_corrections(fixed, 'Công nghệ', 11, topic))
+        for grade, other in [(10, topic), (12, topic),
+                (11, 'Vật nuôi và phương thức chăn nuôi — Công nghệ 11, Công nghệ chăn nuôi, KNTT, Bài 2')]:
+            self.assertEqual(original, apply_reviewed_content_corrections(original, 'Công nghệ', grade, other))
+
+
 if __name__ == '__main__':
     unittest.main()

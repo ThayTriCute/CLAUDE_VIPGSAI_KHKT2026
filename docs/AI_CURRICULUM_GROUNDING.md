@@ -49,3 +49,7 @@ Mới có gói Bài1 Lịch sử10 từ bằng chứng SGK6–10/SGV23–31 đã
 ## 08/11/2026 — Lab đối chiếu nguồn local
 
 Lệnh chính xác “Đối chiếu tư liệu theo bài học” lấy cấu hình source_workshop từ hồ sơ đúng môn/lớp/bài. Cards là diễn giải sư phạm có phạm vi, không trích nguyên văn hoặc chứng nhận pháp lý. Renderer và chấm nhận xét chạy local, không AI; khi thiếu cấu hình của lệnh này phải báo thiếu, không tự chuyển sang API. Cấu hình hiện có cho Bài1 Lịch sử10, Bài5 Địa lí10, Bài11 GDKT&PL10. Kiểm cơ chế/renderer khác nghiệm thu nguồn toàn chương trình; UI từng bài phải có bằng chứng riêng. Không đưa bộ câu hỏi/đáp án workshop vào prompt sinh bài vì không cần trả token cho phần chạy local.
+
+## THSQG — danh mục tải thêm khi cuộn (owner nhắc 08/11/2026)
+
+Danh mục THSQG có thể chỉ tải20sách ban đầu. Phải cuộn đúng vùng danh mục `overflow-auto` và đối chiếu danh sách tải thêm trước khi kết luận thiếu sách; không chỉ cuộn body. Ngày08/11/2026 lớp11 tăng từ20lên30sách, bổ sung đúng2nhánh Công nghệ và10chỉ mục đã lưu vềF. Mở Mục lục trước khi chọn Chương/Bài trong reader; số trangreader có bìa có thể lệch trangin. Link/danh mục/sốtrang không chứng minh nội dung đã đọc. Ghi chính xác bài/trang/phiên bản, nguồn trùng/khác; dừng yêu cầu tải trả403, không đổiheader/đườngdẫnbypass. Có thể đọc nội dung đang được trình đọc hiển thị hợp lệ qua ChromeMCP; không tựcoi đãtải/lưuảnhkhibịtooltừchối. EvidenceT1_THSQG11_EXPANDED_CATALOG_20261108.json,T1_CN11_THSQG_REVIEW_20261108.json.
