@@ -8,6 +8,11 @@ from tests.test_expert_patch_regressions import load_function
 
 
 class Station1ClosureTests(unittest.TestCase):
+    def test_closure_does_not_invent_a_request_to_practice(self):
+        self.run_reply(reply='Đúc kết theo yêu cầu.')
+        self.assertIn('Không tự thêm ý muốn chuyển sang luyện tập', self.last_prompt)
+        self.assertNotIn("Chỉ ghi nhận: 'Em cho biết đã hiểu và muốn chuyển sang luyện tập.'", self.last_prompt)
+
     def test_owner_required_character_lesson_is_not_reduced_to_praise(self):
         self.run_reply(reply='Bài giảng nhân sinh.')
         self.assertIn('BẮT BUỘC có một bài giảng triết lý nhân sinh và đạo đức', self.last_prompt)

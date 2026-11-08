@@ -87,7 +87,11 @@ Lệnh chính xác “Đối chiếu tư liệu theo bài học” lấy cấu h
 
 Owner cung cấp key mới và cho phép mã hóa để các ca AI kiểm local không phải chờ nhập lại. File duy nhất: C:/Users/pmtgi/AppData/Local/GSAI/credentials/gemini_qa.dpapi, Windows DPAPI theo tài khoản Windows hiện tại. Đã kiểm giải mã được; chưa coi là API đã xác thực trước khi có yêu cầu thật thành công. Khi cần, giải mã trong bộ nhớ của luồng thao tác rồi nhập đúng ô password của app local bằng Chrome MCP; tuyệt đối không in giá trị ra tool output, không lấy dump mọi input/DOM có password, không ghi vào QA/log/code/Git, không dùng lại key cũ đã lộ. Không tự động gọi AI chỉ để ping nếu có lượt bài cần làm thực sự. Ghi trạng thái pending trước yêu cầu và lưu full JSON sau nhận. Không đưa file DPAPI lên GitHub/Cloud: nó gắn với tài khoản Windows; Cloud dùng kho Secrets riêng khi triển khai được ủy quyền. Không khẳng định key cũ đã được thu hồi khi chưa có bằng chứng. Quyền sử dụng kiểm thử này tiếp tục qua ca theo checkpoint; không hỏi lại việc nhập key khi có thể dùng kho đã cấp.
 
-## Lab UTC local — 08/11/2026
+## Owner: bắt buộc kiểm chứng toàn hệ thống
+
+Mọi AI làm việc với repo phải đọc docs/AI_SYSTEM_WIDE_VERIFICATION.md cùng checkpoint. Sửa đúng tầng dùng chung, kiểm local trước, Chrome khi nghi vấn hoặc kiểm đại diện; bảo toàn owner-approved. Model sinh nội dung nhận quy tắc cốt lõi qua system instruction dùng chung JSON/streaming trước fallback, không phải tự đọc filesystem. Không tự coi prompt hoặc audit không cảnh báo là nghiệm thu kiến thức.
+
+## Lab UTC local — chi tiết
 
 Công cụ Đổi giờ và ngày theo UTC nằm trong thư viện Lab của Địa lý mọi lớp, nhãn tham khảoKNTT10. fixed_offset_clock dùng chung kiểm ngày, độ lệch nguyên phút và tràn lịch; renderer hiển thị A/UTC/B và đổi ngày khi thay dữ kiện. Chỉ dùng độ lệch được cho, không tự suy giờ pháp định/DST theo tên thành phố, kinh độ hoặc hướng đi. Không phải mô phỏng chuyển động TráiĐất, không chứng nhận toànchươngtrình. Không gọiAI. Khi kiểm/sửa tái dùng tests/test_fixed_offset_clock.py và bằng chứng T1_DIALY10_UTC_*_UI_20261108.json; giữUI/tínhnăngkhác và không sinh lại bài đã lưu.
 

@@ -47,6 +47,34 @@ class ReviewedContentCorrectionTests(unittest.TestCase):
         for subject,grade in [('Lịch sử',10),('Giáo dục kinh tế và pháp luật',11)]:
             self.assertEqual(value,apply_reviewed_content_corrections(value,subject,grade,topic))
 
+    def test_real_power_lesson_repairs_period_model_and_preserves_math_and_keys(self):
+        topic='Lũy thừa với số mũ thực — Toán 11, KNTT, Bài 18'
+        review=reviewed_lesson_sources('Toán học',11,topic)
+        original='\n\n'.join(r['before'] for r in review['content_corrections'])+'\nCORRECT: B\nCORRECT: A\nCORRECT: C'
+        fixed=apply_reviewed_content_corrections(original,'Toán học',11,topic)
+        self.assertIn('6 kì trọn năm',fixed)
+        self.assertIn(r'a\ne0',fixed)
+        self.assertNotIn('37,8',fixed)
+        self.assertTrue(fixed.endswith('CORRECT: B\nCORRECT: A\nCORRECT: C'))
+        self.assertEqual(fixed,apply_reviewed_content_corrections(fixed,'Toán học',11,topic))
+        self.assertEqual(original,apply_reviewed_content_corrections(original,'Toán học',12,topic))
+
+    def test_literature_actual_excerpt_boundary_error_keeps_answer_key_and_other_grade(self):
+        topic = 'Trao duyên (trích Truyện Kiều) — Ngữ văn 11, KNTT, Bài 6'
+        original = ('Từ câu 711 đến câu 758, thuộc phần "Đoàn viên". '
+                    'Trong 12 câu đầu, Kiều lạy và thưa. HINT: câu thơ thứ 712.'
+                    '\nCORRECT: C\nCORRECT: B\nCORRECT: A')
+        fixed = apply_reviewed_content_corrections(original, 'Ngữ văn', 11, topic)
+        self.assertIn('"Chia lìa"', fixed)
+        self.assertIn('các câu 723–734', fixed)
+        self.assertIn('câu thơ 724', fixed)
+        self.assertNotIn('712', fixed)
+        self.assertTrue(fixed.endswith('CORRECT: C\nCORRECT: B\nCORRECT: A'))
+        self.assertEqual(fixed, apply_reviewed_content_corrections(fixed, 'Ngữ văn', 11, topic))
+        for subject, grade, title in [('Ngữ văn', 10, topic), ('Lịch sử', 11, topic),
+                                      ('Ngữ văn', 11, 'Bài khác')]:
+            self.assertEqual(original, apply_reviewed_content_corrections(original, subject, grade, title))
+
     def test_geography_repairs_scope_clock_data_and_keep_shuffled_key(self):
         from services.lesson_sources import apply_reviewed_quiz_proposal
         topic='Hệ quả địa lí các chuyển động của Trái Đất — Địa lí 10, KNTT, Bài 5'

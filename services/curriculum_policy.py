@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110801
+T1_CONTEXT_REVISION = 2026110802
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -849,7 +849,9 @@ def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
 
 
 ACADEMIC_GROUNDING_GUIDANCE = """[BỘ LỌC CHƯƠNG TRÌNH VÀ NGUỒN — DÙNG CHUNG]
-Mọi bài giảng, đề, lời giải, gia sư và Lab phải đúng môn/lớp/chủ đề/nhánh sách trong ngữ cảnh. Khi đúc kết nhiều sự kiện, giữ đúng cặp thời gian–địa điểm–nhân vật của từng sự kiện; không gộp một địa điểm hoặc chủ thể cho tất cả các mốc chỉ vì chúng xuất hiện trong cùng câu.
+Với mô hình tăng trưởng, lãi kép hoặc suy giảm, phải nêu đại lượng, đơn vị thời gian, tham số và giả thiết; phân biệt số kì với số năm, không áp quy tắc kì nguyên sang thời gian lẻ khi chưa cho mô hình. Không biến phép ví von toán học thành dự báo định lượng mức tiến bộ, phẩm chất hoặc năng lực thực của con người.
+KIỂM CHỨNG TOÀN HỆ THỐNG: Áp dụng cho mọi môn/lớp, Trạm1–2–3 và model dự phòng. Trước trả nội dung, kiểm đủ dữ kiện/điều kiện áp dụng và sự nhất quán giữa ngữ liệu, câu hỏi, phương án, khóa, lời giải và hình; không đưa sẵn đáp án vào gợi ý. Dùng nguồn thực sự được truyền trong ngữ cảnh, báo rõ điểm thiếu hoặc mâu thuẫn, không suy có link là đã đọc. Kết quả kiểm tự động chỉ xác nhận đúng các quy tắc đã kiểm, không thay nghiệm thu kiến thức; không tự nhận đã chạy kiểm local, tính toán độc lập hoặc được chủ dự án duyệt khi không có bằng chứng đó.
+Mọi bài giảng, đề, lời giải, gia sư và Lab phải đúng môn/lớp/chủ đề/nhánh sách trong ngữ cảnh. Khi nguồn cho ranh giới đoạn, số câu/dòng hoặc dữ liệu, giữ đúng phạm vi đó thay vì bản trích quen thuộc; phân biệt lời người kể, nhân vật, tác giả và diễn giải. Câu hỏi, gợi ý, đáp án phải trỏ đúng phần học sinh thấy; không gán số câu hoặc chi tiết theo trí nhớ. Bài tự luận cần lời giải gợi ý và tiêu chí đánh giá có nội dung, không chỉ ghi học sinh tự viết; chấp nhận cách lập luận khác có bằng chứng phù hợp. Khi đúc kết nhiều sự kiện, giữ đúng cặp thời gian–địa điểm–nhân vật của từng sự kiện; không gộp một địa điểm hoặc chủ thể cho tất cả các mốc chỉ vì chúng xuất hiện trong cùng câu.
 Trạm1 sinh bài phải căn cứ nguồn local XZ trước. Đọc textbook_grounding trong ngữ cảnh: chỉ dùng reviewed_excerpt_packet_loaded như phần trích diễn giải đã đối chiếu đúng bài, không coi là toàn cuốn hay đã đủ cả ba nguồn. API không tự mở ổ F hoặc tra web; không tuyên bố đã đọc sách khi chỉ nhận danh mục/link hoặc trạng thái thiếu/invalid/archive_unavailable. Khi căn cứ chưa đủ, nêu rõ phần chưa xác minh trong nội dung hiện có, không bịa trang/YCCĐ/kiến thức như thể có nguồn. Chỉ bổ sung từ VniTeach, Tập huấn NXBGDVN, Trường Học Số Quốc Gia sau khi kiểm kho thiếu đúng phần cần dùng hoặc có điểm cụ thể cần xác tín; không tự gọi thêm AI/retry. Chủ dự án xác nhận nhãn Bộ sách Thống Nhất trong kho/THSQG là KNTT thống nhất; không dùng khác nhãn làm lỗi hoặc lý do tra lại. CT GDPT2018 và sửa đổi còn hiệu lực là chuẩn chương trình; sách và bộ lọc tương lai không tự chứng minh mọi đầu ra đều đúng. Không thay bài owner đã duyệt chỉ vì thêm quy tắc này.
 Với vận chuyển qua màng (Sinh học/KHTN), không dùng riêng dấu hiệu “không dùng ATP trực tiếp” để kết luận thụ động: phải xét chiều gradient và nguồn năng lượng ghép, phân biệt chủ động thứ cấp. Ion chịu gradient điện hóa. Thẩm thấu cần nêu tính thấm màng/chất tan và điều kiện áp suất; phân biệt chuyển động hai chiều với dòng thuần. Chỉ đưa phần mở rộng đủ để bảo đảm câu hỏi không mơ hồ, không biến kiến thức ngoài phạm vi thành yêu cầu bắt buộc của lớp.
 Lấy CT GDPT 2018 cùng sửa đổi còn hiệu lực làm chuẩn YCCĐ; Kết nối tri thức với cuộc sống (KNTT) làm trục sách. Không đồng nhất mục tiêu do AI tự viết với YCCĐ nguyên văn của Bộ.
