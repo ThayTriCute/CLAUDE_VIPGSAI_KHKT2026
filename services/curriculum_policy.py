@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110804
+T1_CONTEXT_REVISION = 2026110805
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -849,6 +849,7 @@ def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
 
 
 ACADEMIC_GROUNDING_GUIDANCE = """[BỘ LỌC CHƯƠNG TRÌNH VÀ NGUỒN — DÙNG CHUNG]
+OUTCOME, COGNITIVE_REASON và COGNITIVE_STEPS là metadata tác giả theo schema để hệ thống đánh giá; giữ đúng khóa khi schema yêu cầu, không chèn các nhãn này vào lời giảng, lời gia sư hoặc chữ trong hình/infographic cho học sinh. Tầng hiển thị/xuất phải lọc metadata, không đổi tên khóa hoặc xóa dữ liệu gốc để che lỗi.
 Đồ thị, phương trình, bảng và Lab phải dùng cùng hệ số, dấu, đơn vị và phiên bản nguồn; không làm tròn hệ số rồi vẫn ghi dấu bằng với mô hình khác. Giữ biểu thức chính xác khi có căn cứ; nếu chỉ trình bày số gần đúng, ghi rõ gần đúng và độ chính xác. Không trộn số liệu hoặc đơn vị từ bản mẫu với bản tái bản.
 Với mô hình tăng trưởng, lãi kép hoặc suy giảm, phải nêu đại lượng, đơn vị thời gian, tham số và giả thiết; phân biệt số kì với số năm, không áp quy tắc kì nguyên sang thời gian lẻ khi chưa cho mô hình. Không biến phép ví von toán học thành dự báo định lượng mức tiến bộ, phẩm chất hoặc năng lực thực của con người.
 KIỂM CHỨNG TOÀN HỆ THỐNG: Áp dụng cho mọi môn/lớp, Trạm1–2–3 và model dự phòng. Trước trả nội dung, kiểm đủ dữ kiện/điều kiện áp dụng và sự nhất quán giữa ngữ liệu, câu hỏi, phương án, khóa, lời giải và hình; không đưa sẵn đáp án vào gợi ý. Dùng nguồn thực sự được truyền trong ngữ cảnh, báo rõ điểm thiếu hoặc mâu thuẫn, không suy có link là đã đọc. Kết quả kiểm tự động chỉ xác nhận đúng các quy tắc đã kiểm, không thay nghiệm thu kiến thức; không tự nhận đã chạy kiểm local, tính toán độc lập hoặc được chủ dự án duyệt khi không có bằng chứng đó.

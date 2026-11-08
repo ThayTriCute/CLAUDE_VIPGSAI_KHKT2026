@@ -11,7 +11,7 @@ from markdown_it import MarkdownIt
 from services.academic_context import academic_context
 
 ROOT = Path(__file__).resolve().parents[1]
-T1_CONTEXT_REVISION = 2026110801
+T1_CONTEXT_REVISION = 2026110802
 _TOKENS = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$)")
 
 
@@ -37,6 +37,10 @@ def renderer_assets():
 
 def lesson_body_html(lesson, trusted_svgs=()):
     """Protect math/code separately; never convert formulas to approximate Unicode."""
+    from services.text_boundaries import student_essay_text
+    # Same student-facing boundary as live essays, for every subject and grade.
+    # The full JSON archive retains these author fields for assessment logic.
+    lesson = student_essay_text(lesson)
     # Raw generated HTML remains escaped. Only exact fragments authored in the
     # matched local review may pass through, never SVG examples inside code.
     visuals = {}
@@ -228,6 +232,8 @@ const print=document.getElementById('print');print.disabled=errors>0;print.oncli
 
 def handwritten_prompt(subject, grade, topic, lesson):
     subject, grade = academic_context(subject, grade)
+    from services.text_boundaries import student_essay_text
+    lesson = student_essay_text(lesson, separate_steps=False)
     return json.dumps({"purpose": "STYLE REFERENCE ONLY — use deterministic HTML/PDF for authoritative text and formulas",
                        "subject": subject, "grade": grade, "title": topic, "content": lesson,
                        "style": {"paper": "cream graph paper #F5EEDC", "binding": "black spiral on the left",
@@ -237,6 +243,7 @@ def handwritten_prompt(subject, grade, topic, lesson):
                                  "reference_scope": "Use the supplied notebook image for visual style only; no exam year, ministry identity, questions, or official certification"},
                        "rules": ["Use only the supplied lesson content and context", "Never invent or alter formulas, facts, examples or figures", "All graph and variation-table panels inside the infographic must have transparent backgrounds, including label backdrops, so the parent infographic paper/grid shows through; never put them on an opaque white rectangle", "When the supplied lesson calls for a graph, draw the actual graph of its stated function; include projections of extrema and symmetry centers to both coordinate axes, exact irrational coordinates and axis intercept coordinates, with collision-free labels; never replace exact coordinates with rounded decimals or a verbal description",
                                  "Preserve chemical, physical, mathematical and language notation for this subject",
+                                 "Do not render internal author metadata OUTCOME, COGNITIVE_REASON or COGNITIVE_STEPS as student-facing text",
                                  "Use multiple pages instead of cutting or shrinking content", "Render variation tables as transparent panels over the infographic background; use large green rising/red falling arrows, aligned critical values and split one-sided limits at vertical discontinuities; never substitute tiny Unicode arrows in a flat grid", "Do not copy any subject matter or identity from a style reference"]}, ensure_ascii=False, indent=2)
 
 
@@ -244,6 +251,9 @@ def faithful_infographic_data(subject, grade, topic, lesson):
     academic_context(subject, grade)
     if not lesson or not lesson.strip():
         raise ValueError("Không có nội dung bài học để trích xuất infographic.")
+    from services.text_boundaries import student_essay_text
+    source_digest = hashlib.sha256(lesson.encode()).hexdigest()
+    lesson = student_essay_text(lesson, separate_steps=False)
     md = MarkdownIt("commonmark", {"html": False}).enable("table")
     title, rows = str(topic or subject), []
     tokens = md.parse(lesson)
@@ -256,4 +266,4 @@ def faithful_infographic_data(subject, grade, topic, lesson):
     # is available in build_lesson_html; never pad excerpt slots with facts.
     return {"box1": rows[:4], "box2": rows[4:8], "box4": [],
             "example": {"title": "Nội dung trích từ bài học", "steps": [], "visual_svg": ""},
-            "source_sha256": hashlib.sha256(lesson.encode()).hexdigest(), "is_excerpt": True}
+            "source_sha256": source_digest, "is_excerpt": True}

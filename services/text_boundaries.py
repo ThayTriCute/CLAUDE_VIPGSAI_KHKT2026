@@ -5,7 +5,7 @@ import re
 
 from services.lesson_export import _TOKENS
 
-T1_CONTEXT_REVISION = 2026110701
+T1_CONTEXT_REVISION = 2026110801
 
 TEACHING_STEP_LAYOUT_GUIDANCE = r"""BỐ CỤC CÁC BƯỚC — QUY TẮC DÙNG CHUNG:
 Áp dụng mọi môn/lớp cho bài học, đề, lời giải, gợi ý và gia sư: mỗi nhãn Bước N: hoặc Step N: phải bắt đầu một đoạn riêng, có một dòng trống giữa các bước; in đậm nhãn nếu đầu ra dùng Markdown. Không dồn các bước vào một đoạn, kể cả ví dụ chỉ có hai bước hoặc có nhiều hơn bốn bước.
@@ -120,9 +120,7 @@ def _chemical_core_tex(body):
 
 def chemical_display_markdown(text, *, separate_steps=True):
     """Display-only conversion; stored lesson/answers/source remain unchanged."""
-    value = wrap_naked_chemistry(str(text or ''))
-    if separate_steps:
-        value = polya_display_markdown(value)
+    value = wrap_naked_chemistry(student_essay_text(text, separate_steps=separate_steps))
     def token(match):
         raw = match[0]
         if raw.startswith(('`', '~~~')):
@@ -217,18 +215,22 @@ def polya_display_markdown(text):
                    for i, block in enumerate(blocks)).strip()
 
 
-def student_essay_text(text):
+def student_essay_text(text, *, separate_steps=True):
     """Hide reserved author metadata, retaining the question and Polya prompts.
 
     A complete JSON value may occupy several lines. Do not guess its closing
     delimiters or consume the following student exercise when JSON is damaged.
     """
     value = str(text or '')
+    # Match reserved metadata only outside code examples. Keep offsets intact
+    # so multiline JSON can still be decoded from the original source.
+    scan = re.sub(r'```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`',
+                  lambda m: re.sub(r'[^\n]', ' ', m[0]), value)
     spans = []
     for match in re.finditer(
             r'(?mi)^[ \t]*(?:[-*][ \t]+)?(?:\*\*|__)?'
             r'(OUTCOME|COGNITIVE_REASON|COGNITIVE_STEPS)(?:\*\*|__)?'
-            r':[ \t]*(?:\*\*|__)?[ \t]*', value):
+            r':[ \t]*(?:\*\*|__)?[ \t]*', scan):
         end = value.find('\n', match.end())
         end = len(value) if end < 0 else end
         if match[1].upper() == 'COGNITIVE_STEPS':
@@ -241,4 +243,4 @@ def student_essay_text(text):
         spans.append((match.start(), end))
     for start, end in reversed(spans):
         value = value[:start] + value[end:]
-    return polya_display_markdown(value)
+    return polya_display_markdown(value) if separate_steps else value

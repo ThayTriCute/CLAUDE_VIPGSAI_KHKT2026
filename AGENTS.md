@@ -100,3 +100,8 @@ Ngữ cảnh sinh bài chỉ gửi nguồn/tiêu chí/grounded_facts cần thi�
 ## THSQG — danh mục tải thêm khi cuộn (owner nhắc 08/11/2026)
 
 Danh mục THSQG có thể chỉ tải20sách ban đầu. Phải cuộn đúng vùng danh mục `overflow-auto` và đối chiếu danh sách tải thêm trước khi kết luận thiếu sách; không chỉ cuộn body. Ngày08/11/2026 lớp11 tăng từ20lên30sách, bổ sung đúng2nhánh Công nghệ và10chỉ mục đã lưu vềF. Mở Mục lục trước khi chọn Chương/Bài trong reader; số trangreader có bìa có thể lệch trangin. Link/danh mục/sốtrang không chứng minh nội dung đã đọc. Ghi chính xác bài/trang/phiên bản, nguồn trùng/khác; dừng yêu cầu tải trả403, không đổiheader/đườngdẫnbypass. Có thể đọc nội dung đang được trình đọc hiển thị hợp lệ qua ChromeMCP; không tựcoi đãtải/lưuảnhkhibịtooltừchối. EvidenceT1_THSQG11_EXPANDED_CATALOG_20261108.json,T1_CN11_THSQG_REVIEW_20261108.json.
+
+
+## Owner 08/11/2026 — ẩn metadata kỹ thuật trên mọi bản học sinh
+
+OUTCOME/COGNITIVE_REASON/COGNITIVE_STEPS là khóa nội bộ, không phải chữ hiển thị cho học sinh. Mọi AI tiếp quản phải giữ schema/dữ liệu gốc, dùng student_essay_text ở tầng hiển thị/xuất/infographic/prompt ảnh cho mọi môn/lớp; không vá riêng một bài hoặc chỉ đổi nhãn sang tiếng Việt. Đọc docs/AI_SYSTEM_WIDE_VERIFICATION.md; kiểm JSON nhiều dòng, code examples, bài kế tiếp và bản xuất thật. Lỗi được owner chỉ ra trên bản QA Vật lí11 là ca tái hiện, không giới hạn phạm vi.

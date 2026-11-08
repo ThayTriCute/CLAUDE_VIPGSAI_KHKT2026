@@ -19,3 +19,6 @@ Khi nguồn nêu ranh giới đoạn/câu/dòng, dùng đúng phạm vi đó, kh
 
 
 Khi dựng đồ thị/Lab, phương trình và nhãn phải dùng cùng hệ số với dữ liệu đang tính; không làm tròn hệ số rồi vẫn ghi dấu bằng. Nếu chỉ trình bày gần đúng, ghi rõ gần đúng và mức chính xác. Đối chiếu đơn vị từng phiên bản nguồn trước ghép số liệu; ví dụ bản mẫu và bản tái bản có thể khác đơn vị trục. Chỉ lấy hình/tình huống đang kiểm làm ca tái hiện, áp dụng quy tắc cho mọi môn/lớp.
+
+
+Ranh giới bắt buộc cho mọi AI — metadata tác giả: OUTCOME, COGNITIVE_REASON, COGNITIVE_STEPS là trường kỹ thuật của dữ liệu sinh bài/đánh giá, không phải nội dung giao diện, phiếu học hay bản in học sinh. Giữ các trường cần thiết trong JSON gốc để parser/đánh giá dùng; không xóa schema hoặc dịch tên khóa để che lỗi. Các tầng hiển thị/xuất/infographic hướng học sinh phải dùng bộ lọc chung student_essay_text, giữ câu hỏi, bước giải, công thức, đáp án và rubric. Bảo vệ ví dụ mã và xử lí JSON nhiều dòng; không xóa nhầm bài kế tiếp khi metadata hỏng. Áp dụng đa môn/đa lớp, không chỉ bài Vật lí11 tái hiện. Kiểm đường xuất thật, không coi dữ liệu JSON có trường kỹ thuật là giao diện đã sai.
