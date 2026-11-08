@@ -35,6 +35,40 @@ class ReviewedContentCorrectionTests(unittest.TestCase):
                                       ('Sinh học', 10, 'Bài khác')]:
             self.assertEqual(original, apply_reviewed_content_corrections(original, subject, grade, topic))
 
+    def test_reviewed_option_repair_preserves_shuffled_position_key_and_original(self):
+        from services.lesson_sources import apply_reviewed_quiz_proposal
+        topic='Hiện thực lịch sử và lịch sử được con người nhận thức — Lịch sử 10, KNTT, Bài 1'
+        original=dict(question='Điểm khác biệt?',correct='A',options=[
+            'A. Nhận thức lịch sử có thể thay đổi, hiện thực lịch sử tồn tại độc lập.',
+            'B. Unchanged', 'C. Chỉ có nhận thức lịch sử mới cần đến nguồn tư liệu để chứng minh.', 'D. Unchanged'])
+        fixed=apply_reviewed_quiz_proposal(original,'Lịch sử',10,topic)
+        self.assertEqual(fixed['correct'],'A')
+        self.assertEqual(fixed['options'][2],'C. Nhận thức lịch sử không cần đối chiếu với bất kỳ nguồn tư liệu nào.')
+        self.assertEqual(fixed['options'][0],original['options'][0])
+        self.assertIn('Chỉ có',original['options'][2])
+        self.assertEqual(fixed,apply_reviewed_quiz_proposal(fixed,'Lịch sử',10,topic))
+        self.assertEqual(original,apply_reviewed_quiz_proposal(original,'Lịch sử',11,topic))
+
+    def test_display_gate_reads_changed_review_in_same_lesson_session(self):
+        import ast
+        from pathlib import Path
+        import real_exam_engine as ree
+        from services.academic_context import academic_context
+        from services.curriculum_policy import correct_khtn8_lime_soil_confusion, validate_lesson_policy, T1_CONTEXT_REVISION
+        from tests.test_expert_patch_regressions import load_function
+        tree=ast.parse(Path('app.py').read_text(encoding='utf-8'))
+        node=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='station1_master_sovereign_brain_gate')
+        self.assertFalse(node.decorator_list, 'Registry changes must not be hidden by a lesson-text cache')
+        legacy=load_function('_legacy_sanitize_katex_latex')
+        sanitize=load_function('sanitize_katex_latex',_legacy_sanitize_katex_latex=legacy)
+        gate=load_function('station1_master_sovereign_brain_gate',ree=ree,academic_context=academic_context,
+            validate_lesson_policy=validate_lesson_policy,sanitize_katex_latex=sanitize,
+            CURRICULUM_POLICY_REVISION=T1_CONTEXT_REVISION,correct_khtn8_lime_soil_confusion=correct_khtn8_lime_soil_confusion)
+        original='A source claim'
+        with patch('services.lesson_sources.apply_reviewed_content_corrections',side_effect=[original,'A corrected source claim']):
+            self.assertEqual(gate(original,'Lịch sử',10,'Unchanged topic'),original)
+            self.assertEqual(gate(original,'Lịch sử',10,'Unchanged topic'),'A corrected source claim')
+
     def test_history_source_repairs_keep_quiz_keys_and_exact_topic_scope(self):
         import re
         topic = 'Hiện thực lịch sử và lịch sử được con người nhận thức — Lịch sử 10, KNTT, Bài 1'

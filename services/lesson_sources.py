@@ -16,7 +16,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 PUBLISHER_PORTAL = "https://taphuan.nxbgd.vn/tap-huan?tab=public"
 PUBLISHER_DIGITAL_LIBRARY = "https://truonghocsoquocgia.nxbgd.vn/"
 NATIONAL_SCHOOL_TEXTBOOK_LIBRARY = "https://www.thsqg.vn/sach"
-T1_CONTEXT_REVISION = 2026110704
+T1_CONTEXT_REVISION = 2026110801
 REVIEW_REGISTRY = Path(__file__).resolve().parents[1] / 'data/lesson_reference_reviews.json'
 PUBLISHER_2026_NOTICE = "https://nxbgd.vn/bai-viet/nha-xuat-ban-giao-duc-viet-nam-thong-bao-ve-viec-su-dung-sach-giao-khoa-nam-hoc-2026-2027"
 
@@ -215,6 +215,26 @@ def apply_reviewed_quiz_proposal(question, subject, grade, topic):
     if review['status'] != 'reviewed_requirements_source':
         return result
     stem = apply_reviewed_content_corrections(str(result.get('question', '')), subject, grade, topic)
+    result['question'] = stem
+    for key in ('explain', 'explanation', 'hint'):
+        if isinstance(result.get(key), str):
+            result[key] = apply_reviewed_content_corrections(result[key], subject, grade, topic)
+    # Options may already be shuffled. Match the reviewed option text, preserving
+    # its current letter/position and the existing answer key, never the old D.
+    if isinstance(result.get('options'), list):
+        options = list(result['options'])
+        for rule in review.get('content_corrections', []):
+            if not isinstance(rule, dict) or not rule.get('reason'):
+                continue
+            before = re.fullmatch(r'[A-D]\. ([^\n]+)', str(rule.get('before', '')))
+            after = re.fullmatch(r'[A-D]\. ([^\n]+)', str(rule.get('after', '')))
+            if not before or not after:
+                continue
+            for i, option in enumerate(options):
+                match = re.fullmatch(r'([A-D]\. )([^\n]+)', option) if isinstance(option, str) else None
+                if match and match[2] == before[1]:
+                    options[i] = match[1] + after[1]
+        result['options'] = options
     matches = [r for r in review.get('assessment_proposals', [])
                if r.get('level') in ('NB', 'TH', 'VD', 'VDC') and r.get('reason')
                and folded(r.get('question', '')) == folded(stem)]

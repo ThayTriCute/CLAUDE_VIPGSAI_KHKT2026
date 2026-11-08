@@ -2,7 +2,7 @@ def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context
-    for module, revision in ((lesson_sources, 2026110704), (curriculum_policy, 2026110702),
+    for module, revision in ((lesson_sources, 2026110801), (curriculum_policy, 2026110702),
                              (lab_scope, 2026110703), (lesson_export, 2026110604),
                              (text_boundaries, 2026110701), (socratic_context, 2026110704)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
@@ -10726,7 +10726,8 @@ def render_math_graph_to_webp_base64(graph_data, extra_points=None, xlabel=r'$x$
     except Exception:
         return ""
 
-@st.cache_data(show_spinner=False, max_entries=256)
+# Read reviewed-source corrections on each render; the registry has its own mtime cache.
+# Caching this gate by lesson text alone hides later source-backed repairs.
 def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán học", grade: int = 12, topic: str = "", policy_revision: int = CURRICULUM_POLICY_REVISION) -> str:
     """Validate the selected curriculum context and normalize display syntax.
 
