@@ -11925,6 +11925,9 @@ if selected_station == station_labels[0]:
                                 from services.curriculum_policy import correct_reviewed_myth_guidance
                                 chat_display = correct_reviewed_myth_guidance(
                                     chat_display, subject, grade_num, st.session_state.get('current_topic', ''))
+                                from services.lesson_sources import apply_reviewed_content_corrections
+                                chat_display = apply_reviewed_content_corrections(
+                                    chat_display, subject, grade_num, st.session_state.get('current_topic', ''))
                                 if t1_msg_index and st.session_state.tram1_chat_history[t1_msg_index-1]['role'] == 'user':
                                     from services.socratic_context import repair_reviewed_station1_closing
                                     chat_display = repair_reviewed_station1_closing(
@@ -12055,6 +12058,9 @@ if selected_station == station_labels[0]:
                                     t1_ans_clean, subject, grade_num, st.session_state.get('current_topic', ''))
                                 from services.curriculum_policy import correct_reviewed_myth_guidance
                                 t1_ans_clean = correct_reviewed_myth_guidance(
+                                    t1_ans_clean, subject, grade_num, st.session_state.get('current_topic', ''))
+                                from services.lesson_sources import apply_reviewed_content_corrections
+                                t1_ans_clean = apply_reviewed_content_corrections(
                                     t1_ans_clean, subject, grade_num, st.session_state.get('current_topic', ''))
                                 from services.socratic_context import repair_reviewed_station1_closing
                                 t1_ans_clean = repair_reviewed_station1_closing(

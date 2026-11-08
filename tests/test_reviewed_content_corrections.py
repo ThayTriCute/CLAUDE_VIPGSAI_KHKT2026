@@ -35,6 +35,22 @@ class ReviewedContentCorrectionTests(unittest.TestCase):
                                       ('Sinh học', 10, 'Bài khác')]:
             self.assertEqual(original, apply_reviewed_content_corrections(original, subject, grade, topic))
 
+    def test_reviewed_tutor_keeps_distinct_event_locations_and_live_replay_share_rule(self):
+        import ast
+        from pathlib import Path
+        topic='Hiện thực lịch sử và lịch sử được con người nhận thức — Lịch sử 10, KNTT, Bài 1'
+        before='(như sự kiện năm $1521$ và $1522$ tại đảo Mác-tan)'
+        fixed=apply_reviewed_content_corrections(before,'Lịch sử',10,topic)
+        self.assertIn('Ê-ca-nô trở về Tây Ban Nha năm $1522$',fixed)
+        self.assertEqual(fixed,apply_reviewed_content_corrections(fixed,'Lịch sử',10,topic))
+        self.assertEqual(before,apply_reviewed_content_corrections(before,'Lịch sử',11,topic))
+        self.assertEqual('`'+before+'`',apply_reviewed_content_corrections('`'+before+'`','Lịch sử',10,topic))
+        tree=ast.parse(Path('app.py').read_text(encoding='utf-8'))
+        targets={n.targets[0].id for n in ast.walk(tree) if isinstance(n,ast.Assign)
+                 and isinstance(n.targets[0],ast.Name) and isinstance(n.value,ast.Call)
+                 and isinstance(n.value.func,ast.Name) and n.value.func.id=='apply_reviewed_content_corrections'}
+        self.assertTrue({'chat_display','t1_ans_clean'} <= targets)
+
     def test_reviewed_option_repair_preserves_shuffled_position_key_and_original(self):
         from services.lesson_sources import apply_reviewed_quiz_proposal
         topic='Hiện thực lịch sử và lịch sử được con người nhận thức — Lịch sử 10, KNTT, Bài 1'

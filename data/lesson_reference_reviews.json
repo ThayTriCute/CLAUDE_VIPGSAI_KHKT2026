@@ -518,7 +518,7 @@
             "SGK7–8 mũi tên/khuôn đúc Cổ Loa và truyện thể hiện các dạng tư liệu/tái hiện khác nhau; không dùng truyền thuyết như bằng chứng tự xác minh sự kiện.",
             "SGK8/SGV26–29 hai bia La-pu-la-pu/Ma-gien-lăng: so sánh cùng sự kiện, góc nhìn và mục đích khác; tách sự kiện với đánh giá. Không viết Ma-gien-lăng còn sống hoàn tất hành trình1522; SGK8 nêu Ê-ca-nô trở về.",
             "Sử học nghiên cứu quá khứ loài người nhiều quy mô; phân biệt chức năng khoa học/xã hội với nhiệm vụ nhận thức/giáo dục/dự báo. Dự báo dựa bài học/bối cảnh, không tiên tri hoặc áp quy luật máy móc.",
-            "Mục tiêu SGK/SGV đã đọc không tự là nguyên văn YCCĐ pháp quy. Chưa tạo bài hoặc nghiệm thu kiến thức toàn môn."
+            "Mục tiêu SGK/SGV đã đọc không tự là nguyên văn YCCĐ pháp quy. Không dùng đó làm chứng nhận toàn bộ kiến thức của môn."
           ]
         },
         {
@@ -581,6 +581,11 @@
           "before": "D. Chỉ có nhận thức lịch sử mới cần đến nguồn tư liệu để chứng minh.",
           "after": "D. Nhận thức lịch sử không cần đối chiếu với bất kỳ nguồn tư liệu nào.",
           "reason": "SGK7–8/SGV26–29: phương án D cũ có thể được hiểu là phân biệt tồn tại của sự kiện với cách chứng minh nhận thức, làm câu hỏi có phương án gây tranh luận. Đổi riêng diễn đạt distractor thành sai rõ ràng, giữ thứ tự và khóaC; bài chưa owner-approved."
+        },
+        {
+          "before": "(như sự kiện năm $1521$ và $1522$ tại đảo Mác-tan)",
+          "after": "(như trận Mác-tan năm $1521$ và việc Ê-ca-nô trở về Tây Ban Nha năm $1522$)",
+          "reason": "Actual unapproved tutor recap grouped two event locations. SGK8/THSQG8 differentiates Magellan death1521 atMactan and Elcano return1522 toSpain. Preserve original UI and source-backed before/after; no AI retry."
         }
       ],
       "source_workshop": {
@@ -627,7 +632,12 @@
             "feedback": "Quá khứ không đổi theo lời kể. Sự khác biệt trong nhận thức cần được xem xét bằng tư liệu và phương pháp, không cho phép suy diễn tùy tiện."
           }
         ]
-      }
+      },
+      "grounded_facts": [
+        "Ngày27/4/1521, Ma-gien-lăng tử trận tại Mác-tan.",
+        "Năm1522, Ê-ca-nô trở về Tây Ban Nha sau hành trình đoàn thám hiểm; không gộp địa điểm Mác-tan cho cả hai mốc.",
+        "Chỉ kết luận theo tư liệu đã đọc; phân biệt sự kiện với cách nhấn mạnh hoặc đánh giá."
+      ]
     },
     {
       "id": "kntt-dialy10-chuyendong-20261108",
