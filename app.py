@@ -10892,6 +10892,42 @@ def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán h�
 # ==============================================================================
 # ENGINE TRỰC QUAN HÓA SƯ PHẠM ĐA MÔN - ĐA LỚP & BBT CHUẨN BỘ GD&ĐT (TKZ-TAB)
 # ==============================================================================
+# Ánh xạ macro LaTeX phổ biến (đa môn 6-12) -> Unicode BMP phổ cập mọi thiết bị,
+# dùng trong _render_math_html_token để KHÔNG lọt mã TeX thô ra màn hình học sinh.
+# Không gồm \sqrt, \frac, \dfrac (xử lý cấu trúc riêng) và \circ ở mũ (xử lý độ riêng).
+_MOET_MATH_SYMBOLS = {
+    'leq': '≤', 'le': '≤', 'geq': '≥', 'ge': '≥', 'neq': '≠', 'ne': '≠',
+    'approx': '≈', 'equiv': '≡', 'sim': '∼', 'propto': '∝', 'cong': '≅',
+    'Leftrightarrow': '⇔', 'Longleftrightarrow': '⇔', 'leftrightarrow': '↔',
+    'Rightarrow': '⇒', 'Longrightarrow': '⇒', 'rightarrow': '→', 'longrightarrow': '→',
+    'Leftarrow': '⇐', 'leftarrow': '←', 'rightleftharpoons': '⇌', 'mapsto': '↦',
+    'to': '→', 'uparrow': '↑', 'downarrow': '↓',
+    'times': '×', 'cdot': '·', 'div': '÷', 'ast': '∗', 'star': '⋆',
+    'bullet': '•', 'circ': '∘', 'setminus': '∖', 'oplus': '⊕', 'otimes': '⊗',
+    'cup': '∪', 'cap': '∩', 'subseteq': '⊆', 'subset': '⊂', 'supseteq': '⊇',
+    'supset': '⊃', 'in': '∈', 'notin': '∉', 'ni': '∋', 'forall': '∀',
+    'exists': '∃', 'nexists': '∄', 'varnothing': '∅', 'emptyset': '∅',
+    'land': '∧', 'lor': '∨', 'neg': '¬', 'therefore': '∴', 'because': '∵',
+    'angle': '∠', 'perp': '⊥', 'parallel': '∥', 'triangle': '△', 'degree': '°',
+    'partial': '∂', 'nabla': '∇', 'int': '∫', 'oint': '∮', 'sum': '∑',
+    'prod': '∏', 'infty': '∞', 'pm': '±', 'mp': '∓',
+    'alpha': 'α', 'beta': 'β', 'gamma': 'γ', 'delta': 'δ', 'epsilon': 'ε',
+    'varepsilon': 'ε', 'zeta': 'ζ', 'eta': 'η', 'theta': 'θ', 'vartheta': 'ϑ',
+    'iota': 'ι', 'kappa': 'κ', 'lambda': 'λ', 'mu': 'μ', 'nu': 'ν', 'xi': 'ξ',
+    'rho': 'ρ', 'varrho': 'ϱ', 'sigma': 'σ', 'varsigma': 'ς', 'tau': 'τ',
+    'upsilon': 'υ', 'phi': 'φ', 'varphi': 'φ', 'chi': 'χ', 'psi': 'ψ', 'omega': 'ω',
+    'pi': 'π', 'varpi': 'ϖ',
+    'Gamma': 'Γ', 'Delta': 'Δ', 'Theta': 'Θ', 'Lambda': 'Λ', 'Xi': 'Ξ',
+    'Pi': 'Π', 'Sigma': 'Σ', 'Upsilon': 'Υ', 'Phi': 'Φ', 'Psi': 'Ψ', 'Omega': 'Ω',
+    'sin': 'sin ', 'cos': 'cos ', 'tan': 'tan ', 'cot': 'cot ', 'sec': 'sec ',
+    'csc': 'csc ', 'ln': 'ln ', 'log': 'log ', 'lg': 'lg ', 'exp': 'exp ',
+    'lim': 'lim ', 'max': 'max ', 'min': 'min ', 'gcd': 'gcd ', 'deg': 'deg ',
+    'ldots': '…', 'dots': '…', 'cdots': '⋯', 'vdots': '⋮', 'ddots': '⋱', 'prime': '′',
+}
+_MOET_SYM_RE = re.compile(
+    r'\\(' + '|'.join(sorted(map(re.escape, _MOET_MATH_SYMBOLS), key=len, reverse=True)) + r')(?![a-zA-Z])'
+)
+_MOET_BLACKBOARD = {'N': 'ℕ', 'Z': 'ℤ', 'Q': 'ℚ', 'R': 'ℝ', 'C': 'ℂ'}
 def _render_math_html_token(raw_val: str) -> str:
     """Chuyển đổi biểu thức LaTeX (phân số, căn thức, số mũ, vô cực) sang HTML sắc nét trong BBT."""
     if not raw_val:
@@ -10932,6 +10968,14 @@ def _render_math_html_token(raw_val: str) -> str:
     s = re.sub(r'_([0-9a-zA-Z])', r'<sub>\1</sub>', s)
 
     # Dọn dẹp dấu $ hoặc ngoặc nhọn dư thừa
+    # An toàn hiển thị đa môn: chuẩn hóa độ (^circ -> °), map ký hiệu LaTeX phổ biến
+    # -> Unicode, rồi gỡ mọi macro chưa ánh xạ để KHÔNG lọt mã TeX thô cho học sinh.
+    s = re.sub(r'<sup>\s*\\circ\s*</sup>', '°', s)
+    s = re.sub(r'\^\s*\{?\s*\\circ\s*\}?', '°', s)
+    s = s.replace('\\%', '%').replace('\\,', '').replace('\\;', '').replace('\\:', '').replace('\\!', '').replace('\\ ', ' ')
+    s = _MOET_SYM_RE.sub(lambda m: _MOET_MATH_SYMBOLS[m.group(1)], s)
+    s = re.sub(r'\\mathbb\{([NZQRC])\}', lambda m: _MOET_BLACKBOARD[m.group(1)], s)
+    s = re.sub(r'\\[a-zA-Z]+', '', s)
     s = s.replace('$', '').replace('{', '').replace('}', '')
     return s.strip()
 

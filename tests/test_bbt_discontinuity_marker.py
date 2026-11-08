@@ -28,6 +28,12 @@ def _load_bbt_funcs():
     tree = ast.parse(src)
     lines = src.splitlines(keepends=True)
     ns = {"re": re, "html": html, "math": math}
+    # module-level _MOET_* symbol tables that _render_math_html_token depends on
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(
+            isinstance(t, ast.Name) and t.id.startswith("_MOET") for t in node.targets
+        ):
+            exec(compile("".join(lines[node.lineno - 1:node.end_lineno]), APP, "exec"), ns)
     for node in tree.body:
         if isinstance(node, ast.FunctionDef) and node.name in _NEEDED:
             seg = "".join(lines[node.lineno - 1:node.end_lineno])
