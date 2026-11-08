@@ -242,5 +242,29 @@ class ReviewedContentCorrectionTests(unittest.TestCase):
             self.assertEqual(original, apply_reviewed_content_corrections(original, 'Công nghệ', grade, other))
 
 
+
+    def test_physics11_graph_and_solutions_preserve_scope_and_phase_equivalence(self):
+        from services.lesson_sources import apply_reviewed_quiz_proposal
+        topic = 'Dao động điều hòa — Vật lí 11, KNTT, Bài 1'
+        review = reviewed_lesson_sources('Vật lý', 11, topic)
+        original = '\n'.join(r['before'] for r in review['content_corrections'])
+        fixed = apply_reviewed_content_corrections(original, 'Vật lý', 11, topic)
+        self.assertEqual(fixed.count('<svg '), 1)
+        self.assertIn('background:transparent', fixed)
+        self.assertIn('(2; −40)', fixed)
+        self.assertIn('2k', fixed)
+        self.assertIn('=3', fixed)
+        self.assertIn('không nhất thiết lặp lại đều', fixed)
+        self.assertEqual(fixed, apply_reviewed_content_corrections(fixed, 'Vật lý', 11, topic))
+        self.assertEqual(original, apply_reviewed_content_corrections(original, 'Vật lý', 10, topic))
+        self.assertEqual(original, apply_reviewed_content_corrections(original, 'Hóa học', 11, topic))
+        for proposal in review['assessment_proposals']:
+            quiz = dict(question=proposal['question'], level='TH', correct='C', options=['A','B','C','D'])
+            corrected = apply_reviewed_quiz_proposal(quiz, 'Vật lý', 11, topic)
+            self.assertEqual(corrected['level'], 'NB')
+            self.assertEqual(corrected['correct'], 'C')
+            self.assertEqual(corrected['options'], quiz['options'])
+
+
 if __name__ == '__main__':
     unittest.main()

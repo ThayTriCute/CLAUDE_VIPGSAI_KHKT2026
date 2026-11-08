@@ -2,9 +2,9 @@ def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation
-    for module, revision in ((lesson_sources, 2026110802), (curriculum_policy, 2026110803),
-                             (lab_scope, 2026110804), (lesson_export, 2026110604),
-                             (text_boundaries, 2026110701), (socratic_context, 2026110704),
+    for module, revision in ((lesson_sources, 2026110802), (curriculum_policy, 2026110805),
+                             (lab_scope, 2026110805), (lesson_export, 2026110802),
+                             (text_boundaries, 2026110801), (socratic_context, 2026110704),
                              (philosophy_rotation, 2026110801)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
@@ -21,7 +21,7 @@ from copy import deepcopy
 from services.academic_context import canonical_subject, academic_context, validate_exam_context
 from services.lesson_export import build_lesson_html, handwritten_prompt
 from services.lesson_sources import books_for, lesson_references, PUBLISHER_PORTAL, PUBLISHER_DIGITAL_LIBRARY, NATIONAL_SCHOOL_TEXTBOOK_LIBRARY, textbook_update_notice
-from services.lab_scope import lesson_context_examples, function_formula_latex
+from services.lab_scope import lesson_context_examples, function_formula_latex, oscillator_equation_latex
 from services.text_boundaries import option_markdown_label, chemical_display_markdown
 from qa_runtime import (split_api_keys, admin_password_matches, normalize_bool, display_frame,
     exam_response_metadata, observed_item_matrix, mcq_answer_matches)
@@ -6690,7 +6690,7 @@ def render_smart_lab(data, current_subject=""):
 
 
 
-            st.success(f"📈 **Phương trình:** $x = {p_A:.1f}\\cos({p_omega:.1f}t + {p_phi:.2f})$ cm")
+            st.success(f"📈 **Phương trình:** ${oscillator_equation_latex(p_A, p_omega, p_phi)}$")
 
             st.caption(f"📌 **Chu kỳ T:** `{p_T:.2f} s`<br>📌 **Tần số f:** `{p_f:.2f} Hz`<br>📌 **$v_{{max}}$:** `{p_vmax:.1f} cm/s`<br>📌 **$a_{{max}}$:** `{p_amax:.1f} cm/s²`", unsafe_allow_html=True)
 

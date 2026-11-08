@@ -16,3 +16,9 @@ AI làm việc với repo phải:
 Công cụ QA workspace qa_evidence/audit_saved_lesson_local.py dùng parser/validator có sẵn, không API và không sửa bài; kiểm context/hash/cấu trúc câu hỏi và một số cờ nghi vấn, không chứng minh đáp án đều đúng. Không đưa dữ liệu phiên, khóa hoặc DB lên GitHub để chạy công cụ.
 
 Khi nguồn nêu ranh giới đoạn/câu/dòng, dùng đúng phạm vi đó, không lấy bản trích quen thuộc thay thế. Đối chiếu người nói, số câu trong gợi ý, câu hỏi và đáp án; diễn giải không phải nguyên văn. Tự luận cần gợi ý lời giải/rubric có nội dung và chấp nhận lập luận khác có bằng chứng. Ca thật Văn11 Trao duyên (SGK711–758) là bằng chứng lỗi phạm vi, không giới hạn quy tắc ở môn Văn.
+
+
+Khi dựng đồ thị/Lab, phương trình và nhãn phải dùng cùng hệ số với dữ liệu đang tính; không làm tròn hệ số rồi vẫn ghi dấu bằng. Nếu chỉ trình bày gần đúng, ghi rõ gần đúng và mức chính xác. Đối chiếu đơn vị từng phiên bản nguồn trước ghép số liệu; ví dụ bản mẫu và bản tái bản có thể khác đơn vị trục. Chỉ lấy hình/tình huống đang kiểm làm ca tái hiện, áp dụng quy tắc cho mọi môn/lớp.
+
+
+Ranh giới bắt buộc cho mọi AI — metadata tác giả: OUTCOME, COGNITIVE_REASON, COGNITIVE_STEPS là trường kỹ thuật của dữ liệu sinh bài/đánh giá, không phải nội dung giao diện, phiếu học hay bản in học sinh. Giữ các trường cần thiết trong JSON gốc để parser/đánh giá dùng; không xóa schema hoặc dịch tên khóa để che lỗi. Các tầng hiển thị/xuất/infographic hướng học sinh phải dùng bộ lọc chung student_essay_text, giữ câu hỏi, bước giải, công thức, đáp án và rubric. Bảo vệ ví dụ mã và xử lí JSON nhiều dòng; không xóa nhầm bài kế tiếp khi metadata hỏng. Áp dụng đa môn/đa lớp, không chỉ bài Vật lí11 tái hiện. Kiểm đường xuất thật, không coi dữ liệu JSON có trường kỹ thuật là giao diện đã sai.
