@@ -1532,6 +1532,324 @@
           }
         ]
       }
+    },
+    {
+      "id": "kntt-cn11-cokhi-bai1-20261108",
+      "subject": "Công nghệ",
+      "grade": 11,
+      "topics": [
+        "Khái quát về cơ khí chế tạo — Công nghệ 11, Công nghệ cơ khí, KNTT, Bài 1"
+      ],
+      "reviewed_on": "2026-11-08",
+      "scope": "Đã đọc NXBGDVN và THSQG đúng Bài 1 trang 7–10; một bài thật được sửa có căn cứ, chưa đủ VniTeach/owner/toàn CT. Không chứng nhận pháp lý.",
+      "sources": [
+        {
+          "title": "SGK Công nghệ11 — Công nghệ cơ khí, KNTT, NXBGDVN",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-cong-nghe-11-cong-nghe-co-khi.4701281611",
+          "locator": "Title1/TOC4–5 và Bài1trang7–10 đã đọc ảnh lưu local/XZ.",
+          "edition_note": "Titleghi táibảnlần3; nămchưađượcxáctín. Reader140/downloaddeclared70, chỉlưufirst10,khôngtoànsách/đủba nguồn/phápquy.",
+          "criteria": [
+            "Bám đúng nhánh/môn/lớp và phạm vi đã đọc; không gán mục tiêu SGK thành YCCĐ pháp quy đã chứng nhận.",
+            "Câu hỏi, đáp án, ví dụ/lời giải phải đủ dữ kiện, có rubric; không bịa số liệu địa phương hoặc suy một ví dụ thành quy luật tuyệt đối."
+          ]
+        },
+        {
+          "title": "Trường Học Số Quốc Gia — cong-nghe-11-cong-nghe-co-khi-tn",
+          "url": "https://www.thsqg.vn/sach/cong-nghe-11-cong-nghe-co-khi-tn/doc",
+          "locator": "Đã mở mục lục đúng bài và đọc ảnh trang in7–10 trong Chrome; reader gồm bìa nên số trang giao diện lệch1 so với trang in.",
+          "edition_note": "Owner xác nhận Bộ sách Thống Nhất=KNTT thống nhất. Phần đã đọc khớp nội dung NXBGDVN, không phải bằng chứng biên soạn độc lập hoặc toàn sách/đủYCCĐ/phápquy. Năm ấn bản và mọi đính chính chưa chứng nhận.",
+          "criteria": [
+            "Đối chiếu cùng bài/trang với NXBGDVN; không lấy liên kết danh mục hoặc số lượng sách tải ban đầu làm bằng chứng đã đọc."
+          ]
+        }
+      ],
+      "grounded_facts": [
+        "Cơ khí chế tạo dùng tri thức toán, vật lí, vật liệu cho thiết kế/chế tạo/vận hành/bảo dưỡng/sửa chữa thiết bị, chi tiết phục vụ sản xuất/đời sống. Không đồng nhất ngành chỉ với kim loại hoặc chỉ gia công cắt gọt.",
+        "Vai trò tạo công cụ/máy và đồ dùng, tăng năng suất, cải thiện đời sống, phục vụ nghiên cứu. Đối tượng gồm kim loại/hợp kim, phi kim và vật liệu khác; công cụ là máy và dụng cụ gia công, sản phẩm cần hồ sơ kĩ thuật.",
+        "Trang10gồm5bước cơ bản: đọc bản vẽ chi tiết; chế tạo phôi; gia công chi tiết; xử lí/bảo vệ bề mặt; lắp ráp và kiểm tra chất lượng. Tạo phôi có đúc, gia công áp lực, hàn/cắt; gia công làm chi tiết đạt yêu cầu bản vẽ.",
+        "Phân biệt hoạt động mô tả quy trình với hướng dẫn học sinh tự vận hành máy tiện, hàn/cắt hoặc hóa chất xử lí bề mặt. Không giao thao tác nguy hiểm ở nhà. Khối lịch sử bổ sung trang9chưađượckiểmđộc lập,khôngtựlấymốclịchsửđólàbằngchứngpháplý."
+      ],
+      "content_corrections": [
+        {
+          "before": "người ta không thể chỉ làm thủ công bằng tay.",
+          "after": "người chế tạo lựa chọn dụng cụ thủ công, máy móc hoặc tự động hóa phù hợp yêu cầu kĩ thuật và quy mô sản xuất.",
+          "reason": "Không tuyệt đối hóa một cách sản xuất."
+        },
+        {
+          "before": "phi kim (polime, composite) và các vật liệu mới.",
+          "after": "phi kim (ví dụ polime) và các vật liệu khác. Không xếp mọi composite vào nhóm phi kim vì vật liệu nền có thể khác nhau.",
+          "reason": "Không đồng nhất mọi composite là phi kim."
+        },
+        {
+          "before": "*   **Đối tượng lao động:**",
+          "after": "*   **Vai trò:** Tạo công cụ và máy móc phục vụ sản xuất, góp phần nâng năng suất; tạo đồ dùng phục vụ đời sống; cung cấp thiết bị phục vụ nghiên cứu.\n*   **Đối tượng lao động:**",
+          "reason": "Bổ sung vai trò trong phạm vi trang 7 đã đọc."
+        },
+        {
+          "before": "Sử dụng máy cắt gọt để đạt hình dạng chính xác theo bản vẽ.",
+          "after": "Lựa chọn phương pháp, máy và dụng cụ gia công phù hợp để chi tiết đạt yêu cầu bản vẽ; cắt gọt là một nhóm phương pháp, không đại diện cho mọi hoạt động chế tạo.",
+          "reason": "Giữ phạm vi phương pháp."
+        },
+        {
+          "before": "có hình dáng gần giống sản phẩm nhất",
+          "after": "có hình dạng, kích thước ban đầu phù hợp phương án chế tạo đã chọn",
+          "reason": "Không suy phôi luôn gần hình dạng sản phẩm nhất."
+        },
+        {
+          "before": "lại là bước đầu tiên và quan trọng nhất",
+          "after": "được đặt ở đầu quy trình năm bước đang học",
+          "reason": "Không xếp hạng tầm quan trọng thiếu căn cứ."
+        },
+        {
+          "before": "Mạ kẽm là phương pháp hóa học/điện hóa để bảo vệ bề mặt kim loại khỏi tác động của môi trường, thuộc bước xử lí và bảo vệ bề mặt.",
+          "after": "Trong tình huống đã cho, lớp kẽm được tạo nhằm bảo vệ bề mặt chi tiết, nên thuộc bước xử lí và bảo vệ bề mặt. Có nhiều phương pháp tạo lớp kẽm; không đồng nhất tất cả với một cơ chế điện hóa.",
+          "reason": "Phân loại theo mục đích được cho, không khái quát sai cơ chế."
+        },
+        {
+          "before": "Em hãy liệt kê 3 sản phẩm trong gia đình em là kết quả của ngành cơ khí chế tạo và cho biết vật liệu chính tạo nên chúng là gì?",
+          "after": "Em hãy liệt kê 3 sản phẩm trong gia đình em là kết quả của ngành cơ khí chế tạo và cho biết vật liệu chính tạo nên chúng là gì?\n\nĐáp án minh họa (không phải trích SGK): bản lề bằng thép, nồi bằng nhôm, trục quạt bằng thép. Chấp nhận sản phẩm/vật liệu khác có căn cứ quan sát; không suy vật liệu chính xác chỉ qua màu sắc. Rubric tham khảo: mỗi ví dụ đúng sản phẩm và vật liệu được 1 điểm.",
+          "reason": "Có đáp án tự học và chấp nhận quan sát thực."
+        },
+        {
+          "before": "Giả sử em muốn tự tay làm một chiếc giá đỡ điện thoại đơn giản bằng nhôm. Hãy phác thảo sơ bộ các bước em sẽ thực hiện dựa trên quy trình 5 bước đã học (Lưu ý: Chỉ thực hiện các thao tác an toàn như uốn, kẻ vạch, không tự ý dùng máy cắt điện khi chưa có người hướng dẫn).",
+          "after": "Em hãy vẽ phác trên giấy một giá đỡ điện thoại giả định bằng nhôm và lập kế hoạch theo năm bước. Chỉ thực hiện bản vẽ hoặc mô hình giấy; không yêu cầu tự cắt, uốn, khoan hay xử lí hóa chất trên kim loại.\n\nGợi ý: (1) Bản vẽ nêu hình dạng và kích thước dự kiến; (2) dự kiến phôi phù hợp; (3) mô tả phương án gia công do người có chuyên môn thực hiện; (4) lựa chọn hoàn thiện bề mặt theo yêu cầu; (5) dự kiến lắp ráp nếu có và kiểm độ ổn định, cạnh sắc, khả năng đỡ máy. Rubric: đủ năm bước và giải thích phù hợp mỗi bước 1 điểm; không tự bịa dung sai hoặc hướng dẫn vận hành máy.",
+          "reason": "Bài tập lập kế hoạch có đáp án, không giao thao tác kim loại ở nhà."
+        },
+        {
+          "before": "*   **Bước 4: Kiểm tra và nhìn lại:** Kết luận lại ý kiến đó là đầy đủ hay chưa đủ?",
+          "after": "*   **Bước 4: Kiểm tra và nhìn lại:** Ý kiến chỉ làm việc với kim loại là không đầy đủ: ngành còn dùng phi kim, ví dụ polime và những vật liệu khác phù hợp sản phẩm. Không suy mọi composite đều là phi kim. Rubric tham khảo: nhận xét đúng 1 điểm, nêu nhóm vật liệu ngoài kim loại 1 điểm, ví dụ có căn cứ 1 điểm.",
+          "reason": "Bổ sung kết luận và rubric tự luận."
+        },
+        {
+          "before": "*   **Bước 2: Lập kế hoạch:** Xác định các công việc cụ thể: (1) Xem mẫu/bản vẽ, (2) Cắt thanh sắt thô, (3) Mài/Dũa/Khoan lỗ, (4) Sơn chống gỉ, (5) Thử gạt chốt.\n*   **Bước 3: Thực hiện kế hoạch:** Sắp xếp các công việc đã liệt kê ở Bước 2 tương ứng vào các tiêu đề: Bước 1: Đọc bản vẽ; Bước 2: Chế tạo phôi... cho đến hết.\n*   **Bước 4: Kiểm tra và nhìn lại:** Quy trình đã đảm bảo tính logic chưa? Có thiếu bước bảo vệ bề mặt (sơn) để chốt sắt không bị gỉ không?",
+          "after": "*   **Bước 2: Lập kế hoạch:** Dùng năm bước đang học để mô tả công việc của xưởng, không phải hướng dẫn học sinh tự vận hành máy.\n*   **Bước 3: Thực hiện kế hoạch — lời giải tham khảo:** (1) Đọc bản vẽ chốt và các bộ phận dẫn hướng: hình dạng, kích thước, yêu cầu lắp ghép; đề chưa có số liệu nên không tự đặt dung sai. (2) Chuẩn bị phôi sắt/thép phù hợp bản vẽ và phương án chế tạo. (3) Người có chuyên môn gia công các chi tiết để đạt yêu cầu. (4) Xử lí và bảo vệ bề mặt theo yêu cầu, ví dụ sơn chống gỉ phù hợp. (5) Lắp các chi tiết chốt, bộ phận dẫn hướng theo thiết kế rồi kiểm chất lượng: đóng/mở, độ khớp, bề mặt và yêu cầu bản vẽ.\n*   **Bước 4: Kiểm tra và nhìn lại:** Không bỏ phần lắp ráp khi chỉ nêu thử gạt chốt. Quy trình là mô hình học tập, phương án thực tế phụ thuộc thiết kế và điều kiện xưởng. Rubric tham khảo: mỗi bước đúng chức năng 1 điểm; chấp nhận phương án khác có giải thích phù hợp. Không thực hiện thao tác máy hoặc hóa chất ở nhà.",
+          "reason": "Đủ lời giải năm bước, phần lắp ráp và kiểm tra, rubric và giới hạn dữ kiện."
+        }
+      ],
+      "source_workshop": {
+        "title": "Xưởng tư duy: từ bản vẽ đến kiểm tra",
+        "scope": "Bài tập đối chiếu nguồn và quyết định trên giấy; không mô phỏng máy hoặc thay hướng dẫn nghề.",
+        "cards": [
+          {
+            "title": "Bản vẽ",
+            "text": "Lấy hình dạng, kích thước, yêu cầu kĩ thuật làm căn cứ; thiếu số liệu phải nêu thiếu."
+          },
+          {
+            "title": "Vật liệu và phương pháp",
+            "text": "Không chỉ kim loại; chọn phôi và phương pháp theo yêu cầu, không coi mọi gia công là cắt gọt."
+          },
+          {
+            "title": "Hoàn thiện",
+            "text": "Phân biệt xử lí bề mặt với lắp ráp và kiểm chất lượng; mô tả đủ chức năng từng bước."
+          }
+        ],
+        "questions": [
+          {
+            "prompt": "Đề chưa có kích thước chốt cửa, nên làm gì?",
+            "options": [
+              "Tự đặt dung sai và coi là yêu cầu SGK.",
+              "Nêu thiếu dữ kiện, chỉ mô tả quy trình theo yêu cầu bản vẽ.",
+              "Bỏ bản vẽ."
+            ],
+            "correct": 1,
+            "feedback": "Không bịa thông số chưa được cung cấp."
+          },
+          {
+            "prompt": "Tạo lớp bảo vệ chống gỉ thuộc chức năng nào?",
+            "options": [
+              "Xử lí và bảo vệ bề mặt.",
+              "Đọc bản vẽ.",
+              "Chỉ kiểm tra kích thước."
+            ],
+            "correct": 0,
+            "feedback": "Phân loại theo mục đích bảo vệ bề mặt, không suy mọi phương pháp đều điện hóa."
+          },
+          {
+            "prompt": "Bước cuối với chốt có nhiều bộ phận cần gì?",
+            "options": [
+              "Chỉ cắt phôi.",
+              "Chỉ sơn.",
+              "Lắp ráp và kiểm chất lượng theo yêu cầu."
+            ],
+            "correct": 2,
+            "feedback": "Không thay lắp ráp bằng một phép thử gạt chốt duy nhất."
+          }
+        ]
+      }
+    },
+    {
+      "id": "kntt-cn11-channuoi-bai2-20261108",
+      "subject": "Công nghệ",
+      "grade": 11,
+      "topics": [
+        "Vật nuôi và phương thức chăn nuôi — Công nghệ 11, Công nghệ chăn nuôi, KNTT, Bài 2"
+      ],
+      "reviewed_on": "2026-11-08",
+      "scope": "Đọc đúng Bài2 trang13–17 qua ba cổng; VniTeach là mẫu2022, NXBGDVN/THSQG có nhãn cập nhật. Một bài thật có sửa theo nguồn, chưa owner/toàn CT/pháp luật.",
+      "sources": [
+        {
+          "title": "SGK Công nghệ11 — Công nghệ chăn nuôi, KNTT, NXBGDVN",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-cong-nghe-11-cong-nghe-chan-nuoi.4701291701",
+          "locator": "Title1 và Bài2trang13–17đãđọcảnhcurrentpublisher; đối chiếu trước đó PDFVniTeach mẫu2022trang13–17.",
+          "edition_note": "Officialtitle táibảnlần3,khôngdấusáchmẫu; nămchưađượcxáctín. Declared60download/120reader,chỉlưuchọnlọc7ảnh. BảnVniTeach códấuSÁCHMẪU2022khôngdùnglàbảnhiệnhành. Trang13hiệnnhãnCầnThơ/KhánhHòa khácnhãnSócTrăng/NinhThuậnởsample;khôngsuyđãkiểmtoàncuốn/đủ3nguồn/phápquy.",
+          "criteria": [
+            "Bám đúng nhánh/môn/lớp và phạm vi đã đọc; không gán mục tiêu SGK thành YCCĐ pháp quy đã chứng nhận.",
+            "Câu hỏi, đáp án, ví dụ/lời giải phải đủ dữ kiện, có rubric; không bịa số liệu địa phương hoặc suy một ví dụ thành quy luật tuyệt đối."
+          ]
+        },
+        {
+          "title": "Trường Học Số Quốc Gia — cong-nghe-11-cong-nghe-chan-nuoi-tn",
+          "url": "https://www.thsqg.vn/sach/cong-nghe-11-cong-nghe-chan-nuoi-tn/doc",
+          "locator": "Đã mở mục lục đúng bài và đọc ảnh trang in13–17 trong Chrome; reader gồm bìa nên số trang giao diện lệch1 so với trang in.",
+          "edition_note": "Owner xác nhận Bộ sách Thống Nhất=KNTT thống nhất. Phần đã đọc khớp nội dung NXBGDVN, không phải bằng chứng biên soạn độc lập hoặc toàn sách/đủYCCĐ/phápquy. Năm ấn bản và mọi đính chính chưa chứng nhận.",
+          "criteria": [
+            "Đối chiếu cùng bài/trang với NXBGDVN; không lấy liên kết danh mục hoặc số lượng sách tải ban đầu làm bằng chứng đã đọc."
+          ]
+        },
+        {
+          "title": "VniTeach — SGK Công nghệ 11 Chăn nuôi, bản mẫu 2022",
+          "url": "https://www.vniteach.com/2022/12/24/sgk-cong-nghe-11-chan-nuoi-sach-kntt/",
+          "locator": "Bài 2 trang in 13–17 (PDF14–18) đã đọc; file local vniteach-chan-nuoi11-public-preview-20261108.pdf.xz.",
+          "edition_note": "Có dấu SÁCH MẪU 2022; chỉ đối chiếu khái niệm, không coi là ấn bản hiện hành. Các nhãn Sóc Trăng/Ninh Thuận khác bản NXBGDVN/THSQG đã đọc; ưu tiên bản sau cho nhãn địa danh trong phạm vi bài.",
+          "criteria": [
+            "Nguồn trùng cuốn qua cổng khác không phải tác giả độc lập; không suy toàn sách đã đọc."
+          ]
+        }
+      ],
+      "grounded_facts": [
+        "Bài phân loại vật nuôi theo nguồn gốc(bảnđịa/ngoạinhập), đặc tính sinh vật học và mục đích sử dụng. Đây là các tiêu chí khác nhau; một vật nuôi có thể thuộc nhiều nhóm theo tiêu chí và có nhiều mục đích sử dụng. Không suy gia súc đồng nghĩa mọi loài bốn chân hoặc gia cầm đồng nghĩa mọi chim hoang.",
+        "Ba phương thức chính: chăn thả tự do; công nghiệp/tập trung theo quy trình; bán công nghiệp kết hợp nuôi chuồng với chăn thả. Nêu điều kiện, ưu/nhược điểm; không khẳng định một phương thức luôn tốt nhất hoặc tự động không có dịch bệnh/ô nhiễm.",
+        "Bền vững xét kinh tế,môi trường,xã hội, phúc lợi vật nuôi và hài hòa lợi ích. Thông minh dùng công nghệ/cảm biến/AI/IoT để quản lí/giám sát, chọn công nghệ khả thi phù hợp điều kiện; chỉ có một cảm biến không tự chứng minh trang trại bền vững.",
+        "Bài yêu cầu liên hệ địa phương phải dùng quan sát/nguồn thật, không bịa số liệu đàn vật nuôi/doanh thu hoặc tình trạng dịch bệnh. Không tự đưa liều thuốc/vaccine, chỉ định thú y, mật độ/chế độ nuôi thực tế khi thiếu dữ kiện.",
+        "Primaryảnhtrang13đãcậpnhậtlợnBaXuyênthànhphốCầnThơ,cừuPhanRangKhánhHòa;tríchsample2022theoSócTrăng/NinhThuậnphảighiđúngbốicảnhlịchsử,khônggọiđólàđịagiớihiệnnay."
+      ],
+      "content_corrections": [
+        {
+          "before": "Vì sao có loài chỉ để lấy thịt, có loài để lấy trứng, lấy sữa, hoặc có loài vừa làm cảnh vừa kéo xe?",
+          "after": "Vì sao con người lựa chọn giống vật nuôi và mục đích sử dụng khác nhau như lấy thịt, trứng, sữa, sức kéo hoặc làm cảnh? Một loài có thể có nhiều mục đích sử dụng.",
+          "reason": "Không đồng nhất một loài với duy nhất một mục đích."
+        },
+        {
+          "before": "Vật nuôi bản địa (có sẵn tại địa phương, thích nghi tốt với điều kiện khí hậu vùng) và vật nuôi ngoại nhập (được nhập nội từ các vùng/quốc gia khác).",
+          "after": "Vật nuôi bản địa có nguồn gốc hình thành, phát triển trong nước và vật nuôi ngoại nhập được đưa từ nước ngoài vào. Việc một giống đang có ở địa phương không tự chứng minh đó là giống bản địa.",
+          "reason": "Phân loại nguồn gốc không chỉ dựa nơi hiện nuôi."
+        },
+        {
+          "before": "Nuôi nhốt hoàn toàn trong hệ thống chuồng trại khép kín, áp dụng cơ giới hóa, tự động hóa cao, thức ăn công nghiệp cân đối dinh dưỡng. Phương thức này cho năng suất và hiệu quả kinh tế cao, nhưng đòi hỏi vốn đầu tư lớn và cần xử lý tốt chất thải để tránh ô nhiễm môi trường.",
+          "after": "Tập trung vật nuôi trong chuồng trại, áp dụng quy trình chăm sóc, dinh dưỡng và quản lí có kiểm soát; mức cơ giới hóa, tự động hóa tùy điều kiện, không mặc định mọi cơ sở đều tự động hóa cao hoặc khép kín hoàn toàn. Có khả năng đạt năng suất cao, nhưng cần vốn và kiểm soát dịch bệnh, chất thải; lợi nhuận thực tế còn phụ thuộc chi phí, đầu ra và quản lí.",
+          "reason": "Không tuyệt đối hóa thiết bị/hiệu quả kinh tế theo phương thức."
+        },
+        {
+          "before": "Là hệ thống chăn nuôi mang lại hiệu quả kinh tế cao, bảo vệ môi trường, đảm bảo an sinh xã hội,",
+          "after": "Hướng tới hiệu quả kinh tế lâu dài, bảo vệ môi trường và trách nhiệm xã hội,",
+          "reason": "Bền vững không đồng nghĩa bảo đảm lợi nhuận cao mọi trường hợp."
+        },
+        {
+          "before": "Một hộ gia đình tại nông thôn có 20 con gà ta",
+          "after": "Trong tình huống giả định phục vụ bài học, một hộ gia đình có 20 con gà ta",
+          "reason": "Không gán số liệu minh họa cho địa phương thực."
+        },
+        {
+          "before": "Màu sắc lông và chiều cao chuồng không phải là tiêu chí phân loại vật nuôi.",
+          "after": "Trong ba nhóm tiêu chí của bài, phương án D ghép đặc điểm màu lông với chiều cao chuồng; chiều cao chuồng không phải tiêu chí phân loại vật nuôi. Không suy màu lông không bao giờ dùng mô tả hoặc phân biệt giống.",
+          "reason": "Giải thích đáp án D theo tổ hợp được cho, không phủ nhận vai trò kiểu hình."
+        },
+        {
+          "before": "B. Cho năng suất và hiệu quả kinh tế cao nhờ áp dụng quy trình khép kín, cơ giới hóa.",
+          "after": "B. Có thể đạt năng suất cao khi áp dụng quy trình phù hợp; cần vốn, quản lí dịch bệnh và chất thải.",
+          "reason": "Phương án đúng có điều kiện, giữ vị trí khóa B."
+        },
+        {
+          "before": "Chăn nuôi công nghiệp áp dụng quy trình nghiêm ngặt, thức ăn công nghiệp và chuồng trại khép kín nên cho năng suất cao, nhưng đòi hỏi vốn lớn và phải kiểm soát chặt chẽ dịch bệnh, chất thải (không có nghĩa là tuyệt đối không có ô nhiễm hay dịch bệnh).",
+          "after": "Chăn nuôi công nghiệp tổ chức nuôi tập trung theo quy trình, có khả năng đạt năng suất cao nhưng cần đầu tư và quản lí tốt. Không bảo đảm lợi nhuận, không mặc định mọi cơ sở khép kín hoặc tự động hóa cao; vẫn có rủi ro dịch bệnh và ô nhiễm.",
+          "reason": "Giải thích thống nhất phương án B đã sửa."
+        },
+        {
+          "before": "3. Vì sao ứng dụng công nghệ cảm biến và AI trong chăn nuôi thông minh lại giúp nâng cao hiệu quả sản xuất?",
+          "after": "3. Vì sao ứng dụng công nghệ cảm biến và AI trong chăn nuôi thông minh có thể giúp nâng cao hiệu quả sản xuất?\n\nĐáp án tham khảo: (1) Nguồn gốc, đặc tính sinh vật học, mục đích sử dụng là các tiêu chí khác nhau; cùng một con bò có thể đồng thời thuộc nhóm nguồn gốc xác định, gia súc và dùng lấy sữa. (2) Chăn thả thường cần đầu tư thấp hơn nhưng phụ thuộc tự nhiên; nuôi công nghiệp cần đầu tư, quản lí có kiểm soát và có khả năng đạt năng suất cao, không bảo đảm lợi nhuận. (3) Dữ liệu cảm biến giúp phát hiện điều kiện bất thường, hỗ trợ quyết định; hiệu quả còn tùy độ tin cậy dữ liệu, cách sử dụng và chi phí. Rubric: mỗi câu có ý đúng và giải thích phù hợp được 1 điểm.",
+          "reason": "Đủ đáp án luyện tập và điều kiện áp dụng."
+        },
+        {
+          "before": "và nêu một ưu điểm nổi bật của phương thức đó.",
+          "after": "và nêu một ưu điểm nổi bật của phương thức đó.\n\nMẫu trình bày: tên giống — nguồn xác định nguồn gốc — địa điểm/thời điểm quan sát — đặc điểm nuôi — phương thức và lí do — ưu điểm kèm điều kiện. Không có quan sát hoặc nguồn tin thì ghi chưa đủ căn cứ, không bịa giống bản địa, số đàn hay hiệu quả tại địa phương. Rubric tham khảo: nguồn/quan sát rõ 1 điểm, phân loại đúng 1 điểm, ưu điểm có điều kiện 1 điểm.",
+          "reason": "Có rubric nhiệm vụ mở, không bịa đáp án địa phương."
+        },
+        {
+          "before": "Một trang trại nuôi 500 con gà lông màu",
+          "after": "Trong tình huống giả định, một trang trại nuôi 500 con gà lông màu",
+          "reason": "Số liệu bài toán là giả định, không chứng cứ địa phương."
+        },
+        {
+          "before": "bắt sâu bã",
+          "after": "kiếm thức ăn tự nhiên",
+          "reason": "Sửa cụm từ vô nghĩa trong tình huống."
+        },
+        {
+          "before": "Tự trả lời câu hỏi: Mô hình kết hợp giữa nuôi nhốt chuồng và chăn thả ngoài tự nhiên gọi là gì? Phương thức này giúp vật nuôi vận động, thịt chắc ngon (nhờ thả vườn) nhưng vẫn đảm bảo dinh dưỡng và quản lý được dịch bệnh (nhờ chuồng trại và thức ăn bổ sung).",
+          "after": "Đáp án: chăn nuôi bán công nghiệp, vì kết hợp khu vực chăn thả với chuồng và thức ăn bổ sung. Ưu điểm có thể là tận dụng nguồn thức ăn tự nhiên, có không gian vận động và chủ động bổ sung khẩu phần; không suy chắc chắn thịt ngon hoặc kiểm soát hết dịch bệnh. Chất lượng và sức khỏe còn phụ thuộc giống, dinh dưỡng, chăm sóc và quản lí. Rubric: xác định phương thức 1 điểm, chỉ ra hai dấu hiệu 1 điểm, nêu ưu điểm có điều kiện 1 điểm.",
+          "reason": "Bổ sung đáp án/rubric, bỏ đảm bảo chất lượng và dịch bệnh thiếu căn cứ."
+        },
+        {
+          "before": "Xác định các giải pháp thực tế cho quy mô nhỏ (ví dụ: dùng hệ thống biogas xử lý chất thải, lắp cảm biến nhiệt độ/độ ẩm chuồng nuôi đơn giản, tiêm phòng định kỳ).",
+          "after": "Xét các phương án phù hợp điều kiện, chi phí và hướng dẫn chuyên môn: ghi chép, theo dõi môi trường chuồng, quản lí chất thải; phòng bệnh theo cán bộ thú y, không tự đặt lịch hoặc liều thuốc/vaccine.",
+          "reason": "Không biến bài khái quát thành chỉ định thực hành thú y."
+        },
+        {
+          "before": "Tự viết ra các đề xuất cụ thể: Về môi trường (xây dựng hầm biogas hoặc đệm lót sinh học), về công nghệ (lắp quạt thông gió tự động theo cảm biến nhiệt độ chuồng nuôi), về kinh tế - quản lý (ghi chép nhật ký số hoặc ứng dụng quản lý đàn trên điện thoại).",
+          "after": "Lời giải tham khảo: (1) Ghi nhật kí đàn, thức ăn, chi phí và bất thường bằng sổ hoặc công cụ số phù hợp. (2) Theo dõi nhiệt độ/độ ẩm; chỉ chọn cảm biến, điều khiển thông gió khi có khả năng vận hành, bảo trì và hướng dẫn chuyên môn. (3) Thu gom, xử lí chất thải theo phương án được người có chuyên môn đánh giá; biogas hay đệm lót là lựa chọn cần xét điều kiện, không bắt buộc xây hoặc phối hợp tùy tiện. (4) Đánh giá đồng thời kinh tế, môi trường, xã hội và phúc lợi vật nuôi; một thiết bị không tự chứng nhận bền vững. Đề thiếu ngân sách, diện tích và dữ liệu vận hành nên chưa chọn cấu hình hay khẳng định lợi nhuận. Rubric: đề xuất có căn cứ 1 điểm, xét điều kiện/chi phí 1 điểm, đủ các mặt bền vững 1 điểm, không chỉ định liều thú y hay hướng dẫn xây công trình 1 điểm.",
+          "reason": "Đủ lời giải có điều kiện, không đưa thiết kế công trình hoặc chỉ định thú y."
+        }
+      ],
+      "source_workshop": {
+        "title": "Nông trại tư duy: chọn theo bằng chứng",
+        "scope": "Phân loại và đánh giá phương án trên tình huống giả định; không hướng dẫn vận hành trang trại, xây công trình hay điều trị vật nuôi.",
+        "cards": [
+          {
+            "title": "Ba tiêu chí",
+            "text": "Nguồn gốc, đặc tính sinh học, mục đích sử dụng không thay thế nhau; đang có tại địa phương chưa đủ chứng minh bản địa."
+          },
+          {
+            "title": "Ba phương thức",
+            "text": "Chăn thả, công nghiệp, bán công nghiệp có điều kiện và đánh đổi; không phương thức nào tự bảo đảm không dịch bệnh hoặc có lãi."
+          },
+          {
+            "title": "Bền vững và thông minh",
+            "text": "Xét kinh tế, môi trường, xã hội, phúc lợi; công nghệ phải phù hợp dữ liệu, chi phí và năng lực vận hành."
+          }
+        ],
+        "questions": [
+          {
+            "prompt": "Giống đang nuôi tại địa phương có chắc là bản địa?",
+            "options": [
+              "Chắc chắn.",
+              "Không; cần căn cứ nguồn gốc.",
+              "Chỉ cần nhìn màu lông."
+            ],
+            "correct": 1,
+            "feedback": "Nơi hiện nuôi không đủ xác định nguồn gốc."
+          },
+          {
+            "prompt": "Gà vừa thả vườn vừa nuôi chuồng, ăn bổ sung trong tình huống bài thuộc gì?",
+            "options": [
+              "Bán công nghiệp.",
+              "Tự nhiên hoàn toàn.",
+              "Không thể phân loại."
+            ],
+            "correct": 0,
+            "feedback": "Kết hợp chăn thả và nuôi chuồng có bổ sung thức ăn."
+          },
+          {
+            "prompt": "Lắp một cảm biến có tự chứng minh trang trại bền vững?",
+            "options": [
+              "Có, mọi trường hợp.",
+              "Có nếu cảm biến đắt.",
+              "Không; phải xét nhiều mặt và hiệu quả thực tế."
+            ],
+            "correct": 2,
+            "feedback": "Thông minh và bền vững có liên quan nhưng không đồng nhất."
+          }
+        ]
+      }
     }
   ]
 }
