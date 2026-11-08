@@ -1025,6 +1025,60 @@
           "scope": "Selected grade10 livecatalogue lacks exactGDKTPL10link; no completebook comparison claimed."
         }
       ]
+    },
+    {
+      "id": "kntt-toan11-luythua-20261108",
+      "subject": "Toán học",
+      "grade": 11,
+      "topics": [
+        "Lũy thừa với số mũ thực — Toán 11, KNTT, Bài 18"
+      ],
+      "reviewed_on": "2026-11-08",
+      "scope": "SGKsample Bài18 trang4–9 đãđọc;1bàithật quaappharnessđãnhận33.73s,noappException,auditcơhọckhôngfinding nhưngsemanticreviewtìm5nhómsửa. Chưa nghiệmthu tutor/Lab/export/nguồnbảnhiệnhành/đủ3nguồn hoặc toànsách.",
+      "sources": [
+        {
+          "title": "SGK Toán11 tập hai — KNTT, NXBGD, phần công khai đã lưu",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-toan-11-tap-hai.4701058816",
+          "locator": "Bài18 trang in4–9 tương ứng PDF6–11; mục lục in3/PDF5, titlepagePDF3 đã đọc trực quan từ kho local.",
+          "edition_note": "Trang tên sách ghi tái bản lần thứba; receipt publisher_sample_download/edition_unverified,59PDFpages so với113reader. Chỉ dùng phần Bài18 đã đọc, không tuyên bố sách hoàn chỉnh/ấn bản hiện hành được chứng nhận.",
+          "criteria": [
+            "Theo khung kiến thức/kĩ năng in trang4: nhận biết và giải thích lũy thừa số mũ nguyên/hữu tỉ/thực; tính/rút gọn và vận dụng, dùng máy tính khi phù hợp. Không lấy khung SGK này làm trích dẫn đầy đủ YCCĐ pháp quy.",
+            "Mỗi biến đổi phải đủ điều kiện xác định, phân biệt số căn bậc chẵn với kí hiệu căn số học; không áp quy tắc vô điều kiện cho cơ số âm và số mũ bất kì.",
+            "Bài lãi kép phải nêu lãi suất theo kì, số kì, cách đổi phần trăm và giả thiết không đổi/không rút lãi. Không gán dữ liệu giả định thành lãi suất thực tế."
+          ]
+        }
+      ],
+      "grounded_facts": [
+        "Trong bài, lũy thừa số mũ hữu tỉ và thực được định nghĩa cho cơ số dương; không suy điều kiện đó để cấm lũy thừa số mũ nguyên của cơ số âm.",
+        "Số kì ghép lãi khác số năm; khi ghép n lần/năm trong T năm thì số kì bằng nT."
+      ],
+      "content_corrections": [
+        {
+          "before": "Giả sử bạn gửi 10 triệu đồng vào ngân hàng với lãi suất $6\\%/$năm. Sau 1 năm, số tiền cả gốc lẫn lãi là $10 \\cdot (1 + 0,06)^1$. Sau 2 năm là $10 \\cdot (1 + 0,06)^2$. Nếu gửi trong $n$ năm, ta có công thức $10 \\cdot (1 + 0,06)^n$. Ở các lớp dưới, chúng ta đã làm quen với $n$ là số nguyên dương. Vậy nếu thời gian gửi không tròn năm (số mũ là số hữu tỉ) hoặc xét các mô hình tăng trưởng liên tục (số mũ là số thực), ta sẽ tính toán như thế nào? Bài học này sẽ giúp em mở rộng khái niệm lũy thừa từ số mũ nguyên sang số mũ hữu tỉ và số mũ thực.",
+          "after": "Xét mô hình toán học giả định: gửi 10 triệu đồng, lãi suất mỗi kì một năm là $6\\%$, không đổi, lãi nhập vốn sau mỗi kì và không rút tiền. Sau $n$ kì trọn năm ($n$ nguyên không âm), số tiền là $10(1+0,06)^n$ triệu đồng. Việc mở rộng số mũ sang hữu tỉ và thực là nội dung toán học; không tự suy công thức này là quy tắc trả lãi cho mọi thời gian gửi lẻ năm. Bài học sẽ làm rõ định nghĩa và điều kiện áp dụng của lũy thừa.",
+          "reason": "SGK Bài18 trang4/9: lãi theo kì và sốkì; tách giảđịnh môhình khỏi điều kiện hợpđồng thực."
+        },
+        {
+          "before": "**2. Hình thành kiến thức**",
+          "after": "**2. Hình thành kiến thức**\n\n**Ôn lũy thừa với số mũ nguyên:** Với $n$ nguyên dương, $a^n$ là tích $n$ thừa số $a$ (kể cả $a=0$). Với $a\\ne0$, $a^0=1$ và $a^{-n}=1/a^n$. Trong phạm vi bài, $0^0$ và lũy thừa số mũ nguyên âm của 0 không xác định. Cơ số âm vẫn dùng được với số mũ nguyên; không áp điều kiện cơ số dương của định nghĩa số mũ thực để phủ nhận trường hợp này.",
+          "reason": "SGKtrang4/5: bổsungmục sốmũ nguyên trongkhung kiếnthức/kĩnăng,khônglẫnđiềukiện với sốmũthực."
+        },
+        {
+          "before": "**Bài toán lãi kép:** Một người gửi 50 triệu đồng vào ngân hàng với lãi suất $7\\%/$năm. Biết rằng nếu không rút tiền ra khỏi ngân hàng thì cứ sau mỗi năm số tiền lãi sẽ được nhập vào vốn để tính lãi cho năm tiếp theo. Tính số tiền người đó nhận được sau 5 năm 6 tháng (giả định lãi suất không đổi và kỳ hạn tính lãi có thể chia nhỏ).\n*Hướng dẫn:* Sử dụng công thức $A = P(1+r)^N$. Ở đây $N$ có thể là số hữu tỉ (5,5 năm).",
+          "after": "**Bài toán mô hình lãi kép giả định:** Một khoản vốn 50 triệu đồng được ghép lãi mỗi năm một lần, lãi suất $7\\%$ mỗi kì năm không đổi, không gửi thêm, không rút vốn/lãi và bỏ qua phí, thuế. Hãy tính số tiền sau 6 kì trọn năm.\n*Hướng dẫn:* Dùng $A=P(1+r)^N$, với $P=50$ (triệu đồng), $r=0,07$ là lãi suất mỗi kì và $N=6$ là số kì. Không tự thay số năm lẻ vào công thức khi chưa có quy tắc xử lý kì lẻ.",
+          "reason": "SGK4/9: môhìnhghéplãitheokì; đủgiảthiết,sốkìnguyênvàđơnvị,khôngđoánnửanămngân hàng. Bài toán sốmũhữutỉ đượcgiữ ởbài2phóngxạ với côngthứccho."
+        },
+        {
+          "before": "Vì $0 < a < 1$ nên hàm số lũy thừa nghịch biến.",
+          "after": "Vì $0 < a < 1$ nên theo tính chất so sánh hai lũy thừa cùng cơ số, thứ tự giá trị ngược với thứ tự số mũ.",
+          "reason": "SGK5/8: đangso sánh sốmũcùngcơsốcốđịnh,khônggọi nhầmthànhhàmlũythừatheobiếncơsố."
+        },
+        {
+          "before": "Lũy thừa với số mũ thực cho thấy sự liên tục của các giá trị trong tự nhiên, từ những con số nguyên đơn giản đến những dãy số vô tận xấp xỉ một hằng số. Trong cuộc sống, những thay đổi lớn lao thường không đến tức thì mà tích lũy dần dần qua từng \"số mũ\" nhỏ bé của nỗ lực mỗi ngày. Như công thức lãi kép, nếu mỗi ngày em chỉ cần cố gắng tốt hơn chính mình $1\\%$, thì sau một năm, sự tăng trưởng của em sẽ là $(1 + 0,01)^{365} \\approx 37,8$ lần.",
+          "after": "Trong toán học, một mô hình tăng trưởng cần có đại lượng, đơn vị và giả thiết rõ ràng. Khi liên hệ với việc học, điều có ích là duy trì thói quen tự kiểm, sửa sai và giúp đỡ nhau; không thể lấy công thức lãi kép để đo con người tiến bộ bao nhiêu lần. Giá trị của sự kiên trì và lòng tốt cần được thể hiện bằng hành động cụ thể, không phải một hệ số tăng trưởng chưa có căn cứ.",
+          "reason": "Ẩn dụsưphạmkhôngphảidựbáođịnhlượngconngười;khôngsuy(1.01)^365thànhmứctiếnbộthật. Ápdụngnguyêntắckiểmđiềukiện/môhìnhchung."
+        }
+      ]
     }
   ]
 }

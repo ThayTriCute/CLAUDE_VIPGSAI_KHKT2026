@@ -14,6 +14,8 @@ class AcademicGroundingBoundaryTests(unittest.TestCase):
         prepared = with_academic_grounding('KEEP REQUESTED SCHEMA')
         self.assertTrue(prepared.startswith('KEEP REQUESTED SCHEMA'))
         self.assertEqual(prepared.count('KIỂM CHỨNG TOÀN HỆ THỐNG:'), 1)
+        self.assertIn('phân biệt số kì với số năm', prepared)
+        self.assertIn('Không biến phép ví von toán học thành dự báo định lượng', prepared)
         for clause in ('mọi môn/lớp, Trạm1–2–3 và model dự phòng',
                        'không thay nghiệm thu kiến thức',
                        'không tự nhận đã chạy kiểm local'):
