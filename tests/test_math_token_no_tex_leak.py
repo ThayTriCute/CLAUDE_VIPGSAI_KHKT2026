@@ -26,12 +26,14 @@ def _load():
         ):
             exec(compile("".join(lines[node.lineno - 1:node.end_lineno]), APP, "exec"), ns)
     for node in tree.body:
-        if isinstance(node, ast.FunctionDef) and node.name == "_render_math_html_token":
+        if isinstance(node, ast.FunctionDef) and node.name in (
+            "_render_math_html_token", "_moet_plaintext_math"
+        ):
             exec(compile("".join(lines[node.lineno - 1:node.end_lineno]), APP, "exec"), ns)
-    return ns["_render_math_html_token"]
+    return ns["_render_math_html_token"], ns["_moet_plaintext_math"]
 
 
-render = _load()
+render, plaintext = _load()
 _BACKSLASH_MACRO = re.compile(r"\\[a-zA-Z]+")
 
 
@@ -88,6 +90,38 @@ class TestNoTexLeak(unittest.TestCase):
     def test_plain_text_untouched(self):
         self.assertEqual(render("3"), "3")
         self.assertIn("|x|", render("|x|"))
+
+
+class TestPlaintextMathForImages(unittest.TestCase):
+    """_moet_plaintext_math: ô BBT ảnh WebP (matplotlib vẽ chữ thuần) — Unicode, không lọt TeX."""
+
+    def _no_leak(self, out):
+        self.assertFalse(_BACKSLASH_MACRO.search(out), f"raw TeX leaked: {out!r}")
+
+    def test_sqrt_becomes_unicode(self):
+        self.assertEqual(plaintext(r"\sqrt{2}"), "√(2)")
+        self.assertEqual(plaintext(r"\sqrt3"), "√3")
+        self._no_leak(plaintext(r"y = \sqrt{3}"))
+
+    def test_fraction_flattened(self):
+        self.assertEqual(plaintext(r"\dfrac{1}{2}"), "1/2")
+        self._no_leak(plaintext(r"\frac{a}{b}"))
+
+    def test_irrational_extremum_no_leak(self):
+        # cực trị vô tỷ ở ô BBT ảnh phải hiện √, không phải '\sqrt{2}'
+        out = plaintext(r"-2\sqrt{2}")
+        self.assertIn("√", out)
+        self._no_leak(out)
+
+    def test_symbols_and_degree(self):
+        self.assertIn("≤", plaintext(r"x \leq 3"))
+        self.assertIn("°", plaintext(r"90^\circ"))
+        self.assertIn("α", plaintext(r"\alpha"))
+        self._no_leak(plaintext(r"\theta \geq \pi"))
+
+    def test_infinity_preserved(self):
+        self.assertEqual(plaintext("+∞"), "+∞")
+        self.assertEqual(plaintext("3"), "3")
 
 
 if __name__ == "__main__":

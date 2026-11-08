@@ -9624,6 +9624,7 @@ def render_bbt_to_webp_base64(raw_bbt: str) -> str:
             s = s.replace('+inf', '+∞').replace('-inf', '-∞').replace('inf', '∞')
             s = re.sub(r'\\+(?:nearrow|searrow)', '', s).replace('↗', '').replace('↘', '').strip()
             s = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', r'\1/\2', s)
+            s = _moet_plaintext_math(s)
             return s
 
 
@@ -10928,6 +10929,21 @@ _MOET_SYM_RE = re.compile(
     r'\\(' + '|'.join(sorted(map(re.escape, _MOET_MATH_SYMBOLS), key=len, reverse=True)) + r')(?![a-zA-Z])'
 )
 _MOET_BLACKBOARD = {'N': 'ℕ', 'Z': 'ℤ', 'Q': 'ℚ', 'R': 'ℝ', 'C': 'ℂ'}
+def _moet_plaintext_math(s):
+    """Chuyển macro LaTeX -> Unicode THUẦN cho ngữ cảnh vẽ chữ (matplotlib/WebP, SVG text):
+    √, phân số a/b, độ °, ký hiệu đa môn; gỡ macro chưa ánh xạ. Không để lọt mã TeX ra ảnh.
+    Dùng cho ô BBT ảnh WebP (Trạm 3) nơi matplotlib vẽ chữ thuần, không mathtext."""
+    if not s:
+        return s
+    s = re.sub(r'\\sqrt\s*\{([^{}]+)\}', r'√(\1)', s)
+    s = re.sub(r'\\sqrt\s*(\d+)', r'√\1', s)
+    s = re.sub(r'\\(?:d|t)?frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}', r'\1/\2', s)
+    s = re.sub(r'<sup>\s*\\circ\s*</sup>', '°', s)
+    s = re.sub(r'\^\s*\{?\s*\\circ\s*\}?', '°', s)
+    s = _MOET_SYM_RE.sub(lambda m: _MOET_MATH_SYMBOLS[m.group(1)], s)
+    s = re.sub(r'\\mathbb\s*\{([NZQRC])\}', lambda m: _MOET_BLACKBOARD[m.group(1)], s)
+    s = re.sub(r'\\[a-zA-Z]+', '', s).replace('{', '').replace('}', '')
+    return s
 def _render_math_html_token(raw_val: str) -> str:
     """Chuyển đổi biểu thức LaTeX (phân số, căn thức, số mũ, vô cực) sang HTML sắc nét trong BBT."""
     if not raw_val:
