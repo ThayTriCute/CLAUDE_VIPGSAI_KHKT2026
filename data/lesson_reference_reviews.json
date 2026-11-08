@@ -1685,7 +1685,7 @@
         "Vật nuôi và phương thức chăn nuôi — Công nghệ 11, Công nghệ chăn nuôi, KNTT, Bài 2"
       ],
       "reviewed_on": "2026-11-08",
-      "scope": "Chuẩn bịnguồnđúngbài, chưa sinh/nghiệmthu; phầnđãđọcnhưlocator,chưađủ3nguồn/toànCT/owner. THSQGđãđọcđúngtrang13–17;xemT1_CN11_THSQG_REVIEW_20261108.json.",
+      "scope": "Đọc đúng Bài2 trang13–17 qua ba cổng; VniTeach là mẫu2022, NXBGDVN/THSQG có nhãn cập nhật. Một bài thật có sửa theo nguồn, chưa owner/toàn CT/pháp luật.",
       "sources": [
         {
           "title": "SGK Công nghệ11 — Công nghệ chăn nuôi, KNTT, NXBGDVN",
@@ -1722,7 +1722,134 @@
         "Bền vững xét kinh tế,môi trường,xã hội, phúc lợi vật nuôi và hài hòa lợi ích. Thông minh dùng công nghệ/cảm biến/AI/IoT để quản lí/giám sát, chọn công nghệ khả thi phù hợp điều kiện; chỉ có một cảm biến không tự chứng minh trang trại bền vững.",
         "Bài yêu cầu liên hệ địa phương phải dùng quan sát/nguồn thật, không bịa số liệu đàn vật nuôi/doanh thu hoặc tình trạng dịch bệnh. Không tự đưa liều thuốc/vaccine, chỉ định thú y, mật độ/chế độ nuôi thực tế khi thiếu dữ kiện.",
         "Primaryảnhtrang13đãcậpnhậtlợnBaXuyênthànhphốCầnThơ,cừuPhanRangKhánhHòa;tríchsample2022theoSócTrăng/NinhThuậnphảighiđúngbốicảnhlịchsử,khônggọiđólàđịagiớihiệnnay."
-      ]
+      ],
+      "content_corrections": [
+        {
+          "before": "Vì sao có loài chỉ để lấy thịt, có loài để lấy trứng, lấy sữa, hoặc có loài vừa làm cảnh vừa kéo xe?",
+          "after": "Vì sao con người lựa chọn giống vật nuôi và mục đích sử dụng khác nhau như lấy thịt, trứng, sữa, sức kéo hoặc làm cảnh? Một loài có thể có nhiều mục đích sử dụng.",
+          "reason": "Không đồng nhất một loài với duy nhất một mục đích."
+        },
+        {
+          "before": "Vật nuôi bản địa (có sẵn tại địa phương, thích nghi tốt với điều kiện khí hậu vùng) và vật nuôi ngoại nhập (được nhập nội từ các vùng/quốc gia khác).",
+          "after": "Vật nuôi bản địa có nguồn gốc hình thành, phát triển trong nước và vật nuôi ngoại nhập được đưa từ nước ngoài vào. Việc một giống đang có ở địa phương không tự chứng minh đó là giống bản địa.",
+          "reason": "Phân loại nguồn gốc không chỉ dựa nơi hiện nuôi."
+        },
+        {
+          "before": "Nuôi nhốt hoàn toàn trong hệ thống chuồng trại khép kín, áp dụng cơ giới hóa, tự động hóa cao, thức ăn công nghiệp cân đối dinh dưỡng. Phương thức này cho năng suất và hiệu quả kinh tế cao, nhưng đòi hỏi vốn đầu tư lớn và cần xử lý tốt chất thải để tránh ô nhiễm môi trường.",
+          "after": "Tập trung vật nuôi trong chuồng trại, áp dụng quy trình chăm sóc, dinh dưỡng và quản lí có kiểm soát; mức cơ giới hóa, tự động hóa tùy điều kiện, không mặc định mọi cơ sở đều tự động hóa cao hoặc khép kín hoàn toàn. Có khả năng đạt năng suất cao, nhưng cần vốn và kiểm soát dịch bệnh, chất thải; lợi nhuận thực tế còn phụ thuộc chi phí, đầu ra và quản lí.",
+          "reason": "Không tuyệt đối hóa thiết bị/hiệu quả kinh tế theo phương thức."
+        },
+        {
+          "before": "Là hệ thống chăn nuôi mang lại hiệu quả kinh tế cao, bảo vệ môi trường, đảm bảo an sinh xã hội,",
+          "after": "Hướng tới hiệu quả kinh tế lâu dài, bảo vệ môi trường và trách nhiệm xã hội,",
+          "reason": "Bền vững không đồng nghĩa bảo đảm lợi nhuận cao mọi trường hợp."
+        },
+        {
+          "before": "Một hộ gia đình tại nông thôn có 20 con gà ta",
+          "after": "Trong tình huống giả định phục vụ bài học, một hộ gia đình có 20 con gà ta",
+          "reason": "Không gán số liệu minh họa cho địa phương thực."
+        },
+        {
+          "before": "Màu sắc lông và chiều cao chuồng không phải là tiêu chí phân loại vật nuôi.",
+          "after": "Trong ba nhóm tiêu chí của bài, phương án D ghép đặc điểm màu lông với chiều cao chuồng; chiều cao chuồng không phải tiêu chí phân loại vật nuôi. Không suy màu lông không bao giờ dùng mô tả hoặc phân biệt giống.",
+          "reason": "Giải thích đáp án D theo tổ hợp được cho, không phủ nhận vai trò kiểu hình."
+        },
+        {
+          "before": "B. Cho năng suất và hiệu quả kinh tế cao nhờ áp dụng quy trình khép kín, cơ giới hóa.",
+          "after": "B. Có thể đạt năng suất cao khi áp dụng quy trình phù hợp; cần vốn, quản lí dịch bệnh và chất thải.",
+          "reason": "Phương án đúng có điều kiện, giữ vị trí khóa B."
+        },
+        {
+          "before": "Chăn nuôi công nghiệp áp dụng quy trình nghiêm ngặt, thức ăn công nghiệp và chuồng trại khép kín nên cho năng suất cao, nhưng đòi hỏi vốn lớn và phải kiểm soát chặt chẽ dịch bệnh, chất thải (không có nghĩa là tuyệt đối không có ô nhiễm hay dịch bệnh).",
+          "after": "Chăn nuôi công nghiệp tổ chức nuôi tập trung theo quy trình, có khả năng đạt năng suất cao nhưng cần đầu tư và quản lí tốt. Không bảo đảm lợi nhuận, không mặc định mọi cơ sở khép kín hoặc tự động hóa cao; vẫn có rủi ro dịch bệnh và ô nhiễm.",
+          "reason": "Giải thích thống nhất phương án B đã sửa."
+        },
+        {
+          "before": "3. Vì sao ứng dụng công nghệ cảm biến và AI trong chăn nuôi thông minh lại giúp nâng cao hiệu quả sản xuất?",
+          "after": "3. Vì sao ứng dụng công nghệ cảm biến và AI trong chăn nuôi thông minh có thể giúp nâng cao hiệu quả sản xuất?\n\nĐáp án tham khảo: (1) Nguồn gốc, đặc tính sinh vật học, mục đích sử dụng là các tiêu chí khác nhau; cùng một con bò có thể đồng thời thuộc nhóm nguồn gốc xác định, gia súc và dùng lấy sữa. (2) Chăn thả thường cần đầu tư thấp hơn nhưng phụ thuộc tự nhiên; nuôi công nghiệp cần đầu tư, quản lí có kiểm soát và có khả năng đạt năng suất cao, không bảo đảm lợi nhuận. (3) Dữ liệu cảm biến giúp phát hiện điều kiện bất thường, hỗ trợ quyết định; hiệu quả còn tùy độ tin cậy dữ liệu, cách sử dụng và chi phí. Rubric: mỗi câu có ý đúng và giải thích phù hợp được 1 điểm.",
+          "reason": "Đủ đáp án luyện tập và điều kiện áp dụng."
+        },
+        {
+          "before": "và nêu một ưu điểm nổi bật của phương thức đó.",
+          "after": "và nêu một ưu điểm nổi bật của phương thức đó.\n\nMẫu trình bày: tên giống — nguồn xác định nguồn gốc — địa điểm/thời điểm quan sát — đặc điểm nuôi — phương thức và lí do — ưu điểm kèm điều kiện. Không có quan sát hoặc nguồn tin thì ghi chưa đủ căn cứ, không bịa giống bản địa, số đàn hay hiệu quả tại địa phương. Rubric tham khảo: nguồn/quan sát rõ 1 điểm, phân loại đúng 1 điểm, ưu điểm có điều kiện 1 điểm.",
+          "reason": "Có rubric nhiệm vụ mở, không bịa đáp án địa phương."
+        },
+        {
+          "before": "Một trang trại nuôi 500 con gà lông màu",
+          "after": "Trong tình huống giả định, một trang trại nuôi 500 con gà lông màu",
+          "reason": "Số liệu bài toán là giả định, không chứng cứ địa phương."
+        },
+        {
+          "before": "bắt sâu bã",
+          "after": "kiếm thức ăn tự nhiên",
+          "reason": "Sửa cụm từ vô nghĩa trong tình huống."
+        },
+        {
+          "before": "Tự trả lời câu hỏi: Mô hình kết hợp giữa nuôi nhốt chuồng và chăn thả ngoài tự nhiên gọi là gì? Phương thức này giúp vật nuôi vận động, thịt chắc ngon (nhờ thả vườn) nhưng vẫn đảm bảo dinh dưỡng và quản lý được dịch bệnh (nhờ chuồng trại và thức ăn bổ sung).",
+          "after": "Đáp án: chăn nuôi bán công nghiệp, vì kết hợp khu vực chăn thả với chuồng và thức ăn bổ sung. Ưu điểm có thể là tận dụng nguồn thức ăn tự nhiên, có không gian vận động và chủ động bổ sung khẩu phần; không suy chắc chắn thịt ngon hoặc kiểm soát hết dịch bệnh. Chất lượng và sức khỏe còn phụ thuộc giống, dinh dưỡng, chăm sóc và quản lí. Rubric: xác định phương thức 1 điểm, chỉ ra hai dấu hiệu 1 điểm, nêu ưu điểm có điều kiện 1 điểm.",
+          "reason": "Bổ sung đáp án/rubric, bỏ đảm bảo chất lượng và dịch bệnh thiếu căn cứ."
+        },
+        {
+          "before": "Xác định các giải pháp thực tế cho quy mô nhỏ (ví dụ: dùng hệ thống biogas xử lý chất thải, lắp cảm biến nhiệt độ/độ ẩm chuồng nuôi đơn giản, tiêm phòng định kỳ).",
+          "after": "Xét các phương án phù hợp điều kiện, chi phí và hướng dẫn chuyên môn: ghi chép, theo dõi môi trường chuồng, quản lí chất thải; phòng bệnh theo cán bộ thú y, không tự đặt lịch hoặc liều thuốc/vaccine.",
+          "reason": "Không biến bài khái quát thành chỉ định thực hành thú y."
+        },
+        {
+          "before": "Tự viết ra các đề xuất cụ thể: Về môi trường (xây dựng hầm biogas hoặc đệm lót sinh học), về công nghệ (lắp quạt thông gió tự động theo cảm biến nhiệt độ chuồng nuôi), về kinh tế - quản lý (ghi chép nhật ký số hoặc ứng dụng quản lý đàn trên điện thoại).",
+          "after": "Lời giải tham khảo: (1) Ghi nhật kí đàn, thức ăn, chi phí và bất thường bằng sổ hoặc công cụ số phù hợp. (2) Theo dõi nhiệt độ/độ ẩm; chỉ chọn cảm biến, điều khiển thông gió khi có khả năng vận hành, bảo trì và hướng dẫn chuyên môn. (3) Thu gom, xử lí chất thải theo phương án được người có chuyên môn đánh giá; biogas hay đệm lót là lựa chọn cần xét điều kiện, không bắt buộc xây hoặc phối hợp tùy tiện. (4) Đánh giá đồng thời kinh tế, môi trường, xã hội và phúc lợi vật nuôi; một thiết bị không tự chứng nhận bền vững. Đề thiếu ngân sách, diện tích và dữ liệu vận hành nên chưa chọn cấu hình hay khẳng định lợi nhuận. Rubric: đề xuất có căn cứ 1 điểm, xét điều kiện/chi phí 1 điểm, đủ các mặt bền vững 1 điểm, không chỉ định liều thú y hay hướng dẫn xây công trình 1 điểm.",
+          "reason": "Đủ lời giải có điều kiện, không đưa thiết kế công trình hoặc chỉ định thú y."
+        }
+      ],
+      "source_workshop": {
+        "title": "Nông trại tư duy: chọn theo bằng chứng",
+        "scope": "Phân loại và đánh giá phương án trên tình huống giả định; không hướng dẫn vận hành trang trại, xây công trình hay điều trị vật nuôi.",
+        "cards": [
+          {
+            "title": "Ba tiêu chí",
+            "text": "Nguồn gốc, đặc tính sinh học, mục đích sử dụng không thay thế nhau; đang có tại địa phương chưa đủ chứng minh bản địa."
+          },
+          {
+            "title": "Ba phương thức",
+            "text": "Chăn thả, công nghiệp, bán công nghiệp có điều kiện và đánh đổi; không phương thức nào tự bảo đảm không dịch bệnh hoặc có lãi."
+          },
+          {
+            "title": "Bền vững và thông minh",
+            "text": "Xét kinh tế, môi trường, xã hội, phúc lợi; công nghệ phải phù hợp dữ liệu, chi phí và năng lực vận hành."
+          }
+        ],
+        "questions": [
+          {
+            "prompt": "Giống đang nuôi tại địa phương có chắc là bản địa?",
+            "options": [
+              "Chắc chắn.",
+              "Không; cần căn cứ nguồn gốc.",
+              "Chỉ cần nhìn màu lông."
+            ],
+            "correct": 1,
+            "feedback": "Nơi hiện nuôi không đủ xác định nguồn gốc."
+          },
+          {
+            "prompt": "Gà vừa thả vườn vừa nuôi chuồng, ăn bổ sung trong tình huống bài thuộc gì?",
+            "options": [
+              "Bán công nghiệp.",
+              "Tự nhiên hoàn toàn.",
+              "Không thể phân loại."
+            ],
+            "correct": 0,
+            "feedback": "Kết hợp chăn thả và nuôi chuồng có bổ sung thức ăn."
+          },
+          {
+            "prompt": "Lắp một cảm biến có tự chứng minh trang trại bền vững?",
+            "options": [
+              "Có, mọi trường hợp.",
+              "Có nếu cảm biến đắt.",
+              "Không; phải xét nhiều mặt và hiệu quả thực tế."
+            ],
+            "correct": 2,
+            "feedback": "Thông minh và bền vững có liên quan nhưng không đồng nhất."
+          }
+        ]
+      }
     }
   ]
 }

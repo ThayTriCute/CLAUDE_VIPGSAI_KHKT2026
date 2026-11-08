@@ -223,5 +223,24 @@ class ReviewedContentCorrectionTests(unittest.TestCase):
             self.assertEqual(original, apply_reviewed_content_corrections(original, 'Công nghệ', grade, other))
 
 
+
+    def test_cn11_husbandry_repairs_keep_keys_and_manufacturing_unchanged(self):
+        topic = 'Vật nuôi và phương thức chăn nuôi — Công nghệ 11, Công nghệ chăn nuôi, KNTT, Bài 2'
+        review = reviewed_lesson_sources('Công nghệ', 11, topic)
+        original = '\n'.join(r['before'] for r in review['content_corrections']) + '\nCORRECT: D\nCORRECT: B\nCORRECT: C'
+        fixed = apply_reviewed_content_corrections(original, 'Công nghệ', 11, topic)
+        self.assertIn('không tự chứng minh đó là giống bản địa', fixed)
+        self.assertIn('Không bảo đảm lợi nhuận', fixed)
+        self.assertIn('không suy chắc chắn thịt ngon', fixed)
+        self.assertIn('chưa chọn cấu hình', fixed)
+        self.assertIn('Rubric tham khảo', fixed)
+        self.assertEqual([line for line in fixed.splitlines() if line.startswith('CORRECT:')],
+                         ['CORRECT: D', 'CORRECT: B', 'CORRECT: C'])
+        self.assertEqual(fixed, apply_reviewed_content_corrections(fixed, 'Công nghệ', 11, topic))
+        for grade, other in [(10, topic), (12, topic),
+                (11, 'Khái quát về cơ khí chế tạo — Công nghệ 11, Công nghệ cơ khí, KNTT, Bài 1')]:
+            self.assertEqual(original, apply_reviewed_content_corrections(original, 'Công nghệ', grade, other))
+
+
 if __name__ == '__main__':
     unittest.main()
