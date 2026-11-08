@@ -26,6 +26,13 @@ class LocalTextbookGroundingTests(unittest.TestCase):
         self.assertNotIn('A source fact',system)
         self.assertEqual(local_textbook_grounding('Lịch sử',11,'Exact lesson')['status'],'no_exact_reviewed_packet')
         self.assertEqual(local_textbook_grounding('Lịch sử',10,'Other lesson')['status'],'no_exact_reviewed_packet')
+    def test_official_legal_excerpt_can_accompany_textbook_but_is_not_certification(self):
+        self.payload['sources'][0]['url']='https://datafiles.chinhphu.vn/constitution.pdf'
+        self.write_packet()
+        result=local_textbook_grounding('Lịch sử',10,'Exact lesson')
+        self.assertEqual(result['status'],'reviewed_excerpt_packet_loaded')
+        self.assertFalse(result['semantic_acceptance'])
+
     def test_tampered_packet_cannot_be_sent_as_reviewed_source(self):
         self.packet.write_bytes(b'wrong')
         result=local_textbook_grounding('Lịch sử',10,'Exact lesson')

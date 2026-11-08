@@ -583,6 +583,67 @@
           "reason": "SGK7–8/SGV26–29: phương án D cũ có thể được hiểu là phân biệt tồn tại của sự kiện với cách chứng minh nhận thức, làm câu hỏi có phương án gây tranh luận. Đổi riêng diễn đạt distractor thành sai rõ ràng, giữ thứ tự và khóaC; bài chưa owner-approved."
         }
       ]
+    },
+    {
+      "id": "kntt-dialy10-chuyendong-20261108",
+      "subject": "Địa lý",
+      "grade": 10,
+      "topics": [
+        "Hệ quả địa lí các chuyển động của Trái Đất — Địa lí 10, KNTT, Bài 5"
+      ],
+      "reviewed_on": "2026-11-08",
+      "scope": "Đã đọc phạm vi SGK đúng bài; mới chuẩn bị nguồn, chưa có bài sinh/quiz/UI/tutor/Lab, chưa đủ3nguồn hoặc nghiệm thu kiến thức/pháp lý/YCCĐ.",
+      "sources": [
+        {
+          "title": "SGK Địa lí10 — KNTT, NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-dia-li-10.4700970617",
+          "locator": "SGK Bài5 trang in17–20, mục lục3 đã đọc trực quan Chrome MCP.",
+          "edition_note": "Portal NXBGD current observed; serverpath2026/0410 is not printing-date proof. Not every update verified.",
+          "criteria": [
+            "Luân phiên ngày đêm gắn với dạng cầu và chuyển động tự quay từ tây sang đông; phân biệt giờ địa phương theo kinh độ với giờ múi và giờ pháp định.",
+            "24 múi giờ lí thuyết rộng 15 độ; ranh giới thực có điều chỉnh theo quốc gia. Bài tính giờ phải cho múi giờ/UTC offset và ngày cụ thể; không suy giờ pháp định từ kinh độ khi chưa có dữ kiện.",
+            "Qua đường chuyển ngày từ tây sang đông lùi một ngày lịch, đông sang tây tăng một ngày; đường thực tế không hoàn toàn trùng kinh tuyến 180 độ.",
+            "Trục giữ hướng nghiêng khi chuyển động quanh Mặt Trời; góc 66 độ 33 phút trong sách được đo với mặt phẳng quỹ đạo, không phải với pháp tuyến.",
+            "Hai bán cầu có mùa ngược nhau; độ dài ngày đêm phụ thuộc vĩ độ và mùa, gần bằng nhau ở Xích đạo, có ngày/đêm kéo dài tại vùng cực. Các ngày 21/3, 22/6, 23/9, 22/12 là mốc quy ước minh họa của sách, không khẳng định ngày thiên văn cố định cho mọi năm.",
+            "Không giải thích mùa chủ yếu bằng khoảng cách tới Mặt Trời. Phân biệt bốn mùa ôn đới với biểu hiện mùa ở từng vùng Việt Nam; không áp cùng một mô tả cho mọi nơi."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kntt-gdktpl10-phapluat-20261108",
+      "subject": "Giáo dục kinh tế và pháp luật",
+      "grade": 10,
+      "topics": [
+        "Khái niệm, đặc điểm và vai trò của pháp luật — GDKT&PL 10, KNTT, Bài 11"
+      ],
+      "reviewed_on": "2026-11-08",
+      "scope": "Đã đọc phạm vi SGK đúng bài; mới chuẩn bị nguồn, chưa có bài sinh/quiz/UI/tutor/Lab, chưa đủ3nguồn hoặc nghiệm thu kiến thức/pháp lý/YCCĐ.",
+      "sources": [
+        {
+          "title": "SGK Giáo dục kinh tế và pháp luật10 — KNTT, NXBGD",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-giao-duc-kinh-te-va-phap-luat-10.4756644900",
+          "locator": "SGK Bài11 trang in78–83, mục lục4 đã đọc trực quan Chrome MCP.",
+          "edition_note": "Page81 explicitly Constitution2013 amended2025; source serverpath2026/0507 not publication date proof.",
+          "criteria": [
+            "Pháp luật là hệ thống quy tắc xử sự bắt buộc chung do Nhà nước ban hành, được bảo đảm thực hiện bằng quyền lực nhà nước; phân biệt với nội quy công ty, đạo đức và điều lệ đoàn thể.",
+            "Ba đặc điểm: tính quy phạm phổ biến, tính quyền lực bắt buộc chung, tính xác định chặt chẽ về hình thức. Không suy mọi văn bản nhà nước hoặc công văn đều là văn bản quy phạm pháp luật.",
+            "Hai vai trò: phương tiện để Nhà nước quản lí xã hội; phương tiện để công dân thực hiện và bảo vệ quyền, lợi ích hợp pháp. Không suy người dưới 18 tuổi không phải chấp hành pháp luật, hoặc mọi độ tuổi đều chịu cùng chế tài.",
+            "Phân biệt kiến thức SGK với điều khoản luật hiện hành: từ ví dụ sách không tự kết luận mức phạt hoặc hình thức xử lí tại ngày hiện tại.",
+            "SGK83 nêu tình huống nồng độ cồn 0,4 mg/l và mức phạt/GPLX; chưa xác minh đủ loại xe, mức đo và điều khoản hiện hành. Không sao chép mức phạt vào bài mới như luật hiện hành. Đây là điểm cần đối chiếu, chưa đủ căn cứ kết luận SGK sai.",
+            "SGK81 dẫn Bộ luật Lao động2019, Điều37/39/41; vận dụng tình huống tai nạn lao động phải đủ loại hợp đồng, thời hạn điều trị và ngoại lệ. Chưa kiểm đầy đủ các điều này; không kết luận mọi trường hợp chấm dứt khi đau ốm đều trái luật."
+          ]
+        },
+        {
+          "title": "Hiến pháp — VBHN52/VBHN-VPQH ngày21/7/2025",
+          "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2025/7/52-vbhn-vpqh.pdf",
+          "locator": "PDFpage1 basis andpage3 Article8(1) read; not all33pages or full current-law search.",
+          "edition_note": "Constitution2013 in force1/1/2014, amended byNQ203/2025/QH15 effective16/6/2025 perPDFpage1. Later changes/other statute examples not exhaustively checked.",
+          "criteria": [
+            "Điều8(1) là căn cứ cho vai trò Nhà nước tổ chức/hoạt động và quản lý xã hội bằng Hiến pháp/pháp luật. Không lấy văn bản hợp nhất làm luật mới hoặc ngày21/7 làm ngày hiệu lực Hiến pháp."
+          ]
+        }
+      ]
     }
   ]
 }

@@ -149,7 +149,8 @@ def local_textbook_grounding(subject, grade, topic):
                 raise ValueError('Invalid source')
             host = (urlparse(source.get('url', '')).hostname or '').lower()
             if (not any(host == h or host.endswith('.' + h) for h in
-                        ('vniteach.com', 'nxbgd.vn', 'thsqg.vn'))
+                        ('vniteach.com', 'nxbgd.vn', 'thsqg.vn', 'chinhphu.vn',
+                         'moet.gov.vn', 'vbpl.vn', 'moj.gov.vn'))
                     or urlparse(source['url']).scheme != 'https'
                     or not all(isinstance(source.get(k), str) and source[k].strip()
                                for k in ('title', 'locator', 'edition_note', 'reviewed_excerpt'))):
