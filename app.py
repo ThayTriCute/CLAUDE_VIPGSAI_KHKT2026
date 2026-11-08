@@ -3023,9 +3023,26 @@ def render_exam_clock():
 
 # ==============================================================================
 
+def _normalize_bbt_discontinuity(s):
+    """Chuẩn hóa mọi biến thể ký hiệu tiệm cận đứng (vạch kép) về '||' chuẩn nội bộ.
+
+    Lý do: các model sinh BBT đôi khi xuất \\parallel, \\Vert, ∥ (U+2225) hay ║ thay vì
+    '||'. Nếu không chuẩn hóa, bộ dựng không nhận ra cột tiệm cận -> (1) in mã TeX thô
+    '\\parallel' ra hình, (2) dồn 'giới-hạn-trái ∥ giới-hạn-phải' vào một ô nên ±∞ bị đặt
+    sai cao độ. Quy về '||' để renderer vẽ VẠCH ĐÔI bằng nét vector (SVG/đường kẻ), hiển
+    thị đồng nhất trên Android/iOS/Windows/Mac, không phụ thuộc font hệ thống.
+    Chỉ đổi các ký hiệu tiệm cận; không đụng dấu '|' phân tách cột hay trị tuyệt đối |x|.
+    """
+    if not s:
+        return s
+    s = re.sub(r'\\(?:parallel|shortparallel|Vert)\b', '||', s)
+    s = s.replace('∥', '||').replace('║', '||').replace('⫲', '||')
+    return s
+
 def parse_and_align_bbt(raw_bbt):
 
     raw_str = str(raw_bbt).strip()
+    raw_str = _normalize_bbt_discontinuity(raw_str)
     raw_str = re.sub(r'\\+nearrow\b|\\nearrow', '↗', raw_str)
     raw_str = re.sub(r'\\+searrow\b|\\searrow', '↘', raw_str)
     raw_str = re.sub(r'\\n(?!earrow)', '\n', raw_str)
@@ -9593,6 +9610,7 @@ def render_bbt_to_webp_base64(raw_bbt: str) -> str:
 
     try:
         raw_str = str(raw_bbt).strip()
+        raw_str = _normalize_bbt_discontinuity(raw_str)
         raw_str = re.sub(r'\\+nearrow\b|\\nearrow', '↗', raw_str)
         raw_str = re.sub(r'\\+searrow\b|\\searrow', '↘', raw_str)
         raw_str = raw_str.replace('>>', '↗').replace('>', '↗')
@@ -10881,6 +10899,7 @@ def _render_math_html_token(raw_val: str) -> str:
     s = raw_val.strip()
     s = re.sub(r'^\$+|\$+$', '', s).strip()
     s = s.replace('⟦DBL_BAR⟧', '||')
+    s = s.replace('\\parallel', '∥').replace('\\Vert', '∥')
 
     # Chuẩn hóa ký hiệu vô cực & đặc biệt
     s = re.sub(r'\+\\infty|\+\s*∞', '+∞', s)
@@ -10920,6 +10939,7 @@ def _render_math_html_token(raw_val: str) -> str:
 def _parse_bbt_cells_safe(line: str) -> list:
     """Tách ô bảng Markdown nhưng bảo vệ tuyệt đối ký hiệu tiệm cận đứng || và trị tuyệt đối |x|."""
     s = line.strip()
+    s = _normalize_bbt_discontinuity(s)
     # 1. Bảo vệ ký hiệu không xác định / tiệm cận đứng || (bắt || độc lập hoặc trong ô/chữ, không bắt cột trống | |)
     s = re.sub(r'(?<!\|)\|\|(?!\|)', '⟦DBL_BAR⟧', s)
     # 2. Bảo vệ trị tuyệt đối |...| bên trong cặp $...$
