@@ -13636,7 +13636,7 @@ if selected_station == station_labels[1]:
         # earlier approved histories are left untouched.
         if m.get('role') == 'assistant' and idx_m == len(st.session_state.messages)-1:
             closure_plan = st.session_state.get('tram2_closure_info', {})
-            if closure_plan.get('plan_id'):
+            if isinstance(closure_plan, dict) and closure_plan.get('plan_id'):
                 from services.socratic_context import complete_verified_quote_reference
                 m['content'] = complete_verified_quote_reference(m['content'], [closure_plan])
 
@@ -16605,7 +16605,7 @@ if selected_station == station_labels[2]:
         for index, m in enumerate(st.session_state.tram3_chat_messages):
             if m.get('role') == 'assistant' and index == len(st.session_state.tram3_chat_messages)-1:
                 closure_plan = st.session_state.get('tram3_closure_info', {})
-                if closure_plan.get('plan_id'):
+                if isinstance(closure_plan, dict) and closure_plan.get('plan_id'):
                     from services.socratic_context import complete_verified_quote_reference
                     m['content'] = complete_verified_quote_reference(m['content'], [closure_plan])
 
