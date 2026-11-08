@@ -10,6 +10,16 @@ from services.curriculum_policy import (
 
 
 class AcademicGroundingBoundaryTests(unittest.TestCase):
+    def test_systemwide_verification_contract_is_in_injected_instruction_once(self):
+        prepared = with_academic_grounding('KEEP REQUESTED SCHEMA')
+        self.assertTrue(prepared.startswith('KEEP REQUESTED SCHEMA'))
+        self.assertEqual(prepared.count('KIỂM CHỨNG TOÀN HỆ THỐNG:'), 1)
+        for clause in ('mọi môn/lớp, Trạm1–2–3 và model dự phòng',
+                       'không thay nghiệm thu kiến thức',
+                       'không tự nhận đã chạy kiểm local'):
+            self.assertIn(clause, prepared)
+        self.assertEqual(with_academic_grounding(prepared), prepared)
+
     def test_cross_station_closure_rules_reach_shared_api_instruction(self):
         from services.philosophy_rotation import GUIDANCE
         prepared = with_academic_grounding('Requested JSON schema')
