@@ -1220,7 +1220,57 @@
           "after": "Hãy lí giải sự giằng xé giữa trách nhiệm và tình cảm, có dẫn chứng; không bắt buộc xếp nhân vật vào một trong hai nhãn vị kỉ/vị tha.",
           "reason": "Giữ câu hỏi mở và phân tích có bằng chứng."
         }
-      ]
+      ],
+      "source_workshop": {
+        "title": "Xưởng đọc sát văn bản: Ai đang nói? Bằng chứng ở đâu?",
+        "scope": "Bài thực hành tự đặt từ SGK đã đọc14–16; cards diễn giải, không thay toàn văn. Mở SGK song song nếu cần phân tích từ ngữ nguyên văn. Không chấm quan điểm đạo đức bằng một đáp án duy nhất.",
+        "cards": [
+          {
+            "title": "Khung ngữ liệu",
+            "text": "Đoạn trong SGK này là câu711–758. Câu711–722 mở đầu: người kể, lời hỏi của Vân rồi lời Kiều bộc lộ day dứt. Câu723–734 là lời nhờ cậy; không gọi đó là12câuđầu của toàn đoạn."
+          },
+          {
+            "title": "Kỉ vật và tâm tình",
+            "text": "Kiều nhắc chiếc vành, tờ mây và những dấu tích lời thề. Lời dặn về hương/đàn và hình dung âm hồn cần đọc như lời nói, tưởng tượng về mai sau; không tự ghi thành cử chỉ Kiều đã thực hiện trong đêm ấy."
+          },
+          {
+            "title": "Tách bằng chứng với diễn giải",
+            "text": "Lời gọi Kim Trọng cuối đoạn cho phép bàn về đối tượng tâm tình trong tưởng tượng. Hai câu cuối là lời người kể về Kiều lặng ngất; không lấy tất cả lời trong đoạn làm lời Nguyễn Du trực tiếp khuyên học sinh."
+          }
+        ],
+        "questions": [
+          {
+            "prompt": "Phạm vi nào là lời Kiều nhờ cậy Vân được đối chiếu trong bài này?",
+            "options": [
+              "Câu723–734.",
+              "Câu711–722 là toàn bộ lời nhờ cậy.",
+              "Mọi bản SGK đều có cùng ranh giới đoạn trích."
+            ],
+            "correct": 0,
+            "feedback": "Đối chiếu SGK14–15: lời cậy/lạy/thưa ở723–724, tiếp tới734; đoạnSGK bắt đầu711 nên phải tách phần mở đầu."
+          },
+          {
+            "prompt": "Ghi chú nào giữ đúng ranh giới giữa lời dặn và hành động?",
+            "options": [
+              "Kiều đã đốt lò hương và gảy đàn ngay khi nói.",
+              "Thúy Vân là người gọi Kim lang ở cuối đoạn.",
+              "Lời về hương/đàn hướng tới mai sau, không đủ chứng cứ nói Kiều đã thực hiện ngay."
+            ],
+            "correct": 2,
+            "feedback": "Chú ý các dấu hiệu thời gian và chủ thể lời nói; không biến cảnh tưởng tượng thành sự kiện đã xảy ra."
+          },
+          {
+            "prompt": "Liên hệ nhân sinh nào phù hợp mà không áp đặt?",
+            "options": [
+              "Người phụ nữ phải từ bỏ hạnh phúc mới là tử tế.",
+              "Có thể trân trọng trách nhiệm nhưng vẫn bảo vệ sự tự nguyện và phẩm giá; lập luận cần bằng chứng.",
+              "Mọi cách đọc đoạn trích đều đúng dù không có dẫn chứng."
+            ],
+            "correct": 1,
+            "feedback": "Đồng cảm trong bối cảnh văn học không có nghĩa yêu cầu học sinh chịu ép buộc; cách đọc khác cần có lí lẽ và căn cứ."
+          }
+        ]
+      }
     }
   ]
 }
