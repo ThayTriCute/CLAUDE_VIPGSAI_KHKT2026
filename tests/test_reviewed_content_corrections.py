@@ -35,6 +35,18 @@ class ReviewedContentCorrectionTests(unittest.TestCase):
                                       ('Sinh học', 10, 'Bài khác')]:
             self.assertEqual(original, apply_reviewed_content_corrections(original, subject, grade, topic))
 
+    def test_civic_review_repairs_rule_characteristic_confusion_without_changing_keys(self):
+        topic='Khái niệm, đặc điểm và vai trò của pháp luật — GDKT&PL 10, KNTT, Bài 11'
+        review=reviewed_lesson_sources('Giáo dục kinh tế và pháp luật',10,topic)
+        rule=next(r for r in review['content_corrections'] if r['before'].startswith('*Tình huống:* Anh A'))
+        value=rule['before']+'\nCORRECT: D\nCORRECT: B\nCORRECT: C'
+        fixed=apply_reviewed_content_corrections(value,'Giáo dục kinh tế và pháp luật',10,topic)
+        self.assertIn('không phải “vi phạm một đặc điểm”',fixed)
+        self.assertTrue(fixed.endswith('CORRECT: D\nCORRECT: B\nCORRECT: C'))
+        self.assertEqual(fixed,apply_reviewed_content_corrections(fixed,'Giáo dục kinh tế và pháp luật',10,topic))
+        for subject,grade in [('Lịch sử',10),('Giáo dục kinh tế và pháp luật',11)]:
+            self.assertEqual(value,apply_reviewed_content_corrections(value,subject,grade,topic))
+
     def test_geography_repairs_scope_clock_data_and_keep_shuffled_key(self):
         from services.lesson_sources import apply_reviewed_quiz_proposal
         topic='Hệ quả địa lí các chuyển động của Trái Đất — Địa lí 10, KNTT, Bài 5'

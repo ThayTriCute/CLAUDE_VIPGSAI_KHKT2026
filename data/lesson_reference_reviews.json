@@ -855,7 +855,7 @@
         "Khái niệm, đặc điểm và vai trò của pháp luật — GDKT&PL 10, KNTT, Bài 11"
       ],
       "reviewed_on": "2026-11-08",
-      "scope": "Đã đọc phạm vi SGK đúng bài; mới chuẩn bị nguồn, chưa có bài sinh/quiz/UI/tutor/Lab, chưa đủ3nguồn hoặc nghiệm thu kiến thức/pháp lý/YCCĐ.",
+      "scope": "SGK Bài11 trang78–83 đã đọc; sửa bản sinh thật bằng hồ sơ nguồn, còn kiểm UI/quiz/Lab/tutor/export và đối chiếu nguồn bổ sung. Chưa chứng nhận đủ ba nguồn/toàn bộ luật hoặc YCCĐ.",
       "sources": [
         {
           "title": "SGK Giáo dục kinh tế và pháp luật10 — KNTT, NXBGD",
@@ -874,7 +874,7 @@
         {
           "title": "Hiến pháp — VBHN52/VBHN-VPQH ngày21/7/2025",
           "url": "https://datafiles.chinhphu.vn/cpp/files/vbpq/2025/7/52-vbhn-vpqh.pdf",
-          "locator": "PDFpage1 basis andpage3 Article8(1) read; not all33pages or full current-law search.",
+          "locator": "PDFpage1 basis; page3 Điều8(1); page10 Điều39/46 đã đọc. Không đọc/chứng nhận toàn bộ33trang.",
           "edition_note": "Constitution2013 in force1/1/2014, amended byNQ203/2025/QH15 effective16/6/2025 perPDFpage1. Later changes/other statute examples not exhaustively checked.",
           "criteria": [
             "Điều8(1) là căn cứ cho vai trò Nhà nước tổ chức/hoạt động và quản lý xã hội bằng Hiến pháp/pháp luật. Không lấy văn bản hợp nhất làm luật mới hoặc ngày21/7 làm ngày hiệu lực Hiến pháp."
@@ -914,7 +914,69 @@
             "feedback": "Bài học khái niệm không cung cấp mọi dữ kiện xử phạt. Phải kiểm văn bản và điều kiện cụ thể; không biến ví dụ sách thành kết luận pháp lý cho mọi tình huống."
           }
         ]
-      }
+      },
+      "content_corrections": [
+        {
+          "before": "cần có những \"quy tắc trò chơi\" chung. Đó chính là pháp luật.",
+          "after": "cần có những quy tắc chung. Đây chỉ là phép so sánh để mở đầu: luật chơi bóng đá không tự trở thành pháp luật. Phải phân biệt pháp luật với các quy tắc xã hội khác theo chủ thể ban hành, phạm vi và cơ chế bảo đảm thực hiện.",
+          "reason": "SGK78–80: phân biệt quy tắc xã hội với pháp luật; phép ví von không phải định nghĩa."
+        },
+        {
+          "before": "được áp dụng nhiều lần, ở nhiều nơi, đối với mọi đối tượng trong phạm vi cả nước.",
+          "after": "được áp dụng đối với các chủ thể thuộc phạm vi điều chỉnh khi có điều kiện áp dụng. Không phải mọi quy định đều áp dụng cho mọi người ở mọi nơi: cần xét đối tượng, địa bàn và hiệu lực của quy định; có quy phạm áp dụng trong cả nước, có quy phạm trong đơn vị hành chính nhất định.",
+          "reason": "SGK79 và Điều3(1) Luật64/2025: cả nước hoặc đơn vị hành chính nhất định; không đồng nhất tính phổ biến với phạm vi vô hạn."
+        },
+        {
+          "before": "mọi cá nhân, tổ chức đều phải tuân thủ, nếu vi phạm sẽ bị xử lý theo quy định.",
+          "after": "cá nhân, tổ chức phải tuân thủ quy định thuộc phạm vi áp dụng đối với mình. Việc xác định vi phạm và trách nhiệm pháp lý phải có căn cứ, đúng thẩm quyền, điều kiện và thủ tục; không suy mọi độ tuổi hoặc mọi tình huống đều chịu cùng chế tài.",
+          "reason": "SGK79; yêu cầu phạm vi và điều kiện, không đưa mức phạt chưa kiểm chứng."
+        },
+        {
+          "before": "Nội dung pháp luật phải được thể hiện trong các văn bản quy phạm pháp luật với ngôn ngữ chính xác, rõ ràng, một nghĩa để tránh hiểu lầm.",
+          "after": "Trong phạm vi bài học về văn bản quy phạm pháp luật, nội dung cần được diễn đạt chính xác, rõ ràng; văn bản phải đúng thẩm quyền, hình thức, trình tự và thủ tục ban hành. Không phải mọi thông báo, công văn hoặc văn bản của một cơ quan đều là văn bản quy phạm pháp luật.",
+          "reason": "SGK80 và Điều2 Luật64/2025; không suy mọi văn bản nhà nước là VBQPPL."
+        },
+        {
+          "before": "*Tình huống:* Anh A lái xe máy vượt đèn đỏ và bị Cảnh sát giao thông lập biên bản xử phạt. Hành vi của anh A vi phạm đặc điểm nào của pháp luật?\n*Lời giải:* Hành vi này vi phạm **tính quyền lực, bắt buộc chung**. Pháp luật quy định mọi người khi tham gia giao thông đều phải chấp hành tín hiệu đèn (quy tắc chung). Khi anh A không tuân thủ, cơ quan nhà nước (Cảnh sát giao thông) đã sử dụng quyền lực nhà nước để xử phạt nhằm đảm bảo tính nghiêm minh.",
+          "after": "*Tình huống giả định:* Anh A có hành vi không chấp hành tín hiệu giao thông đã được cơ quan có thẩm quyền xác định là vi phạm theo quy định áp dụng. Việc xử lý đúng thẩm quyền và thủ tục minh họa đặc điểm nào của pháp luật?\n*Lời giải:* Anh A vi phạm một quy tắc giao thông cụ thể, không phải “vi phạm một đặc điểm”. Việc Nhà nước bảo đảm thực hiện quy tắc và xử lý vi phạm theo pháp luật minh họa **tính quyền lực, bắt buộc chung**. Bài tập không đủ dữ kiện để xác định mức phạt hay kết luận một vụ việc thực tế.",
+          "reason": "Sửa nhầm lẫn quy tắc/đặc điểm theo SGK79; không tự tư vấn giao thông hoặc khẳng định mức phạt."
+        },
+        {
+          "before": "*(Gợi ý: Ai ban hành nội quy trường học? Nội quy trường học có áp dụng cho tất cả mọi người dân trong thành phố không?)*",
+          "after": "*(Gợi ý: Ai ban hành nội quy trường học? Phạm vi áp dụng là ai? Nội quy không tự trở thành văn bản quy phạm pháp luật, nhưng vẫn có thể đặt nghĩa vụ nội bộ hợp pháp cho thành viên; không được suy rằng không phải pháp luật thì có thể tùy ý bỏ qua.)*",
+          "reason": "Phân biệt nguồn gốc/phạm vi không đồng nghĩa phủ nhận nghĩa vụ nội bộ hợp pháp."
+        },
+        {
+          "before": "Hãy liệt kê 3 quyền của học sinh được quy định trong pháp luật mà em biết (ví dụ: quyền được học tập) và cho biết pháp luật đã bảo vệ quyền đó như thế nào nếu có người ngăn cản em đến trường.",
+          "after": "Điều39 Hiến pháp quy định công dân có quyền và nghĩa vụ học tập. Từ căn cứ này, em hãy tìm thêm hai quyền liên quan đến học sinh trong nguồn pháp luật chính thức, ghi đúng điều khoản và đối tượng áp dụng. Với tình huống bị cản trở học tập, trước hết xác định dữ kiện và căn cứ, rồi đề xuất cách nhờ người lớn đáng tin cậy hoặc cơ quan có thẩm quyền hỗ trợ theo đúng quy định. Không tự suy mọi học sinh THPT đều thuộc cùng một nhóm tuổi pháp lý.",
+          "reason": "Hiến pháp VBHN52/2025 Điều39 đã đọc; không mặc định học sinh THPT đều là trẻ em dưới16."
+        },
+        {
+          "before": "Tính tự nguyện thường thuộc về các quy tắc đạo đức hoặc điều lệ hội nhóm, còn pháp luật mang tính bắt buộc chung do Nhà nước bảo đảm.",
+          "after": "Tính tự nguyện tham gia một tổ chức không phải đặc điểm của pháp luật. Cần phân biệt việc tự nguyện gia nhập với nghĩa vụ tuân thủ điều lệ hoặc nội quy hợp pháp sau khi gia nhập; pháp luật được Nhà nước bảo đảm thực hiện trong phạm vi áp dụng.",
+          "reason": "SGK79; tránh quy mọi điều lệ là tùy chọn."
+        },
+        {
+          "before": "Văn bản pháp luật phải được diễn đạt chính xác, một nghĩa để bất kỳ ai khi đọc cũng hiểu và thực hiện đúng.",
+          "after": "Văn bản quy phạm pháp luật cần được diễn đạt chính xác, rõ ràng nhằm hạn chế cách hiểu sai.",
+          "reason": "SGK80: yêu cầu ngôn ngữ không bảo đảm mọi người luôn hiểu đúng tuyệt đối."
+        },
+        {
+          "before": "Pháp luật xác lập quyền (ví dụ: quyền sở hữu tài sản) và quy định cách thức để công dân đòi lại quyền khi bị xâm phạm (ví dụ: khởi kiện).",
+          "after": "Pháp luật quy định quyền và các cơ chế bảo vệ quyền, lợi ích hợp pháp. Cách yêu cầu bảo vệ phải phù hợp loại vụ việc, điều kiện, thẩm quyền và thủ tục; không suy chỉ có khởi kiện hoặc được tự ý dùng vũ lực lấy lại tài sản.",
+          "reason": "SGK81–82: vai trò bảo vệ quyền, không giới hạn mọi vụ việc vào một thủ tục."
+        },
+        {
+          "before": "Trình bày việc không đồng ý. Giải thích bằng cách nêu sự khác biệt về nguồn gốc (Nhà nước vs Cộng đồng/Tổ chức) và biện pháp bảo đảm thực hiện (Cưỡng chế vs Dư luận/Kỷ luật nội bộ).",
+          "after": "Chọn một quy tắc cụ thể rồi tự đối chiếu: ai ban hành, áp dụng với ai, được bảo đảm bằng cơ chế nào? Từ kết quả so sánh, em tự đưa ra nhận định và dẫn chứng. Lưu ý nghĩa vụ nội bộ hợp pháp không tự trở thành pháp luật chỉ vì có tính bắt buộc với thành viên.",
+          "reason": "Phần3 chỉ hướng dẫn Socratic, không cho sẵn kết luận; tránh phân đôi máy móc pháp luật/nội quy."
+        }
+      ],
+      "grounded_facts": [
+        "Điều39 Hiến pháp: công dân có quyền và nghĩa vụ học tập; không đồng nhất mọi học sinh THPT với trẻ em dưới16.",
+        "Phân biệt vi phạm quy tắc cụ thể với đặc điểm pháp luật được minh họa qua cơ chế bảo đảm thực hiện.",
+        "Tính phổ biến không có nghĩa mọi quy phạm áp dụng cho mọi đối tượng ở mọi địa bàn; phải xét phạm vi và hiệu lực."
+      ]
     }
   ]
 }
