@@ -15,12 +15,22 @@ from services.recovery_diagnostics import recovery_failure_summary
 
 ROOT = Path(__file__).resolve().parents[1]
 TREE = ast.parse((ROOT / 'app.py').read_text(encoding='utf-8'))
+_SUPPORT_FUNCS = ('_normalize_bbt_discontinuity', '_moet_plaintext_math')
 
 
 def load_function(name, **env):
     node = copy.deepcopy(next(n for n in TREE.body if isinstance(n, ast.FunctionDef) and n.name == name))
     node.decorator_list = []
     ns = {'re': re, 'json': json, **env}
+    # Bảng ký hiệu _MOET_* và hàm chuẩn hóa BBT là phụ thuộc module-level của app.py; nạp kèm để test
+    # trích hàm riêng lẻ không bị NameError (trong app thật chúng luôn có sẵn).
+    if name not in _SUPPORT_FUNCS:
+        for support in TREE.body:
+            if isinstance(support, ast.Assign) and any(isinstance(t, ast.Name) and t.id.startswith('_MOET_') for t in support.targets):
+                exec(compile(ast.Module(body=[support], type_ignores=[]), 'app-expert-support', 'exec'), ns)
+        for support_name in _SUPPORT_FUNCS:
+            if support_name not in ns:
+                ns[support_name] = load_function(support_name, **{k: v for k, v in ns.items() if k.startswith('_MOET_')})
     exec(compile(ast.Module(body=[node], type_ignores=[]), 'app-expert-test', 'exec'), ns)
     return ns[name]
 
