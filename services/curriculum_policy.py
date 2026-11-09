@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110903
+T1_CONTEXT_REVISION = 2026110920
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 
@@ -693,12 +693,19 @@ def lesson_prompt(subject, grade, topic):
             "đủ mốc, dấu đạo hàm, giá trị hoặc giới hạn và mũi tên theo đúng hàm đang xét; "
             "không thay bảng bằng đoạn văn xét dấu. Giữ các cột tương ứng để công cụ dựng bảng hiện có xử lý. "
             "Không tự bịa giới hạn, điểm gián đoạn hoặc thêm bảng giải tích cho bài không cần.\n"
-            "Nếu yêu cầu rõ cả ba dạng hàm, Phần 1 cần ba ví dụ số có hướng dẫn riêng; không chỉ liệt kê tên hoặc chuyển ví dụ sang bài tự làm. "
-            "Khi khảo sát ba dạng SGK, phải giữ đúng dạng không suy biến: bậc ba có a≠0; "
-            "y=(ax+b)/(cx+d) có c≠0 và ad−bc≠0; "
-            "y=(ax²+bx+c)/(dx+e) có a≠0, d≠0 và ae²−bde+cd²≠0. "
-            "Nếu hệ số không thỏa, nêu rõ hàm không thuộc dạng đang xét; "
-            "không dùng hàm hằng, mẫu hằng hoặc điểm khuyết làm ví dụ đạt của dạng phân thức này.\n"
+        )
+        if academic_context(subject, grade)[1] == 12:
+            # Ba dạng khảo sát SGK (bậc ba, phân thức 1/1, 2/1) thuộc Toán 12 KNTT;
+            # không đưa vào lời dặn cho bài Toán 6–11.
+            visual_guidance += (
+                "Nếu yêu cầu rõ cả ba dạng hàm, Phần 1 cần ba ví dụ số có hướng dẫn riêng; không chỉ liệt kê tên hoặc chuyển ví dụ sang bài tự làm. "
+                "Khi khảo sát ba dạng SGK, phải giữ đúng dạng không suy biến: bậc ba có a≠0; "
+                "y=(ax+b)/(cx+d) có c≠0 và ad−bc≠0; "
+                "y=(ax²+bx+c)/(dx+e) có a≠0, d≠0 và ae²−bde+cd²≠0. "
+                "Nếu hệ số không thỏa, nêu rõ hàm không thuộc dạng đang xét; "
+                "không dùng hàm hằng, mẫu hằng hoặc điểm khuyết làm ví dụ đạt của dạng phân thức này.\n"
+            )
+        visual_guidance += (
             "Trước khi lập bảng hoặc đồ thị, kiểm tập xác định, nghiệm đạo hàm, dấu từng khoảng, "
             "cực trị, giới hạn và tiệm cận; thiếu dữ kiện thì nêu rõ, không tự bổ sung số liệu. "
             "Bảng ba hàng x, y′, y dùng cột xen kẽ mốc và khoảng: hàng x để trống ô khoảng; "

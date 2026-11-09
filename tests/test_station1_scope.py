@@ -223,5 +223,22 @@ class LessonPartTests(unittest.TestCase):
         self.assertTrue(lesson_parts(no_titles)[2].lstrip().startswith('Câu 1. [Mức độ: VD]'))
 
 
+class GradeScopedPromptTests(unittest.TestCase):
+    def test_three_form_survey_rules_only_for_grade12_math(self):
+        from services.curriculum_policy import lesson_prompt
+        for grade in range(6, 13):
+            with self.subTest(grade=grade):
+                prompt = lesson_prompt('Toán học', grade, 'Bài đang học')
+                self.assertEqual('ad−bc≠0' in prompt, grade == 12)
+                self.assertIn('Bảng biến thiên: chỉ khi', prompt)  # hướng dẫn bảng/đồ thị chung vẫn giữ
+
+    def test_cubic_closing_reminder_is_bound_to_cubic_lessons(self):
+        from pathlib import Path
+        source = (Path(__file__).resolve().parents[1] / 'app.py').read_text(encoding='utf-8')
+        start = source.index('science_closure = (')
+        block = source[start:source.index('if subject == "Tin học"', start)]
+        self.assertIn("'bậc ba' in", block)
+
+
 if __name__ == '__main__':
     unittest.main()

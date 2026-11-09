@@ -3,7 +3,7 @@ def _refresh_t1_context_services():
     from importlib import reload
     from services import bbt_display_contract, inequality_region, plot_labels, lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation, station1_scope
     from data import curriculum_data
-    for module, revision in ((bbt_display_contract, 2026110911), (inequality_region, 2026110914), (plot_labels, 2026110914), (lesson_sources, 2026110802), (curriculum_policy, 2026110903),
+    for module, revision in ((bbt_display_contract, 2026110911), (inequality_region, 2026110914), (plot_labels, 2026110914), (lesson_sources, 2026110802), (curriculum_policy, 2026110920),
                              (lab_scope, 2026110901), (lesson_export, 2026110911),
                              (text_boundaries, 2026110801), (socratic_context, 2026110901),
                              (philosophy_rotation, 2026110801), (station1_scope, 2026110920),
@@ -12264,7 +12264,8 @@ if selected_station == station_labels[0]:
                                     )
                                     science_closure = (
                                         " Với hàm bậc ba, không nhầm đạo hàm cấp một f'(x) là tam thức bậc hai với đạo hàm cấp hai f''(x)."
-                                        if subject == "Toán học" else ""
+                                        # Chỉ nhắc khi bài thật sự xét hàm bậc ba (Toán 11–12), không đưa vào bài Toán 6–10 khác.
+                                        if subject == "Toán học" and 'bậc ba' in (str(st.session_state.get('current_topic', '')) + ' ' + str(st.session_state.get('current_lesson', ''))).lower() else ""
                                     )
                                     if subject == "Tin học" and 'html' in str(st.session_state.get('current_topic', '')).lower():
                                         science_closure += (
