@@ -107,3 +107,22 @@ Danh mục THSQG có thể chỉ tải20sách ban đầu. Phải cuộn đúng v
 ## Owner 08/11/2026 — ẩn metadata kỹ thuật trên mọi bản học sinh
 
 OUTCOME/COGNITIVE_REASON/COGNITIVE_STEPS là khóa nội bộ, không phải chữ hiển thị cho học sinh. Mọi AI tiếp quản phải giữ schema/dữ liệu gốc, dùng student_essay_text ở tầng hiển thị/xuất/infographic/prompt ảnh cho mọi môn/lớp; không vá riêng một bài hoặc chỉ đổi nhãn sang tiếng Việt. Đọc docs/AI_SYSTEM_WIDE_VERIFICATION.md; kiểm JSON nhiều dòng, code examples, bài kế tiếp và bản xuất thật. Lỗi được owner chỉ ra trên bản QA Vật lí11 là ca tái hiện, không giới hạn phạm vi.
+
+
+## LUẬT BẮT BUỘC owner 09/11/2026 — làm việc nghiêm cẩn, có bằng chứng, không chủ quan (áp dụng MỌI ca AI)
+
+Bài học xương máu: một ca AI đã KẾT LUẬN khi mới đọc một phần code (chỉ đọc `exact_plot_coordinate` của func_3 rồi suy rộng "mọi luồng đã chuẩn"), và đã VÁ làm hỏng một test có sẵn (`test_visual_table_answer_leak` → NameError `_MOET_SYM_RE`) mà không biết vì chưa chạy lại toàn bộ test. Đó là lỗi chủ quan, lanh chanh, quá tự tin. Từ nay MỌI ca AI bắt buộc tuân thủ:
+
+1. ĐỌC TRƯỚC KHI LÀM. Trước khi sửa/kết luận, đọc và rà toàn bộ phạm vi liên quan trên GitHub (file, thư mục, TỪNG DÒNG, kể cả dấu chấm), nếu ca trước chưa làm. Không suy rộng từ một nhánh/một hàm ra toàn hệ thống. Mọi khẳng định phải kèm bằng chứng cụ thể: trích đúng `đường_dẫn:dòng`, kết quả lệnh, hoặc so sánh baseline. Không đoán qua loa, không báo cáo khi chưa xác tín.
+
+2. CHẠY TEST ĐỐI CHIẾU BASELINE sau MỌI thay đổi code. "Tick xanh" của repo là CI `.github/workflows/ci.yml`: `py_compile app.py precision_visual_engine.py real_exam_engine.py database.py lesson_infographic_engine.py` + `python -m unittest discover -s tests -p "test_*.py"`. Quy trình bắt buộc: (a) py_compile 5 file; (b) chạy toàn bộ `tests/` trên nhánh của mình VÀ trên `main` (5dbe486 hoặc main hiện hành); (c) so tập test FAIL hai bên — BẤT KỲ test nào fail trên nhánh mình mà không fail trên main là HỒI QUY do mình, phải vá trước khi báo xong. Không được phá "tick xanh".
+
+3. PHÂN BIỆT LỖI THIẾU-THƯ-VIỆN vs LỖI THẬT. Container kiểm thử thường THIẾU sympy/streamlit/plotly/google-genai/ijson/pymupdf (CI có đủ qua requirements.txt). Test fail do `ModuleNotFoundError` các gói này sẽ PASS trên CI — không phải lỗi mình. Chỉ lo lỗi thật (fail cả khi có dep, hoặc fail trên nhánh mình mà main không fail). Khi nghi ngờ, CHẠY NGẦM để minh chứng cụ thể (đối chiếu giá trị bằng công cụ độc lập, render hình thật nếu có matplotlib, v.v.).
+
+4. KHÔNG CHỦ QUAN khi không test được tại chỗ. Nếu phần sửa phụ thuộc sympy/streamlit/plotly mà container không chạy được, phải NÓI RÕ "chưa render-test tại chỗ, cần CI/Cloud xác minh" — không tuyên bố "đã chuẩn". Mô phỏng đúng pattern đã chạy trong chính repo; đối chiếu toán bằng công cụ độc lập đã có.
+
+5. app.py XUỐNG DÒNG HỖN HỢP (giữ đúng 477 dòng LF): sửa app.py bằng thay-thế-byte-chính-xác, kiểm "LF-only unchanged" sau mỗi lần; KHÔNG dùng công cụ chuẩn hóa toàn file. Cẩn trọng với `git stash`/`git checkout -- .` kẻo mất thay đổi chưa commit.
+
+6. QUY TRÌNH PHÁT HÀNH: mỗi bản vá một nhánh riêng off main + test riêng; push + mở PR qua REST (`gh api .../pulls`, KHÔNG `gh pr create` vì GraphQL bị chặn 403; Actions API cũng bị chặn 403 nên không đọc được CI từ phiên — dựa wake-event GitHub). KHÔNG tự merge (chỉ owner). Sau mỗi mốc cập nhật nhật ký bàn giao đầy đủ.
+
+7. TẤT CẢ là tối ưu toàn cục cho hệ thống ĐA MÔN, ĐA LỚP 6→12, mọi môn, theo CT2018 cùng sửa đổi còn hiệu lực, bộ sách KNTT/KNTT thống nhất, và các văn bản pháp quy của Bộ CÒN HIỆU LỰC tính đến ngày giờ hệ thống hiện tại. Giữ nguyên bài/owner-approved; chỉ mở lại khi có lỗi cụ thể có căn cứ.
