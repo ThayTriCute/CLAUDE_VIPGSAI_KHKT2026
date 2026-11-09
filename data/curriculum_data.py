@@ -137,7 +137,7 @@ BIGDATA_CURRICULUM = {
 
     "Lịch sử": {
 
-        12: ["Chuyên đề 1: Liên Hợp Quốc & Trật tự thế giới", "Chuyên đề 2: Tổ chức ASEAN", "Chuyên đề 3: Cách mạng tháng Tám 1945 & Kháng chiến chống Pháp", "Chuyên đề 4: Kháng chiến chống Mỹ 1954-1975", "Chuyên đề 5: Công cuộc Đổi mới từ 1986", "Chuyên đề 6: Lịch sử đối ngoại của Việt Nam thời cận – hiện đại", "Chuyên đề 7: Hồ Chí Minh trong lịch sử Việt Nam"],
+        12: ["Chuyên đề 1: Thế giới trong và sau Chiến tranh lạnh (Liên hợp quốc, trật tự thế giới)", "Chuyên đề 2: ASEAN: những chặng đường lịch sử", "Chuyên đề 3: Cách mạng tháng Tám 1945, chiến tranh giải phóng và bảo vệ Tổ quốc (từ 8/1945 đến nay)", "Chuyên đề 4: Công cuộc Đổi mới ở Việt Nam từ năm 1986 đến nay", "Chuyên đề 5: Lịch sử đối ngoại của Việt Nam thời cận – hiện đại", "Chuyên đề 6: Hồ Chí Minh trong lịch sử Việt Nam"],
 
         11: ["Chuyên đề 1: Cách mạng tư sản", "Chuyên đề 2: Chủ nghĩa xã hội", "Chuyên đề 3: Quá trình giành độc lập dân tộc của các quốc gia Đông Nam Á", "Chuyên đề 4: Chiến tranh bảo vệ Tổ quốc và chiến tranh giải phóng dân tộc (trước 1945)", "Chuyên đề 5: Một số cuộc cải cách lớn trong lịch sử Việt Nam (trước 1858)", "Chuyên đề 6: Lịch sử bảo vệ chủ quyền Việt Nam ở Biển Đông"],
 
