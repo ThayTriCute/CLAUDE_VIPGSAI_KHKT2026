@@ -1,8 +1,8 @@
 def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
-    from services import bbt_display_contract, lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation
-    for module, revision in ((bbt_display_contract, 2026110911), (lesson_sources, 2026110802), (curriculum_policy, 2026110903),
+    from services import bbt_display_contract, inequality_region, lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation
+    for module, revision in ((bbt_display_contract, 2026110911), (inequality_region, 2026110912), (lesson_sources, 2026110802), (curriculum_policy, 2026110903),
                              (lab_scope, 2026110901), (lesson_export, 2026110911),
                              (text_boundaries, 2026110801), (socratic_context, 2026110901),
                              (philosophy_rotation, 2026110801)):
@@ -5545,6 +5545,30 @@ def render_smart_lab(data, current_subject=""):
 
     dtype = data.get("type")
 
+    if dtype == 'linear_region' and current_subject not in ("Ngữ văn", "Lịch sử", "Địa lý", "Giáo dục công dân", "Giáo dục kinh tế và pháp luật", "Lịch sử & Địa lý", "Tiếng Anh"):
+        # Miền nghiệm hệ BPT bậc nhất hai ẩn (Toán 10 KNTT): dựng tại chỗ, tọa độ đỉnh chính xác, không gọi AI.
+        from services.inequality_region import parse_constraints, region_svg, _constraint_text, _frac_tex
+        constraints = parse_constraints('; '.join(str(c) for c in data.get('constraints', [])))
+        if not constraints:
+            st.warning('Chưa đọc được bất phương trình bậc nhất hai ẩn x, y. Ví dụ: x >= 0; y >= 0; 3x + 5y <= 7.')
+            return
+        st.markdown('### 📐 Biểu diễn miền nghiệm của hệ bất phương trình bậc nhất hai ẩn')
+        st.latex(r'\begin{cases}' + r'\\'.join(_constraint_text(c, tex=True) for c in constraints) + r'\end{cases}')
+        diagram, info = region_svg(constraints)
+        st.markdown(diagram, unsafe_allow_html=True)
+        if info['status'] == 'empty':
+            st.warning('Hệ vô nghiệm: không có điểm nào thỏa mãn đồng thời mọi bất phương trình.')
+        elif info['status'] == 'degenerate':
+            st.info('Miền nghiệm suy biến (chỉ là một đoạn/đường thẳng hoặc một điểm), không có phần trong.')
+        elif info['status'] == 'unbounded':
+            st.info('Miền nghiệm không bị chặn (kéo dài vô hạn); hình chỉ vẽ phần trong khung nhìn.')
+        if info['labels']:
+            st.markdown('**Các đỉnh của miền nghiệm (tọa độ chính xác):** ' + ', '.join(
+                '$' + name + r'\left(' + _frac_tex(x) + r';\,' + _frac_tex(y) + r'\right)$' for name, x, y in info['labels']))
+        st.caption('Quy ước SGK Toán 10 (KNTT): gạch bỏ phần không thỏa mãn; miền nghiệm là phần không bị gạch. Bờ nét liền thuộc miền nghiệm, nét đứt thì không.')
+        st.download_button('Tải hình miền nghiệm (SVG)', diagram.encode('utf-8'), file_name='Mien_nghiem_he_BPT.svg', mime='image/svg+xml', key=lab_key('linear_region_svg'))
+        return
+
     if dtype == 'geo_fixed_offset_clock':
         from datetime import date, time
         from services.lab_scope import fixed_offset_clock
@@ -5857,7 +5881,7 @@ def render_smart_lab(data, current_subject=""):
 
     social_subjects = ["Ngữ văn", "Lịch sử", "Địa lý", "Giáo dục công dân", "Giáo dục kinh tế và pháp luật", "Lịch sử & Địa lý", "Tiếng Anh"]
 
-    if current_subject in social_subjects and dtype in ["func_3", "parabola", "func_1_1", "func_2_1", "func_2", "area", "revolve_ox", "oxyz", "geometry_3d", "func_exp", "func_log"]:
+    if current_subject in social_subjects and dtype in ["func_3", "parabola", "func_1_1", "func_2_1", "func_2", "area", "revolve_ox", "oxyz", "geometry_3d", "func_exp", "func_log", "linear_region"]:
 
         st.warning(f"Dữ liệu mô phỏng hiện tại chưa phù hợp với môn {current_subject}. "
                    "Em hãy nhập tên bài, nội dung hoặc số liệu cần trực quan hóa vào lệnh mô phỏng. "
@@ -13063,7 +13087,8 @@ if selected_station == station_labels[0]:
     from services.lab_scope import reaction_rate_table_request
     from services.lab_scope import osmosis_lab_request
     from services.lab_scope import reviewed_workshop_request, is_local_workshop_command, reviewed_logic_lab_request, is_local_logic_command
-    explicit_local_model = (explicit_light_model or soil_ph_lab_request(lab_command, subject)
+    from services.inequality_region import linear_region_request
+    explicit_local_model = (explicit_light_model or linear_region_request(lab_command, subject) or soil_ph_lab_request(lab_command, subject)
                             or horizontal_throw_request(lab_command, subject)
                             or reaction_rate_table_request(lab_command, subject, grade_num, st.session_state.get('current_topic', ''))
                             or osmosis_lab_request(lab_command, subject, grade_num, st.session_state.get('current_topic', ''))
@@ -13241,6 +13266,10 @@ QUY TẮC PHÂN LOẠI MÔ HÌNH:
 
    + Hai đường thẳng song song trong không gian: {{"type": "geometry_3d", "shape": "parallel_lines", "title": "Mô hình hai đường thẳng song song d1 // d2"}}
 
+9b. MIỀN NGHIỆM HỆ BẤT PHƯƠNG TRÌNH BẬC NHẤT HAI ẨN (Toán 10, KNTT) — KHÔNG dùng sơ đồ tư duy cho yêu cầu này:
+   {{"type": "linear_region", "constraints": ["x >= 0", "y >= 0", "3*x + 5*y <= 7"]}}
+   Chép đúng từng bất phương trình từ yêu cầu hoặc bài học; không tự thêm điều kiện x >= 0, y >= 0 khi đề không có.
+
 10. KHÔNG GIAN OXYZ:
 
    {{"type": "oxyz", "x": 2, "y": 3, "z": 4}}
@@ -13283,7 +13312,7 @@ QUY TẮC PHÂN LOẠI MÔ HÌNH:
                             m_code = re.search(r'"code"\s*:\s*"(.*?)"\s*(?:,\s*"|\})', raw_json, re.DOTALL)
                             if m_code:
                                 try:
-                                    extracted = m_code.group(1).encode('utf-8').decode('unicode_escape', errors='ignore')
+                                    extracted = json.loads('"' + m_code.group(1) + '"')  # giữ nguyên tiếng Việt; unicode_escape làm vỡ chữ có dấu
                                 except Exception:
                                     extracted = m_code.group(1)
                                 st.session_state.lab_data = {"type": "mermaid", "code": extracted}
