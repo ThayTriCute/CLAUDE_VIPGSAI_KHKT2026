@@ -16833,14 +16833,14 @@ if selected_station == station_labels[3]:
 
                 import hmac
 
-                configured = str(get_secret("ADMIN_PASS", "sha256:bbbb18c2d250cbc4f780cd5311f633083b7c0eebd91c29b3e06420fb363bb986")).strip()
+                configured = str(get_secret("ADMIN_PASS", "")).strip()
 
                 clean_pass = (password or "").strip()
 
                 locked_until = st.session_state.get("admin_locked_until", 0.0)
                 is_valid = time.monotonic() >= locked_until and admin_password_matches(clean_pass, configured)
                 if not configured:
-                    st.error("Chưa cấu hình ADMIN_PASS trong Streamlit Secrets. Giáo viên cần thiết lập trước khi mở khu vực dữ liệu.")
+                    st.error("Chưa cấu hình ADMIN_PASS trong Streamlit Secrets. Giáo viên cần thiết lập (dạng 'sha256:<hash>') trước khi mở khu vực dữ liệu.")
                 elif time.monotonic() < locked_until:
                     st.error("Đã thử sai nhiều lần. Vui lòng chờ 60 giây trước khi thử lại.")
 
