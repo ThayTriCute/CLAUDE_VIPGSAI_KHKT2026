@@ -8,7 +8,7 @@ import threading
 import uuid
 import math
 from qa_runtime import parse_grade
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 DB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 DB_PATH = os.path.join(DB_DIR, "gsai_learning.db")
@@ -24,6 +24,12 @@ class DatabaseManager:
         self.db_path = str(db_path or DB_PATH)
         os.makedirs(os.path.dirname(os.path.abspath(self.db_path)), exist_ok=True)
         self._local = threading.local()
+        # Đồng bộ Cloud bền vững: khóa bí mật chỉ giữ trong bộ nhớ (không ghi DB/Git);
+        # hàng đợi sync_outbox nằm trong SQLite nên sống qua Cloud restart.
+        self._supabase_creds = None
+        self._outbox_lock = threading.Lock()
+        self._outbox_draining = False
+        self._auto_drain = True
         self._init_sqlite()
 
     def _get_connection(self):
@@ -94,6 +100,19 @@ class DatabaseManager:
 
                 CREATE INDEX IF NOT EXISTS idx_exam_study ON exam_attempts (subject, grade_level, phase, student_id);
                 CREATE INDEX IF NOT EXISTS idx_diagnostic_search ON diagnostic_logs (subject, grade_level, topic);
+
+                CREATE TABLE IF NOT EXISTS sync_outbox (
+                    id TEXT PRIMARY KEY,
+                    table_name TEXT NOT NULL,
+                    payload_json TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'pending',
+                    attempts INTEGER NOT NULL DEFAULT 0,
+                    last_error TEXT,
+                    next_attempt_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS idx_outbox_pending ON sync_outbox (status, next_attempt_at);
                 """)
                 conn.commit()
         except Exception as e:
@@ -130,6 +149,112 @@ class DatabaseManager:
         if not ok:
             logging.warning("Chưa đồng bộ được sự kiện; bản ghi cục bộ vẫn được giữ.")
         return ok
+
+    # --- Hàng đợi đồng bộ bền vững (durable outbox) ------------------------------
+    @staticmethod
+    def _utc_now():
+        return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+
+    def _remember_creds(self, supabase_url, supabase_key):
+        """Giữ khóa Supabase trong bộ nhớ tiến trình; không bao giờ ghi vào DB."""
+        if supabase_url and supabase_key:
+            self._supabase_creds = (supabase_url, supabase_key)
+
+    def _enqueue_sync(self, cursor, table_name, payload):
+        """Ghi payload vào sync_outbox TRONG CÙNG giao dịch với bản ghi cục bộ.
+
+        Dùng INSERT OR IGNORE theo khóa idempotency '{bảng}:{id}' nên phát lại
+        không tạo bản trùng. Không lưu khóa/bí mật ở đây.
+        """
+        identity = str(payload.get("id") or uuid.uuid4())
+        now = self._utc_now()
+        cursor.execute(
+            "INSERT OR IGNORE INTO sync_outbox "
+            "(id, table_name, payload_json, status, next_attempt_at, created_at, updated_at) "
+            "VALUES (?, ?, ?, 'pending', ?, ?, ?)",
+            (f"{table_name}:{identity}", table_name,
+             json.dumps(payload, ensure_ascii=False), now, now, now))
+
+    def _trigger_drain(self):
+        """Khởi chạy một lượt rút hàng đợi ở nền, không chồng lượt."""
+        if not self._auto_drain or not self._supabase_creds:
+            return
+        with self._outbox_lock:
+            if self._outbox_draining:
+                return
+            self._outbox_draining = True
+
+        def worker():
+            try:
+                self._drain_outbox()
+            finally:
+                with self._outbox_lock:
+                    self._outbox_draining = False
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _drain_outbox(self, limit=50):
+        """Gửi các mục pending tới hạn; thành công thì xóa, thất bại thì lùi lịch.
+
+        Trả về số mục đã gửi thành công. Idempotency nhờ 'resolution=merge-duplicates'
+        của Supabase nên gửi lại an toàn.
+        """
+        creds = self._supabase_creds
+        if not creds:
+            return 0
+        supabase_url, supabase_key = creds
+        now = self._utc_now()
+        try:
+            with self._get_connection() as conn:
+                rows = conn.execute(
+                    "SELECT id, table_name, payload_json, attempts FROM sync_outbox "
+                    "WHERE status='pending' AND next_attempt_at <= ? "
+                    "ORDER BY next_attempt_at LIMIT ?",
+                    (now, int(limit))).fetchall()
+        except Exception as exc:
+            logging.warning("Không đọc được sync_outbox: %s", exc)
+            return 0
+        sent = 0
+        for row in rows:
+            try:
+                payload = json.loads(row["payload_json"])
+            except (ValueError, TypeError):
+                payload = None
+            ok = False
+            last_error = "payload_json không hợp lệ" if payload is None else ""
+            if isinstance(payload, dict):
+                try:
+                    ok = self._sync_parent_and_event(row["table_name"], payload, supabase_url, supabase_key)
+                    if not ok:
+                        last_error = "đồng bộ Supabase trả về thất bại"
+                except Exception as exc:
+                    last_error = str(exc)[:300]
+                    logging.warning("Lỗi đồng bộ outbox %s: %s", row["id"], exc)
+            try:
+                with self._get_connection() as conn:
+                    if ok:
+                        conn.execute("DELETE FROM sync_outbox WHERE id=?", (row["id"],))
+                        sent += 1
+                    else:
+                        attempts = int(row["attempts"]) + 1
+                        delay = min(3600, 30 * (2 ** min(attempts, 7)))
+                        nxt = (datetime.now(timezone.utc) + timedelta(seconds=delay)).strftime("%Y-%m-%d %H:%M:%S")
+                        status = "failed" if (payload is None or attempts >= 12) else "pending"
+                        conn.execute(
+                            "UPDATE sync_outbox SET attempts=?, next_attempt_at=?, status=?, "
+                            "last_error=?, updated_at=? WHERE id=?",
+                            (attempts, nxt, status, last_error, self._utc_now(), row["id"]))
+                    conn.commit()
+            except Exception as exc:
+                logging.warning("Không cập nhật được sync_outbox: %s", exc)
+        return sent
+
+    def flush_pending_sync(self, supabase_url="", supabase_key=""):
+        """Gọi khi khởi động (hoặc định kỳ) để đẩy nốt các mục còn tồn sau restart."""
+        self._remember_creds(supabase_url, supabase_key)
+        if not self._supabase_creds:
+            return 0
+        return self._drain_outbox()
 
     def save_student_if_not_exists(self, student_id: str, student_name: str, grade_level: int):
         try:
@@ -182,32 +307,28 @@ class DatabaseManager:
                     answers_str,
                     submitted_time
                 ))
+                inserted = cursor.rowcount != 0
+                # Enqueue đồng bộ TRONG CÙNG giao dịch với bản ghi cục bộ.
+                if supabase_url and supabase_key and inserted:
+                    self._enqueue_sync(cursor, "exam_attempts", {
+                        "id": attempt_id,
+                        "student_id": student_id,
+                        "student_name": entry.get("name", "Ẩn danh"),
+                        "grade_level": grade_num,
+                        "subject": entry.get("subject", "Toán học"),
+                        "exam_code": str(entry.get("code", "")),
+                        "score": float(entry.get("score", 0.0)),
+                        "phase": str(entry.get("phase", "practice")),
+                        "duration_seconds": int(entry.get("duration_seconds", 0)),
+                        "grading_status": str(entry.get("grading_status", "auto_graded")),
+                        "answers_json": answers_str,
+                        "submitted_at": submitted_time
+                    })
                 conn.commit()
-                if cursor.rowcount == 0:
-                    return True
 
-            # Đồng bộ đám mây bất đồng bộ nếu có cấu hình (Payload khớp 100% schema.sql)
             if supabase_url and supabase_key:
-                supa_payload = {
-                    "id": attempt_id,
-                    "student_id": student_id,
-                    "student_name": entry.get("name", "Ẩn danh"),
-                    "grade_level": grade_num,
-                    "subject": entry.get("subject", "Toán học"),
-                    "exam_code": str(entry.get("code", "")),
-                    "score": float(entry.get("score", 0.0)),
-                    "phase": str(entry.get("phase", "practice")),
-                    "duration_seconds": int(entry.get("duration_seconds", 0)),
-                    "grading_status": str(entry.get("grading_status", "auto_graded")),
-                    "answers_json": answers_str,
-                    "submitted_at": submitted_time
-                }
-                threading.Thread(
-                    target=self._sync_parent_and_event,
-                    args=("exam_attempts", supa_payload, supabase_url, supabase_key),
-                    daemon=True
-                ).start()
-
+                self._remember_creds(supabase_url, supabase_key)
+                self._trigger_drain()
             return True
         except Exception as e:
             logging.error("Lỗi lưu kết quả bài thi: %s", e)
@@ -247,27 +368,25 @@ class DatabaseManager:
                     scores_str,
                     diag_time
                 ))
+                inserted = cursor.rowcount != 0
+                if supabase_url and supabase_key and inserted:
+                    self._enqueue_sync(cursor, "diagnostic_logs", {
+                        "id": diag_id,
+                        "student_id": student_id,
+                        "student_name": entry.get("name", "Ẩn danh"),
+                        "grade_level": grade_num,
+                        "subject": entry.get("subject", "Toán học"),
+                        "topic": entry.get("topic", ""),
+                        "error_type": entry.get("error_type", ""),
+                        "evaluation": entry.get("evaluation", ""),
+                        "radar_scores_json": scores_str,
+                        "created_at": diag_time
+                    })
                 conn.commit()
 
             if supabase_url and supabase_key:
-                supa_diag_payload = {
-                    "id": diag_id,
-                    "student_id": student_id,
-                    "student_name": entry.get("name", "Ẩn danh"),
-                    "grade_level": grade_num,
-                    "subject": entry.get("subject", "Toán học"),
-                    "topic": entry.get("topic", ""),
-                    "error_type": entry.get("error_type", ""),
-                    "evaluation": entry.get("evaluation", ""),
-                    "radar_scores_json": scores_str,
-                    "created_at": diag_time
-                }
-                threading.Thread(
-                    target=self._sync_parent_and_event,
-                    args=("diagnostic_logs", supa_diag_payload, supabase_url, supabase_key),
-                    daemon=True
-                ).start()
-
+                self._remember_creds(supabase_url, supabase_key)
+                self._trigger_drain()
             return True
         except Exception as e:
             logging.error("Lỗi lưu chẩn đoán lỗi: %s", e)
@@ -295,25 +414,23 @@ class DatabaseManager:
                     entry.get("detail", ""),
                     entry.get("time", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                 ))
+                inserted = cursor.rowcount != 0
+                if supabase_url and supabase_key and inserted:
+                    self._enqueue_sync(cursor, "user_feedbacks", {
+                        "id": str(entry.get("event_id")),
+                        "student_name": entry.get("name", "Ẩn danh"),
+                        "grade_level": grade_num,
+                        "subject": entry.get("subject", ""),
+                        "category": entry.get("category", ""),
+                        "rating": int(entry.get("rating", 5)),
+                        "detail": entry.get("detail", ""),
+                        "created_at": entry.get("time", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                    })
                 conn.commit()
-            if supabase_url and supabase_key:
-                feedback_time = entry.get("time", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-                supa_fb_payload = {
-                    "id": str(entry.get("event_id")),
-                    "student_name": entry.get("name", "Ẩn danh"),
-                    "grade_level": grade_num,
-                    "subject": entry.get("subject", ""),
-                    "category": entry.get("category", ""),
-                    "rating": int(entry.get("rating", 5)),
-                    "detail": entry.get("detail", ""),
-                    "created_at": feedback_time
-                }
-                threading.Thread(
-                    target=self._sync_parent_and_event,
-                    args=("user_feedbacks", supa_fb_payload, supabase_url, supabase_key),
-                    daemon=True
-                ).start()
 
+            if supabase_url and supabase_key:
+                self._remember_creds(supabase_url, supabase_key)
+                self._trigger_drain()
             return True
         except Exception as e:
             logging.error("Lỗi lưu phản hồi: %s", e)
