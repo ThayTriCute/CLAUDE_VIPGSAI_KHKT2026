@@ -7,7 +7,7 @@ import html
 import re
 from fractions import Fraction
 
-T1_CONTEXT_REVISION = 2026110913
+T1_CONTEXT_REVISION = 2026110914
 
 _OPS = {'<=': '<=', '=<': '<=', '≤': '<=', '⩽': '<=', '>=': '>=', '=>': '>=', '≥': '>=', '⩾': '>=', '<': '<', '>': '>'}
 _OP_RE = r'(<=|=<|≤|⩽|>=|=>|≥|⩾|<|>)'
@@ -354,17 +354,23 @@ def region_plotly_spec(constraints):
                          hovertemplate=f'd{k+1}: {_side(a, b, c)} = {_frac_text(c)}<extra></extra>'))
     names = iter('ABCDEFGHKLMNPQ')
     labels = [('O' if x == 0 and y == 0 else next(names), x, y) for x, y in info['vertices']]
+    annotations = []
     if labels:
+        texts = [n if n == 'O' else f'{n}({_frac_text(x)}; {_frac_text(y)})' for n, x, y in labels]
         data.append(dict(type='scatter', x=[float(x) for _, x, _ in labels], y=[float(y) for _, _, y in labels],
-                         mode='markers+text', marker=dict(size=9, color='#0f172a'),
-                         text=[n if n == 'O' else f'{n}({_frac_text(x)}; {_frac_text(y)})' for n, x, y in labels],
-                         textposition='top right', textfont=dict(size=13, color='#0f172a'),
-                         hovertemplate='%{text}<extra></extra>', name='Đỉnh (tọa độ chính xác)'))
+                         mode='markers', marker=dict(size=9, color='#0f172a'), customdata=texts,
+                         hovertemplate='%{customdata}<extra></extra>', name='Đỉnh (tọa độ chính xác)'))
+        # Nhãn đặt tránh đè nhau/điểm khác (services/plot_labels, dùng chung các Lab đồ thị).
+        from services.plot_labels import place_labels
+        points = [dict(x=float(x), y=float(y), text=text, kind='I') for (_, x, y), text in zip(labels, texts)]
+        for point, (dx, dy) in zip(points, place_labels(points, (x0, x1), (y0, y1), 600, 470)):
+            annotations.append(dict(x=point['x'], y=point['y'], text=point['text'], showarrow=False, xshift=dx, yshift=dy,
+                                    font=dict(size=13, color='#0f172a'), bgcolor='rgba(255,255,255,0.92)', borderpad=2))
     axis = dict(zeroline=True, zerolinecolor='#0f172a', zerolinewidth=2, gridcolor='#e2e8f0', dtick=1,
                 color='#0f172a', showline=False)
     layout = dict(template='plotly_white', height=560, margin=dict(l=40, r=20, t=40, b=40),
                   paper_bgcolor='#ffffff', plot_bgcolor='#ffffff', font=dict(color='#0f172a'),
                   title=dict(text='Miền nghiệm của hệ bất phương trình', font=dict(size=16)),
                   xaxis=dict(axis, range=[x0, x1], title='x'), yaxis=dict(axis, range=[y0, y1], title='y', scaleanchor='x', scaleratio=1),
-                  legend=dict(orientation='h', y=-0.12, font=dict(size=12)))
+                  legend=dict(orientation='h', y=-0.12, font=dict(size=12)), annotations=annotations)
     return {'data': data, 'layout': layout}, info
