@@ -1,9 +1,9 @@
 def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
-    from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation
-    for module, revision in ((lesson_sources, 2026110802), (curriculum_policy, 2026110903),
-                             (lab_scope, 2026110901), (lesson_export, 2026110901),
+    from services import bbt_display_contract, lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation
+    for module, revision in ((bbt_display_contract, 2026110911), (lesson_sources, 2026110802), (curriculum_policy, 2026110903),
+                             (lab_scope, 2026110901), (lesson_export, 2026110911),
                              (text_boundaries, 2026110801), (socratic_context, 2026110901),
                              (philosophy_rotation, 2026110801)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
@@ -3034,8 +3034,12 @@ def _normalize_bbt_discontinuity(s):
     Chỉ đổi các ký hiệu tiệm cận; không đụng dấu '|' phân tách cột hay trị tuyệt đối |x|.
     """
     # Một nguồn duy nhất dùng chung cho Trạm 1/2/3, đề, xuất bản: services/bbt_display_contract.
-    from services.bbt_display_contract import normalize_bbt_discontinuity
-    return normalize_bbt_discontinuity(s)
+    # Worker Cloud có thể còn giữ module cũ chưa có hàm này: nạp lại thay vì ImportError (sự cố 09/11/2026).
+    from services import bbt_display_contract as _contract
+    if not hasattr(_contract, 'normalize_bbt_discontinuity'):
+        from importlib import reload
+        _contract = reload(_contract)
+    return _contract.normalize_bbt_discontinuity(s)
     # Markdown bắt buộc thoát '|' trong ô bảng nên model hay viết vạch kép thành '\\|\\|' hoặc '\\|' (LaTeX ‖).
     # Không nhận dạng -> ô y' bị điền '0' và hai giới hạn ±∞ dồn chung một ô (lỗi Trạm 1, 09/11/2026).
     s = re.sub(r'\\(?:\||Vert|lVert|rVert)\s*\\(?:\||Vert|lVert|rVert)(?![a-zA-Z])', '||', s)
