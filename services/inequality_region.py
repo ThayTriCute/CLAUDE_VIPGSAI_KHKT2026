@@ -7,7 +7,7 @@ import html
 import re
 from fractions import Fraction
 
-T1_CONTEXT_REVISION = 2026110912
+T1_CONTEXT_REVISION = 2026110913
 
 _OPS = {'<=': '<=', '=<': '<=', '≤': '<=', '⩽': '<=', '>=': '>=', '=>': '>=', '≥': '>=', '⩾': '>=', '<': '<', '>': '>'}
 _OP_RE = r'(<=|=<|≤|⩽|>=|=>|≥|⩾|<|>)'
@@ -314,3 +314,57 @@ def region_svg(constraints):
            + ''.join(parts) + '</svg>')
     info['labels'] = labels
     return svg, info
+
+
+def region_plotly_spec(constraints):
+    """Cùng dữ liệu chính xác như SVG, dạng Plotly (dict data/layout, không phụ thuộc plotly khi kiểm thử).
+    Phần không thỏa từng BPT tô gạch xám; miền nghiệm tô xanh nhạt; bờ ngặt nét đứt; đỉnh ghi phân số."""
+    info = analyse(constraints)
+    x0, x1, y0, y1 = _view(constraints, info['vertices'])
+    box = [(Fraction(x0).limit_denominator(1000), Fraction(y0).limit_denominator(1000)),
+           (Fraction(x1).limit_denominator(1000), Fraction(y0).limit_denominator(1000)),
+           (Fraction(x1).limit_denominator(1000), Fraction(y1).limit_denominator(1000)),
+           (Fraction(x0).limit_denominator(1000), Fraction(y1).limit_denominator(1000))]
+    closed = lambda poly: ([float(x) for x, _ in poly] + [float(poly[0][0])], [float(y) for _, y in poly] + [float(poly[0][1])])
+    data = []
+    for k, (a, b, op, c) in enumerate(constraints):
+        flipped = (a, b, {'<=': '>', '<': '>=', '>=': '<', '>': '<='}[op], c)
+        excluded = _dedupe(_clip(box, flipped))
+        if len(excluded) >= 3:
+            xs, ys = closed(excluded)
+            data.append(dict(type='scatter', x=xs, y=ys, mode='lines', fill='toself', line=dict(width=0),
+                             fillcolor='rgba(100,116,139,0.28)', fillpattern=dict(shape='/', fgcolor='#64748b', size=9),
+                             hoverinfo='skip', showlegend=k == 0, name='Phần bị gạch (không thỏa)', legendgroup='hatch'))
+    feasible = box
+    for constraint in constraints:
+        feasible = _dedupe(_clip(feasible, constraint))
+    if len(feasible) >= 3:
+        xs, ys = closed(feasible)
+        data.append(dict(type='scatter', x=xs, y=ys, mode='lines', fill='toself', line=dict(width=0),
+                         fillcolor='rgba(34,197,94,0.18)', hoverinfo='skip', name='Miền nghiệm (không bị gạch)'))
+    palette = ['#2563eb', '#dc2626', '#7c3aed', '#ea580c', '#0891b2', '#be185d', '#4d7c0f', '#0f766e']
+    for k, (a, b, op, c) in enumerate(constraints):
+        seg = _dedupe(_clip(_clip(box, (a, b, '<=', c)), (a, b, '>=', c)))
+        if len(seg) < 2:
+            continue
+        p, q = seg[0], seg[-1]
+        data.append(dict(type='scatter', x=[float(p[0]), float(q[0])], y=[float(p[1]), float(q[1])], mode='lines',
+                         line=dict(color=palette[k % len(palette)], width=3, dash='dash' if op in ('<', '>') else 'solid'),
+                         name=f'd{k+1}: {_side(a, b, c)} = {_frac_text(c)} ({_constraint_text((a, b, op, c))})',
+                         hovertemplate=f'd{k+1}: {_side(a, b, c)} = {_frac_text(c)}<extra></extra>'))
+    names = iter('ABCDEFGHKLMNPQ')
+    labels = [('O' if x == 0 and y == 0 else next(names), x, y) for x, y in info['vertices']]
+    if labels:
+        data.append(dict(type='scatter', x=[float(x) for _, x, _ in labels], y=[float(y) for _, _, y in labels],
+                         mode='markers+text', marker=dict(size=9, color='#0f172a'),
+                         text=[n if n == 'O' else f'{n}({_frac_text(x)}; {_frac_text(y)})' for n, x, y in labels],
+                         textposition='top right', textfont=dict(size=13, color='#0f172a'),
+                         hovertemplate='%{text}<extra></extra>', name='Đỉnh (tọa độ chính xác)'))
+    axis = dict(zeroline=True, zerolinecolor='#0f172a', zerolinewidth=2, gridcolor='#e2e8f0', dtick=1,
+                color='#0f172a', showline=False)
+    layout = dict(template='plotly_white', height=560, margin=dict(l=40, r=20, t=40, b=40),
+                  paper_bgcolor='#ffffff', plot_bgcolor='#ffffff', font=dict(color='#0f172a'),
+                  title=dict(text='Miền nghiệm của hệ bất phương trình', font=dict(size=16)),
+                  xaxis=dict(axis, range=[x0, x1], title='x'), yaxis=dict(axis, range=[y0, y1], title='y', scaleanchor='x', scaleratio=1),
+                  legend=dict(orientation='h', y=-0.12, font=dict(size=12)))
+    return {'data': data, 'layout': layout}, info
