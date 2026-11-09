@@ -2,6 +2,7 @@
 name: GSAI THPT 2026 - Automated CI/CD Quality Assurance
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
   pull_request:
