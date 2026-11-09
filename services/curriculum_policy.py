@@ -428,7 +428,12 @@ def validate_lesson_policy(text, subject, grade):
                 raise ValueError("Tiêu đề bài học khai báo khác lớp đang chọn.")
         if line.lstrip().startswith('#'):
             for declared_grade in re.finditer(r"(?:lớp|khối)\s*:?\s*(\d{1,2})\b", clean, re.I):
-                if normalize_grade(declared_grade[1]) != grade:
+                # "Nhắc lại kiến thức lớp 5", "Ôn tập lớp 10", "ở lớp 7" là kiến thức nền,
+                # không phải nhãn lớp của bài; chỉ chặn khi tiêu đề gắn bài với lớp khác.
+                before = folded(clean[:declared_grade.start()])[-24:]
+                if re.search(r'(?:on tap|nhac lai|da hoc|kien thuc|chuong trinh|\bo|\btu)$', before):
+                    continue
+                if not 6 <= int(declared_grade[1]) <= 12 or normalize_grade(declared_grade[1]) != grade:
                     raise ValueError("Tiêu đề bài học khai báo khác lớp đang chọn.")
     check_current_facts(text)
     return text

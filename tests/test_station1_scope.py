@@ -239,6 +239,17 @@ class GradeScopedPromptTests(unittest.TestCase):
         block = source[start:source.index('if subject == "Tin học"', start)]
         self.assertIn("'bậc ba' in", block)
 
+    def test_prior_grade_review_heading_is_not_rejected_as_wrong_grade(self):
+        from services.curriculum_policy import validate_lesson_policy
+        for text, subject, grade in (('### PHẦN 1: BÀI HỌC\n#### Nhắc lại kiến thức lớp 5\nx', 'Toán học', 6),
+                                     ('### Ôn tập lớp 10\nx', 'Toán học', 11),
+                                     ('### Điều em đã học ở lớp 7\nx', 'Ngữ văn', 8)):
+            with self.subTest(text=text):
+                self.assertEqual(validate_lesson_policy(text, subject, grade), text)
+        for text in ('# Bài 3 — Toán lớp 12\nx', '# Bài 1 (lớp 5)\nx', '**Lớp:** 12\nx'):
+            with self.subTest(text=text), self.assertRaises(ValueError):
+                validate_lesson_policy(text, 'Toán học', 11)
+
 
 if __name__ == '__main__':
     unittest.main()
