@@ -253,11 +253,11 @@ BIGDATA_CURRICULUM = {
 
             "Chuyên đề 2: My Friends & My Neighbourhood",
 
-            "Chuyên đề 3: Natural Wonders of Viet Nam & Our Greener World",
+            "Chuyên đề 3: Natural Wonders of Viet Nam & Our Tet Holiday",
 
             "Chuyên đề 4: Television & Sports and Games",
 
-            "Chuyên đề 5: Cities of the World & Robots"
+            "Chuyên đề 5: Cities of the World, Our Houses in the Future, Our Greener World & Robots"
 
         ]
 
