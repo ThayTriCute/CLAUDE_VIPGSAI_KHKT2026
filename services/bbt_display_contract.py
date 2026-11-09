@@ -1,6 +1,11 @@
 """Align supplied rows for the existing BBT renderer; never invent limits."""
 import re
 
+# Đổi giá trị khi đổi API module này: worker Cloud giữ module cũ sẽ được nạp lại
+# (app._refresh_t1_context_services) trước khi app.py gọi hàm mới. Sự cố 09/11/2026:
+# ImportError normalize_bbt_discontinuity vì worker còn giữ bản cũ.
+T1_CONTEXT_REVISION = 2026110911
+
 
 def normalize_bbt_discontinuity(text):
     """Một nguồn duy nhất cho ký hiệu tiệm cận đứng (vạch kép) của BBT: mọi biến thể -> '||'.
