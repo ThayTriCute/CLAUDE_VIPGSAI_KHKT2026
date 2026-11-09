@@ -130,10 +130,10 @@ class Station1ClosureTests(unittest.TestCase):
                         for child in node.body for n in ast.walk(child)))
 
     def run_reply(self, reply='', failure=False, subject='Toán học', grade=8,
-                  message='Em không còn thắc mắc.', closed=False):
+                  message='Em không còn thắc mắc.', closed=False, topic=''):
         class State(dict):
             __getattr__ = dict.__getitem__
-        state=State(tram1_chat_history=[], tram1_understood=closed)
+        state=State(tram1_chat_history=[], tram1_understood=closed, **({'current_topic': topic} if topic else {}))
         register=Mock()
         class Slot:
             def __init__(self): self.markdown = Mock()
@@ -199,6 +199,10 @@ class Station1ClosureTests(unittest.TestCase):
         self.assertIn('Kiên trì', self.last_prompt)
         self.assertIn('không gán tác giả', self.last_prompt)
         self.assertNotIn('FixtureAuthor', self.last_prompt)
+        # 09/11/2026: lời nhắc f'(x)/f''(x) của hàm bậc ba chỉ dành cho bài hàm bậc ba,
+        # không chèn vào lời chốt bài Toán 8 khác (quy tắc chuyên môn đúng ngữ cảnh).
+        self.assertNotIn('không nhầm đạo hàm cấp một', self.last_prompt)
+        self.run_reply(reply='Kiên trì và trung thực.', grade=12, topic='Khảo sát hàm số bậc ba')
         self.assertIn('không nhầm đạo hàm cấp một', self.last_prompt)
 
     def test_station2_closure_prompt_does_not_depend_on_station1_locals(self):
