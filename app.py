@@ -1,8 +1,8 @@
 def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
-    from services import bbt_display_contract, inequality_region, lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation
-    for module, revision in ((bbt_display_contract, 2026110911), (inequality_region, 2026110913), (lesson_sources, 2026110802), (curriculum_policy, 2026110903),
+    from services import bbt_display_contract, inequality_region, plot_labels, lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation
+    for module, revision in ((bbt_display_contract, 2026110911), (inequality_region, 2026110914), (plot_labels, 2026110914), (lesson_sources, 2026110802), (curriculum_policy, 2026110903),
                              (lab_scope, 2026110901), (lesson_export, 2026110911),
                              (text_boundaries, 2026110801), (socratic_context, 2026110901),
                              (philosophy_rotation, 2026110801)):
@@ -5338,19 +5338,40 @@ def render_exact_function_plotly(fig):
         except (ValueError, TypeError, SyntaxError):
             return value
 
+    # Gộp điểm trùng (vd I trùng giao Oy) và đặt nhãn tránh đè: services/plot_labels (dùng chung).
+    from services import plot_labels as _labels
+    def _kind(name):
+        name = str(name or '')
+        for key, kind in (('CĐ', 'CĐ'), ('CT', 'CT'), ('Tâm', 'I'), ('uốn', 'I'), ('Đỉnh', 'Đỉnh'), ('Oy', 'Oy'), ('Ox', 'Ox')):
+            if key in name:
+                return kind
+        return 'other'
+    labelled = []
     for trace in fig.data:
         if trace.text is not None and not isinstance(trace.text, str):
             trace.text = [formula_label(text) for text in trace.text]
             if 'markers' in str(trace.mode) and len(trace.text) == 1:
-                shifts = {'Cực đại (CĐ)':(-30,42),'Cực tiểu (CT)':(28,-42),
-                          'Tâm đối xứng I':(36,24),'Tâm ĐX / Điểm uốn I':(36,24),
-                          'Giao Oy':(-38,-26),'Giao trục Oy':(-38,-26)}
-                dx,dy = shifts.get(trace.name,(0,-30))
-                fig.add_annotation(x=trace.x[0],y=trace.y[0],text=trace.text[0],
-                                   showarrow=False,xshift=dx,yshift=dy,font=dict(size=14),
-                                   bgcolor='rgba(15,23,42,0.88)',borderpad=3)
+                labelled.append(dict(x=float(trace.x[0]), y=float(trace.y[0]), text=trace.text[0],
+                                     kind=_kind(trace.name), name=trace.name, trace=trace))
                 trace.mode = 'markers'
                 trace.text = None
+    kept = _labels.merge_coincident(labelled)
+    for point in kept:
+        if point['aliases']:
+            point['trace'].name = str(point['trace'].name) + ' ≡ ' + ' ≡ '.join(str(a) for a in point['aliases'])
+    for point in labelled:
+        if not any(point['trace'] is k['trace'] for k in kept):
+            point['trace'].showlegend = False
+    x_range = list(fig.layout.xaxis.range or [min(p['x'] for p in kept) - 1, max(p['x'] for p in kept) + 1]) if kept else [0, 1]
+    y_range = list(fig.layout.yaxis.range or [min(p['y'] for p in kept) - 1, max(p['y'] for p in kept) + 1]) if kept else [0, 1]
+    origin_box = []
+    if x_range[0] <= 0 <= x_range[1] and y_range[0] <= 0 <= y_range[1]:
+        ox = (0 - x_range[0]) / (x_range[1] - x_range[0]) * 620
+        oy = (y_range[1] - 0) / (y_range[1] - y_range[0]) * 435
+        origin_box = [(ox - 20, oy + 2, 18, 20)]
+    for point, (dx, dy) in zip(kept, _labels.place_labels(kept, x_range, y_range, 620, 435, origin_box)):
+        fig.add_annotation(x=point['x'], y=point['y'], text=point['text'], showarrow=False, xshift=dx, yshift=dy,
+                           font=dict(size=14), bgcolor='rgba(15,23,42,0.88)', borderpad=3)
     for annotation in fig.layout.annotations or []:
         annotation.text = formula_label(annotation.text)
     # Keep the title and legend out of the plotting area on narrow screens.
@@ -5378,17 +5399,16 @@ def setup_pedagogical_oxy(fig, x_range, y_range):
 
     fig.add_annotation(x=x_max, y=0, ax=-18, ay=0, xref='x', yref='y', axref='pixel', ayref='pixel', showarrow=True, arrowhead=2, arrowsize=1.2, arrowwidth=2, arrowcolor='#cbd5e1')
 
-    fig.add_annotation(x=x_max - 0.1, y=-0.5, text='<b>x</b>', showarrow=False, font=dict(color='#f8fafc', size=15, family='Times New Roman'))
-
 
 
     fig.add_annotation(x=0, y=y_max, ax=0, ay=18, xref='x', yref='y', axref='pixel', ayref='pixel', showarrow=True, arrowhead=2, arrowsize=1.2, arrowwidth=2, arrowcolor='#cbd5e1')
 
-    fig.add_annotation(x=-0.4, y=y_max - 0.1, text='<b>y</b>', showarrow=False, font=dict(color='#f8fafc', size=15, family='Times New Roman'))
 
 
-
-    fig.add_annotation(x=-0.35, y=-0.45, text='<i>O</i>', showarrow=False, font=dict(color='#94a3b8', size=15, family='Times New Roman'))
+    # O, x, y neo theo pixel quanh gốc/đầu trục (không trôi khi đổi tỉ lệ khung).
+    from services.plot_labels import axis_letter_annotations
+    for _axis_label in axis_letter_annotations([x_min, x_max], [y_min, y_max]):
+        fig.add_annotation(**_axis_label)
 
 
 
@@ -7400,25 +7420,25 @@ def render_smart_lab(data, current_subject=""):
 
             # Đỉnh I
             fig.add_trace(go.Scatter(x=[x_dinh], y=[y_dinh], mode='markers+text', marker=dict(size=10, color='gold', symbol='diamond'),
-                                     text=[f'I({_ptex(_ex_dinh_x)}; {_ptex(_ex_dinh_y)})'], textposition="top center", name='Đỉnh I'))
+                                     text=[f'I({sp.sstr(_ex_dinh_x)}; {sp.sstr(_ex_dinh_y)})'], textposition="top center", name='Đỉnh I'))
             fig.add_trace(go.Scatter(x=[x_dinh, x_dinh, 0], y=[0, y_dinh, y_dinh], mode='lines', line=dict(color='gold', width=1.2, dash='dot'), hoverinfo='skip', showlegend=False))
 
             # Giao Oy
             if y_min <= fc <= y_max:
                 fig.add_trace(go.Scatter(x=[0], y=[fc], mode='markers+text', marker=dict(size=8, color='#34d399', symbol='cross'),
-                                         text=[f'(0; {_ptex(_qc2)})'], textposition="middle right", name='Giao Oy'))
+                                         text=[f'(0; {sp.sstr(_qc2)})'], textposition="middle right", name='Giao Oy'))
 
             # Giao Ox
             if delta_p >= 0:
                 for _r in _ex_roots2:
                     _rx = float(_r)
-                    if x_min <= _rx <= x_max and abs(_rx) > 0.15:
+                    if x_min <= _rx <= x_max:
                         fig.add_trace(go.Scatter(x=[_rx], y=[0], mode='markers+text', marker=dict(size=7, color='#06b6d4', symbol='circle-open'),
-                                                 text=[f'({_ptex(_r)}; 0)'], textposition="bottom center", name='Giao Ox', showlegend=False))
+                                                 text=[f'({sp.sstr(_r)}; 0)'], textposition="bottom center", name='Giao Ox', showlegend=False))
 
             setup_pedagogical_oxy(fig, [x_min, x_max], [y_min, y_max])
             fig.update_layout(title="Đồ thị Parabol Bậc 2 (Tối ưu co giãn • Kèm Đỉnh, Trục ĐX & Giao trục)", height=520, showlegend=True)
-            st.plotly_chart(fig, width="stretch")
+            render_exact_function_plotly(fig)  # nhãn chính xác dựng LaTeX, gộp điểm trùng, tránh đè
 
 
 

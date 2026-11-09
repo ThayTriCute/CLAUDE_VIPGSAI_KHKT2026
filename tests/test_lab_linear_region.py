@@ -82,7 +82,8 @@ class LabWiringTests(unittest.TestCase):
         self.assertEqual(st.radio.call_args.args[1], ['SVG chính xác', 'Plotly tương tác'])
         spec = st.plotly_chart.call_args.args[0]
         vertex_trace = spec['data'][-1]
-        self.assertEqual(sorted(vertex_trace['text']), ['A(0; 7/5)', 'B(7/3; 0)', 'O'])
+        self.assertEqual(sorted(vertex_trace['customdata']), ['A(0; 7/5)', 'B(7/3; 0)', 'O'])
+        self.assertEqual(sorted(n['text'] for n in spec['layout']['annotations']), ['A(0; 7/5)', 'B(7/3; 0)', 'O'])
         self.assertTrue(any(d.get('line', {}).get('dash') == 'solid' for d in spec['data']))
 
     def test_plotly_spec_is_accepted_by_plotly(self):
