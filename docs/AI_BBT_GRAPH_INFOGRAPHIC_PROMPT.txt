@@ -49,3 +49,7 @@ Nghiệm thu trước giao
 
 Đầu ra của AI
 Nêu dữ kiện đã kiểm; mô hình toán có giá trị chính xác; hình/code đúng renderer; kết quả kiểm từng đường và file/commit bằng chứng; phần còn thiếu với bước tiếp cụ thể. Nếu không đủ dữ kiện hoặc công cụ không hỗ trợ, ghi rõ giới hạn. Không gắn nhãn đã đạt chỉ bằng việc nhắc lại chỉ dẫn này.
+
+
+Ký hiệu tiệm cận đứng và cao độ giới hạn (chuẩn hóa bắt buộc 09/11/2026)
+Trong hàng y' và hàng y của BBT, ký hiệu vạch kép tiệm cận đứng PHẢI dùng đúng '||' (hai dấu gạch đứng). TUYỆT ĐỐI không xuất \parallel, \Vert, ∥ (U+2225) hay ║ dưới dạng mã TeX/ký tự thô trong ô bảng: bộ dựng nhận diện cột tiệm cận qua '||', nếu sai ký hiệu sẽ (1) in mã TeX thô ra hình, (2) không tách được giới hạn trái/phải nên ±∞ bị đặt sai cao độ. Renderer vẽ vạch kép bằng NÉT VECTOR (đường kẻ/border), không dùng glyph font, để hiển thị đồng nhất trên mọi thiết bị Android/iOS/Windows/Mac. Tại ô tiệm cận, ghi 'giới_hạn_trái || giới_hạn_phải' (ví dụ '-∞ || +∞'); giới hạn một phía bằng +∞ đặt ở ĐỈNH, bằng -∞ đặt ở ĐÁY, theo chiều mũi tên vào/ra. Ứng dụng đã có lớp chuẩn hóa _normalize_bbt_discontinuity() quy mọi biến thể về '||' tại mọi đường dựng (SVG bài học, HTML, ảnh WebP, LaTeX); không được gỡ lớp này và không tự thêm đặc lệ theo một bài. Dấu '|' phân tách cột và trị tuyệt đối |x| giữ nguyên, không đụng tới.

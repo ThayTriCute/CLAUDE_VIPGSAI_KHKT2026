@@ -3023,9 +3023,26 @@ def render_exam_clock():
 
 # ==============================================================================
 
+def _normalize_bbt_discontinuity(s):
+    """Chuẩn hóa mọi biến thể ký hiệu tiệm cận đứng (vạch kép) về '||' chuẩn nội bộ.
+
+    Lý do: các model sinh BBT đôi khi xuất \\parallel, \\Vert, ∥ (U+2225) hay ║ thay vì
+    '||'. Nếu không chuẩn hóa, bộ dựng không nhận ra cột tiệm cận -> (1) in mã TeX thô
+    '\\parallel' ra hình, (2) dồn 'giới-hạn-trái ∥ giới-hạn-phải' vào một ô nên ±∞ bị đặt
+    sai cao độ. Quy về '||' để renderer vẽ VẠCH ĐÔI bằng nét vector (SVG/đường kẻ), hiển
+    thị đồng nhất trên Android/iOS/Windows/Mac, không phụ thuộc font hệ thống.
+    Chỉ đổi các ký hiệu tiệm cận; không đụng dấu '|' phân tách cột hay trị tuyệt đối |x|.
+    """
+    if not s:
+        return s
+    s = re.sub(r'\\(?:parallel|shortparallel|Vert)\b', '||', s)
+    s = s.replace('∥', '||').replace('║', '||').replace('⫲', '||')
+    return s
+
 def parse_and_align_bbt(raw_bbt):
 
     raw_str = str(raw_bbt).strip()
+    raw_str = _normalize_bbt_discontinuity(raw_str)
     raw_str = re.sub(r'\\+nearrow\b|\\nearrow', '↗', raw_str)
     raw_str = re.sub(r'\\+searrow\b|\\searrow', '↘', raw_str)
     raw_str = re.sub(r'\\n(?!earrow)', '\n', raw_str)
@@ -9594,6 +9611,7 @@ def render_bbt_to_webp_base64(raw_bbt: str) -> str:
 
     try:
         raw_str = str(raw_bbt).strip()
+        raw_str = _normalize_bbt_discontinuity(raw_str)
         raw_str = re.sub(r'\\+nearrow\b|\\nearrow', '↗', raw_str)
         raw_str = re.sub(r'\\+searrow\b|\\searrow', '↘', raw_str)
         raw_str = raw_str.replace('>>', '↗').replace('>', '↗')
@@ -9607,6 +9625,7 @@ def render_bbt_to_webp_base64(raw_bbt: str) -> str:
             s = s.replace('+inf', '+∞').replace('-inf', '-∞').replace('inf', '∞')
             s = re.sub(r'\\+(?:nearrow|searrow)', '', s).replace('↗', '').replace('↘', '').strip()
             s = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', r'\1/\2', s)
+            s = _moet_plaintext_math(s)
             return s
 
 
@@ -10875,6 +10894,57 @@ def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán h�
 # ==============================================================================
 # ENGINE TRỰC QUAN HÓA SƯ PHẠM ĐA MÔN - ĐA LỚP & BBT CHUẨN BỘ GD&ĐT (TKZ-TAB)
 # ==============================================================================
+# Ánh xạ macro LaTeX phổ biến (đa môn 6-12) -> Unicode BMP phổ cập mọi thiết bị,
+# dùng trong _render_math_html_token để KHÔNG lọt mã TeX thô ra màn hình học sinh.
+# Không gồm \sqrt, \frac, \dfrac (xử lý cấu trúc riêng) và \circ ở mũ (xử lý độ riêng).
+_MOET_MATH_SYMBOLS = {
+    'leq': '≤', 'le': '≤', 'geq': '≥', 'ge': '≥', 'neq': '≠', 'ne': '≠',
+    'approx': '≈', 'equiv': '≡', 'sim': '∼', 'propto': '∝', 'cong': '≅',
+    'Leftrightarrow': '⇔', 'Longleftrightarrow': '⇔', 'leftrightarrow': '↔',
+    'Rightarrow': '⇒', 'Longrightarrow': '⇒', 'rightarrow': '→', 'longrightarrow': '→',
+    'Leftarrow': '⇐', 'leftarrow': '←', 'rightleftharpoons': '⇌', 'mapsto': '↦',
+    'to': '→', 'uparrow': '↑', 'downarrow': '↓',
+    'times': '×', 'cdot': '·', 'div': '÷', 'ast': '∗', 'star': '⋆',
+    'bullet': '•', 'circ': '∘', 'setminus': '∖', 'oplus': '⊕', 'otimes': '⊗',
+    'cup': '∪', 'cap': '∩', 'subseteq': '⊆', 'subset': '⊂', 'supseteq': '⊇',
+    'supset': '⊃', 'in': '∈', 'notin': '∉', 'ni': '∋', 'forall': '∀',
+    'exists': '∃', 'nexists': '∄', 'varnothing': '∅', 'emptyset': '∅',
+    'land': '∧', 'lor': '∨', 'neg': '¬', 'therefore': '∴', 'because': '∵',
+    'angle': '∠', 'perp': '⊥', 'parallel': '∥', 'triangle': '△', 'degree': '°',
+    'partial': '∂', 'nabla': '∇', 'int': '∫', 'oint': '∮', 'sum': '∑',
+    'prod': '∏', 'infty': '∞', 'pm': '±', 'mp': '∓',
+    'alpha': 'α', 'beta': 'β', 'gamma': 'γ', 'delta': 'δ', 'epsilon': 'ε',
+    'varepsilon': 'ε', 'zeta': 'ζ', 'eta': 'η', 'theta': 'θ', 'vartheta': 'ϑ',
+    'iota': 'ι', 'kappa': 'κ', 'lambda': 'λ', 'mu': 'μ', 'nu': 'ν', 'xi': 'ξ',
+    'rho': 'ρ', 'varrho': 'ϱ', 'sigma': 'σ', 'varsigma': 'ς', 'tau': 'τ',
+    'upsilon': 'υ', 'phi': 'φ', 'varphi': 'φ', 'chi': 'χ', 'psi': 'ψ', 'omega': 'ω',
+    'pi': 'π', 'varpi': 'ϖ',
+    'Gamma': 'Γ', 'Delta': 'Δ', 'Theta': 'Θ', 'Lambda': 'Λ', 'Xi': 'Ξ',
+    'Pi': 'Π', 'Sigma': 'Σ', 'Upsilon': 'Υ', 'Phi': 'Φ', 'Psi': 'Ψ', 'Omega': 'Ω',
+    'sin': 'sin ', 'cos': 'cos ', 'tan': 'tan ', 'cot': 'cot ', 'sec': 'sec ',
+    'csc': 'csc ', 'ln': 'ln ', 'log': 'log ', 'lg': 'lg ', 'exp': 'exp ',
+    'lim': 'lim ', 'max': 'max ', 'min': 'min ', 'gcd': 'gcd ', 'deg': 'deg ',
+    'ldots': '…', 'dots': '…', 'cdots': '⋯', 'vdots': '⋮', 'ddots': '⋱', 'prime': '′',
+}
+_MOET_SYM_RE = re.compile(
+    r'\\(' + '|'.join(sorted(map(re.escape, _MOET_MATH_SYMBOLS), key=len, reverse=True)) + r')(?![a-zA-Z])'
+)
+_MOET_BLACKBOARD = {'N': 'ℕ', 'Z': 'ℤ', 'Q': 'ℚ', 'R': 'ℝ', 'C': 'ℂ'}
+def _moet_plaintext_math(s):
+    """Chuyển macro LaTeX -> Unicode THUẦN cho ngữ cảnh vẽ chữ (matplotlib/WebP, SVG text):
+    √, phân số a/b, độ °, ký hiệu đa môn; gỡ macro chưa ánh xạ. Không để lọt mã TeX ra ảnh.
+    Dùng cho ô BBT ảnh WebP (Trạm 3) nơi matplotlib vẽ chữ thuần, không mathtext."""
+    if not s:
+        return s
+    s = re.sub(r'\\sqrt\s*\{([^{}]+)\}', r'√(\1)', s)
+    s = re.sub(r'\\sqrt\s*(\d+)', r'√\1', s)
+    s = re.sub(r'\\(?:d|t)?frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}', r'\1/\2', s)
+    s = re.sub(r'<sup>\s*\\circ\s*</sup>', '°', s)
+    s = re.sub(r'\^\s*\{?\s*\\circ\s*\}?', '°', s)
+    s = _MOET_SYM_RE.sub(lambda m: _MOET_MATH_SYMBOLS[m.group(1)], s)
+    s = re.sub(r'\\mathbb\s*\{([NZQRC])\}', lambda m: _MOET_BLACKBOARD[m.group(1)], s)
+    s = re.sub(r'\\[a-zA-Z]+', '', s).replace('{', '').replace('}', '')
+    return s
 def _render_math_html_token(raw_val: str) -> str:
     """Chuyển đổi biểu thức LaTeX (phân số, căn thức, số mũ, vô cực) sang HTML sắc nét trong BBT."""
     if not raw_val:
@@ -10882,6 +10952,7 @@ def _render_math_html_token(raw_val: str) -> str:
     s = raw_val.strip()
     s = re.sub(r'^\$+|\$+$', '', s).strip()
     s = s.replace('⟦DBL_BAR⟧', '||')
+    s = s.replace('\\parallel', '∥').replace('\\Vert', '∥')
 
     # Chuẩn hóa ký hiệu vô cực & đặc biệt
     s = re.sub(r'\+\\infty|\+\s*∞', '+∞', s)
@@ -10914,6 +10985,14 @@ def _render_math_html_token(raw_val: str) -> str:
     s = re.sub(r'_([0-9a-zA-Z])', r'<sub>\1</sub>', s)
 
     # Dọn dẹp dấu $ hoặc ngoặc nhọn dư thừa
+    # An toàn hiển thị đa môn: chuẩn hóa độ (^circ -> °), map ký hiệu LaTeX phổ biến
+    # -> Unicode, rồi gỡ mọi macro chưa ánh xạ để KHÔNG lọt mã TeX thô cho học sinh.
+    s = re.sub(r'<sup>\s*\\circ\s*</sup>', '°', s)
+    s = re.sub(r'\^\s*\{?\s*\\circ\s*\}?', '°', s)
+    s = s.replace('\\%', '%').replace('\\,', '').replace('\\;', '').replace('\\:', '').replace('\\!', '').replace('\\ ', ' ')
+    s = _MOET_SYM_RE.sub(lambda m: _MOET_MATH_SYMBOLS[m.group(1)], s)
+    s = re.sub(r'\\mathbb\{([NZQRC])\}', lambda m: _MOET_BLACKBOARD[m.group(1)], s)
+    s = re.sub(r'\\[a-zA-Z]+', '', s)
     s = s.replace('$', '').replace('{', '').replace('}', '')
     return s.strip()
 
@@ -10921,6 +11000,7 @@ def _render_math_html_token(raw_val: str) -> str:
 def _parse_bbt_cells_safe(line: str) -> list:
     """Tách ô bảng Markdown nhưng bảo vệ tuyệt đối ký hiệu tiệm cận đứng || và trị tuyệt đối |x|."""
     s = line.strip()
+    s = _normalize_bbt_discontinuity(s)
     # 1. Bảo vệ ký hiệu không xác định / tiệm cận đứng || (bắt || độc lập hoặc trong ô/chữ, không bắt cột trống | |)
     s = re.sub(r'(?<!\|)\|\|(?!\|)', '⟦DBL_BAR⟧', s)
     # 2. Bảo vệ trị tuyệt đối |...| bên trong cặp $...$
