@@ -165,3 +165,52 @@ def topic_context_conflict(topic, subject, grade):
     conflict_grade = own[0] if own and grade not in own else None
     other_book = other[0] if other and not any(s == subject for s, _ in mentions) else None
     return {'grade': conflict_grade, 'other_book': other_book}
+
+
+# --- Ba phần bài học do AI sinh: không cắt nhầm ở dòng "Phần 2 (khổ 2–3)" -------
+_PART_RE = re.compile(r'(?im)^[ \t]*(?:#{1,6}[ \t]*)?(?:\*\*|__)?[ \t]*PHẦN[ \t]*([23])(?!\d)[^\n]*$')
+_PART_TITLES = {2: re.compile(r'trắc\s*nghiệm', re.I), 3: re.compile(r'tự\s*luận|bài\s*tập', re.I)}
+
+
+def _part_rank(match, part):
+    """0: tiêu đề đúng tên phần; 1: tiêu đề Markdown/in đậm/IN HOA; 2: dòng thường."""
+    line = match.group(0).strip()
+    if _PART_TITLES[part].search(line):
+        return 0
+    if line.startswith(('#', '**', '__')) or line.startswith('PHẦN'):
+        return 1
+    return 2
+
+
+def lesson_part_spans(text):
+    """Vị trí tiêu đề PHẦN 2/PHẦN 3 của bài Trạm 1: {n: (đầu dòng tiêu đề, đầu nội dung)}.
+
+    Bài Ngữ văn/Lịch sử thường có dòng bố cục "Phần 2 (khổ 2–3): ..." trong Phần 1;
+    dòng đó không phải tiêu đề phần luyện tập nên không được cắt bài hoặc làm mất
+    câu hỏi. Ưu tiên tiêu đề có tên phần, rồi tiêu đề định dạng, cuối cùng mới tới
+    dòng thường (giữ hành vi cũ khi bài không có tiêu đề rõ hơn).
+    """
+    value = str(text or '')
+    found = {2: [], 3: []}
+    for match in _PART_RE.finditer(value):
+        found[int(match[1])].append(match)
+    spans = {}
+    for part in (2, 3):
+        after = spans.get(2, (0, 0))[1]
+        candidates = [m for m in found[part] if m.start() >= after]
+        if candidates:
+            best = min(candidates, key=lambda m: (_part_rank(m, part), m.start()))
+            spans[part] = (best.start(), best.end())
+    return spans
+
+
+def lesson_parts(text):
+    """(Phần 1, Phần 2, Phần 3) theo lesson_part_spans; phần thiếu là chuỗi rỗng."""
+    value = str(text or '')
+    spans = lesson_part_spans(value)
+    p2, p3 = spans.get(2), spans.get(3)
+    first = min([s[0] for s in (p2, p3) if s] or [len(value)])
+    part1 = value[:first]
+    part2 = value[p2[1]:(p3[0] if p3 else len(value))] if p2 else ''
+    part3 = value[p3[1]:] if p3 else ''
+    return part1, part2, part3

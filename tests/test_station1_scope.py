@@ -12,7 +12,7 @@ import re
 import unittest
 
 from services.academic_context import subjects_for_grade
-from services.station1_scope import (GENERIC_NOTE, lesson_illustrations,
+from services.station1_scope import (GENERIC_NOTE, lesson_illustrations, lesson_part_spans, lesson_parts,
                                      topic_context_conflict, topic_context_mentions)
 from tests.test_expert_patch_regressions import load_function
 
@@ -150,6 +150,77 @@ class CurriculumSuggestionTests(unittest.TestCase):
         body = ast.get_source_segment(source, refresh)
         self.assertIn(f'(station1_scope, {station1_scope.T1_CONTEXT_REVISION})', body)
         self.assertIn(f'(curriculum_data, {curriculum_data.T1_CONTEXT_REVISION})', body)
+
+
+QUIZ = """Câu 1. [Mức độ: NB] Câu hỏi một?
+A. Một
+B. Hai
+C. Ba
+D. Bốn
+CORRECT: B
+HINT: Em nhớ lại?
+Câu 2. [Mức độ: TH] Phần 2 nói về điều gì?
+A. Cảnh
+B. Nỗi nhớ
+C. Lao động
+D. Học tập
+CORRECT: B
+HINT: Đọc lại khổ 2–3?
+"""
+ESSAY = "Câu 1. [Mức độ: VD] Phân tích phần 3 của văn bản.\nBước 1: Tìm hiểu đề — đọc lại phần 3.\n"
+OUTLINE = ("Bố cục: 3 phần\nPhần 1 (khổ 1): hình ảnh quê hương.\n"
+           "Phần 2 (khổ 2–3): nỗi nhớ.\nPhần 3 (khổ cuối): tình yêu quê hương.\n")
+
+
+def lesson(outline=OUTLINE, h2='### PHẦN 2: TRẮC NGHIỆM KHÁCH QUAN SOCRATIC', h3='### PHẦN 3: BÀI TẬP TỰ LUẬN'):
+    return ("### PHẦN 1: BÀI HỌC\n**Khởi động:** ...\n**Hình thành kiến thức**\n" + outline
+            + "**Luyện tập:** Tóm tắt.\n**Vận dụng:** Viết đoạn văn.\n" + h2 + "\n" + QUIZ + h3 + "\n" + ESSAY)
+
+
+def old_parse_window(text):
+    """Cách tách cũ của parse_quiz_questions (trước 09/11/2026) để so sánh."""
+    part3 = re.search(r'(?im)^\s*(?:#{1,6}\s*)?PHẦN\s*3(?!\d)', text)
+    window = text[:part3.start()] if part3 else text
+    part2 = re.search(r'(?im)^\s*(?:#{1,6}\s*)?PHẦN\s*2(?!\d)', window)
+    return window[part2.end():] if part2 else window
+
+
+class LessonPartTests(unittest.TestCase):
+    def parse(self, text):
+        from unittest.mock import patch
+        fn = load_function('parse_quiz_questions', sanitize_katex_latex=lambda s: s,
+                           format_pedagogical_math=None, annotate_question=lambda q: q)
+        with patch('random.shuffle', side_effect=lambda items: None):
+            return fn(text)
+
+    def test_outline_lines_do_not_cut_lesson_or_drop_quiz(self):
+        text = lesson()
+        part1, part2, part3 = lesson_parts(text)
+        self.assertIn('Phần 3 (khổ cuối)', part1)
+        self.assertIn('**Vận dụng:**', part1)
+        self.assertTrue(part2.lstrip().startswith('Câu 1.'))
+        self.assertTrue(part3.lstrip().startswith('Câu 1. [Mức độ: VD]'))
+        self.assertEqual([q['question'] for q in self.parse(text)],
+                         ['Câu hỏi một?', 'Phần 2 nói về điều gì?'])
+
+    def test_standard_lessons_keep_previous_quiz_window(self):
+        variants = [lesson(outline=''), lesson(outline='', h2='### PHẦN 2', h3='### PHẦN 3'),
+                    lesson(outline='', h2='PHẦN 2: TRẮC NGHIỆM', h3='PHẦN 3: TỰ LUẬN'),
+                    'Câu 1: Nội dung\nA. Một\nB. Hai\nC. Ba\nD. Bốn\nCORRECT: A\n']
+        for text in variants:
+            with self.subTest(text=text[:40]):
+                spans = lesson_part_spans(text)
+                new = text[:spans[3][0]] if 3 in spans else text
+                new = new[spans[2][1]:] if 2 in spans else new
+                self.assertEqual(new.split('Câu 1', 1)[-1], old_parse_window(text).split('Câu 1', 1)[-1])
+
+    def test_bold_and_plain_heading_forms(self):
+        text = lesson(h2='**PHẦN 2: TRẮC NGHIỆM**', h3='**PHẦN 3: BÀI TẬP TỰ LUẬN**')
+        self.assertEqual(len(self.parse(text)), 2)
+        self.assertIn('Phần 2 (khổ 2–3)', lesson_parts(text)[0])
+        no_titles = lesson(h2='### PHẦN 2', h3='### PHẦN 3')
+        self.assertEqual(len(self.parse(no_titles)), 2)
+        self.assertTrue(lesson_parts(no_titles)[2].lstrip().startswith('Câu 1. [Mức độ: VD]'))
 
 
 if __name__ == '__main__':

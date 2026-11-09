@@ -7598,11 +7598,12 @@ def recover_missing_quiz_keys(existing, reparsed):
 
 def parse_quiz_questions(text):
     questions = []
-    part3_match = re.search(r'(?im)^\s*(?:#{1,6}\s*)?PHẦN\s*3(?!\d)', text)
-    part2_text = text[:part3_match.start()] if part3_match else text
-    part2_match = re.search(r'(?im)^\s*(?:#{1,6}\s*)?PHẦN\s*2(?!\d)', part2_text)
-    if part2_match:
-        part2_text = part2_text[part2_match.end():]
+    # Dòng bố cục "Phần 2 (khổ 2–3)" trong Phần 1 không phải tiêu đề phần trắc nghiệm.
+    from services.station1_scope import lesson_part_spans
+    part_spans = lesson_part_spans(text)
+    part2_text = text[:part_spans[3][0]] if 3 in part_spans else text
+    if 2 in part_spans:
+        part2_text = part2_text[part_spans[2][1]:]
 
     pattern = r'(?im)^[ \t]*(?:\*\*)?(?:\[Q\d+\]|C[âa]u[ \t]*\d+[\.\:]?)'
     parts = re.split(pattern, part2_text)
@@ -12099,12 +12100,14 @@ if selected_station == station_labels[0]:
                            file_name="Bai_hoc_day_du_" + _lesson_archive_hash.sha256(archive_lesson_text.encode('utf-8')).hexdigest()[:12] + ".json",
                            mime="application/json", key="t1_download_full_" + current_context_key)
 
-        part2_split = re.split(r'(?i)(?:###\s*)?PHẦN 2[\:\.]?', lesson_text)
-        part3_split = re.split(r'(?i)(?:###\s*)?PHẦN 3[\:\.]?', lesson_text)
+        # Tách ba phần theo tiêu đề thật (services.station1_scope), không cắt ở dòng bố cục.
+        from services.station1_scope import lesson_parts, lesson_part_spans
+        t1_spans = lesson_part_spans(lesson_text)
+        t1_part1, t1_part2, t1_part3 = lesson_parts(lesson_text)
 
         # In Phần 1 kèm nút đọc Giảng bài bằng Giọng nói sư phạm
-        if len(part2_split) > 0 and part2_split[0].strip():
-            cleaned_p1 = re.sub(r'\n\s*\n', '\n\n', part2_split[0].strip())
+        if t1_part1.strip():
+            cleaned_p1 = re.sub(r'\n\s*\n', '\n\n', t1_part1.strip())
             cleaned_p1 = re.sub(r'(?:\s*\-\-\-\s*)+$', '', cleaned_p1)
             cleaned_p1 = station1_master_sovereign_brain_gate(cleaned_p1, subject=subject, grade=grade_num, topic=st.session_state.get('current_topic', ''), policy_revision=CURRICULUM_POLICY_REVISION)
             cleaned_p1_vis = render_pedagogical_lesson_visuals(cleaned_p1, subject=subject, grade=grade_num)
@@ -12488,11 +12491,11 @@ if selected_station == station_labels[0]:
 
                 st.markdown("---")
 
-        elif len(part2_split) > 1 and "PHẦN 3" in part2_split[1].upper():
+        elif 2 in t1_spans and 3 in t1_spans:
 
             st.warning("💡 Hệ thống AI vừa sinh ra một định dạng trắc nghiệm mới. Đang hiển thị ở chế độ xem tĩnh:")
 
-            fallback_p2 = re.split(r'(?i)###\s*PHẦN\s*3', part2_split[1])[0]
+            fallback_p2 = t1_part2
             fallback_p2_vis = render_pedagogical_lesson_visuals(fallback_p2.strip(), subject=subject, grade=grade_num, illustrations=False)
             st.markdown(chemical_display_markdown(fallback_p2_vis), unsafe_allow_html=True)
 
@@ -12500,13 +12503,13 @@ if selected_station == station_labels[0]:
 
         # In Phần 3
 
-        if len(part3_split) > 1 and part3_split[-1].strip():
+        if 3 in t1_spans and t1_part3.strip():
 
             st.markdown("### ✍️ Phần 3: Bài tập tự luận & Hướng dẫn tư duy")
             st.caption("Mức độ tự luận là đề xuất của AI; cần đối chiếu yêu cầu cần đạt, lời giải và rubric theo đúng môn/lớp. Bài dài hoặc nhiều bước không tự động là VDC.")
             from services.text_boundaries import student_essay_text
             from services.lesson_sources import apply_reviewed_essay_labels
-            p3_student = apply_reviewed_essay_labels(student_essay_text(part3_split[-1]), subject, grade_num,
+            p3_student = apply_reviewed_essay_labels(student_essay_text(t1_part3), subject, grade_num,
                                                     st.session_state.get('current_topic', ''))
             p3_vis = render_pedagogical_lesson_visuals(p3_student, subject=subject, grade=grade_num, illustrations=False)
             st.markdown(chemical_display_markdown(p3_vis), unsafe_allow_html=True)
