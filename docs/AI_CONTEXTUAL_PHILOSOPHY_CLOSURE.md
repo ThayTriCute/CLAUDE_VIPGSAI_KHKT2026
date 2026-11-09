@@ -1,5 +1,7 @@
 # Chốt bài nhân sinh dùng chung Trạm 1, Trạm 2, Trạm 3
 
+09/11: URL toàn cuốn chưa đủ vị trí danh ngôn. complete_verified_quote_reference bổ sung source_locator từ nguồn verified khi đã khớp đủ câu và tác giả, kể cả output đã cóURL nhưng thiếuchương/đoạn. URL nằm trong ví dụ mã không được coi là nguồn lời giảng. Không bịa vị trí, không gọiAI thêm, giữ nguyên bài giảng và tính idempotent; kiểm thực cả nguồn/vị trí/nhãn diễn nghĩa.
+
 Quy tắc chủ dự án ngày 07/11/2026: khi học sinh đã hiểu và không còn câu hỏi, đúc kết kiến thức rồi có bài giảng triết lý nhân sinh đủ chiều sâu theo ngữ cảnh. Đổi bài học, góc nhìn, tác giả và cách thực hành qua các lần học/vào app, trải Á–Âu, cổ đại đến cận/hiện đại. Không chỉ khen, chép danh ngôn hoặc lặp công thức “kiên trì/trung thực” cho mọi bài. Đây là phần DƯỠNG THIỆN TÂM–ƯƠM NHÂN TÀI của hệ thống, không phải phụ lục trang trí.
 
 AI vào sửa/sinh nội dung phải đọc checkpoint và tài liệu này. Model API không tự mở tệp: `services.philosophy_rotation.GUIDANCE` được gắn qua `with_academic_grounding` vào system instruction của hai transport thường/JSON và streaming, trước vòng chọn key/model dự phòng. Mọi provider mới phải giữ contract. Ba đường closure còn phải gửi `closure_instruction` gồm nguồn, góc nhìn, lịch sử kế hoạch công khai và ngữ cảnh thực. Không đặt bài giảng kết thúc khi học sinh vẫn còn hỏi.

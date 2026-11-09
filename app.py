@@ -2,9 +2,9 @@ def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation
-    for module, revision in ((lesson_sources, 2026110802), (curriculum_policy, 2026110805),
-                             (lab_scope, 2026110805), (lesson_export, 2026110802),
-                             (text_boundaries, 2026110801), (socratic_context, 2026110704),
+    for module, revision in ((lesson_sources, 2026110802), (curriculum_policy, 2026110903),
+                             (lab_scope, 2026110901), (lesson_export, 2026110901),
+                             (text_boundaries, 2026110801), (socratic_context, 2026110901),
                              (philosophy_rotation, 2026110801)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
@@ -5610,7 +5610,8 @@ def render_smart_lab(data, current_subject=""):
     if dtype == 'bio_osmosis':
         from services.lab_scope import osmosis_state
         st.markdown('### Thẩm thấu — dự đoán, đổi điều kiện và giải thích')
-        st.caption('Mô hình định tính theo SGK Sinh10 trang66–67, không phải phép đo hoặc phim tế bào thật. Xét ban đầu cùng nhiệt độ/áp suất, màng cho nước qua và không cho chất tan đang xét qua. Nồng độ là số hạt tan hiệu dụng; không đồng nhất mọi mol chất tan với độ trương.')
+        source_scope = data.get('source_scope') or 'SGK Sinh10 trang66–67'
+        st.caption(f'Mô hình định tính theo {source_scope}, không phải phép đo hoặc phim tế bào thật. Xét ban đầu cùng nhiệt độ/áp suất, màng cho nước qua và không cho chất tan đang xét qua. Nồng độ là số hạt tan hiệu dụng; không đồng nhất mọi mol chất tan với độ trương.')
         cell = st.radio('Loại tế bào:', ['Động vật', 'Thực vật có thành'], horizontal=True, key=lab_key('osmosis_cell'))
         c1, c2 = st.columns(2)
         inside = c1.slider('Hạt tan hiệu dụng bên trong (đơn vị tương đối)', 0, 600, 300, 25, key=lab_key('osmosis_inside'))
@@ -5640,7 +5641,7 @@ def render_smart_lab(data, current_subject=""):
         writer = csv.writer(stream)
         writer.writerow(['cell_type', 'inside_effective_relative', 'outside_effective_relative', 'initial_net_direction', 'scope'])
         writer.writerow([cell, inside, outside, model['direction'], 'qualitative_model_not_measurement'])
-        st.download_button('Tải cấu hình và kết quả mô hình (.csv)', stream.getvalue().encode('utf-8-sig'), 'Sinh10_tham_thau_mo_hinh.csv', 'text/csv', key=lab_key('osmosis_csv'))
+        st.download_button('Tải cấu hình và kết quả mô hình (.csv)', stream.getvalue().encode('utf-8-sig'), f'Sinh{int(data.get("source_grade", 10))}_tham_thau_mo_hinh.csv', 'text/csv', key=lab_key('osmosis_csv'))
         st.markdown(f'[Nguồn SGK đã đối chiếu]({data["source_url"]})')
         return
 

@@ -19,6 +19,9 @@ class AcademicGroundingBoundaryTests(unittest.TestCase):
         self.assertIn('lời giải gợi ý và tiêu chí đánh giá có nội dung', prepared)
         self.assertIn('từ khóa thời gian không tự bảo đảm một phương án đúng', prepared)
         self.assertIn('không bọc từng từ trong LaTeX', prepared)
+        self.assertIn('không đưa đáp án/gợi ý/giải thích cạnh câu hỏi', prepared)
+        self.assertIn('phần trăm với điểm phần trăm', prepared)
+        self.assertIn('không tự là điều kiện đủ xác định nhóm nước', prepared)
         self.assertIn('Không suy từ lời tự báo đã hiểu', prepared)
         self.assertIn('Không biến phép ví von toán học thành dự báo định lượng', prepared)
         for clause in ('mọi môn/lớp, Trạm1–2–3 và model dự phòng',
@@ -51,6 +54,9 @@ class AcademicGroundingBoundaryTests(unittest.TestCase):
     def test_membrane_counterexample_is_in_shared_system_guidance(self):
         prepared = with_academic_grounding('Keep requested JSON schema')
         for clause in ('chủ động thứ cấp', 'gradient điện hóa', 'tính thấm màng/chất tan'):
+            self.assertIn(clause, prepared)
+        for clause in ('không biến hấp thu nước qua màng thành vận chuyển chủ động',
+                       'không luôn đi xuống', 'áp suất thủy tĩnh'):
             self.assertIn(clause, prepared)
         self.assertEqual(with_academic_grounding(prepared), prepared)
 

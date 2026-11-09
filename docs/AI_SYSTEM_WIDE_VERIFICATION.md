@@ -1,5 +1,11 @@
 # Kiểm chứng và sửa lỗi cho toàn hệ thống
 
+Khi dùng thống kê kinh tế–xã hội trong bất kỳ môn/lớp nào: ghi năm/đơn vị/phiên bản; phân biệt tổng/bình quân, quy mô/tăng trưởng và phần trăm/điểm phần trăm. Không dùng một ngưỡngHDI hoặc phân nhómthu nhập làm điều kiện đủ của nhómnước, không bỏ thuế khi cộng cơ cấuGDP và không tự bịa ngưỡng thườngtrên70% từ tên nhóm. ACADEMIC_GROUNDING_GUIDANCE truyền quy tắc qua mọi transport/model; caĐịa11 là bằng chứng lỗi, không giới hạn phạm vi hướng dẫn. Sửa kiến thức trong hồ sơ đúngbài, giữ khóa và bàiđãduyệt; testcơchế không chứng nhận mọi thống kê đãđúng.
+
+Phiếu/infographic học sinh đa môn, đa lớp: không hiện CORRECT/HINT/EXPLAIN cạnh câu hỏi. JSON gốc/parser giữ khóa và nội dung; HTML tách đáp án/gợi ý sang phụ lục giáo viên đóng mặc định, chỉ in khi mở rõ ràng. Prompt ảnh và trích infographic dùng student_assessment_text, không mang đáp án sang ảnh. A–D giữ đúng thứ tự/khóa, đo chiều rộng chữ và công thức sau khi dựng/font sẵn sàng để chọn4/2/1cột, tự xếp lại khi đổi khổ; không co chữ ép đủ một hàng. Nhãn giao diện tiếngViệt, không dịch ngữ liệu ngoại ngữ/công thức/ví dụ mã. Đây là quy tắc bố cục sư phạm, không tự chứng nhận mọi định dạng đề chính thức của Bộ.
+
+Sinh học/KHTN mọi lớp: khi giải thích rễ thiếu oxygen/ATP, giữ nước qua màng là thẩm thấu thụ động; phân biệt ảnh hưởng gián tiếp của chuyển hóa/ion với dùng ATP trực tiếp. Mạch rây theo nguồn–đích, không luôn đi xuống; phân biệt áp suất thẩm thấu với áp suất thủy tĩnh của dòng khối. Quy tắc vào ACADEMIC_GROUNDING_GUIDANCE dùng chung, không chỉ sửa bài Sinh11. Lab thẩm thấu ở lớp khác chỉ được opt-in bằng osmosis_model.locator trong hồ sơ đúng bài đã đọc; caption/CSV lấy đúng nguồn/lớp, không đổi nhãn để coi mô hình tế bào là mô phỏng toàn cây. Giữ mô hình/điều khiển Sinh10 đã duyệt.
+
 Áp dụng mọi môn/lớp, Trạm1–2–3, model chính và dự phòng. Bài đang kiểm là ca tái hiện, không phải giới hạn phạm vi bản vá.
 
 Ứng dụng chèn quy tắc cốt lõi từ ACADEMIC_GROUNDING_GUIDANCE qua with_academic_grounding vào cả transport JSON và streaming trước vòng fallback. API không tự đọc file này hoặc ổ F. Nguồn đúng bài phải được ứng dụng đưa vào ngữ cảnh. Hướng dẫn không bảo đảm mọi đầu ra đều đúng.

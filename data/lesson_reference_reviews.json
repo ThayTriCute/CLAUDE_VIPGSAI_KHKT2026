@@ -1972,6 +1972,859 @@
           "reason": "Nhận biết trực tiếp dạng đồ thị đã nêu trong định nghĩa."
         }
       ]
+    },
+    {
+      "id": "kntt-hoa11-canbang-bai1-20261108",
+      "subject": "Hóa học",
+      "grade": 11,
+      "topics": [
+        "Khái niệm về cân bằng hóa học — Hóa học 11, KNTT, Bài 1"
+      ],
+      "reviewed_on": "2026-11-08",
+      "scope": "Đã đọc Bài1 trang6–15 qua ba cổng, VniTeach mẫu2022. Một bài thật56.2s được sửa theo nguồn; chưa owner/toàn CT/YCCĐ/pháp luật.",
+      "sources": [
+        {
+          "title": "SGK Hóa học11 KNTT — NXBGDVN",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-hoa-hoc-11.4701111834",
+          "locator": "Title táibản3,TOCtrang4 vàBài1trangin6–15đãđọc;selected00,03,05–14ảnhlocal/XZ.",
+          "edition_note": "Title táibản3, nămchưaxáctín;reader156downloadpages,chỉlưu12ảnhcầnđọc,khôngtoànsách.",
+          "criteria": [
+            "Đúng bài, cùng phương trình/đơn vị/điều kiện; dữ liệu giả định hoặc từ sách phải ghi nhãn, có lời giải/rubric; không biến mục tiêu SGK thành YCCĐ pháp quy đã xác nhận."
+          ]
+        },
+        {
+          "title": "Trường Học Số Quốc Gia — Hóa học11 KNTT thống nhất",
+          "url": "https://www.thsqg.vn/sach/hoa-hoc-11-tn/doc",
+          "locator": "Bài1trangin6–15,reader7–16đãđọcChrome.",
+          "edition_note": "Đốichiếukhớp nộidung trongphạmviBài1vớiNXBGDVN,khôngtácgiảđộclập hoặcxáctínnămấn bản.",
+          "criteria": [
+            "Đúng bài, cùng phương trình/đơn vị/điều kiện; dữ liệu giả định hoặc từ sách phải ghi nhãn, có lời giải/rubric; không biến mục tiêu SGK thành YCCĐ pháp quy đã xác nhận."
+          ]
+        },
+        {
+          "title": "VniTeach — SGK Hóa học11 KNTT, bản mẫu11/2022",
+          "url": "https://www.vniteach.com/2022/12/18/sgk-hoa-hoc-11-bo-sach-kntt/",
+          "locator": "CoverBẢNMẪU11/2022,TOC4–5/PDF5–6,Bài1pp6–15/PDF7–16đãđọc,PDF/XZlưuF.",
+          "edition_note": "Bảnmẫukhôngcoilàhiệnhành;khớpkháiniệm/vídụ/điềukiệntrongphạmviđãđọc,khôngchứngnhậnmọiđínhchính.",
+          "criteria": [
+            "Đúng bài, cùng phương trình/đơn vị/điều kiện; dữ liệu giả định hoặc từ sách phải ghi nhãn, có lời giải/rubric; không biến mục tiêu SGK thành YCCĐ pháp quy đã xác nhận."
+          ]
+        }
+      ],
+      "grounded_facts": [
+        "Phản ứng thuận nghịch xảy ra theo hai chiều ngược nhau trong cùng điều kiện. Cân bằng động có tốc độ thuận bằng nghịch; phản ứng vẫn diễn ra. Nồng độ từng chất ổn định khi điều kiện duy trì, không bắt buộc nồng độ các chất bằng nhau.",
+        "Biểu thức Kc dùng nồng độ cân bằng với số mũ là hệ số phương trình đã cân bằng; không đưa chất rắn tinh khiết vào biểu thức. Với cùng phương trình trong mô hình SGK, Kc phụ thuộc nhiệt độ, không phụ thuộc nồng độ ban đầu hay xúc tác. Đảo hoặc nhân phương trình phải đổi biểu thức Kc. Không suy số mũ phương trình tốc độ luôn bằng hệ số phản ứng tổng; Bảng 1.1 có giả thiết phản ứng đơn giản riêng.",
+        "Dữ liệu sách: H2(g)+I2(g)⇌2HI(g), bình kín 10L ở445°C. Từ1molH2 và1molI2, cân bằng có0.2molH2,0.2molI2,1.6molHI. Nồng độ cân bằng0.02,0.02,0.16mol/L cho Kc=0.16²/(0.02*0.02)=64. Đây không phải phép đo do app thực hiện. Bảng1.1 chỉ ghi các mốc t0,t1,..., không có số giây để tự bịa trục thời gian.",
+        "Nguyên lí Le Chatelier: hệ đang cân bằng chuyển dịch theo chiều làm giảm tác động bên ngoài, không xóa hoàn toàn tác động. Tăng nhiệt độ ưu tiên chiều thu nhiệt, giảm nhiệt độ ưu tiên chiều tỏa nhiệt. Xét thay đổi nồng độ đúng thành phần và điều kiện; không coi thêm chất rắn tinh khiết còn hiện diện như tăng nồng độ chất tan.",
+        "Tăng áp suất bằng nén giảm thể tích khí ở nhiệt độ không đổi ưu tiên phía ít mol khí hơn. Nếu tổng hệ số khí hai vế bằng nhau thì không chuyển dịch trong mô hình này. Không đồng nhất thêm khí trơ ở thể tích không đổi với nén khí. Với2NO2⇌N2O4, ngay khi nén màu đậm do nồng độ tăng, sau đó nhạt hơn so với ngay sau nén; không suy màu cuối nhạt hơn màu ban đầu khi thiếu dữ kiện.",
+        "2NO2⇌N2O4 thuận tỏa nhiệt: làm lạnh màu nhạt hơn, làm nóng màu đậm hơn trong thí nghiệm mô tả. NO2 độc; chỉ mô phỏng, đọc dữ liệu hoặc quan sát thí nghiệm giáo viên tổ chức, không giao tự điều chế/đun/nén tại nhà. Phản ứng thủy phân sodium acetate trong bài có ΔH>0 theo chiều thuận, tức thu nhiệt.",
+        "Xúc tác giúp đạt cân bằng nhanh hơn, không đổi Kc hoặc chuyển dịch cân bằng ở cùng nhiệt độ. Tổng hợp N2+3H2⇌2NH3 tỏa nhiệt: nén áp cao thuận lợi cho NH3; hạ nhiệt độ thuận lợi về cân bằng nhưng chậm tốc độ. SGK nêu thỏa hiệp khoảng450°C,200bar và xúc tácFe; không biến thành hướng dẫn tự vận hành.",
+        "Hb+O2⇌HbO2 chỉ là mô hình sư phạm trong bài, không suy chẩn đoán hoặc chỉ định dùng oxygen điều trị từ mô hình này."
+      ],
+      "content_corrections": [
+        {
+          "before": "Đó chính là một trạng thái cân bằng. Vậy trong hóa học, trạng thái này được hiểu như thế nào?",
+          "after": "Đó là cân bằng vật lí trong chai kín ở điều kiện ổn định, dùng minh họa ý tưởng hai quá trình ngược nhau; bay hơi/ngưng tụ không phải phản ứng hóa học. Vậy cân bằng hóa học khác ở đâu?",
+          "reason": "Phân biệt cân bằng vật lí với phản ứng hóa học."
+        },
+        {
+          "before": "$K_c$ chỉ phụ thuộc vào nhiệt độ.",
+          "after": "Với cùng phương trình phản ứng và quy ước đang xét, $K_c$ phụ thuộc nhiệt độ. Đổi bản chất phản ứng, đảo chiều hoặc nhân hệ số phương trình phải đổi biểu thức/giá trị tương ứng, không giữ máy móc.",
+          "reason": "Giữ phạm vi phát biểu Kc phụ thuộc T."
+        },
+        {
+          "before": "*Áp suất:* Tăng áp suất $\\rightarrow$ chiều làm giảm số mol khí; Giảm áp suất $\\rightarrow$ chiều làm tăng số mol khí. (Nếu số mol khí hai vế bằng nhau, áp suất không làm chuyển dịch cân bằng).",
+          "after": "*Áp suất:* Trong mô hình khí đang xét, nén giảm thể tích ở nhiệt độ không đổi ưu tiên phía có tổng hệ số khí nhỏ hơn; giãn thể tích có chiều ngược lại. Tổng hệ số khí hai vế bằng nhau thì không chuyển dịch khi nén đẳng nhiệt. Không đếm số mol thực tế đang có trong bình thay cho hệ số phương trình, và không đồng nhất thêm khí trơ ở thể tích không đổi với nén khí.",
+          "reason": "Phân biệt điều kiện áp suất, hệ số mol khí và thành phần thực."
+        },
+        {
+          "before": "*Nồng độ:* Tăng nồng độ chất A $\\rightarrow$ chiều làm giảm nồng độ A.",
+          "after": "*Nồng độ:* Xét tăng nồng độ một thành phần khí hoặc chất tan có tham gia cân bằng trong điều kiện phù hợp: cân bằng chuyển dịch làm giảm tác động đó. Không áp như vậy cho việc thêm chất rắn tinh khiết khi pha rắn vẫn còn.\n    *   *Xúc tác:* Giúp hệ đạt cân bằng nhanh hơn, không đổi $K_c$ hoặc chuyển dịch cân bằng ở cùng nhiệt độ.",
+          "reason": "Có điều kiện nồng độ và bổ sung vai trò xúc tác."
+        },
+        {
+          "before": "*(Gợi ý: C là chất rắn, không đưa vào biểu thức).*",
+          "after": "Đáp án: $K_c=\\frac{[\\ce{CO}]^2}{[\\ce{CO2}]}$ với các nồng độ ở cân bằng; không đưa C rắn tinh khiết vào. Rubric tham khảo: đúng tử và số mũ 1 điểm, mẫu 1 điểm, nêu loại C rắn/điều kiện cân bằng 1 điểm.",
+          "reason": "Luyện tập có lời giải/rubric."
+        },
+        {
+          "before": "Để thu được nhiều $\\ce{NH3}$ hơn, ta nên tăng hay giảm áp suất của hệ? Tại sao?",
+          "after": "Trong mô hình khí, giữ nhiệt độ và thành phần ban đầu như nhau, nén giảm thể tích có lợi về cân bằng cho tạo NH3 vì tổng hệ số khí giảm từ4 xuống2. Không suy điều này từ mọi cách tăng áp suất tổng. Về thực tế công nghiệp, còn xét tốc độ, chi phí và an toàn; bài tập chỉ phân tích lí thuyết, không vận hành bình áp suất. Rubric: nêu nén đẳng nhiệt 1 điểm, đếm hệ số4→2 đúng 1 điểm, giải thích chuyển dịch 1 điểm.",
+          "reason": "Vận dụng có lời giải và giới hạn thực hành."
+        },
+        {
+          "before": "HINT: Em hãy nhớ lại cụm từ \"cân bằng động\". Liệu các phân tử có ngừng va chạm và phản ứng với nhau không, hay chúng vẫn chuyển hóa qua lại với tốc độ bù trừ cho nhau?",
+          "after": "EXPLAIN: Cân bằng động có tốc độ thuận bằng nghịch; các phản ứng vẫn xảy ra, nồng độ từng chất ổn định nhưng không bắt buộc bằng nhau.\nHINT: Em hãy nhớ lại cụm từ \"cân bằng động\". Liệu các phân tử có ngừng va chạm và phản ứng với nhau không, hay chúng vẫn chuyển hóa qua lại với tốc độ bù trừ cho nhau?",
+          "reason": "Bổ sung giải thích sau chấm; gợi ý không chốt luôn đáp án hoặc nhầm động học với nhiệt động."
+        },
+        {
+          "before": "HINT: Khi làm lạnh, hệ sẽ chuyển dịch theo chiều chống lại sự làm lạnh (tức là chiều tỏa thêm nhiệt). Dựa vào việc màu nhạt đi (tạo ra nhiều $\\ce{N2O4}$ hơn), em hãy đoán xem chiều thuận là chiều tỏa nhiệt hay thu nhiệt?",
+          "after": "EXPLAIN: Màu nâu đỏ nhạt đi cho thấy phía N2O4 được ưu tiên. Làm lạnh ưu tiên chiều tỏa nhiệt, nên chiều thuận2NO2→N2O4 là tỏa nhiệt. Đây là phân tích dữ liệu thí nghiệm giáo viên, không tự làm với NO2 độc.\nHINT: Màu nâu thuộc chất nào? Từ màu nhạt đi, xác định phía được ưu tiên rồi đối chiếu nguyên lí khi làm lạnh; chưa chọn đáp án chỉ theo chữ thuận/nghịch.",
+          "reason": "Bổ sung giải thích sau chấm; gợi ý không chốt luôn đáp án hoặc nhầm động học với nhiệt động."
+        },
+        {
+          "before": "HINT: Em hãy xem lại định nghĩa biểu thức $K_c$. Khi nồng độ ban đầu thay đổi, tỉ lệ nồng độ lúc cân bằng có thay đổi theo để giữ giá trị $K_c$ không đổi không? Chỉ có yếu tố năng lượng nào mới làm thay đổi bản chất động học này?",
+          "after": "EXPLAIN: Với cùng phương trình và mô hình đang xét, nhiệt độ làm đổi Kc; thay nồng độ ban đầu, nén đẳng nhiệt hoặc thêm xúc tác không làm đổi Kc. Đây là tính chất cân bằng nhiệt động, không phải phương trình tốc độ.\nHINT: Giữ cùng phương trình phản ứng, phân biệt thay trạng thái cân bằng với thay giá trị Kc. Yếu tố nào trong bốn lựa chọn có thể làm đổi Kc?",
+          "reason": "Bổ sung giải thích sau chấm; gợi ý không chốt luôn đáp án hoặc nhầm động học với nhiệt động."
+        },
+        {
+          "before": "*   Tính toán giá trị cụ thể.",
+          "after": "*   Đáp án: $[\\ce{PCl5}]=\\frac{0.1\\times0.1}{0.04}=0.25\\,\\mathrm{mol/L}$. Rubric tham khảo: biểu thức Kc đúng 1 điểm, biến đổi/thay số 1 điểm, kết quả và đơn vị 1 điểm.",
+          "reason": "Tự luận có đáp số đủ thay lời nhắc tự tính."
+        },
+        {
+          "before": "*   Giá trị $K_c$ nhỏ (0,04) có phù hợp với việc nồng độ chất phản ứng ($\\ce{PCl5}$) lớn hơn tích nồng độ các sản phẩm không?",
+          "after": "*   Thay ngược số đã tìm: $\\frac{0.1\\times0.1}{0.25}=0.04$, khớp dữ kiện. Không so trực tiếp một nồng độ với tích hai nồng độ có thứ nguyên khác nhau.",
+          "reason": "Sửa phép so sánh sai thứ nguyên."
+        },
+        {
+          "before": "Nếu ta đẩy pít-tông vào để giảm thể tích của hệ (giữ nhiệt độ không đổi),",
+          "after": "Trong mô hình hoặc ảnh thí nghiệm giáo viên, khi pít-tông giảm thể tích của hệ (giữ nhiệt độ không đổi),",
+          "reason": "Không giao học sinh tự nén NO2 độc."
+        },
+        {
+          "before": "*   Liệu màu sau cùng có nhạt hơn màu lúc ban đầu hoàn toàn không (khi chưa nén)? Lưu ý rằng chuyển dịch cân bằng chỉ làm *giảm bớt* tác động chứ không xóa bỏ hoàn toàn.",
+          "after": "*   Kết luận cần phân biệt hai giai đoạn: ngay sau nén, mật độ NO2 tăng nên màu đậm lên; tái cân bằng sau đó ưu tiên chiều nghịch tạo N2O4, nên nhạt bớt so với ngay sau nén. Không mặc nhiên ghi nhạt hơn trước nén; so sánh màu còn cần điều kiện quan sát và dữ kiện. Đây là mô hình/đọc thí nghiệm giáo viên, không tự dùng NO2. Rubric: giải thích tức thời 1 điểm, chiều nghịch do2molkhí→1molkhí 1 điểm, mốc so màu/giới hạn đúng 1 điểm.",
+          "reason": "Đủ kết luận/rubric và mốc so sánh màu."
+        },
+        {
+          "before": "*Gia sư: Cân bằng hóa học không phải là sự đứng yên, mà là một sự nỗ lực duy trì ổn định trong một môi trường luôn biến động. Giống như việc chúng ta giữ thăng bằng trên một chiếc xe đạp: ta vẫn đang vận động liên tục để không bị ngã.",
+          "after": "*Gia sư: Cân bằng hóa học là cân bằng động trong điều kiện xác định, không phải phản ứng đã dừng. Liên hệ giữ thăng bằng trên xe đạp sau đây chỉ là phép ví von về thích nghi, không suy cân bằng hóa học phải được duy trì bằng nỗ lực hoặc dòng năng lượng ngoài liên tục.",
+          "reason": "Không biến ví von thành khẳng định hóa học sai."
+        },
+        {
+          "before": "$\\ce{N2O4(g) (không màu) \\rightleftharpoons 2NO2(g) (màu nâu đỏ)}$",
+          "after": "$\\ce{N2O4(g) \\rightleftharpoons 2NO2(g)}$ (N2O4 không màu; NO2 màu nâu đỏ)",
+          "reason": "Để chú thích màu ngoài công thức, giữ đúng chất và hệ số."
+        },
+        {
+          "before": "cho thấy em đã nắm vững các yếu tố ảnh hưởng đến cân bằng",
+          "after": "cho thấy em đã nêu đúng vai trò của xúc tác trong điều kiện đang xét",
+          "reason": "Không nâng lời tự báo thành nắm vững toàn bộ yếu tố."
+        },
+        {
+          "before": "một trạng thái cân bằng mới bền vững hơn",
+          "after": "một trạng thái cân bằng mới phù hợp điều kiện đã thay đổi",
+          "reason": "Không so sánh độ bền giữa hai điều kiện chưa xác định."
+        },
+        {
+          "before": "Trong hóa học, một tác động nhỏ về áp suất hay nồng độ cũng đủ để làm thay đổi cả một hệ thống. Cuộc đời cũng vậy, mỗi lựa chọn nhỏ của chúng ta hôm nay — như việc em kiên trì đặt câu hỏi cho đến khi hiểu rõ bản chất — đều dẫn đến những hệ quả tích cực trong tương lai.",
+          "after": "Trong mô hình phù hợp, thay đổi điều kiện có thể làm cân bằng chuyển dịch; không phải mọi cách tăng áp suất đều có tác dụng ấy. Liên hệ cuộc sống sau đây chỉ là phép ví von: việc đặt câu hỏi, kiểm chứng và cân nhắc hệ quả có thể giúp em lựa chọn có trách nhiệm hơn, chứ không bảo đảm mọi lựa chọn đều đem lại kết quả tốt.",
+          "reason": "Không biến ẩn dụ thành định luật hóa học hay bảo đảm hệ quả tích cực."
+        }
+      ],
+      "assessment_proposals": [
+        {
+          "question": "Hằng số cân bằng $K_c$ của một phản ứng thuận nghịch phụ thuộc vào yếu tố nào sau đây?",
+          "level": "NB",
+          "reason": "Nhận biết trực tiếp tính chất đã nêu, chưa phải phân tích tình huống nhiều bước."
+        }
+      ],
+      "source_workshop": {
+        "title": "Đối chiếu cân bằng: dữ liệu, điều kiện và kết luận",
+        "scope": "Bài tập từ phần sách đã đọc; không phải phép đo thực hoặc hướng dẫn xử lí khí độc.",
+        "cards": [
+          {
+            "title": "Cân bằng động",
+            "text": "Hai tốc độ bằng nhau; phản ứng tiếp tục. Nồng độ ổn định không có nghĩa nồng độ mọi chất bằng nhau."
+          },
+          {
+            "title": "Kc từ dữ liệu",
+            "text": "H2/I2/HI cân bằng0.02/0.02/0.16mol/L cho Kc64. Dùng nồng độ cân bằng và đúng phương trình."
+          },
+          {
+            "title": "Đổi điều kiện",
+            "text": "Nén đẳng nhiệt khác thêm khí trơ ở thể tích không đổi. Xúc tác không thay đổi Kc hoặc vị trí cân bằng."
+          }
+        ],
+        "questions": [
+          {
+            "prompt": "Dữ liệu0.02M H2,0.02M I2,0.16M HI cho Kc bằng?",
+            "options": [
+              "8",
+              "64",
+              "0.04"
+            ],
+            "correct": 1,
+            "feedback": "Kc=0.16²/(0.02×0.02)=64."
+          },
+          {
+            "prompt": "Đang cân bằng, thêm xúc tác ở cùng nhiệt độ có tác dụng gì?",
+            "options": [
+              "Đạt cân bằng nhanh hơn, không đổi Kc.",
+              "Luôn tăng lượng sản phẩm cân bằng.",
+              "Dừng phản ứng nghịch."
+            ],
+            "correct": 0,
+            "feedback": "Phân biệt động học đạt cân bằng với vị trí cân bằng."
+          },
+          {
+            "prompt": "Nén N2O4⇌2NO2 ở nhiệt độ không đổi ưu tiên phía nào?",
+            "options": [
+              "Phía2NO2 vì nhiều phân tử.",
+              "Không thay đổi vì có cùng hai nguyên tố.",
+              "PhíaN2O4 vì ít mol khí hơn theo hệ số."
+            ],
+            "correct": 2,
+            "feedback": "So tổng hệ số khí1và2, không đếm số nguyên tố."
+          }
+        ]
+      }
+    },
+    {
+      "id": "kntt-sinh11-nuockhoang-bai2-20261109",
+      "subject": "Sinh học",
+      "grade": 11,
+      "topics": [
+        "Trao đổi nước và khoáng ở thực vật — Sinh học 11, KNTT, Bài 2"
+      ],
+      "reviewed_on": "2026-11-09",
+      "scope": "Đã đọc NXBGDVN tái bản3 trang9–21 và bản mẫuVniTeach11/2022 trang9–20. THSQG đọc9–13,15–21; trang14 lỗi ảnh, không coi đủ ba nguồn toàn bài. Hai link cập nhật do NXBGDVN công bố đã đọc; mục liên quan là chú thích trang20. Không nghiệm thu toàn SGK/CT2018/YCCĐ/pháp luật/owner.",
+      "sources": [
+        {
+          "title": "SGK Sinh học 11 KNTT — NXBGDVN",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-sinh-hoc-11.4701129740",
+          "locator": "Title tái bản3; TOC4: Bài2 trang9, Bài3 trang22. Đã đọc Bài2 trang9–21 từ15ảnh title/TOC/phần bài chọn lọc lưuF/XZ.",
+          "edition_note": "Tái bản lần thứ ba, năm chưa xác tín. Bản hiện hiển thị có thêm trang21 và hình19 khác mẫu2022; không gán năm theo thư mục máy chủ.",
+          "criteria": [
+            "Bao quát vai trò nước/khoáng, rễ, mạch gỗ/rây, khí khổng, nitrogen, yếu tố môi trường, tưới/phân bón; tách nguồn–đích, áp suất rễ/lực kéo, thụ động/chủ động và phạm vi số liệu."
+          ]
+        },
+        {
+          "title": "Trường Học Số Quốc Gia — Sinh học11 KNTT thống nhất",
+          "url": "https://www.thsqg.vn/sach/sinh-hoc-11-tn/doc",
+          "locator": "Đã đọc trang9–13,15–21 ở reader10–14,16–22. Trang14 ảnh0015.png lỗi naturalWidth0: chưa đọc qua cổng này.",
+          "edition_note": "Phần đọc khớp NXBGDVN gồm hình19 hai cây và trang21; hai cổng cùng sách không phải tác giả độc lập.",
+          "criteria": [
+            "Giữ khoảng thiếu trang14; không ghi đã đối chiếu đủ toàn bài ở ba cổng."
+          ]
+        },
+        {
+          "title": "VniTeach — Sinh học11 KNTT bản mẫu11/2022",
+          "url": "https://www.vniteach.com/2022/12/17/sgk-sinh-hoc-11-bo-sach-kntt/",
+          "locator": "Cover BẢN MẪU tháng11/2022/TOC đã đọc; Bài2 trang9–20/PDF10–21 đã đọc từPDF/XZ local.",
+          "edition_note": "Không coi mẫu2022 hiện hành. Không có trang21 cốt lõi/luyện tập như tái bản3; hình19 một cây thay vì hai cây, chú thích cơ quan cũ ở20; Bảng mía mẫu ghi2.2, tái bản3 ghi2.3.",
+          "criteria": [
+            "Tái dùng tệp48MB hash2599d36fe50cdd9c2817e1fb1b41665db54ed5ceab194ff1c6e46777229efa8b; không tải lại; không trộn số trang/bảng giữa phiên bản."
+          ]
+        },
+        {
+          "title": "NXBGDVN — Sinh học11 thông tin/trang cập nhật",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/chi-tiet-sach/sinh-hoc-11-940163795.940163795",
+          "locator": "Thông tin cập nhật1trang đã đọc: trang20 chú thích cơ quan; trang139 địa danh ngoài bài. Trang cập nhật tương ứng20 đã đọc tại https://drive.google.com/file/d/1qFRF4u252gjYCdiDyg8wY44Ob1iaUPhz/view .",
+          "edition_note": "Trang20 bổ sung tên cơ quan nay là Cục Trồng trọt và Bảo vệ thực vật – Bộ Nông nghiệp và Môi trường trong chú thích nguồn2015. Đây là nội dung SGK cập nhật được quan sát, không xác minh độc lập luật hiện hành.",
+          "criteria": [
+            "Nếu trích bảng mía phải giữ đúng phạm vi cây mía thâm canh đất cát pha và nguồn2015; không biến thành hướng dẫn liều bón chung cho học sinh."
+          ]
+        }
+      ],
+      "grounded_facts": [
+        "Nước tham gia cấu tạo tế bào, dung môi/vận chuyển, nguyên liệu/môi trường phản ứng và điều hòa nhiệt. Khoáng có vai trò cấu trúc/điều tiết. Các khoảng70–90%,2%/98%,10–20% trong SGK là mô tả theo ngữ cảnh, không hằng số mọi cây hay dùng suy liều tưới.",
+        "Trao đổi nước: hấp thu ở rễ, vận chuyển thân, thoát hơi ở lá. Cây trên cạn chủ yếu qua lông hút; cây thủy sinh qua biểu bì nhiều cơ quan. Nước qua màng thụ động theo thẩm thấu trong điều kiện phù hợp, không tiêuATP trực tiếp; không khẳng định dịch rễ luôn ưu trương khi đất mặn/khô hoặc bỏ qua áp suất nước. Khoáng có thụ động/chủ động, chủ động cần năng lượng; không đồng nhất mọi hấp thu là thẩm thấu.",
+        "Hai đường từ lông hút: gian bào và tế bào chất. Đai Caspary ở nội bì chặn đường gian bào buộc qua màng chọn lọc, không chặn mọi dòng nước. Quản bào/mạch ống dẫn gỗ trưởng thành đã chết, không có nghĩa mọi tế bào mô gỗ đều chết. Dòng gỗ chủ yếu rễ→lá nhờ phối hợp áp suất rễ/liên kết nước-bám thành/lực kéo thoát hơi, có trao đổi ngang; ứ giọt khác sương ngưng tụ.",
+        "Mạch rây gồm ống rây sống và tế bào kèm; vận chuyển chất hữu cơ chủ yếu sucrose từ cơ quan nguồn đến đích. Có thể lên hoặc xuống tùy nguồn–đích, không khẳng định chỉ đi xuống hay hai chiều đồng thời trong cùng một ống. Rây nhận nước từ gỗ; không lấy chênh nồng độ đơn thuần làm đầy đủ cơ chế dòng khối, phân biệt chất tải và động lực.",
+        "Thoát hơi chủ yếu qua khí khổng và một phần qua bề mặt/cutin, liên quan lực kéo gỗ,CO2 vào lá và làm mát. Tế bào khí khổng trương nước mở/mất nước đóng theo hình SGK; ánh sáng và stress/ABA tác động ion và nước. Không mọi ban ngày luôn mở/ban đêm luôn đóng; quá sáng/nóng/thiếu nước có thể đóng. Không đề xuất tăng thoát hơi vô hạn để cây hút nước tốt.",
+        "Trong phạm vi bài, cây hấp thu nitrogen chủ yếu dạng ammonium/nitrate, không trực tiếp dùng N2 khí quyển. Một số vi sinh vật cố địnhN2, các quá trình đất/sấm sét tạo nguồn cây dùng được; không gọi mọi vi sinh vật đều cố địnhN2. Nitrate được khử qua nitrite thành ammonium rồi đồng hóa thành aminoacid/amide và hợp chất hữu cơ. Sơ đồ NH4+ cộng ketoacid là sơ đồ khái quát chuyển hóa, không phương trình phản ứng hóa học cân bằng đầy đủ hay hướng dẫn pha hóa chất.",
+        "Ánh sáng/nhiệt độ/ẩm đất/không khí ảnh hưởng phụ thuộc loài, giới hạn và các điều kiện khác. Không suy càng cao càng tốt; đất ngập có thể làm thiếuoxy hô hấp rễ và giảm hấp thu dù nhiều nước. Triệu chứng vànglá không đủ tự chẩn đoán duy nhất thiếuN hay xác định liều phân.",
+        "Tưới hợp lí đúng nhu cầu, thời điểm/phương pháp, xét cây/giai đoạn/đất/thời tiết; không mỗi cây một lượng chung. Phân bón thiếu/tối ưu/thừa, thừa có thể gây độc/ô nhiễm, không tuyến tính vô hạn; bốn đúng là loại, liều, thời điểm, phương pháp. Bảng mía là ví dụ nguồn2015 đặc thù, không khuyến cáo hiện hành cho mọi cây. Bài luyện mới phải nêu giả định/số liệu mô phỏng, có lời giải/rubric và phân biệt thí nghiệm thực với mô hình."
+      ],
+      "content_corrections": [
+        {
+          "before": "Tại sao lá cây không bị \"bốc cháy\" hay héo khô dù phơi mình dưới ánh nắng gay gắt cả ngày?",
+          "after": "Vì sao nhiều cây vẫn duy trì được trạng thái nước trong một ngày nắng, nhưng khi nóng hoặc thiếu nước quá mức cây vẫn có thể héo, cháy lá?",
+          "reason": "Không mặc định mọi lá cây luôn an toàn suốt ngày nắng; SGK nêu giới hạn môi trường và mất cân bằng nước."
+        },
+        {
+          "before": "Nước chiếm 70–90% khối lượng tươi,",
+          "after": "Theo mô tả khái quát trong SGK, nước chiếm khoảng 70–90% khối lượng tươi của thực vật; tỉ lệ thay đổi theo loài và bộ phận,",
+          "reason": "Giữ phạm vi khoảng mô tả, không hằng số mọi cây."
+        },
+        {
+          "before": "**Đai Caspary** đóng vai trò \"cửa khẩu\" kiểm soát các chất vào mạch gỗ.",
+          "after": "**Đai Caspary** chặn đường gian bào tại nội bì, buộc dòng này qua màng tế bào để được chọn lọc trước khi vào mạch gỗ; không chặn mọi đường nước và không phải bơm đẩy nước.",
+          "reason": "SGK12: phân biệt chặn đường gian bào và chặn toàn bộ hấp thu."
+        },
+        {
+          "before": "Động lực gồm: Lực kéo do thoát hơi nước (chính), lực đẩy (áp suất rễ) và lực liên kết giữa các phân tử nước.",
+          "after": "Động lực phối hợp lực kéo do thoát hơi nước, áp suất rễ, lực liên kết giữa các phân tử nước và lực bám với thành mạch. Dòng gỗ chủ yếu từ rễ lên lá, có trao đổi ngang qua lỗ bên; quản bào và mạch ống trưởng thành đã chết, không suy mọi tế bào trong mô gỗ đều chết.",
+          "reason": "SGK12–13: bổ sung bám thành, phân biệt tế bào dẫn và toàn mô."
+        },
+        {
+          "before": "**Dòng mạch rây (Phloem):** Vận chuyển chất hữu cơ (chủ yếu là sucrose) từ \"nguồn\" (lá) đến \"đích\" (rễ, quả, củ). Động lực là sự chênh lệch áp suất thẩm thấu giữa nguồn và đích.",
+          "after": "**Dòng mạch rây (Phloem):** Vận chuyển chất hữu cơ, chủ yếu sucrose, từ cơ quan nguồn đến cơ quan đích. Lá trưởng thành có thể là nguồn, rễ/quả/củ đang dự trữ là đích; khi củ huy động dự trữ nuôi chồi non thì củ là nguồn và chồi là đích. Dòng có thể lên hoặc xuống tùy nguồn–đích, không phải hai chiều đồng thời trong cùng một ống. Ống rây sống có tế bào kèm; trao đổi nước với mạch gỗ liên quan chênh lệch chất tan, còn dòng khối trong ống rây được thúc đẩy bởi chênh lệch áp suất thủy tĩnh (áp suất trương). Không đồng nhất áp suất thẩm thấu với áp suất đẩy dòng khối.",
+          "reason": "SGK13–14/21: nguồn–đích có thể đảo; phân biệt điều kiện nước vào và động lực dòng khối."
+        },
+        {
+          "before": "Cơ chế đóng mở khí khổng phụ thuộc vào độ trương nước của tế bào hình hạt đậu.",
+          "after": "Trong hình khí khổng dạng hạt đậu của SGK, đóng mở phụ thuộc độ trương của hai tế bào khí khổng; không khẳng định mọi loài đều có tế bào dạng hạt đậu.",
+          "reason": "SGK14 hình minh họa không đại diện hình dạng của mọi loài."
+        },
+        {
+          "before": "Cây hấp thụ Nitrogen dưới dạng $\\ce{NH4+}$ và $\\ce{NO3-}$.",
+          "after": "Trong phạm vi bài, cây hấp thu nitrogen chủ yếu dưới dạng $\\ce{NH4+}$ và $\\ce{NO3-}$; không trực tiếp dùng $\\ce{N2}$ khí quyển làm nguồn dinh dưỡng. Một số vi sinh vật cố định nitrogen và các quá trình chuyển hóa trong đất tạo nguồn cây dùng được. Nitrate được khử theo sơ đồ $\\ce{NO3- -> NO2- -> NH4+}$; ammonium được đồng hóa thành amino acid/amide rồi thành các chất hữu cơ. Sơ đồ này khái quát biến đổi nitrogen, không phải phương trình cân bằng đầy đủ. Thiếu nitrogen có thể làm lá vàng, cây chậm lớn; thừa có thể khiến thân lá yếu, dễ đổ, nhưng chỉ màu lá chưa đủ kết luận nguyên nhân hay liều phân.\n\n*   **Môi trường và canh tác:** Ánh sáng, nhiệt độ, độ ẩm đất và không khí ảnh hưởng trong giới hạn của từng loài. Quá nóng hoặc hạn/stress có thể làm khí khổng đóng; không mặc định ban ngày luôn mở và không tăng thoát hơi vô hạn. Đất ngập có thể thiếu oxygen làm rễ giảm hô hấp và hấp thu. Tưới theo nhu cầu cây/giai đoạn/đất/thời tiết, đúng thời điểm và phương pháp. Phân bón thiếu/tối ưu/thừa có tác động khác nhau; bốn đúng là đúng loại, liều, thời điểm và phương pháp. Không ngoại suy càng bón nhiều càng tăng năng suất; bảng mía trong SGK là ví dụ đặc thù, không liều dùng chung.",
+          "reason": "SGK15–21: bài sinh thiếu chuyển hóaN, yếu tố môi trường và ứng dụng; bổ sung đúng mục tiêu SGK, không tự coi YCCĐ pháp quy đã nghiệm thu."
+        },
+        {
+          "before": "Khi bón quá nhiều phân, nồng độ chất tan ở môi trường đất trở nên rất cao (ưu trương) so với dịch bào của rễ. Theo nguyên lý thẩm thấu, nước sẽ không thấm vào rễ mà ngược lại, nước từ trong rễ bị rút ra ngoài đất. Cây mất nước đột ngột dẫn đến héo và chết.",
+          "after": "Nếu lượng phân hòa tan làm thế nước của đất thấp hơn tế bào rễ (với các điều kiện áp suất phù hợp), nước vào rễ giảm và có thể có dòng nước thuần từ rễ ra ngoài, làm giảm sức trương, cây có thể héo. Thừa phân còn có thể gây độc ion, tổn thương rễ và ô nhiễm. Không phải mọi lần bón dư đều ngay lập tức làm cây chết, cũng không được suy liều xử lí từ ví dụ này. Nước qua màng là thụ động; năng lượng chuyển hóa hỗ trợ vận chuyển ion và hoạt động sống của rễ một cách gián tiếp.",
+          "reason": "SGK19–20: điều kiện thẩm thấu phải được nêu; không tuyệt đối hóa hậu quả hay biến nước thành vận chuyển chủ động."
+        },
+        {
+          "before": "*(Gợi ý: Liên quan đến áp suất rễ và độ ẩm không khí làm giảm sự thoát hơi nước).*",
+          "after": "*Gợi ý:* Xét áp suất rễ và thoát hơi khi không khí ẩm.\n\n*Lời giải:* Khi đất đủ nước, rễ còn tạo áp suất rễ trong khi độ ẩm không khí cao làm thoát hơi yếu, nước lỏng có thể được đẩy qua thủy khổng ở mép lá tạo giọt. Hiện tượng thường dễ thấy ở cây thân thảo/cây thấp trong điều kiện phù hợp, không chỉ xảy ra duy nhất ở các nhóm này. Ứ giọt là nước từ trong cây tiết ra, khác sương do hơi nước ngoài không khí ngưng tụ. Chấp nhận giải thích đúng điều kiện, nguồn nước và vai trò áp suất rễ; không đồng nhất giọt nước với hơi thoát qua khí khổng.",
+          "reason": "Luyện tập cần đáp án/rubric, không chỉ gợi ý; tránh chữ chỉ thường mâu thuẫn."
+        },
+        {
+          "before": "Em hãy giải thích tại sao hiện tượng \"ứ giọt\" thường chỉ xảy ra",
+          "after": "Em hãy giải thích vì sao hiện tượng \"ứ giọt\" thường dễ quan sát",
+          "reason": "Không khẳng định độc quyền hiện tượng theo dạng sống."
+        },
+        {
+          "before": "Dựa vào kiến thức về \"Bốn đúng\" trong bón phân (đúng loại, đúng liều lượng, đúng thời điểm, đúng phương pháp), em hãy đề xuất một kế hoạch tưới nước và bón phân cho một chậu cây cảnh tại nhà sao cho tiết kiệm nước mà cây vẫn phát triển tốt.",
+          "after": "Dựa vào kiến thức về \"Bốn đúng\" trong bón phân (đúng loại, đúng liều lượng, đúng thời điểm, đúng phương pháp), em hãy đề xuất kế hoạch chăm sóc một chậu cây cảnh.\n\n*Lời giải tham khảo/rubric:* Trước hết xác định loài, giai đoạn sinh trưởng, tình trạng giá thể/thoát nước và điều kiện nắng. Theo dõi độ ẩm để tưới khi cây cần, lượng phù hợp và tránh úng; không áp một số lít cố định cho mọi cây. Về phân bón, cần căn cứ nhu cầu cây và hướng dẫn chuyên môn/nhãn sản phẩm; không tự ấn định liều khi thiếu dữ kiện. Học sinh lập bảng quan sát và đề xuất có lí do, không tự pha/trộn hóa chất hay thử liều phân. Đạt khi giải thích được tiết kiệm nước, thoáng khí cho rễ và đủ bốn đúng; chấp nhận kế hoạch khác có căn cứ.",
+          "reason": "Vận dụng cần đáp án mở/rubric và không giao thử hóa chất không đủ dữ kiện."
+        },
+        {
+          "before": "Học sinh cần kết nối kiến thức về sự hấp thụ nước (cần năng lượng) và điều kiện hô hấp tại rễ (cần oxygen).",
+          "after": "Học sinh liên hệ thiếu oxygen với giảm hô hấp hiếu khí/ATP, tổn thương rễ và giảm vận chuyển ion; hấp thu nước qua màng thụ động, chịu tác động gián tiếp của trạng thái rễ.",
+          "reason": "Metadata cũng phải đúng: không gắnATP trực tiếp cho thẩm thấu."
+        },
+        {
+          "before": "Em hãy suy luận xem khi đất ngập nước, lượng oxygen cung cấp cho rễ thay đổi thế nào? Khi rễ thiếu oxygen, quá trình hô hấp tạo năng lượng ATP bị ảnh hưởng ra sao? Không có năng lượng và tế bào rễ bị tổn thương/chết thì việc hút nước thụ động và chủ động sẽ bị tác động như thế nào?",
+          "after": "Ngập lâu làm oxygen khuếch tán đến rễ hạn chế, giảm hô hấp hiếu khí và ATP, giảm vận chuyển ion chủ động và hoạt động sống; rễ có thể bị tổn thương. Vì vậy khả năng hấp thu/vận chuyển nước giảm, cây có thể mất cân bằng nước dù đất nhiều nước. Nước qua màng vẫn là thẩm thấu thụ động, không có cơ chế hút nước chủ động tiêuATP trực tiếp. Mức ảnh hưởng tùy loài, thời gian ngập và điều kiện; cây thích nghi ngập có thể đáp ứng khác.",
+          "reason": "Sửa lỗi kiến thức trực tiếp trong lời giải, đồng thời cung cấp đáp án thay chuỗi câu hỏi."
+        },
+        {
+          "before": "Đã nhắc đến vai trò của oxygen và sự tích tụ các chất độc trong điều kiện kị khí chưa?",
+          "after": "Rubric: nêu thiếu oxygen, ảnh hưởng hô hấp/ion và tình trạng rễ, liên hệ giảm hấp thu nước; không nói nước tiêuATP trực tiếp. Không bắt buộc suy có độc chất cụ thể khi đề không cho dữ kiện.",
+          "reason": "Không buộc thêm chất độc chưa có căn cứ và giữ rubric kiểm được."
+        },
+        {
+          "before": "Trong một thí nghiệm, người ta dùng một vòng kim loại nhỏ thắt chặt quanh thân cây (chỉ làm hỏng phần vỏ và mạch rây, mạch gỗ vẫn nguyên vẹn).",
+          "after": "Trong một tình huống thí nghiệm giả định để phân tích số liệu, giả sử lá trưởng thành ở phía trên là nguồn cung cấp chất hữu cơ cho rễ phía dưới; tác động vòng quanh thân làm gián đoạn mạch rây nhưng giữ mạch gỗ nguyên vẹn. Đây là mô tả để học, không yêu cầu học sinh thắt/cắt làm hỏng cây.",
+          "reason": "Cần giả thiết nguồn–đích và phân biệt tình huống giả định với thao tác thật."
+        },
+        {
+          "before": "Sử dụng kiến thức về hướng vận chuyển và thành phần chất vận chuyển trong dòng mạch rây (từ lá xuống các cơ quan phía dưới).",
+          "after": "Trong giả thiết cụ thể này, theo dõi sucrose từ lá phía trên đến rễ phía dưới qua mạch rây; không suy mạch rây luôn đi xuống trong mọi cây/giai đoạn.",
+          "reason": "Giới hạn hướng vận chuyển theo tình huống, bảo toàn quy tắc nguồn–đích."
+        },
+        {
+          "before": "Em hãy xác định xem chất hữu cơ được tổng hợp từ đâu và đi theo đường nào để xuống rễ? Khi đường đó bị chặn bởi vòng thắt, các chất hữu cơ này sẽ đi đâu và tích tụ ở vị trí nào? Tại sao phần dưới lại phát triển kém?",
+          "after": "Trong giả thiết đã cho, lá phía trên tạo chất hữu cơ; dòng rây về rễ bị gián đoạn nên chất hữu cơ tích lũy ở phía trên chỗ tác động, góp phần làm phình. Phần dưới giảm nhận chất hữu cơ nên sinh trưởng kém. Mạch gỗ nguyên vẹn còn dẫn nước trong giai đoạn đầu, nhưng về lâu dài thiếu dinh dưỡng/tổn thương rễ có thể tác động cả cây; không dự đoán thời điểm chết từ đề này.",
+          "reason": "Bổ sung lời giải thực chất và phân biệt tác động trực tiếp/gián tiếp."
+        },
+        {
+          "before": "Đối chiếu kết quả với chức năng của mạch rây. Liệu mạch gỗ có bị ảnh hưởng không? Nếu mạch gỗ vẫn hoạt động, cây có bị chết khô ngay lập tức không?",
+          "after": "Rubric: đúng nguồn–đích, đúng con đường rây, giải thích tích lũy phía trên và thiếu dinh dưỡng phía dưới, phân biệt mạch gỗ ban đầu còn nguyên với hậu quả lâu dài. Không kết luận mọi dòng rây chỉ đi xuống hoặc cây chết khô ngay.",
+          "reason": "Thêm tiêu chí đánh giá, không chỉ đặt tiếp câu hỏi."
+        },
+        {
+          "before": "Dựa trên những gì em đã chia sẻ, thầy ghi nhận em đã nắm bắt được các nguyên lý quan trọng sau:",
+          "after": "Dựa trên phần em tự trình bày, thầy đúc kết các ý sau; đây chưa phải kết luận em đã làm chủ toàn bộ bài:",
+          "reason": "Phân biệt tự báo hiểu với nghiệm thu toàn bài."
+        },
+        {
+          "before": "(Nguồn: *Meditations*, quyển VI, đoạn 21; bản dịch George Long -",
+          "after": "(Diễn nghĩa tiếng Việt theo bản dịch George Long; nguồn: *Meditations*, quyển VI, đoạn 21 -",
+          "reason": "Nhãn diễn nghĩa đặt cùng lời trích tiếngViệt, không gán bảnViệt choGeorgeLong."
+        },
+        {
+          "before": "\n\nBản dịch nghĩa tiếng Việt của trích đoạn: I seek the truth by which no man was ever injured.",
+          "after": "\n\nCâu gốc tiếng Anh trong bản dịch George Long: I seek the truth by which no man was ever injured.",
+          "reason": "Đặt đúng nhãn câuAnh; nhãn diễn nghĩaViệt đã giữ ở lời trích."
+        }
+      ],
+      "osmosis_model": {
+        "locator": "SGK Sinh học11 KNTT Bài2 trang11–12: cơ chế hấp thu nước ở rễ; mô hình màng đơn giản chỉ xét chiều ban đầu, không mô phỏng toàn bộ cây"
+      },
+      "source_workshop": {
+        "command": "Đối chiếu tư liệu theo bài học",
+        "title": "Nước và khoáng — đọc nguồn, dự đoán và giải thích",
+        "cards": [
+          {
+            "title": "Nước và năng lượng",
+            "text": "SGK11–12/21: nước qua màng theo thẩm thấu thụ động. ATP tham gia vận chuyển ion chủ động và hoạt động rễ, tác động gián tiếp lên hấp thu nước."
+          },
+          {
+            "title": "Nguồn và đích",
+            "text": "SGK13–14/21: lá trưởng thành hoặc cơ quan dự trữ có thể làm nguồn tùy giai đoạn; rây vận chuyển từ nguồn đến đích."
+          },
+          {
+            "title": "Liều phân và giới hạn",
+            "text": "SGK19–20: vùng thiếu/tối ưu/thừa có kết quả khác nhau; bảng mía là ví dụ theo cây/đất, không liều chung."
+          }
+        ],
+        "questions": [
+          {
+            "options": [
+              "Nước bắt buộc dùngATP trực tiếp",
+              "Nước qua màng thụ động theo thế nước trong điều kiện phù hợp",
+              "Mọi ion đều đi vào bằng thẩm thấu",
+              "Nước luôn vào rễ kể cả mọi đất mặn"
+            ],
+            "correct": 1,
+            "prompt": "Đâu là phát biểu đúng về nước vào tế bào lông hút?",
+            "feedback": "ATP hỗ trợ ion/hoạt động sống, không biến thẩm thấu thành vận chuyển chủ động."
+          },
+          {
+            "options": [
+              "Nguồn chồi, đích củ trong mọi trường hợp",
+              "Mạch rây không có vai trò",
+              "Nguồn củ, đích chồi non theo tình huống đã cho",
+              "Mạch rây luôn đi xuống nên không thể nuôi chồi"
+            ],
+            "correct": 2,
+            "prompt": "Củ dự trữ đang nuôi chồi non: xác định nguồn–đích phù hợp?",
+            "feedback": "Nguồn–đích tùy giai đoạn, không cố định theo vị trí trên/dưới."
+          },
+          {
+            "options": [
+              "Luôn tăng năng suất tỉ lệ thuận",
+              "Không bao giờ gây hại",
+              "Tự suy được liều mọi cây từ bảng mía",
+              "Giảm năng suất/gây độc hoặc ô nhiễm tùy điều kiện"
+            ],
+            "correct": 3,
+            "prompt": "Khi đã vượt mức phân tối ưu, tăng thêm phân có thể dẫn đến điều gì?",
+            "feedback": "Quan hệ có giới hạn; cần đúng loại, liều, thời điểm, phương pháp."
+          }
+        ],
+        "scope": "Đã đọc NXBGDVN tái bản3 trang9–21 và bản mẫuVniTeach11/2022 trang9–20. THSQG đọc9–13,15–21; trang14 lỗi ảnh, không coi đủ ba nguồn toàn bài. Hai link cập nhật do NXBGDVN công bố đã đọc; mục liên quan là chú thích trang20. Không nghiệm thu toàn SGK/CT2018/YCCĐ/pháp luật/owner."
+      }
+    },
+    {
+      "topic": "Một số vấn đề chung về cách mạng tư sản — Lịch sử 11, KNTT, Bài 1",
+      "API_calls": 0,
+      "scope": "Bài1 trang6–11 đã đọc ở cả ba cổng. Không nghiệm thu toàn cuốn/CT2018/YCCĐ/pháp luật Việt Nam; phần chủ quyền/chính sách/địa giới ở bài khác chưa đối chiếu chuyên đề.",
+      "sources": [
+        {
+          "title": "NXBGDVN Lịch sử11 KNTT",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-lich-su-11.4720315375",
+          "locator": "Title tái bản3, TOC3: Bài1pp6–11/Bài2p12; đã đọc ảnhselected05–10 lưuF/XZ.",
+          "edition_note": "Tái bản lần thứ ba; năm chưa xác tín. 96downloadpages, chỉ lưu10ảnh liên quan.",
+          "criteria": [
+            "Bám đúng phạm vi Bài1 trang6–11 và phiên bản tái bản3, tách tiền đề, mục tiêu/nhiệm vụ, lãnh đạo/động lực, kết quả/ý nghĩa; diễn giải không phải trích nguyên văn; thiếu căn cứ không tự khẳng định pháp luật đã đạt."
+          ]
+        },
+        {
+          "title": "THSQG Lịch sử11 KNTT thống nhất",
+          "url": "https://www.thsqg.vn/sach/lich-su-11-tn/doc",
+          "locator": "Printed6–11/reader7–12 đọc bằngChrome. Nội dung/ảnh khớp NXBGDVN trong phạm vi.",
+          "edition_note": "Cùng sách qua cổng khác, không tác giả độc lập.",
+          "criteria": [
+            "Bám đúng phạm vi Bài1 trang6–11 và phiên bản tái bản3, tách tiền đề, mục tiêu/nhiệm vụ, lãnh đạo/động lực, kết quả/ý nghĩa; diễn giải không phải trích nguyên văn; thiếu căn cứ không tự khẳng định pháp luật đã đạt."
+          ]
+        },
+        {
+          "title": "VniTeach Lịch sử11 KNTT mẫu11/2022",
+          "url": "https://www.vniteach.com/2022/12/18/sgk-lich-su-11-bo-sach-kntt/",
+          "locator": "CoverBẢNMẪU11/2022, Bài1printed6–11/PDF7–12 đã đọc; PDF23,877,900bytes/XZ lưuF.",
+          "edition_note": "Bản mẫu11/2022 không coi hiện hành: caption trang6 ghi Đại lộ Các Mác, tái bản3 ghi Chăm Ê-li-dê; định nghĩa trang7 mẫu chỉ nêu tư sản/chống phong kiến, tái bản3 nêu nhiều lực lượng/phong kiến và thực dân; thời đoạn mẫu giữaXVI–đầuXIX, tái bản3 giữaXVI–đầuXX. Trang11 mẫu thiếu đoạn giải thích tính triệt để so với tái bản3. Không trộn câu chữ cũ.",
+          "criteria": [
+            "Bám đúng phạm vi Bài1 trang6–11 và phiên bản tái bản3, tách tiền đề, mục tiêu/nhiệm vụ, lãnh đạo/động lực, kết quả/ý nghĩa; diễn giải không phải trích nguyên văn; thiếu căn cứ không tự khẳng định pháp luật đã đạt."
+          ]
+        },
+        {
+          "title": "NXBGDVN catalogue và thông tin cập nhật",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/chi-tiet-sach/lich-su-11-940006350.940006350",
+          "locator": "Linkthôngtincậpnhật1NarLSZ2C5Va_qRjYQpqtsHqp0FM18iQV: đã đọc bảng3trang, mụcBài1p9đổiTấtcảcáccuộccáchmạngtưsảnđó→Tấtcảcácsựkiệnđó. Linktrangcậpnhật1qDXhRX97GWHGFQfEPbJhTiAtJKdjFrEE: đã đọcPDFpage3 tươngứngprinted9, khôngtoàn25trang.",
+          "edition_note": "Các cập nhật ngoàiBài1 đã nhìn bảngchỉmục nhưng không coi nội dung trang/khẳng định pháp luật hiện hành đã được thẩm định.",
+          "criteria": [
+            "Bám đúng phạm vi Bài1 trang6–11 và phiên bản tái bản3, tách tiền đề, mục tiêu/nhiệm vụ, lãnh đạo/động lực, kết quả/ý nghĩa; diễn giải không phải trích nguyên văn; thiếu căn cứ không tự khẳng định pháp luật đã đạt."
+          ]
+        }
+      ],
+      "grounded_facts": [
+        "Theo cách trình bày SGK tái bản3, cách mạng tư sản do nhiều lực lượng lãnh đạo (tư sản/quý tộc mới/chủ nô...), chống chế độ phong kiến hoặc thực dân, thiết lập nhà nước tư sản, mở đường chủ nghĩa tư bản. Không mặc định mọi cuộc chỉ do tư sản độc quyền lãnh đạo hoặc đều cùng hình thức/kết quả.",
+        "Bốn nhóm tiền đề là kinh tế, chính trị, xã hội, tư tưởng; phân biệt tiền đề sâu xa với sự kiện mở đầu. Kinh tế tư bản nảy sinh trong chế độ cũ nhưng gặp rào cản; mâu thuẫn quyền lực/đẳng cấp và các tầng lớp thúc đẩy đấu tranh. Không gán toàn bộ nguyên nhân cho một cá nhân hay một sắc thuế.",
+        "Tư tưởng cải cách tôn giáo trong những cuộc nổ ra sớm và Triết học Ánh sáng ở Pháp khác nhau. SGK9 nêu Môngteckiơ hạn chế quyền vua/tựdo, Vônte quânchủsángsuốt/tựdotínngưỡng/tưhữu, Rútxô cộnghòa; không gộp ba người cùng một chủ trương. Đây là diễn giải SGK, không sáng tác trích dẫn nguyên văn.",
+        "Mục tiêu chung mở đường phát triển chủ nghĩa tư bản; nhiệm vụ dân tộc (thống nhất thị trường hoặc giải phóng dân tộc) và dân chủ (xóa chuyên chế/xác lập dân chủ tư sản) biểu hiện khác nhau theo tình huống. Anh liên minh tư sản–quý tộc mới; 13thuộcđịa liên minh tư sản–chủnô; Pháp cuốiXVIII tư sản độc quyền lãnh đạo theoSGK. Phân biệt lãnh đạo với động lực/quần chúng, không phủ nhận vai trò nhân dân.",
+        "Theo SGK trang10–11, kết quả và ý nghĩa gắn với lật đổ quân chủ chuyên chế hoặc giành độc lập, mở đường cho chủ nghĩa tư bản. Anh thiết lập quân chủ lập hiến; 13 thuộc địa lập nhà nước mới; Pháp có ảnh hưởng sâu rộng. Đánh giá đại cách mạng Pháp theo SGK gồm sự tham gia của nhân dân và giải quyết nhiệm vụ cách mạng; không suy mọi người đã được bình đẳng thực tế ngay, hoặc mọi bạo lực đều đúng trong hiện đại.",
+        "Tư liệu1: Hồ Chí Minh, Toàn tập, tập2, NXB Chính trị quốc gia,2011,trang290, như SGK7 dẫn. Tư liệu2: A.Man-phơ-rét, Đại Cách mạng Pháp1789,NXB Khoa học,1965,trang18–19, như SGK8 dẫn. Tư liệu3: Lê-nin, Toàn tập,tập38,NXB Chính trị quốc gia,2006,trang444, như SGK11 dẫn. Mới đọc phần trích trong SGK, chưa mở độc lập các toàn tập. Không bịa nội dung ngoài trích, lời nói hoặc động cơ. Tranh biếm họa không phải ảnh chụp sự kiện; ưu tiên diễn giải thay sao chép dài.",
+        "Phá ngục Ba-xti ngày14/7/1789 là mốc mở đầu trong bài, không phải thời điểm kết thúc cách mạng. Hình diễu hành trang6 là Paris2012 trên Đại lộ Chăm Ê-li-dê (ChampsÉlysées) theo tái bản3, không phải ảnh sự kiện1789. Không dùng sự kiện lịch sử để suy ra quy định pháp luật Việt Nam hiện hành hoặc cổ vũ hành động bạo lực."
+      ],
+      "id": "kntt-lichsu11-cachmang-bai1-20261109",
+      "subject": "Lịch sử",
+      "grade": 11,
+      "topics": [
+        "Một số vấn đề chung về cách mạng tư sản — Lịch sử 11, KNTT, Bài 1"
+      ],
+      "reviewed_on": "2026-11-09",
+      "content_corrections": [
+        {
+          "before": "Hãy quan sát hình ảnh Đại lộ Chăm Ê-li-dê (Paris) ngày nay.",
+          "after": "Hãy xem Hình 1 SGK trang 6: lễ diễu hành ở Đại lộ Chăm Ê-li-dê, Paris, năm 2012; đây không phải ảnh sự kiện 1789.",
+          "reason": "Giữ ngày/chức năng của hình trong sách, không tự gọi ảnh2012 là hiện tại."
+        },
+        {
+          "before": "*   **Tiền đề của cách mạng tư sản:**",
+          "after": "*   **Khái niệm theo SGK tái bản 3:** Cách mạng tư sản có thể do nhiều lực lượng lãnh đạo (tư sản, quý tộc mới, chủ nô...), chống chế độ phong kiến hoặc thực dân, thiết lập nhà nước tư sản và mở đường cho chủ nghĩa tư bản phát triển. Các cuộc cách mạng trong phần khái quát SGK được đặt từ giữa thế kỉ XVI đến đầu thế kỉ XX; không dùng thời đoạn hẹp của bản mẫu 2022 thay bản tái bản.\n\n*   **Tiền đề của cách mạng tư sản:**",
+          "reason": "Bổ sung khái niệm bản mới, khác bản mẫu chỉ nêu tư sản và phong kiến; thời đoạn bản mới đã đọc."
+        },
+        {
+          "before": "*Nhiệm vụ:* Gồm nhiệm vụ dân tộc (giành độc lập hoặc thống nhất thị trường) và nhiệm vụ dân chủ (xóa bỏ chuyên chế, xác lập quyền tự do).",
+          "after": "*Nhiệm vụ:* Nhiệm vụ dân tộc gắn xóa cát cứ, thống nhất thị trường dân tộc hoặc giải phóng dân tộc; nhiệm vụ dân chủ gắn xóa chế độ phong kiến chuyên chế và xác lập nền dân chủ tư sản theo khái niệm của bài. Mức thực hiện và hình thức khác nhau theo từng cuộc, không suy mọi quyền đều được thực hiện đầy đủ ngay.",
+          "reason": "Giữ thuật ngữ nhiệm vụ trong SGK9 và giới hạn kết quả thực tế."
+        },
+        {
+          "before": "*Động lực:* Quần chúng nhân dân (nông dân, thợ thủ công, thị dân) là lực lượng chính quyết định thắng lợi.",
+          "after": "*Động lực:* Theo SGK 10, giai cấp lãnh đạo và quần chúng nhân dân đều giữ vai trò quan trọng trong thắng lợi. Quần chúng tham gia đông đảo có ảnh hưởng đến tính triệt để của cách mạng; cần phân biệt vai trò lãnh đạo với lực lượng tham gia và bối cảnh từng cuộc.",
+          "reason": "Không loại lãnh đạo khỏi động lực khi SGK nêu cả hai."
+        },
+        {
+          "before": "**Kết quả và ý nghĩa:** Thiết lập các hình thức nhà nước mới (Quân chủ lập hiến ở Anh, Cộng hòa ở Mỹ và Pháp). Cách mạng Pháp có sức ảnh hưởng sâu rộng nhất, được coi là \"Đại cách mạng\".",
+          "after": "**Kết quả và ý nghĩa:** Các cuộc cách mạng có kết quả lật đổ quân chủ chuyên chế hoặc giành độc lập, tạo điều kiện phát triển chủ nghĩa tư bản. SGK nêu Anh thiết lập quân chủ lập hiến, chiến tranh giành độc lập của 13 thuộc địa tạo nhà nước mới; Pháp cuối XVIII được đánh giá là đại cách mạng với ảnh hưởng sâu rộng. Không xếp hạng ảnh hưởng sâu rộng nhất khi nguồn chưa đưa phép so sánh, không coi mọi giai đoạn đều có một chính thể bất biến.",
+          "reason": "SGK10–11 không bảo đảm so sánh nhất hoặc diễn biến chính thể bất biến."
+        },
+        {
+          "before": "Em cần chỉ ra rằng các nhà triết học (Mông-te-ski-ơ, Vôn-te, Rút-xô) đã phê phán sự độc đoán của nhà vua và giáo hội, đồng thời đề xuất mô hình nhà nước tiến bộ (tam quyền phân lập, dân chủ). Điều này giúp định hướng và \"tiếp lửa\" cho quần chúng đấu tranh.",
+          "after": "Theo SGK 9, Triết học Ánh sáng ở Pháp cung cấp cơ sở tư tưởng để phê phán chế độ cũ và tập hợp lực lượng. Cần phân biệt từng tác giả: Mông-te-xki-ơ hạn chế quyền vua/bảo đảm tự do công dân; Vôn-te chủ trương quân chủ sáng suốt, tự do tín ngưỡng và quyền tư hữu; Rút-xô chủ trương cộng hòa. Đây là diễn giải nội dung SGK, không phải ba người cùng đề xuất một mô hình hay lời trích nguyên văn. Đáp án đạt khi nối được phê phán cũ–cơ sở tư tưởng mới và nêu khác biệt có căn cứ.",
+          "reason": "Không gộp chủ trương hoặc gán trích dẫn ngoài phần đã đọc; cần lời giải cụ thể/rubric."
+        },
+        {
+          "before": "Hãy lập bảng so sánh điểm khác biệt về giai cấp lãnh đạo giữa Cách mạng tư sản Anh và Cách mạng tư sản Pháp (1789).",
+          "after": "Hãy lập bảng so sánh giai cấp lãnh đạo của cách mạng tư sản Anh và Pháp cuối thế kỉ XVIII.\n\n*Đáp án tham khảo:* Anh: liên minh tư sản và quý tộc mới, vai trò quan trọng thuộc quý tộc mới theo SGK 10. Pháp cuối XVIII: giai cấp tư sản độc quyền lãnh đạo theo bài. Cả hai cần phân biệt lãnh đạo với quần chúng tham gia. Chấp nhận bảng/câu văn tương đương có căn cứ; không biến vai trò nhân dân thành không đáng kể.",
+          "reason": "Bổ sung đáp án tự học; tránh thu hẹp toàn cách mạng vào riêng1789."
+        },
+        {
+          "before": "Tìm hiểu về bản *Tuyên ngôn Độc lập* của Mỹ (1776) hoặc *Tuyên ngôn Nhân quyền và Dân quyền* của Pháp (1789) và chỉ ra một điểm tiến bộ về quyền con người mà em tâm đắc.",
+          "after": "Khai thác Tư liệu 1 và mục kinh tế SGK 7, viết đoạn ngắn giải thích rào cản kinh tế đối với 13 thuộc địa Anh ở Bắc Mỹ; ghi rõ nguồn là phần trích trong SGK.\n\n*Đáp án/rubric:* Nêu hạn chế trao đổi hàng hóa, sản xuất/buôn bán và thuế như tư liệu mô tả, liên hệ mâu thuẫn với nhu cầu phát triển kinh tế thuộc địa. Phân biệt tư liệu được dẫn và lời diễn giải của mình, không gán cho tư liệu kết luận về luật Việt Nam hiện hành. Đạt khi có dẫn vị trí, phân tích rào cản và liên hệ đúng bối cảnh. Muốn tìm hiểu tuyên ngôn ngoài bài cần đọc văn bản/nguồn cụ thể trước; bài này chưa đưa toàn văn các tuyên ngôn vào căn cứ.",
+          "reason": "Không giao nhiệm vụ không có lời giải/căn cứ ngoài phần đã đọc; chuyển sang thao tác nguồn đã đọc đúng bài."
+        },
+        {
+          "before": "Trong các cuộc cách mạng tư sản thời cận đại, lực lượng nào sau đây đóng vai trò là động lực chính thúc đẩy cách mạng đi đến thắng lợi?",
+          "after": "Bên cạnh giai cấp lãnh đạo, lực lượng đông đảo nào được SGK nhấn mạnh là động lực quan trọng góp phần quyết định thắng lợi của các cuộc cách mạng tư sản?",
+          "reason": "Câu cũ cóA vàC đều có thể là động lực theo SGK10. Làm rõ tiêu chí đểCduynhất, không đổi khóa."
+        },
+        {
+          "before": "Em hãy nhớ lại xem ai là người trực tiếp cầm vũ khí, xuống đường chiến đấu tại ngục Ba-xti hay trên các chiến trường để tạo nên sức mạnh áp đảo?",
+          "after": "Em hãy phân biệt nhóm lãnh đạo với các tầng lớp tham gia đông đảo trong bối cảnh lịch sử mà SGK mô tả; phương án nào chỉ nhóm lực lượng rộng?",
+          "reason": "Gợi ý phân loại bằng chứng, không thu hẹp động lực vào người mang vũ khí."
+        },
+        {
+          "before": "Giai cấp tư sản là lãnh đạo, còn quần chúng nhân dân (nông dân, thị dân, thợ thủ công) là động lực chính quyết định quy mô và thắng lợi của cách mạng.",
+          "after": "Với câu hỏi đã nêu rõ bên cạnh giai cấp lãnh đạo, đáp ánC là quần chúng nhân dân. SGK 10 đồng thời coi cả lãnh đạo và quần chúng có vai trò quan trọng; thành phần lãnh đạo khác nhau theo cuộc cách mạng, không luôn chỉ có tư sản.",
+          "reason": "Giải thích nhất quán câu hỏi đã làm rõ và không tuyệt đối hóa lãnh đạo."
+        },
+        {
+          "before": "\"Dân chủ\" liên quan đến quyền lợi của người dân đối với bộ máy nhà nước. Việc xóa bỏ sự cai trị độc đoán của nhà vua thuộc về nhiệm vụ dân tộc hay dân chủ?",
+          "after": "Hãy đối chiếu hai nhóm nhiệm vụ ở SGK 9: một nhóm giải quyết độc lập/thống nhất thị trường, nhóm kia giải quyết chế độ chính trị. Mỗi phương án thuộc nhóm nào?",
+          "reason": "Gợi ý không đọc lại chính phương án đúng và phân biệt tiêu chí."
+        },
+        {
+          "before": "Cách mạng Anh diễn ra sớm nên dùng màu sắc tôn giáo (Thanh giáo), còn Cách mạng Pháp diễn ra khi trình độ nhận thức xã hội cao hơn, dựa trên hệ thống Triết học Ánh sáng khoa học và triệt để hơn.",
+          "after": "Theo SGK 9, các cuộc cách mạng nổ ra sớm như Anh dùng ngọn cờ tôn giáo cải cách (Thanh giáo); ở Pháp, Triết học Ánh sáng là nền tảng tư tưởng dân chủ tư sản trong bài. Đây là khác biệt về bối cảnh/hệ tư tưởng, không đủ căn cứ để xếp mọi tư tưởng hoặc xã hội theo mức nhận thức cao thấp.",
+          "reason": "Bỏ nhận định thứ bậc khoa học/nhận thức không có trong nguồn đã đọc."
+        },
+        {
+          "before": "Liệt kê các thành tựu kinh tế tư bản (công trường thủ công, buôn bán phát triển); liệt kê các chính sách phong kiến (thuế nặng, đơn vị đo lường không thống nhất); chỉ ra mâu thuẫn.",
+          "after": "Dùng dẫn chứng kinh tế tư bản và rào cản được SGK 7 nêu trong trường hợp đã chọn; phân biệt chế độ phong kiến ở Anh/Pháp với chế độ thực dân tại 13 thuộc địa. Không thêm dẫn chứng định lượng/đơn vị đo chưa có nguồn.",
+          "reason": "Không bịa chi tiết ngoài nguồn; giữ bối cảnh ví dụ."
+        },
+        {
+          "before": "(Học sinh tự viết đoạn văn theo các ý: Kinh tế tư bản cần thị trường, nhân công, vốn; chế độ phong kiến kìm hãm các yếu tố này -> cách mạng là tất yếu).",
+          "after": "Trong bối cảnh SGK mô tả, sản xuất/trao đổi theo hướng tư bản phát triển nhưng bị các rào cản của chế độ cũ kìm hãm, tạo mâu thuẫn giữa nhu cầu kinh tế và quyền lực chính trị. Vì vậy tư sản và các lực lượng liên quan có nhu cầu xóa rào cản; kết hợp tiền đề chính trị, xã hội, tư tưởng để giải thích cách mạng. Không từ một yếu tố suy mọi cuộc cách mạng tất yếu xảy ra cùng cách thức/thời điểm.",
+          "reason": "Thêm lời giải thay chỗ trống và tránh suy tất định một nguyên nhân."
+        },
+        {
+          "before": "Kiểm tra xem đã giải thích rõ mối quan hệ \"kìm hãm - lật đổ\" chưa? Có nhầm lẫn với nhiệm vụ dân tộc không?",
+          "after": "Rubric: dẫn chứng kinh tế đúng bối cảnh, chỉ rõ rào cản và mâu thuẫn, phân biệt tiền đề với nhiệm vụ/kết quả, không xem một yếu tố là nguyên nhân duy nhất. Chấp nhận lập luận khác nếu có bằng chứng phù hợp.",
+          "reason": "Rubric có nội dung và chấp nhận lập luận có căn cứ."
+        },
+        {
+          "before": "Tìm các bằng chứng về tính triệt để (xóa bỏ phong kiến tận gốc), sự tham gia của nhân dân, và sự ảnh hưởng đến các nước khác (lan tỏa tư tưởng tự do, bình đẳng).",
+          "after": "Tìm dẫn chứng trong SGK 10–11 về giải quyết nhiệm vụ cách mạng, vai trò của nhân dân và ảnh hưởng quốc tế. Không dùng tận gốc theo nghĩa mọi tàn dư hoặc mọi bất bình đẳng đã biến mất.",
+          "reason": "Giới hạn cách hiểu tính triệt để trong đánh giá SGK."
+        },
+        {
+          "before": "(Học sinh tự xây dựng các luận điểm: 1. Lật đổ hoàn toàn quân chủ chuyên chế; 2. Giải quyết vấn đề ruộng đất cho nông dân; 3. Tấn công vào thành trì phong kiến châu Âu).",
+          "after": "Theo SGK 11, lập luận gồm: cách mạng lật đổ quân chủ chuyên chế, xác lập nền dân chủ tư sản và mở đường phát triển kinh tế tư bản; nhân dân tham gia tích cực, sáng tạo góp phần giải quyết nhiệm vụ; cách mạng có ảnh hưởng sâu rộng và ý nghĩa quốc tế. Dùng Tư liệu 3 như nhận định được SGK dẫn, không coi đó là toàn văn đã đọc độc lập. Chưa đưa bằng chứng cụ thể về chính sách ruộng đất vào hồ sơ nên không dùng làm luận cứ chi tiết ở đây.",
+          "reason": "Thêm đáp án có nguồn và bỏ luận cứ chưa đối chiếu, không tạo sự kiện mới."
+        },
+        {
+          "before": "Các luận điểm đã đủ sức thuyết phục để gọi là \"đại cách mạng\" chưa? Đã so sánh ngầm với tính chất \"không triệt để\" của các cuộc cách mạng khác chưa?",
+          "after": "Rubric: ít nhất các nhóm kết quả, vai trò nhân dân và ảnh hưởng quốc tế có dẫn chứng đúng SGK; giải thích mối liên hệ thay chỉ liệt kê. Không gọi mọi cuộc khác là không triệt để khi chưa xác định tiêu chí/phạm vi; không suy đây là biện minh cho bạo lực trong hiện tại.",
+          "reason": "Không ép kết luận so sánh không căn cứ; phân biệt lịch sử và hiện tại."
+        },
+        {
+          "before": "**Câu 2. [Mức độ: VDC]**\nCó ý kiến cho rằng: \"Cách mạng tư sản Pháp cuối thế kỉ XVIII là một cuộc đại cách mạng\". Em hãy đưa ra các luận điểm dựa trên kiến thức về kết quả và ý nghĩa lịch sử để bảo vệ ý kiến này.",
+          "after": "**Câu 2. [Mức độ: TH]**\nCó ý kiến cho rằng: \"Cách mạng tư sản Pháp cuối thế kỉ XVIII là một cuộc đại cách mạng\". Em hãy đưa ra các luận điểm dựa trên kiến thức về kết quả và ý nghĩa lịch sử để bảo vệ ý kiến này.",
+          "reason": "Đề chỉ yêu cầu giải thích đánh giá có sẵn trong SGK theo kết quả/ý nghĩa, chưa có tình huống mới để tự nhậnVDC. Đây là đề xuất phân loại tại local, không nghiệm thu toàn ma trận."
+        },
+        {
+          "before": "Em đã tự mình chỉ ra được những điểm cốt lõi trong nội dung Bài 1 mà chúng ta vừa cùng nhau chiếm lĩnh.",
+          "after": "Em đã tự trình bày một số điểm của Bài 1; thầy đúc kết phần đó, chưa coi đây là nghiệm thu toàn bộ bài.",
+          "reason": "Phân biệt lời báo hiểu với bằng chứng nắm vững toàn bài."
+        },
+        {
+          "before": "Sự thấu đáo mà em vừa thể hiện chính là nền tảng để xây dựng một nhân cách chính trực:",
+          "after": "Thói quen kiểm chứng này là điều em có thể tiếp tục rèn luyện để hành xử có trách nhiệm:",
+          "reason": "Không kết luận nhân cách từ một lần tự báo hiểu; giữ bài giảng nhân sinh hướng thực hành."
+        }
+      ],
+      "source_workshop": {
+        "title": "Cách mạng tư sản — phân biệt tư liệu và lập luận",
+        "scope": "Bài1 trang6–11 đã đọc ở cả ba cổng. Không nghiệm thu toàn cuốn/CT2018/YCCĐ/pháp luật Việt Nam; phần chủ quyền/chính sách/địa giới ở bài khác chưa đối chiếu chuyên đề.",
+        "cards": [
+          {
+            "title": "Định nghĩa và phiên bản",
+            "text": "SGK tái bản 3 trang 7 nêu nhiều lực lượng lãnh đạo, chống phong kiến hoặc thực dân; không lấy định nghĩa hẹp của mẫu 2022 thay bản mới."
+          },
+          {
+            "title": "Lãnh đạo và động lực",
+            "text": "SGK 10: cả lãnh đạo và quần chúng đều quan trọng; trong từng câu hỏi cần tiêu chí phân biệt, không tạo hai phương án cùng đúng."
+          },
+          {
+            "title": "Hình và lời trích",
+            "text": "SGK 6: lễ diễu hành Paris 2012 không phải ảnh 1789; SGK 7/8/11 dẫn tư liệu với xuất xứ, không có nghĩa người học đã đọc toàn tập gốc."
+          }
+        ],
+        "questions": [
+          {
+            "prompt": "Hình lễ diễu hành SGK 6 có thể dùng đúng để minh họa điều gì?",
+            "options": [
+              "Ảnh chụp cuộc tấn công Ba-xti 1789",
+              "Một hình ảnh kỉ niệm tạiParis 2012 theo chú thích",
+              "Bằng chứng mọi quyền đã bình đẳng hoàn toàn",
+              "Sự kiện kết thúc cách mạng 1789"
+            ],
+            "correct": 1,
+            "feedback": "Phân biệt thời điểm được ghi trong hình với sự kiện lịch sử được kỉ niệm."
+          },
+          {
+            "prompt": "Cách đọc đúng quan hệ lãnh đạo–động lực theo SGK 10?",
+            "options": [
+              "Chỉ lãnh đạo có vai trò",
+              "Chỉ nhân dân có vai trò",
+              "Cả hai quan trọng, cần phân biệt chức năng và bối cảnh",
+              "Mọi cuộc chỉ có một thành phần lãnh đạo giống nhau"
+            ],
+            "correct": 2,
+            "feedback": "Không loại một lực lượng khỏi vai trò quan trọng hoặc đồng nhất chức năng."
+          },
+          {
+            "prompt": "Khi đã đọc Tư liệu 3 trongSGK 11, nên ghi phạm vi nguồn thế nào?",
+            "options": [
+              "Đã đọc toàn bộLêninToàntập",
+              "Có thể tự thêm lời trích ngoàiSGK",
+              "Đã kiểm đủ pháp luậtViệtNamhiện hành",
+              "Mới đọc tríchđoạnSGK dẫn với vị trí; nội dungngoài trích cần xác minh"
+            ],
+            "correct": 3,
+            "feedback": "Đọc tríchđoạn không chứng minh đã đọc toàn văn/luật hiện hành."
+          }
+        ]
+      }
+    },
+    {
+      "subject": "Địa lý",
+      "grade": 11,
+      "topic": "Sự khác biệt về trình độ phát triển kinh tế – xã hội của các nhóm nước — Địa lí 11, KNTT, Bài 1",
+      "scope": "Đã đọc Bài1 trang5–8 ở ba cổng, bảng cập nhật1trang và trang cập nhậtPDF1–2/7 tương ứngSGK6/8. Chưa sinh bài/owner/toànCT/YCCĐ/pháp luật hoặc toàn ranh giới bản đồ.",
+      "sources": [
+        {
+          "title": "NXBGDVN SGK Địa lí11 KNTT",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/doc-sach/sgk-dia-li-11.4720361879",
+          "locator": "Title tái bản3, TOC3; Bài1 trang5–8 đã đọc từ selected04–07, ảnh/XZ lưuF.",
+          "edition_note": "Tái bản lần thứ ba, năm chưa xác tín; không suy năm theo URL máy chủ.",
+          "criteria": [
+            "Dùng số liệu tái bản3 đúng năm2020/2021, đơn vị và chỉ tiêu, không gọi mới nhất; phân biệt GNI/người với GDP, quy mô với tốc độ tăng, HDI với một tiêu chí riêng; không trộn dữ liệu khác phiên bản."
+          ]
+        },
+        {
+          "title": "THSQG Địa lí11 KNTT thống nhất",
+          "url": "https://www.thsqg.vn/sach/dia-li-11-tn/doc",
+          "locator": "Đã đọc printed5–8 qua reader6–9; printed4 hướng dẫn là phần nhìn kèm. Bảng số liệu khớp bảnNXBGDVN trong phạm vi.",
+          "edition_note": "Cùng sách qua cổng khác, không nguồn biên soạn độc lập.",
+          "criteria": [
+            "Dùng số liệu tái bản3 đúng năm2020/2021, đơn vị và chỉ tiêu, không gọi mới nhất; phân biệt GNI/người với GDP, quy mô với tốc độ tăng, HDI với một tiêu chí riêng; không trộn dữ liệu khác phiên bản."
+          ]
+        },
+        {
+          "title": "VniTeach Địa lí11 KNTT",
+          "url": "https://www.vniteach.com/2022/12/18/sgk-dia-li-11-bo-sach-kntt/",
+          "locator": "Cover/PDF2 hội đồng thẩm định theoQĐ2026ngày21/7/2022, TOC3/PDF5; Bài1 trang5–8/PDF7–10 đã đọc. PDF31,304,969bytes171pages/XZ lưuF.",
+          "edition_note": "Không thấy dấu BẢN MẪU trên cover đã đọc; ngày trang web và quyết định hội đồng không chứng minh năm xuất bản. Chưa xác tín ấn bản, dữ liệu một số bảng khác tái bản3; không tự gọi là bản mẫu2022 hoặc hiện hành.",
+          "criteria": [
+            "Dùng số liệu tái bản3 đúng năm2020/2021, đơn vị và chỉ tiêu, không gọi mới nhất; phân biệt GNI/người với GDP, quy mô với tốc độ tăng, HDI với một tiêu chí riêng; không trộn dữ liệu khác phiên bản."
+          ]
+        },
+        {
+          "title": "NXBGDVN catalogue/cập nhật Địa lí11",
+          "url": "https://taphuan.nxbgd.vn/tap-huan/chi-tiet-sach/dia-li-11-939832163.939832163",
+          "locator": "Bảng thông tin cập nhật1trang tại link1Ot54vkkX8o_hY1K0Klot52qX3J_0ZU5p đã đọc; trang cập nhậtPDF1–2/7 tương ứngSGK6và8 tại link1bAnGAWixy6goeMq7_EyXEPMUHcdG4FbZ đã đọc, không toàn7trang.",
+          "edition_note": "Các cập nhật ngoàiBài1 chỉ nhìn chỉ mục, không nghiệm thu nội dung toàn trang hoặc số liệu hiện nay.",
+          "criteria": [
+            "Dùng số liệu tái bản3 đúng năm2020/2021, đơn vị và chỉ tiêu, không gọi mới nhất; phân biệt GNI/người với GDP, quy mô với tốc độ tăng, HDI với một tiêu chí riêng; không trộn dữ liệu khác phiên bản."
+          ]
+        }
+      ],
+      "grounded_facts": [
+        "Theo SGK5, phân biệt nhóm phát triển/đang phát triển dựa tổng hợp GNI/người, cơ cấu kinh tế, HDI; không chỉ GDP tổng hoặc một chỉ số. GNI/người là tổng thu nhập quốc gia chia dân số, khác GDP/người; số trung bình không thể hiện mọi người có thu nhập như nhau. Phân nhóm thu nhập của Ngân hàng Thế giới không đồng nghĩa hoàn toàn phân nhóm trình độ phát triển.",
+        "HDI tổng hợp sức khỏe, học vấn, thu nhập; không phải chỉ tuổi thọ hoặc chỉ tiền. Ngưỡng SGK: rất cao từ0.800, cao0.700đến dưới0.800, trung bình0.550đến dưới0.700, thấp dưới0.550. Các ngưỡng thu nhập trong ôEmcóbiết là cập nhật2022 dựaGNI/người2021, không tự gọi là ngưỡng hiện hành2026.",
+        "Bảng1.1 và1.3 là dữ liệu2020, Bảng1.2 là2021; ghi năm/đơn vị/phiên bản nguồn khi so sánh. Dữ liệu này dùng học theoSGK, không tuyên bố mới nhất; nếu cần số liệu hiện hành phải tra nguồn chính thức mới với năm/phương pháp cụ thể.",
+        "Tái bản3 Bảng1.1p6: Đức GNI/người47520USD,HDI0.944; HoaKỳ64140,0.920; Nhật40810,0.923; Brazil7800,0.758; NamPhi6010,0.727; ViệtNam3390,0.710. Cơ cấuGDPViệtNam12.7/36.7/41.8/8.8% tương ứng nông-lâm-thủy sản/công nghiệp-xây dựng/dịch vụ/thuế sản phẩm trừ trợ cấp. Không mặc định ba ngành cộng100% khi bảng còn thành phần thuế, không đổi phần trăm thành điểm phần trăm.",
+        "Bảng1.1 HoaKỳ cập nhật nông-lâm-thủy sản1.1%,thuế0.4% thayVniTeach0.9%/0.6%. Bảng1.3 cập nhật dânthànhthịHoaKỳ82.7% thay82.0%; NamPhi tăngtựnhiên1.2% thay1.1%, dưới15tuổi28.7% thay29.0%,15–64tuổi65.3% thay65.0%. Không trộn các giá trị khác phiên bản trong một bài tính.",
+        "NXBGDVN Bảng1.2 GDP2021 giá hiện hành(tỉUSD)/tăngGDP(%): Đức4259.9/2.6,HoaKỳ23315.1/5.9,Nhật4940.9/1.7,Brazil1609.0/4.6,NamPhi419.0/4.9,ViệtNam366.1/2.6. VniTeach có một số giá trị khác (nhưViệtNam363), không ghép vào bảng tái bản. Quy môGDP khác tốc độ tăng, giá hiện hành khác phép đo tăng trưởng; không suy nước cóGDPtổnglớn thì mọi người giàu hoặc tăng trưởng luôn cao.",
+        "Đặc điểm kinh tế/xã hội của nhóm nước trongSGK7–8 là khái quát có ngoại lệ: thường, phần lớn, một số. Không mọi nước đang phát triển đều nghèo, dân số trẻ,HDIthấp hay tốc độ tăng luôncao; có nước đang phát triển dịchvụ chiếm tỉ trọngcao/HDIcao. Phân nhóm không xếp hạng phẩm giá con người, văn hóa hoặc chủng tộc. Nếu dựng biểu đồ phải cùng năm/đơn vị/chỉ tiêu và đúng dữ liệu, không tự suy ranh giới/chủ quyền từ bản đồ minh họa hoặc nhận toàn bộ bản đồ đã được nghiệm thu."
+      ],
+      "API_calls": 0,
+      "id": "kntt-dialy11-nhomnuoc-bai1-20261109",
+      "topics": [
+        "Sự khác biệt về trình độ phát triển kinh tế – xã hội của các nhóm nước — Địa lí 11, KNTT, Bài 1"
+      ],
+      "reviewed_on": "2026-11-09",
+      "content_corrections": [
+        {
+          "before": "Phản ánh mức thu nhập và chất lượng cuộc sống. Cần phân biệt với GDP (Tổng sản phẩm trong nước) – GNI chú trọng vào thu nhập thực tế mà cư dân quốc gia đó nhận được.",
+          "after": "Là tổng thu nhập quốc gia chia cho dân số, phản ánh một mặt kinh tế bình quân; không cho biết mọi người có thu nhập như nhau hoặc đầy đủ chất lượng sống. GNI khác GDP (tổng sản phẩm trong nước); không đồng nhất GNI/người với GDP tổng, GDP/người hay tiền mặt từng người nhận. Phân nhóm thu nhập của Ngân hàng Thế giới không hoàn toàn đồng nghĩa phân nhóm trình độ phát triển.",
+          "reason": "SGK5: đúng định nghĩa bình quân, không lẫn tổng/bình quân hay coi một chỉ số đủ đánh giá toàn diện."
+        },
+        {
+          "before": "Tỉ trọng các ngành trong GDP. Nhóm phát triển thường có ngành dịch vụ chiếm tỉ trọng rất cao; nhóm đang phát triển đang chuyển dịch dần từ nông nghiệp sang công nghiệp và dịch vụ.",
+          "after": "Phản ánh đóng góp của các ngành trong GDP. Trong bảng SGK còn có thuế sản phẩm trừ trợ cấp sản phẩm; đây không phải một ngành kinh tế thứ tư. Không mặc định ba ngành đã cộng đủ 100%. Nhóm phát triển thường có dịch vụ đóng góp lớn; nhiều nước đang phát triển cũng có tỉ trọng dịch vụ cao, nên không phân nhóm chỉ bằng một tỉ trọng.",
+          "reason": "SGK6 cơ cấu có cột thuế, Brazil/NamPhi cũng có dịch vụ cao; tránh đơn tiêu chí."
+        },
+        {
+          "before": "**Nhóm nước phát triển (ví dụ: Hoa Kỳ, Đức, Nhật Bản):** GNI/người cao, HDI rất cao, dịch vụ chiếm tỉ trọng áp đảo trong cơ cấu GDP.",
+          "after": "**Nhóm nước phát triển:** Các ví dụ Hoa Kỳ, Đức, Nhật Bản trong Bảng 1.1 năm 2020 có GNI/người cao, HDI rất cao và dịch vụ đóng góp lớn nhất. Đây là nhận xét từ số liệu của các ví dụ, không quy tắc không ngoại lệ cho mọi quốc gia ở mọi năm.",
+          "reason": "Giữ phạm vi ví dụ/năm của bảng, không tất định toàn nhóm."
+        },
+        {
+          "before": "**Nhóm nước đang phát triển (ví dụ: Brazil, Việt Nam, Nam Phi):** GNI/người ở mức trung bình cao, trung bình thấp hoặc thấp; HDI ở các mức khác nhau nhưng đang cải thiện; cơ cấu kinh tế đang chuyển dịch mạnh mẽ.",
+          "after": "**Nhóm nước đang phát triển:** Trình độ và thu nhập đa dạng, không đồng nhất với thu nhập thấp hoặc HDI thấp. Trong Bảng 1.1 năm 2020, Brazil, Việt Nam và Nam Phi có HDI ở mức cao theo ngưỡng SGK. Cần kết hợp các chỉ tiêu và bối cảnh thay vì một ngưỡng duy nhất.\n\n*   **So sánh kinh tế và xã hội:** Theo SGK 7–8, nhóm phát triển thường công nghiệp hóa sớm, chú trọng tri thức/công nghệ, dân số có xu hướng già hóa và chất lượng dịch vụ xã hội cao. Nhóm đang phát triển đa dạng về quy mô GDP; nhiều nước chuyển dịch công nghiệp hóa, cải thiện y tế/giáo dục, phần lớn có cơ cấu dân số trẻ nhưng cũng đang già hóa. Không suy mọi nước trong nhóm có cùng mức tăng trưởng, đô thị hóa hay chất lượng sống. Ví dụ Bảng 1.3 năm 2020 cho Brazil có dân thành thị 87.0%, cao hơn Hoa Kỳ 82.7%, dù phân nhóm nước khác nhau. Các bảng bài này dùng dữ liệu 2020 hoặc 2021; ngưỡng thu nhập trong ôEmcóbiết là cập nhật 2022 theoGNI/người 2021, không gọi là số liệu mới nhất 2026.",
+          "reason": "Bổ sung phần so sánh còn thiếu, nhấn ngoại lệ và năm nguồn; không trộn thống kê cũ/mới."
+        },
+        {
+          "before": "Trình độ phát triển con người của Đức hiện ở mức cao hơn so với Việt Nam.",
+          "after": "Trong số liệu năm 2020 đang xét, HDI của Đức lớn hơn Việt Nam; chênh lệch chỉ số là 0.234. Đây không phải số liệu hiện nay hoặc phép xếp hạng phẩm giá con người/văn hóa; HDI không đo mọi mặt của sự phát triển.",
+          "reason": "Không gọi dữ liệu2020 làhiện tại; phân biệt trị sốHDI với phẩm giá."
+        },
+        {
+          "before": "*(Gợi ý: Nhớ lại HDI là chỉ số tổng hợp của 3 yếu tố, không chỉ có thu nhập).*",
+          "after": "*Gợi ý:* Xét đủ ba phương diện.\n\n*Đáp án/rubric:* Chưa thể bảo đảm HDI rất cao chỉ từ GNI/người cao; sức khỏe và học vấn cũng tham gia chỉ số. Đề không cho các chỉ số thành phần/cách tính nên không xác định chính xác HDI. Đạt khi phân biệt thu nhập với chỉ số tổng hợp và không gán một mức cụ thể khi thiếu dữ liệu.",
+          "reason": "Thêm đáp án tự học, không từ điều kiện định tính suy mứcHDI chắc chắn."
+        },
+        {
+          "before": "Từ đó, em hãy nhận xét xem ngành nào đang đóng góp lớn nhất vào nền kinh tế nước ta?",
+          "after": "Theo đúng bảng năm 2020, ngành nào có tỉ trọng đóng góp lớn nhất?\n\n*Đáp án/rubric:* Dịch vụ 41.8% lớn nhất trong ba nhóm ngành; cao hơn công nghiệp–xây dựng 36.7% là 5.1 điểm phần trăm, không phải tăng 5.1%. Ba ngành cộng 91.2%; cộng thêm phần thuế sản phẩm trừ trợ cấp 8.8% mới được 100%. Đây là mô tả cơ cấuGDP năm 2020, không phải cơ cấu hiện hành hoặc cơ cấuGNI. Đạt khi đúng ngành/năm/đơn vị và phân biệt phần thuế.",
+          "reason": "Bổ sung lời giải, phép cộng và khác biệt phần trăm/điểm phần trăm."
+        },
+        {
+          "before": "Tuy nhiên, nếu thu nhập cao mà sức khỏe hay giáo dục thấp thì HDI vẫn không thể đạt mức Rất cao.",
+          "after": "Tuy nhiên, chỉ biết thu nhập cao chưa đủ bảo đảm HDI rất cao; cần các chỉ số thành phần và cách tính phù hợp. Không xác định một mứcHDI chắc chắn từ các mô tả định tính chưa có số liệu.",
+          "reason": "Không tuyệt đối hóa khôngthể khi đề thiếu chỉ số thành phần định lượng."
+        },
+        {
+          "before": "Các nước phát triển thường có nền kinh tế tri thức và dịch vụ rất phát triển, chiếm tỉ trọng lớn (thường trên $70\\%$) trong cơ cấu GDP.",
+          "after": "Theo Bảng 1.1 năm 2020, dịch vụ là ngành đóng góp lớn nhất ở các ví dụ phát triển: Đức 63.3%, Hoa Kỳ 80.1%, Nhật Bản 69.5%. Vì vậyB đúng theo đặc điểm khái quát của bài, không cần/ngầm đặt ngưỡng trên 70% cho mọi nước phát triển. Tỉ trọng dịch vụ cao một mình cũng không đủ phân nhóm nước.",
+          "reason": "Ngưỡng70% không khớp Đức/Nhật trong nguồn; dùng dữ liệu và phạm vi đúng."
+        },
+        {
+          "before": "Em hãy viết thành đoạn văn dựa trên ý: GNI/người chỉ phản ánh con số trung bình về kinh tế, chưa cho thấy sự phân hóa giàu nghèo, chất lượng y tế hay trình độ dân trí của người dân.",
+          "after": "GNI/người phản ánh thu nhập bình quân nên hữu ích khi so sánh đúng năm/đơn vị, nhưng một trị số bình quân không mô tả đầy đủ phân phối thu nhập, sức khỏe và học vấn. Cần kết hợp cơ cấu kinh tế vàHDI theo bài; HDI cũng là chỉ số tổng hợp có giới hạn, không bao quát mọi khía cạnh xã hội. Không gán trình độ thấp cho từng cá nhân từ số bình quân quốc gia.",
+          "reason": "Thêm lời giải cụ thể và giới hạn suy từ bình quân sang từng người."
+        },
+        {
+          "before": "Đoạn văn của em đã nêu được cả hai mặt (tầm quan trọng và hạn chế) chưa? Em có ví dụ nào về quốc gia có thu nhập cao nhưng các mặt xã hội chưa tương xứng không?",
+          "after": "Rubric: nêu công dụng bình quân, ít nhất hai mặt chưa thể hiện đầy đủ, cách kết hợp chỉ tiêu và giới hạn suy luận. Ví dụ cụ thể phải có nguồn/năm phù hợp; không bắt học sinh tự bịa một quốc gia để hoàn tất lời giải.",
+          "reason": "Có tiêu chí đánh giá và không ép ví dụ chưa có bằng chứng."
+        },
+        {
+          "before": "Dựa vào kiến thức đã học, em hãy xác định mỗi quốc gia trên thuộc nhóm nước nào và giải thích ngắn gọn dựa trên các chỉ tiêu đó.",
+          "after": "Hãy xác định mứcHDI của mỗi quốc gia theo ngưỡng đã học, rồi nêu phân nhóm nước mà Bảng 1.1 SGK đã ghi. Giải thích vì sao mứcHDI không đồng nhất với phân nhóm phát triển/đang phát triển.",
+          "reason": "Hai chỉ số không tự tạo ngưỡng phân nhóm toàn diện; tách mứcHDI và phân nhómSGK."
+        },
+        {
+          "before": "Yêu cầu vận dụng các ngưỡng số liệu cụ thể trong SGK để phân loại thực tế.",
+          "after": "Phân biệt mứcHDI theo ngưỡng với phân nhóm nước đã được ghi trongSGK; không tự suy một ngưỡngHDI là điều kiện đủ của nhóm phát triển.",
+          "reason": "Metadata phân loại cũng phải đúng bản chất nhiệm vụ."
+        },
+        {
+          "before": "[\"So sánh GNI/người và HDI của từng nước với ngưỡng chuẩn\", \"Phân loại nhóm nước\", \"Lập luận dựa trên số liệu\"]",
+          "after": "[\"Đối chiếu mứcHDI theo ngưỡng\", \"Tra phân nhóm nước trongBảng 1.1 SGK\", \"Phân biệt hai loại phân nhóm và giới hạn suy luận\"]",
+          "reason": "Không đưa ngưỡngthu nhập/HDI giả định làmchuẩn đủ phân nhómnước."
+        },
+        {
+          "before": "Tra cứu lại ngưỡng HDI trong bài học (ngưỡng $0,800$ là mốc quan trọng). So sánh mức thu nhập của Hoa Kỳ và Brazil để thấy sự chênh lệch lớn.",
+          "after": "Đối chiếuHDI với ngưỡng SGK và tra cột phân nhóm nước trongBảng 1.1 năm 2020. GNI/người hỗ trợ so sánh kinh tế, không biến ngưỡngHDI thành tiêu chuẩn duy nhất xác định nhóm nước.",
+          "reason": "Tách thao tác tính và tra phân nhóm đúng nguồn."
+        },
+        {
+          "before": "Với Hoa Kỳ, số liệu $64140$ USD và HDI $0,920$ (>0,800) thì thuộc nhóm nào? Với Brazil, các con số thấp hơn rõ rệt nhưng HDI vẫn ở mức nào ($0,700$ đến $0,800$)?",
+          "after": "Năm 2020, Hoa Kỳ cóHDI 0.920 nên mức rất cao, Brazil 0.758 nên mức cao. Bảng 1.1 SGK xếp Hoa Kỳ là nước phát triển, Brazil đang phát triển; đó là phân nhóm của nguồn, không phải suy đủ chỉ từ 0.800. GNI/người tương ứng 64140 USD và 7800 USD, cho thấy khác biệt kinh tế trong cùng năm nhưng không đo mọi mặt phát triển.",
+          "reason": "Bổ sung đáp án đúng thay chuỗi hỏi, giữ ngưỡngHDI khôngsuy nhóm nước."
+        },
+        {
+          "before": "Kiểm tra xem em đã dùng đúng thuật ngữ \"Nhóm nước phát triển\" và \"Nhóm nước đang phát triển\" chưa. Giải thích của em đã bám sát vào cả hai chỉ số GNI và HDI chưa?",
+          "after": "Rubric: mứcHDI đúng rất cao/cao, phân nhóm nước đúng theoBảng 1.1, năm 2020/đơn vịUSD rõ, giải thích khác nhau giữa phân nhómthu nhập/HDI và nhómnước; không dùng một chỉ số để xếp phẩm giá con người.",
+          "reason": "Rubric có nội dung và giới hạn chuyên môn."
+        },
+        {
+          "before": "Qua bài học về sự khác biệt giữa các nhóm nước, chúng ta thấy rằng sự giàu có về tiền bạc (GNI) chỉ là một phần, sự phát triển thực sự của một dân tộc còn nằm ở trí tuệ và sức khỏe của mỗi con người (HDI). Giống như nhà tư tưởng Seneca từng nói: *\"Tiền bạc chưa làm ai trở nên giàu có\"* (trích *Thư đạo đức*, nguồn: *Moral Letters to Lucilius*). Sự giàu có chân chính là sự thấu hiểu và nỗ lực cống hiến. Em hãy bắt đầu bằng một hành động tử tế hôm nay: giúp bạn cùng lớp hiểu một khái niệm khó, để cùng nhau nâng cao \"chỉ số phát triển\" của chính lớp học mình nhé!",
+          "after": "Gợi suy ngẫm: số liệu giúp hiểu một số điều kiện phát triển, không phải thước đo phẩm giá của một người hay dân tộc. Khi so sánh, hãy ghi đúng nguồn/năm, tôn trọng khác biệt và quan tâm cơ hội học tập, sức khỏe của người khác. Giúp một người bạn học tập là hành động tử tế, không đồng nghĩa làmHDI của lớp tăng theo một công thức thống kê. Đây là suy ngẫm của bài học, không gán cho một triết gia khi chưa xác minh được vị trí lời trích. Phần đúc kết và bài giảng nhân sinh theo ngữ cảnh sẽ tiếp khi em đã hiểu và không còn câu hỏi.",
+          "reason": "Lời gánSeneca chưa vịtrí nguồn/URL trongoutput, khôngtựcoi đúng; bỏgánvàvívonthốngkêđịnhlượng, giữtriếtlý vàđúng thờiđiểmclosure."
+        },
+        {
+          "before": "nhưng đó không phải là thước đo duy nhất để đánh giá giá trị của một dân tộc hay một cá nhân.",
+          "after": "nhưng không dùng phân nhóm kinh tế–xã hội để xếp hạng phẩm giá của một cá nhân, nền văn hóa hay dân tộc.",
+          "reason": "Chỉ số phát triển không phải phép xếp phẩm giá; không chỉ nói đó chưa là thước đo duy nhất."
+        }
+      ],
+      "source_workshop": {
+        "title": "Đọc số liệu nhóm nước — đúng chỉ tiêu, năm và đơn vị",
+        "scope": "Đã đọc Bài1 trang5–8 ở ba cổng, bảng cập nhật1trang và trang cập nhậtPDF1–2/7 tương ứngSGK6/8. Chưa sinh bài/owner/toànCT/YCCĐ/pháp luật hoặc toàn ranh giới bản đồ.",
+        "cards": [
+          {
+            "title": "HDI 2020, Bảng 1.1",
+            "text": "Đức 0.944; Việt Nam 0.710. Đây là giá trị chỉ số, không phần trăm, không số liệu hiện nay."
+          },
+          {
+            "title": "Cơ cấuGDP Việt Nam 2020, Bảng 1.1",
+            "text": "Nông-lâm-thủy sản 12.7%; công nghiệp-xây dựng 36.7%; dịch vụ 41.8%; thuế sản phẩm trừ trợ cấp 8.8%. Phần thuế không phải ngành kinh tế thứ tư."
+          },
+          {
+            "title": "Phân nhóm không đồng nhất",
+            "text": "SGK xếp Hoa Kỳ phát triển/HDI rất cao, Brazil đang phát triển/HDI cao; không dùng ngưỡngHDI làm điều kiện đủ của nhóm nước."
+          }
+        ],
+        "questions": [
+          {
+            "prompt": "HDI Đức trừHDI Việt Nam theo bảng 2020 bằng bao nhiêu?",
+            "options": [
+              "0.234, theo đơn vị chỉ số",
+              "23.4%, là mức tăng củaViệt Nam",
+              "0.234 USD",
+              "23.4 điểm phần trăm"
+            ],
+            "correct": 0,
+            "feedback": "0.944−0.710=0.234; không phải mức tăng theo thời gian hoặc phần trăm."
+          },
+          {
+            "prompt": "Dịch vụ 41.8% cao hơn công nghiệp 36.7% bao nhiêu?",
+            "options": [
+              "5.1%, chắc chắn là tốc độ tăng",
+              "5.1 điểm phần trăm trong cùng bảng cơ cấu",
+              "78.5 điểm phần trăm",
+              "Không thể so sánh dù cùng năm/đơn vị"
+            ],
+            "correct": 1,
+            "feedback": "Hiệu hai tỉ trọng là 5.1 điểm phần trăm, không tốc độ tăng 5.1%."
+          },
+          {
+            "prompt": "Cách kết luận đúng về phân nhóm HDI và nhóm nước?",
+            "options": [
+              "HDI cao luôn là nước phát triển",
+              "Một ngưỡngHDI đủ cho mọi nhóm nước",
+              "Tách mứcHDI theo ngưỡng và nhóm nước ghi trongSGK; kết hợp các chỉ tiêu",
+              "GNI/người vàGDP tổng giống nhau"
+            ],
+            "correct": 2,
+            "feedback": "Hai phân nhóm có nội dung khác nhau; không biến một chỉ số thành điều kiện đủ."
+          }
+        ]
+      }
     }
   ]
 }
