@@ -1,6 +1,11 @@
 # VIP 74.1 - HỆ THỐNG GIA SƯ AI THPT 2026 (CHUẨN GDPT 2018 - BẢN VÁ HOÀN THIỆN ĐA MÔN & ĐA KHỐI LỚP)
 # -*- coding: utf-8 -*-
-"""BIGDATA CURRICULUM GDPT 2018 DATA MODULE"""
+"""BIGDATA CURRICULUM GDPT 2018 DATA MODULE
+
+Chủ đề gợi ý do ứng dụng biên tập theo mục lục KNTT; không phải mục lục đã thẩm định.
+09/11/2026: sửa các chủ đề gắn nhầm lớp (đối chiếu mục lục KNTT đã ghi trong nhật ký bàn giao).
+"""
+T1_CONTEXT_REVISION = 2026110920
 
 BIGDATA_CURRICULUM = {
 
@@ -72,7 +77,7 @@ BIGDATA_CURRICULUM = {
 
     "Khoa học tự nhiên": {
 
-        9: ["Chuyên đề 1: Năng lượng cơ học", "Chuyên đề 2: Ánh sáng & Khúc xạ", "Chuyên đề 3: Kim loại & Phi kim IUPAC", "Chuyên đề 4: Hydrocarbon Alkane Alkene", "Chuyên đề 5: Di truyền phân tử DNA RNA", "Chuyên đề 6: Tiến hóa & Quần thể"],
+        9: ["Chuyên đề 1: Năng lượng cơ học", "Chuyên đề 2: Ánh sáng & Khúc xạ", "Chuyên đề 3: Kim loại & Phi kim IUPAC", "Chuyên đề 4: Hydrocarbon Alkane Alkene", "Chuyên đề 5: Di truyền phân tử DNA RNA", "Chuyên đề 6: Tiến hóa"],
 
         8: ["Chuyên đề 1: Khối lượng riêng & Áp suất", "Chuyên đề 2: Đòn bẩy & Mômen lực", "Chuyên đề 3: Mạch điện & Tác dụng dòng điện", "Chuyên đề 4: Phản ứng hóa học & Mol", "Chuyên đề 5: Acid Base Salt pH IUPAC", "Chuyên đề 6: Sinh học cơ thể người"],
 
@@ -84,7 +89,7 @@ BIGDATA_CURRICULUM = {
 
     "Sinh học": {
 
-        12: ["Chuyên đề 1: Di truyền phân tử DNA RNA Đột biến gen", "Chuyên đề 2: Di truyền NST & Phân bào", "Chuyên đề 3: Quy luật Mendel & Hoán vị gen", "Chuyên đề 4: Di truyền học quần thể Hardy-Weinberg", "Chuyên đề 5: Di truyền y học & Công nghệ gen", "Chuyên đề 6: Tiến hóa hiện đại", "Chuyên đề 7: Sinh thái học & Hệ sinh thái"],
+        12: ["Chuyên đề 1: Di truyền phân tử DNA RNA Đột biến gen", "Chuyên đề 2: Di truyền nhiễm sắc thể & Đột biến nhiễm sắc thể", "Chuyên đề 3: Quy luật Mendel & Hoán vị gen", "Chuyên đề 4: Di truyền học quần thể Hardy-Weinberg", "Chuyên đề 5: Di truyền y học & Công nghệ gen", "Chuyên đề 6: Tiến hóa hiện đại", "Chuyên đề 7: Sinh thái học & Hệ sinh thái"],
 
         11: ["Chuyên đề 1: Quang hợp & Hô hấp ở thực vật", "Chuyên đề 2: Trao đổi chất ở động vật", "Chuyên đề 3: Cảm ứng & Tập tính", "Chuyên đề 4: Sinh trưởng & Phát triển", "Chuyên đề 5: Sinh sản vô tính & Hữu tính"],
 
@@ -132,9 +137,9 @@ BIGDATA_CURRICULUM = {
 
     "Lịch sử": {
 
-        12: ["Chuyên đề 1: Liên Hợp Quốc & Trật tự thế giới", "Chuyên đề 2: Tổ chức ASEAN", "Chuyên đề 3: Cách mạng tháng Tám 1945 & Kháng chiến chống Pháp", "Chuyên đề 4: Kháng chiến chống Mỹ 1954-1975", "Chuyên đề 5: Công cuộc Đổi mới từ 1986", "Chuyên đề 6: Bảo vệ chủ quyền Biển Đông"],
+        12: ["Chuyên đề 1: Liên Hợp Quốc & Trật tự thế giới", "Chuyên đề 2: Tổ chức ASEAN", "Chuyên đề 3: Cách mạng tháng Tám 1945 & Kháng chiến chống Pháp", "Chuyên đề 4: Kháng chiến chống Mỹ 1954-1975", "Chuyên đề 5: Công cuộc Đổi mới từ 1986", "Chuyên đề 6: Lịch sử đối ngoại của Việt Nam thời cận – hiện đại", "Chuyên đề 7: Hồ Chí Minh trong lịch sử Việt Nam"],
 
-        11: ["Chuyên đề 1: Cách mạng tư sản", "Chuyên đề 2: Chủ nghĩa xã hội", "Chuyên đề 3: Chiến tranh thế giới I & II", "Chuyên đề 4: Các cuộc kháng chiến bảo vệ Tổ quốc"],
+        11: ["Chuyên đề 1: Cách mạng tư sản", "Chuyên đề 2: Chủ nghĩa xã hội", "Chuyên đề 3: Quá trình giành độc lập dân tộc của các quốc gia Đông Nam Á", "Chuyên đề 4: Chiến tranh bảo vệ Tổ quốc và chiến tranh giải phóng dân tộc (trước 1945)", "Chuyên đề 5: Một số cuộc cải cách lớn trong lịch sử Việt Nam (trước 1858)", "Chuyên đề 6: Lịch sử bảo vệ chủ quyền Việt Nam ở Biển Đông"],
 
         10: ["Chuyên đề 1: Hiện thực lịch sử", "Chuyên đề 2: Nền văn minh cổ - trung đại", "Chuyên đề 3: Văn minh Đại Việt", "Chuyên đề 4: Cộng đồng các dân tộc Việt Nam"]
 
@@ -154,13 +159,13 @@ BIGDATA_CURRICULUM = {
 
         12: [
 
-            "Chuyên đề 1: Life in the Future & Artificial Intelligence",
+            "Chuyên đề 1: Life Stories We Admire & Artificial Intelligence",
 
             "Chuyên đề 2: World of Work & Lifelong Learning",
 
-            "Chuyên đề 3: Green Living & Environmental Protection",
+            "Chuyên đề 3: Green Living & Wildlife Conservation",
 
-            "Chuyên đề 4: Urbanisation & Cultural Diversity",
+            "Chuyên đề 4: Urbanisation & A Multicultural World",
 
             "Chuyên đề 5: Grammar Master: Advanced Tenses, Inversion & Relative Clauses",
 
@@ -170,13 +175,13 @@ BIGDATA_CURRICULUM = {
 
         11: [
 
-            "Chuyên đề 1: A Long and Healthy Life & Healthy Lifestyle",
+            "Chuyên đề 1: A Long and Healthy Life & ASEAN and Viet Nam",
 
-            "Chuyên đề 2: Generation Gap & Independent Life",
+            "Chuyên đề 2: The Generation Gap & Cities of the Future",
 
-            "Chuyên đề 3: Global Warming & Preserving Heritage",
+            "Chuyên đề 3: Global Warming & Preserving Our Heritage",
 
-            "Chuyên đề 4: Education Pathways & Becoming Independent",
+            "Chuyên đề 4: Education Options for School-Leavers & Becoming Independent",
 
             "Chuyên đề 5: Grammar: Linking Verbs, To-Infinitive & Gerunds",
 
@@ -204,11 +209,11 @@ BIGDATA_CURRICULUM = {
 
             "Chuyên đề 1: Local Community & City Life",
 
-            "Chuyên đề 2: Healthy Living & Life Skills",
+            "Chuyên đề 2: Healthy Living for Teens & Remembering the Past",
 
-            "Chuyên đề 3: Wonders of Viet Nam & Tourism",
+            "Chuyên đề 3: Natural Wonders of the World & Tourism",
 
-            "Chuyên đề 4: English in the World & Natural Wonders",
+            "Chuyên đề 4: World Englishes & Planet Earth",
 
             "Chuyên đề 5: Grammar & Vocabulary for Grade 10 Entrance Exam"
 
@@ -218,11 +223,11 @@ BIGDATA_CURRICULUM = {
 
             "Chuyên đề 1: Leisure Time & Life in the Countryside",
 
-            "Chuyên đề 2: Ethnic Groups of Viet Nam & Customs and Traditions",
+            "Chuyên đề 2: Ethnic Groups of Viet Nam & Our Customs and Traditions",
 
-            "Chuyên đề 3: Our Customs & Festivals in Viet Nam",
+            "Chuyên đề 3: Lifestyles & Environmental Protection",
 
-            "Chuyên đề 4: Science and Technology & Planet Earth",
+            "Chuyên đề 4: Science and Technology & Life on Other Planets",
 
             "Chuyên đề 5: Grammar & Communication Practice"
 
@@ -244,11 +249,11 @@ BIGDATA_CURRICULUM = {
 
         6: [
 
-            "Chuyên đề 1: My New School & My Home",
+            "Chuyên đề 1: My New School & My House",
 
             "Chuyên đề 2: My Friends & My Neighbourhood",
 
-            "Chuyên đề 3: Natural Wonders of Viet Nam & Our Green Future",
+            "Chuyên đề 3: Natural Wonders of Viet Nam & Our Greener World",
 
             "Chuyên đề 4: Television & Sports and Games",
 
@@ -262,15 +267,15 @@ BIGDATA_CURRICULUM = {
 
         12: [
 
-            "Chuyên đề 1: Mạng máy tính & Dịch vụ Internet nâng cao",
+            "Chuyên đề 1: Trí tuệ nhân tạo trong khoa học và đời sống",
 
-            "Chuyên đề 2: Khoa học dữ liệu & Trí tuệ nhân tạo (AI)",
+            "Chuyên đề 2: Mạng máy tính: thiết bị mạng và giao thức mạng",
 
-            "Chuyên đề 3: Cơ sở dữ liệu và Hệ quản trị CSDL (SQL)",
+            "Chuyên đề 3: Giao tiếp và ứng xử trong không gian mạng",
 
-            "Chuyên đề 4: Lập trình web chuẩn CSS/HTML & JavaScript",
+            "Chuyên đề 4: Tạo trang web với HTML và CSS",
 
-            "Chuyên đề 5: An toàn thông tin & Đạo đức số"
+            "Chuyên đề 5: Học máy và khoa học dữ liệu (định hướng Khoa học máy tính)"
 
         ],
 
@@ -278,7 +283,7 @@ BIGDATA_CURRICULUM = {
 
             "Chuyên đề 1: Kiến trúc máy tính & Hệ điều hành",
 
-            "Chuyên đề 2: Mạng máy tính & Phần mềm ứng dụng",
+            "Chuyên đề 2: Cơ sở dữ liệu và Hệ quản trị CSDL (SQL)",
 
             "Chuyên đề 3: Lập trình Python cơ bản & Nâng cao",
 
@@ -368,13 +373,13 @@ BIGDATA_CURRICULUM = {
 
             "Chuyên đề 2: Hội nhập kinh tế quốc tế",
 
-            "Chuyên đề 3: Bảo hiểm và tín dụng",
+            "Chuyên đề 3: Bảo hiểm và an sinh xã hội",
 
             "Chuyên đề 4: Quyền và nghĩa vụ của công dân về kinh tế",
 
             "Chuyên đề 5: Quyền và nghĩa vụ của công dân về văn hóa, xã hội",
 
-            "Chuyên đề 6: Pháp luật về quốc phòng, an ninh"
+            "Chuyên đề 6: Một số vấn đề cơ bản của luật quốc tế"
 
         ],
 
@@ -432,7 +437,7 @@ BIGDATA_CURRICULUM = {
 
             "Chuyên đề 3: Phong trào Tây Sơn và Lịch sử Việt Nam thế kỷ XVIII",
 
-            "Chuyên đề 4: Thổ dưỡng và Sinh vật Việt Nam"
+            "Chuyên đề 4: Thổ nhưỡng và Sinh vật Việt Nam"
 
         ],
 
@@ -466,13 +471,15 @@ BIGDATA_CURRICULUM = {
 
         9: [
 
-            "Chuyên đề 1: Sống có lý tưởng & Lòng yêu nước",
+            "Chuyên đề 1: Sống có lí tưởng & Khoan dung",
 
-            "Chuyên đề 2: Trách nhiệm của thanh niên",
+            "Chuyên đề 2: Tích cực tham gia hoạt động cộng đồng & Khách quan, công bằng",
 
-            "Chuyên đề 3: Kỹ năng quản lý tài chính cá nhân",
+            "Chuyên đề 3: Quản lí thời gian hiệu quả & Tiêu dùng thông minh",
 
-            "Chuyên đề 4: Thích ứng với thay đổi & Quyền con người"
+            "Chuyên đề 4: Thích ứng với thay đổi & Vi phạm pháp luật, trách nhiệm pháp lí",
+
+            "Chuyên đề 5: Bảo vệ hòa bình & Quyền tự do kinh doanh, nghĩa vụ nộp thuế"
 
         ],
 
@@ -484,7 +491,7 @@ BIGDATA_CURRICULUM = {
 
             "Chuyên đề 3: Lao động cần cù, sáng tạo",
 
-            "Chuyên đề 4: Phòng, chống tệ nạn xã hội & Bạo lực gia đình"
+            "Chuyên đề 4: Phòng, chống bạo lực gia đình & Lập kế hoạch chi tiêu"
 
         ],
 
@@ -496,7 +503,7 @@ BIGDATA_CURRICULUM = {
 
             "Chuyên đề 3: Học tập tự giác, tích cực",
 
-            "Chuyên đề 4: Quản lý tiền & Đòi hỏi quyền lợi chính đáng"
+            "Chuyên đề 4: Quản lí tiền & Phòng, chống tệ nạn xã hội"
 
         ],
 

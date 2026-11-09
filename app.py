@@ -1,11 +1,13 @@
 def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
-    from services import bbt_display_contract, inequality_region, plot_labels, lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation
+    from services import bbt_display_contract, inequality_region, plot_labels, lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation, station1_scope
+    from data import curriculum_data
     for module, revision in ((bbt_display_contract, 2026110911), (inequality_region, 2026110914), (plot_labels, 2026110914), (lesson_sources, 2026110802), (curriculum_policy, 2026110903),
                              (lab_scope, 2026110901), (lesson_export, 2026110911),
                              (text_boundaries, 2026110801), (socratic_context, 2026110901),
-                             (philosophy_rotation, 2026110801)):
+                             (philosophy_rotation, 2026110801), (station1_scope, 2026110920),
+                             (curriculum_data, 2026110920)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
@@ -11571,7 +11573,7 @@ def _build_svg_bbt_from_rows(x_cells: list, yp_cells: list, y_cells: list, is_si
 
 
 @st.cache_data(show_spinner=False, max_entries=256)
-def render_pedagogical_lesson_visuals(markdown_text: str, subject: str = "", grade: int = 12) -> str:
+def render_pedagogical_lesson_visuals(markdown_text: str, subject: str = "", grade: int = 12, illustrations: bool = True) -> str:
     """
     TINH TÚY THỊ GIÁC ĐỒ HỌA TRẠM 3 TÍCH HỢP TOÀN DIỆN VÀO TRẠM 1:
     - Bắt Bảng biến thiên (BBT) Markdown chuyển thành Đồ họa chuẩn Bộ GD&ĐT (tkz-tab SVG & WebP).
@@ -11696,193 +11698,47 @@ def render_pedagogical_lesson_visuals(markdown_text: str, subject: str = "", gra
     )
     text = mslgn_pattern.sub(_replace_mslgn_table, text)
 
-    # 3. KÍCH HOẠT MÔ HÌNH THỊ GIÁC ĐA MÔN & ĐA LỚP GDPT 2018 (VẬT LÝ, HÓA HỌC, SINH HỌC, ĐỊA LÍ, OXYZ)
-    # Tự động chèn mô hình đồ họa vector trực quan khi bài học đề cập đến các chuyên đề trọng tâm
-    subj_norm = str(subject).strip().lower()
-    text_lower = text.lower()
-
+    # 3. MINH HỌA MẪU THEO ĐÚNG MÔN/LỚP CT2018 (services.station1_scope)
+    # Hình mẫu là sơ đồ khái quát, không lấy dữ kiện từ bài: chỉ chèn ở Phần 1 khi
+    # đúng môn, đúng lớp, đúng nội dung; hình Oxyz chỉ dựng từ tọa độ có trong bài.
+    if not illustrations:
+        return text
+    from services.station1_scope import lesson_illustrations, illustration_caption, illustration_note
+    source = text
+    keys = lesson_illustrations(source, subject, grade)
+    if not keys:
+        return text
     try:
         import precision_visual_engine as pve
     except Exception:
-        pve = None
-
-    if pve:
-        # A. VẬT LÝ / KHOA HỌC TỰ NHIÊN:
-        if "vật lý" in subj_norm or "vật lí" in subj_norm or "khoa học tự nhiên" in subj_norm:
-            # 1. Nhiệt học p-V
-            if any(k in text_lower for k in ["chu trình", "đẳng áp", "đẳng tích", "đẳng nhiệt", "đồ thị p-v", "khí lý tưởng", "khí lí tưởng"]) and "svg_pv_inserted" not in text:
-                try:
-                    pv_model = pve.build_thermal_gas_pv_model()
-                    if pv_model and pv_model.get("svg"):
-                        pv_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(pv_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🔬 Đồ thị Chu trình Nhiệt động lực học p-V</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += pv_box
-                except Exception:
-                    pass
-            # 2. Lực từ & Bàn tay trái
-            if any(k in text_lower for k in ["lực từ", "từ trường", "bàn tay trái", "lorentz", "cảm ứng từ"]) and "svg_mag_inserted" not in text:
-                try:
-                    mag_model = pve.build_magnetic_force_model()
-                    if mag_model and mag_model.get("svg"):
-                        mag_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(mag_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🧲 Mô hình Quy tắc Bàn tay trái & Chiều Lực từ</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += mag_box
-                except Exception:
-                    pass
-            # 3. Phóng xạ hạt nhân
-            if any(k in text_lower for k in ["phóng xạ", "chu kỳ bán rã", "chu kì bán rã", "hạt nhân", "độ phóng xạ"]) and "svg_nuc_inserted" not in text:
-                try:
-                    nuc_model = pve.build_nuclear_decay_model()
-                    if nuc_model and nuc_model.get("svg"):
-                        nuc_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(nuc_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>⚛️ Đồ thị Phân rã phóng xạ theo Thời gian</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += nuc_box
-                except Exception:
-                    pass
-            # 4. Mạch RLC & Sóng cơ
-            if any(k in text_lower for k in ["mạch rlc", "cuộn cảm", "tụ điện", "dao động điều hòa", "bước sóng", "sóng dừng"]) and "svg_wave_inserted" not in text:
-                try:
-                    wave_model = pve.build_oscillation_wave_model()
-                    if wave_model and wave_model.get("svg"):
-                        wave_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(wave_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>〰️ Đồ thị Dao động & Lan truyền Sóng cơ</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += wave_box
-                except Exception:
-                    pass
-
-        # B. HÓA HỌC / KHOA HỌC TỰ NHIÊN:
-        elif "hóa học" in subj_norm or "hóa" in subj_norm:
-            # 1. Thí nghiệm điều chế khí
-            # The fixed diagram contains heating and water displacement; only
-            # use it when those details and the gas are explicit in the lesson.
-            if (re.search(r'c\s*_?\{?2\}?\s*h\s*_?\{?4\}?|\b(?:ethylene|ethene|etilen)\b', text_lower)
-                    and 'đẩy nước' in text_lower
-                    and any(k in text_lower for k in ('đun nóng', 'đèn cồn'))
-                    and 'svg_chem_inserted' not in text):
-                try:
-                    chem_model = pve.build_gas_preparation_model("C2H4")
-                    if chem_model and chem_model.get("svg"):
-                        chem_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(chem_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🧪 Mô hình Thí nghiệm Điều chế & Thu khí Phòng Lab</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += chem_box
-                except Exception:
-                    pass
-            # 2. Pin điện hóa Daniell
-            if ('daniell' in text_lower and 'svg_daniell_inserted' not in text):
-                try:
-                    dan_model = pve.build_daniell_cell_model()
-                    if dan_model and dan_model.get("svg"):
-                        dan_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(dan_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🔋 Sơ đồ Hoạt động Pin điện hóa Daniell</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += dan_box
-                except Exception:
-                    pass
-
-        # C. SINH HỌC:
-        elif "sinh học" in subj_norm or "sinh" in subj_norm:
-            # 1. Phả hệ di truyền
-            if any(k in text_lower for k in ["phả hệ", "di truyền", "gen trội", "gen lặn", "thế hệ i", "thế hệ ii"]) and "svg_ped_inserted" not in text:
-                try:
-                    ped_model = pve.build_pedigree_chart_model()
-                    if ped_model and ped_model.get("svg"):
-                        ped_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 320px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(ped_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🧬 Sơ đồ Phả hệ Di truyền Menđen & Y học</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += ped_box
-                except Exception:
-                    pass
-            # 2. Lưới thức ăn
-            if any(k in text_lower for k in ["lưới thức ăn", "chuỗi thức ăn", "sinh vật sản xuất", "sinh vật tiêu thụ", "hệ sinh thái"]) and "svg_food_inserted" not in text:
-                try:
-                    food_model = pve.build_food_web_model()
-                    if food_model and food_model.get("svg"):
-                        food_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 340px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(food_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🌿 Sơ đồ Lưới thức ăn trong Quần xã Sinh vật</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += food_box
-                except Exception:
-                    pass
-
-        # D. TOÁN HỌC & HÌNH HỌC KHÔNG GIAN OXYZ:
-        elif "toán" in subj_norm:
-            # 1. Tọa độ Oxyz & Quỹ đạo bay
-            if any(k in text_lower for k in ["tọa độ không gian", "oxyz", "hệ trục oxyz", "đường bay", "thiết bị bay", "mặt cầu", "vectơ trong không gian"]) and "svg_oxyz_inserted" not in text:
-                try:
-                    if any(k in text_lower for k in ["đường bay", "thiết bị bay", "trạm phát sóng"]):
-                        oxyz_m = pve.build_oxyz_flight_path_model(text_lower)
-                    else:
-                        oxyz_m = pve.build_oxyz_tetrahedron_model(text_lower)
-                    if oxyz_m and oxyz_m.get("svg"):
-                        oxyz_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 280px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(oxyz_m['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>📐 Trực quan hóa Không gian Tọa độ Oxyz</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += oxyz_box
-                except Exception:
-                    pass
-            # 2. Khối chóp, Khối lăng trụ & Hình hộp
-            elif any(k in text_lower for k in ["hình chóp", "khối chóp", "tứ diện", "lăng trụ", "hình hộp chữ nhật", "lập phương"]) and "svg_geom_inserted" not in text:
-                try:
-                    if "lăng trụ" in text_lower:
-                        g_model = pve.build_pure_triangular_prism_model()
-                    elif any(k in text_lower for k in ["hình hộp", "lập phương"]):
-                        g_model = pve.build_pure_box_model()
-                    elif "tứ diện" in text_lower:
-                        g_model = pve.build_pure_tetrahedron_model()
-                    else:
-                        g_model = pve.build_pure_pyramid_quad_model()
-                    if g_model and g_model.get("svg"):
-                        geom_box = (
-                            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
-                            f"<div style='display: inline-block; max-width: 280px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
-                            f"{sanitize_svg_for_markdown(g_model['svg'])}"
-                            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>🏛️ Mô hình Hình học Không gian Chuẩn SGK</p>"
-                            f"</div></div>\n\n"
-                        )
-                        text += geom_box
-                except Exception:
-                    pass
+        return text
+    builders = {
+        'pv': pve.build_thermal_gas_pv_model,
+        'magnetic': pve.build_magnetic_force_model,
+        'nuclear': pve.build_nuclear_decay_model,
+        'daniell': pve.build_daniell_cell_model,
+        'pedigree': pve.build_pedigree_chart_model,
+        'food_web': pve.build_food_web_model,
+        'gas_c2h4': lambda: pve.build_gas_preparation_model("C2H4"),
+        # Truyền nguyên văn (không hạ chữ thường) để đọc đúng tên điểm A, B, C, M, N.
+        'oxyz_tetra': lambda: pve.build_oxyz_tetrahedron_model(source),
+        'oxyz_flight': lambda: pve.build_oxyz_flight_path_model(source),
+    }
+    for key in keys:
+        try:
+            model = builders[key]()
+        except Exception:
+            continue
+        if not model or not model.get("svg"):
+            continue
+        text += (
+            f"\n\n<div style='text-align: center; margin: 14px auto;'>"
+            f"<div style='display: inline-block; max-width: 340px; width: 100%; padding: 8px; background: #ffffff; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);'>"
+            f"{sanitize_svg_for_markdown(model['svg'])}"
+            f"<p style='font-size: 13px; color: #475569; margin-top: 6px; font-weight: bold;'>{html.escape(illustration_caption(key))}</p>"
+            f"<p style='font-size: 12px; color: #64748b; margin-top: 2px;'>{html.escape(illustration_note(key))}</p>"
+            f"</div></div>\n\n"
+        )
 
     return text
 
@@ -12081,33 +11937,21 @@ if selected_station == station_labels[0]:
 
 
 
-    # BỘ KIỂM SOÁT XUNG ĐỘT CẤP LỚP SƯ PHẠM (SMART GRADE-CONFLICT RESOLVER)
-
+    # BỘ KIỂM SOÁT XUNG ĐỘT CẤP LỚP/MÔN (services.station1_scope): "lớp N", "khối N"
+    # hoặc tên sách đúng môn đang chọn ("Toán 12") quyết định lớp; sách môn khác chỉ nhắc.
     conflict_grade = None
-
+    other_book = None
     page_match = None
-
     if topic_input and topic_input.strip():
-
-        match_g = re.search(r'(?:lớp|khối|lop|khoi)\s*(\d{1,2})', topic_input, re.IGNORECASE)
-
-        if match_g:
-
-            try:
-
-                cand_g = int(match_g.group(1))
-
-                if 6 <= cand_g <= 12 and cand_g != grade_num:
-
-                    conflict_grade = cand_g
-
-            except Exception:
-
-                pass
-
+        from services.station1_scope import topic_context_conflict
+        topic_conflict = topic_context_conflict(topic_input, subject, grade_num)
+        conflict_grade = topic_conflict['grade']
+        other_book = topic_conflict['other_book']
         page_match = re.search(r'(?:trang|page)\s*(\d+)', topic_input, re.IGNORECASE)
 
-
+    if other_book and not conflict_grade:
+        st.info(f"💡 **Thầy AI nhận thấy:** Tên bài em nhập nhắc tới sách **{other_book[0]} lớp {other_book[1]}**. "
+                f"Trạm 1 sẽ soạn theo **{subject} lớp {grade_num}** đang chọn; nếu em muốn học bài của môn đó, hãy chọn lại môn/lớp ở thanh bên.")
 
     if conflict_grade:
 
@@ -12649,7 +12493,7 @@ if selected_station == station_labels[0]:
             st.warning("💡 Hệ thống AI vừa sinh ra một định dạng trắc nghiệm mới. Đang hiển thị ở chế độ xem tĩnh:")
 
             fallback_p2 = re.split(r'(?i)###\s*PHẦN\s*3', part2_split[1])[0]
-            fallback_p2_vis = render_pedagogical_lesson_visuals(fallback_p2.strip(), subject=subject, grade=grade_num)
+            fallback_p2_vis = render_pedagogical_lesson_visuals(fallback_p2.strip(), subject=subject, grade=grade_num, illustrations=False)
             st.markdown(chemical_display_markdown(fallback_p2_vis), unsafe_allow_html=True)
 
 
@@ -12664,7 +12508,7 @@ if selected_station == station_labels[0]:
             from services.lesson_sources import apply_reviewed_essay_labels
             p3_student = apply_reviewed_essay_labels(student_essay_text(part3_split[-1]), subject, grade_num,
                                                     st.session_state.get('current_topic', ''))
-            p3_vis = render_pedagogical_lesson_visuals(p3_student, subject=subject, grade=grade_num)
+            p3_vis = render_pedagogical_lesson_visuals(p3_student, subject=subject, grade=grade_num, illustrations=False)
             st.markdown(chemical_display_markdown(p3_vis), unsafe_allow_html=True)
 
 
