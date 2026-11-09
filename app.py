@@ -6914,6 +6914,10 @@ def render_smart_lab(data, current_subject=""):
                 root = exact_center_x if center else min(exact_critical, key=lambda r: abs(float(sp.re(r.evalf()))-x_value))
                 ordinate = exact_center_y if center else sp.simplify(exact_cubic.subs(exact_var, root))
                 return sp.sstr(root) + '; ' + sp.sstr(ordinate)
+            def exact_latex_coordinate(x_value, y_value, center=False):
+                root = exact_center_x if center else min(exact_critical, key=lambda r: abs(float(sp.re(r.evalf())) - x_value))
+                ordinate = exact_center_y if center else sp.simplify(exact_cubic.subs(exact_var, root))
+                return sp.latex(root) + '; ' + sp.latex(ordinate)
 
             # Tính toán Điểm uốn / Tâm đối xứng
             x_uon = -fb / (3.0 * fa)
@@ -6922,8 +6926,8 @@ def render_smart_lab(data, current_subject=""):
             # Tính toán Cực trị
             delta_prime = (fb ** 2) - 3.0 * fa * fc
             has_extrema = delta_prime > 1e-6
-            c_info = [f"📌 **Tâm ĐX / Điểm uốn:** $I({x_uon:.2f}; {y_uon:.2f})$"]
-            c_info.append(f"📌 **Giao trục tung $Oy$:** $(0; {fd:.2f})$")
+            c_info = [f"📌 **Tâm ĐX / Điểm uốn:** $I({exact_latex_coordinate(x_uon, y_uon, center=True)})$"]
+            c_info.append(f"📌 **Giao trục tung $Oy$:** $(0; {sp.latex(sp.Rational(str(fd)))})$")
 
             x_cd, y_cd, x_ct, y_ct = None, None, None, None
             if has_extrema:
@@ -6940,8 +6944,8 @@ def render_smart_lab(data, current_subject=""):
                     x_ct, y_ct = min(x_cand1, x_cand2), (y_cand1 if x_cand1 < x_cand2 else y_cand2)
                     x_cd, y_cd = max(x_cand1, x_cand2), (y_cand2 if x_cand1 < x_cand2 else y_cand1)
 
-                c_info.append(f"🔴 **Điểm cực đại:** $CĐ({x_cd:.2f}; {y_cd:.2f})$")
-                c_info.append(f"🟠 **Điểm cực tiểu:** $CT({x_ct:.2f}; {y_ct:.2f})$")
+                c_info.append(f"🔴 **Điểm cực đại:** $CĐ({exact_latex_coordinate(x_cd, y_cd)})$")
+                c_info.append(f"🟠 **Điểm cực tiểu:** $CT({exact_latex_coordinate(x_ct, y_ct)})$")
             else:
                 c_info.append("ℹ️ Hàm số đơn điệu, không có cực trị.")
 
@@ -7057,14 +7061,14 @@ def render_smart_lab(data, current_subject=""):
 
             st.latex(function_formula_latex([fa, fb], [fc, fd]))
             info_lines = [
-                f"📌 **Tiệm cận đứng (TCĐ):** $x = {x_tc_dung:.2f}$",
-                f"📌 **Tiệm cận ngang (TCN):** $y = {y_tc_ngang:.2f}$",
-                f"🎯 **Tâm đối xứng:** $I({x_tc_dung:.2f}; {y_tc_ngang:.2f})$"
+                f"📌 **Tiệm cận đứng (TCĐ):** $x = {sp.latex(-qd/qc)}$",
+                f"📌 **Tiệm cận ngang (TCN):** $y = {sp.latex(qa/qc)}$",
+                f"🎯 **Tâm đối xứng:** $I({sp.latex(-qd/qc)}; {sp.latex(qa/qc)})$"
             ]
             if y_oy is not None:
-                info_lines.append(f"📍 **Giao trục tung $Oy$:** $(0; {y_oy:.2f})$")
+                info_lines.append(f"📍 **Giao trục tung $Oy$:** $(0; {sp.latex(qb/qd)})$")
             if x_ox is not None:
-                info_lines.append(f"📍 **Giao trục hoành $Ox$:** $({x_ox:.2f}; 0)$")
+                info_lines.append(f"📍 **Giao trục hoành $Ox$:** $({sp.latex(-qb/qa)}; 0)$")
 
             st.caption("Tọa độ chính xác, đường gióng và giao trục được thể hiện trong hình bên cạnh.")
 
@@ -7173,12 +7177,12 @@ def render_smart_lab(data, current_subject=""):
 
             st.latex(function_formula_latex([fa, fb, fc], [fd, fe]))
             info_lines_21 = [
-                f"📌 **Tiệm cận đứng:** $x = {x_tc_dung:.2f}$",
-                f"📌 **Tiệm cận xiên:** $y = {m_slope:.2f}x + ({n_intercept:.2f})$",
-                f"🎯 **Tâm đối xứng:** $I({x_tam_dx:.2f}; {y_tam_dx:.2f})$"
+                f"📌 **Tiệm cận đứng:** $x = {sp.latex(center_x21)}$",
+                f"📌 **Tiệm cận xiên:** $y = {sp.latex(slope21)}x + ({sp.latex(intercept21)})$",
+                f"🎯 **Tâm đối xứng:** $I({sp.latex(center_x21)}; {sp.latex(center_y21)})$"
             ]
             if y_oy is not None:
-                info_lines_21.append(f"📍 **Giao trục tung $Oy$:** $(0; {y_oy:.2f})$")
+                info_lines_21.append(f"📍 **Giao trục tung $Oy$:** $(0; {sp.latex(qc21/qe21)})$")
 
             x_cd_21, y_cd_21, x_ct_21, y_ct_21 = None, None, None, None
             lbl_x_cd, lbl_y_cd, lbl_x_ct, lbl_y_ct = "", "", "", ""
@@ -7291,19 +7295,28 @@ def render_smart_lab(data, current_subject=""):
 
             x_dinh = -fb / (2 * fa)
             y_dinh = fa * x_dinh**2 + fb * x_dinh + fc
+            import sympy as sp
+            _qa2, _qb2, _qc2 = (sp.Rational(str(v)) for v in (fa, fb, fc))
+            _xv2 = sp.Symbol('x', real=True)
+            _quad2 = _qa2 * _xv2**2 + _qb2 * _xv2 + _qc2
+            _ex_dinh_x = -_qb2 / (2 * _qa2)
+            _ex_dinh_y = sp.simplify(_quad2.subs(_xv2, _ex_dinh_x))
+            _ex_roots2 = sorted((r for r in sp.solve(_quad2, _xv2) if r.is_real), key=lambda r: float(r))
+            _ptex = lambda ex: str(ex).replace('sqrt', '√').replace('**', '^').replace('*', '·')
             st.info(f"**$y = {fa}x^2 + ({fb})x + ({fc})$**")
 
             p_lines = [
-                f"📌 **Đỉnh Parabol:** $I({x_dinh:.2f}; {y_dinh:.2f})$",
-                f"📌 **Trục đối xứng:** $x = {x_dinh:.2f}$",
-                f"📍 **Giao trục tung $Oy$:** $(0; {fc:.2f})$"
+                f"📌 **Đỉnh Parabol:** $I({sp.latex(_ex_dinh_x)}; {sp.latex(_ex_dinh_y)})$",
+                f"📌 **Trục đối xứng:** $x = {sp.latex(_ex_dinh_x)}$",
+                f"📍 **Giao trục tung $Oy$:** $(0; {sp.latex(_qc2)})$"
             ]
             delta_p = fb**2 - 4.0 * fa * fc
             if delta_p >= 0:
                 sq_dp = math.sqrt(delta_p)
                 xp1 = (-fb - sq_dp) / (2.0 * fa)
                 xp2 = (-fb + sq_dp) / (2.0 * fa)
-                p_lines.append(f"📍 **Giao trục hoành $Ox$:** $({xp1:.2f}; 0)$, $({xp2:.2f}; 0)$")
+                _rtex = ", ".join(f"$({sp.latex(r)}; 0)$" for r in _ex_roots2)
+                p_lines.append(f"📍 **Giao trục hoành $Ox$:** {_rtex}")
             st.caption("<br>".join(p_lines), unsafe_allow_html=True)
 
         with c2:
@@ -7330,20 +7343,21 @@ def render_smart_lab(data, current_subject=""):
 
             # Đỉnh I
             fig.add_trace(go.Scatter(x=[x_dinh], y=[y_dinh], mode='markers+text', marker=dict(size=10, color='gold', symbol='diamond'),
-                                     text=[f'I({x_dinh:.1f}; {y_dinh:.1f})'], textposition="top center", name='Đỉnh I'))
+                                     text=[f'I({_ptex(_ex_dinh_x)}; {_ptex(_ex_dinh_y)})'], textposition="top center", name='Đỉnh I'))
             fig.add_trace(go.Scatter(x=[x_dinh, x_dinh, 0], y=[0, y_dinh, y_dinh], mode='lines', line=dict(color='gold', width=1.2, dash='dot'), hoverinfo='skip', showlegend=False))
 
             # Giao Oy
             if y_min <= fc <= y_max:
                 fig.add_trace(go.Scatter(x=[0], y=[fc], mode='markers+text', marker=dict(size=8, color='#34d399', symbol='cross'),
-                                         text=[f'(0; {fc:.1f})'], textposition="middle right", name='Giao Oy'))
+                                         text=[f'(0; {_ptex(_qc2)})'], textposition="middle right", name='Giao Oy'))
 
             # Giao Ox
             if delta_p >= 0:
-                for xp in [xp1, xp2]:
-                    if x_min <= xp <= x_max and abs(xp) > 0.15:
-                        fig.add_trace(go.Scatter(x=[xp], y=[0], mode='markers+text', marker=dict(size=7, color='#06b6d4', symbol='circle-open'),
-                                                 text=[f'({xp:.1f}; 0)'], textposition="bottom center", name='Giao Ox', showlegend=False))
+                for _r in _ex_roots2:
+                    _rx = float(_r)
+                    if x_min <= _rx <= x_max and abs(_rx) > 0.15:
+                        fig.add_trace(go.Scatter(x=[_rx], y=[0], mode='markers+text', marker=dict(size=7, color='#06b6d4', symbol='circle-open'),
+                                                 text=[f'({_ptex(_r)}; 0)'], textposition="bottom center", name='Giao Ox', showlegend=False))
 
             setup_pedagogical_oxy(fig, [x_min, x_max], [y_min, y_max])
             fig.update_layout(title="Đồ thị Parabol Bậc 2 (Tối ưu co giãn • Kèm Đỉnh, Trục ĐX & Giao trục)", height=520, showlegend=True)
