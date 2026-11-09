@@ -2,13 +2,37 @@
 import re
 
 
+def normalize_bbt_discontinuity(text):
+    """Một nguồn duy nhất cho ký hiệu tiệm cận đứng (vạch kép) của BBT: mọi biến thể -> '||'.
+
+    Model có thể viết \\parallel, \\Vert, ∥, ║, hoặc dạng thoát Markdown '\\|\\|' / '\\|'
+    (bảng Markdown bắt buộc thoát '|' trong ô). Không chuẩn hóa thì ô y' bị coi như '0' và
+    hai giới hạn ±∞ dồn chung một ô. Trị tuyệt đối \\|x\\| (dính chữ/số) được giữ nguyên.
+    Chỉ gọi cho dữ liệu đã xác định là BBT/bảng xét dấu, không cho bảng thường.
+    """
+    if not text:
+        return text
+    s = str(text)
+    s = re.sub(r'\\(?:\||Vert|lVert|rVert)\s*\\(?:\||Vert|lVert|rVert)(?![a-zA-Z])', '||', s)
+    s = re.sub(r'\\(?:parallel|shortparallel|Vert|lVert|rVert)(?![a-zA-Z])', '||', s)
+    s = re.sub(r'(?<![\w)\]}\\])\\\|(?![\w(\[{])', '||', s)
+    return s.replace('∥', '||').replace('║', '||').replace('⫲', '||')
+
+
+def is_bbt_markdown(lines):
+    """Bảng có hàng đầu là biến (x/t) và một hàng đạo hàm/hàm số: BBT hoặc bảng xét dấu."""
+    heads = [re.sub(r'[$\s*`{}^]', '', str(line).strip().strip('|').split('|')[0]).replace('\\prime', "'")
+             for line in lines if str(line).strip().startswith('|') and not re.fullmatch(r'[\s|:\-]+', str(line))]
+    return len(heads) >= 2 and heads[0] in ('x', 't') and any(re.search(r"[′'’]|^f\(x\)$|^y$|^g\(x\)$", h) for h in heads[1:])
+
+
 def supplied_bbt_rows(raw):
     text = str(raw or '').replace(r'\n', '\n')
     rows = []
     for line in text.splitlines():
         if '|' not in line or re.fullmatch(r'[\s|:\-]+', line):
             continue
-        line = re.sub(r'(?<!\|)\|\|(?!\|)', '§BAR§', line.strip())
+        line = re.sub(r'(?<!\|)\|\|(?!\|)', '§BAR§', normalize_bbt_discontinuity(line.strip()))
         rows.append([s.strip().replace('§BAR§', '||') for s in line.strip('|').split('|')])
     return rows
 

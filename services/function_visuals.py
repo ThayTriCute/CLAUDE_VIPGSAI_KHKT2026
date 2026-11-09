@@ -9,7 +9,7 @@ from functools import lru_cache
 import sympy as sp
 
 X = sp.Symbol('x', real=True)
-RENDER_REVISION = 2026110510
+RENDER_REVISION = 2026110910
 
 
 class NonStandardFunction(ValueError):
@@ -479,6 +479,50 @@ def explicit_function_visuals(topic):
         return ''
 
 
+_FUNCTION_SOURCE = re.compile(r'(?<!\w)y\s*=\s*((?:(?:\\(?:dfrac|frac|left|right|cdot|times))|[0-9xX+\-*/^().{}\s])+)')
+_FENCE = re.compile(r'(?:```|~~~)[ \t]*[A-Za-z]*[ \t]*\n[\s\S]*?\n[ \t]*(?:```|~~~)')
+_PRE = re.compile(r'<pre\b[^>]*>\s*<code\b[^>]*>[\s\S]*?</code>\s*</pre>')
+_WRAPPED_TABLE = (r'<div\b[^>]*>\s*<div\b[^>]*>\s*📐[^<]*</div>\s*<table\b[^>]*>[\s\S]*?</table>\s*</div>'
+                  r'|<table\b[^>]*>[\s\S]*?</table>')
+
+
+def is_ascii_plot(block):
+    """A fenced character drawing of axes/curve (not code): the lesson needs the real figure instead."""
+    inner = re.sub(r'^(?:```|~~~)[^\n]*\n|\n[ \t]*(?:```|~~~)$', '', block.strip())
+    lines = [line for line in inner.split('\n') if line.strip()]
+    if len(lines) < 4 or re.search(r'\b(?:def|return|import|print|while|class|function|const|let|var)\b|;\s*$', inner, re.M):
+        return False
+    glyphs = re.sub(r'\s', '', inner)
+    drawing = sum(ch in '|-+/\\_.`\'^<>:=*~' for ch in glyphs)
+    axis = re.search(r'-{2,}\s*>|-{4,}|─{2,}', inner) and sum('|' in line or '│' in line for line in lines) >= 2
+    return bool(axis) and drawing >= 0.3 * len(glyphs)
+
+
+def _drawing(fragment):
+    """True/False for a fenced or exported <pre> block; None for a table."""
+    if fragment.startswith('<pre'):
+        return is_ascii_plot('```\n' + html.unescape(re.sub(r'<[^>]+>', '', fragment)).strip('\n') + '\n```')
+    if fragment.startswith(('```', '~~~')):
+        return is_ascii_plot(fragment)
+    return None
+
+
+
+def _nearest_function_figure(prefix, allowed=None):
+    """Verified figure of the closest preceding explicit function (data-tex or prose y=...)."""
+    plain = _PRE.sub(lambda m: ' ' * len(m[0]), _FENCE.sub(lambda m: ' ' * len(m[0]), prefix))
+    sources = [(m.start(), html.unescape(m[1])) for m in re.finditer(r'data-tex="(y=[^"]+)"', plain)]
+    for m in _FUNCTION_SOURCE.finditer(plain):
+        raw = m[1].strip()
+        if raw and (raw.endswith('.') or not re.match(r'[A-Za-z_\\]', plain[m.end():])):
+            sources.append((m.start(), 'y=' + raw))
+    for _, source in sorted(sources, reverse=True)[:8]:
+        figure = explicit_function_visuals(source)
+        if figure and 'data-function-rejected' not in figure and (allowed is None or figure in allowed):
+            return figure
+    return None
+
+
 def with_function_visuals(body, topic, lesson=''):
     """Use the same figure on the lesson page and in all export styles."""
     visuals = explicit_function_visuals(str(topic or ''))
@@ -497,20 +541,32 @@ def with_function_visuals(body, topic, lesson=''):
                 figures.add(figure)
         if len(figures) > 1:
             # Associate only with the nearest explicit preceding function.
-            # Never leave a malformed source BBT alongside its verified model.
+            # Never leave a malformed source BBT or a character drawing alongside its verified model.
             used = set()
             def scoped_table(match):
                 prefix = body[:match.start()]
-                functions = list(re.finditer(r'data-tex="(y=[^"]+)"', prefix))
+                drawing = _drawing(match[0])
+                if drawing is not None:
+                    if not drawing:
+                        return match[0]
+                    figure = _nearest_function_figure(prefix, figures)
+                    if figure is None:
+                        return match[0]
+                    if figure in used:
+                        return ''
+                    used.add(figure)
+                    return figure
                 plain = html.unescape(re.sub(r'<[^>]+>', '', match[0]))
-                if not functions or not re.search(r"x[\s\S]*y[′'][\s\S]*y", plain):
+                if not re.search(r"x[\s\S]*y[′'][\s\S]*y", plain):
                     return match[0]
-                figure = explicit_function_visuals(html.unescape(functions[-1][1]))
-                if figure not in figures:
+                figure = _nearest_function_figure(prefix, figures)
+                if figure is None:
                     return match[0]
+                if figure in used:
+                    return ''
                 used.add(figure)
                 return figure
-            result = re.sub(r'<table\b[^>]*>[\s\S]*?</table>', scoped_table, body)
+            result = re.sub(_WRAPPED_TABLE + '|' + _PRE.pattern + '|' + _FENCE.pattern, scoped_table, body)
             return result + "".join(sorted(figures - used))
         if len(figures) == 1:
             visuals = figures.pop()
@@ -519,11 +575,22 @@ def with_function_visuals(body, topic, lesson=''):
     replaced = [False]
 
     def replace_table(match):
+        drawing = _drawing(match[0])
+        if drawing is not None:
+            if not drawing:
+                return match[0]
+            nearest = _nearest_function_figure(body[:match.start()])
+            if nearest not in (None, visuals):
+                return match[0]
+            if replaced[0]:
+                return ''
+            replaced[0] = True
+            return visuals
         plain = html.unescape(re.sub(r'<[^>]+>', '', match[0]))
         if not replaced[0] and re.search(r'x[\s\S]*y[′\'][\s\S]*y', plain):
             replaced[0] = True
             return visuals
         return match[0]
 
-    result = re.sub(r'<table\b[^>]*>[\s\S]*?</table>', replace_table, body)
+    result = re.sub(_WRAPPED_TABLE + '|' + _PRE.pattern + '|' + _FENCE.pattern, replace_table, body)
     return result if replaced[0] else result + visuals

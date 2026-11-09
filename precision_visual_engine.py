@@ -2596,6 +2596,8 @@ def heal_bbt_mathematics(raw_bbt: str) -> str:
     raw_str = str(raw_bbt).strip()
     if raw_str.lower() in ["null", "none", "{}", "undefined", "nil", "nan", "[]"] or len(raw_str) < 5:
         return ""
+    from services.bbt_display_contract import normalize_bbt_discontinuity
+    raw_str = normalize_bbt_discontinuity(raw_str)
 
     def _clean(v):
         s = str(v).replace('$', '').strip()

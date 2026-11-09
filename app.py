@@ -3033,9 +3033,14 @@ def _normalize_bbt_discontinuity(s):
     thị đồng nhất trên Android/iOS/Windows/Mac, không phụ thuộc font hệ thống.
     Chỉ đổi các ký hiệu tiệm cận; không đụng dấu '|' phân tách cột hay trị tuyệt đối |x|.
     """
-    if not s:
-        return s
-    s = re.sub(r'\\(?:parallel|shortparallel|Vert)\b', '||', s)
+    # Một nguồn duy nhất dùng chung cho Trạm 1/2/3, đề, xuất bản: services/bbt_display_contract.
+    from services.bbt_display_contract import normalize_bbt_discontinuity
+    return normalize_bbt_discontinuity(s)
+    # Markdown bắt buộc thoát '|' trong ô bảng nên model hay viết vạch kép thành '\\|\\|' hoặc '\\|' (LaTeX ‖).
+    # Không nhận dạng -> ô y' bị điền '0' và hai giới hạn ±∞ dồn chung một ô (lỗi Trạm 1, 09/11/2026).
+    s = re.sub(r'\\(?:\||Vert|lVert|rVert)\s*\\(?:\||Vert|lVert|rVert)(?![a-zA-Z])', '||', s)
+    s = re.sub(r'\\(?:parallel|shortparallel|Vert|lVert|rVert)(?![a-zA-Z])', '||', s)
+    s = re.sub(r'(?<![\w)\]}\\])\\\|(?![\w(\[{])', '||', s)
     s = s.replace('∥', '||').replace('║', '||').replace('⫲', '||')
     return s
 
@@ -11357,10 +11362,10 @@ def _normalize_moet_bbt_grid(x_cells: list, yp_cells: list, y_cells: list) -> di
 def _t1_with_function_visuals(body, topic, lesson=''):
     """Load this release's math renderer if a long-lived worker retained it."""
     from services import function_visuals
-    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026110510:
+    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026110910:
         from importlib import reload
         function_visuals = reload(function_visuals)
-    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026110510:
+    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026110910:
         raise RuntimeError('Bộ dựng đồ thị chưa đồng bộ bản phát hành; cần nạp lại ứng dụng.')
     return function_visuals.with_function_visuals(body, topic, lesson)
 

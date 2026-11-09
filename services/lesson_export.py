@@ -127,9 +127,14 @@ def lesson_body_html(lesson, trusted_svgs=()):
     # A table emitted directly after a numbered-list item is otherwise parsed
     # as literal pipes by CommonMark. Separate real pipe-row blocks from prose,
     # while preserving code examples and every source cell.
+    def _bbt_table(block):
+        # BBT only: escaped Markdown double bars (\\|\\|) are the vertical-asymptote marker.
+        from services.bbt_display_contract import is_bbt_markdown, normalize_bbt_discontinuity
+        rows = block.splitlines()
+        return '\n'.join(normalize_bbt_discontinuity(r) for r in rows) if is_bbt_markdown(rows) else block
     def separate_tables(prose):
         return re.sub(r"(?m)(?:^[ \t]{0,3}\|[^\n]+\|[ \t]*(?:\r?\n|$))+",
-                      lambda match: "\n\n" + match[0].strip() + "\n\n", prose)
+                      lambda match: "\n\n" + _bbt_table(match[0].strip()) + "\n\n", prose)
     blocks = re.split(r"(```[\s\S]*?```|~~~[\s\S]*?~~~)", lesson)
     lesson = ''.join(block if index % 2 else separate_tables(block)
                      for index, block in enumerate(blocks))
