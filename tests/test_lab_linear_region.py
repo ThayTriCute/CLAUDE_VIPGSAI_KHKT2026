@@ -61,6 +61,7 @@ class LabWiringTests(unittest.TestCase):
         from tests.test_expert_patch_regressions import load_function
         st = Mock()
         st.session_state = {}
+        st.radio.return_value = 'SVG chính xác'
         render = load_function('render_smart_lab', st=st)
         render(linear_region_request(OWNER, 'Toán học'), 'Toán học')
         exported = st.download_button.call_args.args[1].decode('utf-8')
@@ -69,6 +70,30 @@ class LabWiringTests(unittest.TestCase):
         self.assertIn(r'3x + 5y \le 7', latex)
         vertices = st.markdown.call_args_list[-1].args[0]
         self.assertIn(r'\dfrac{7}{3}', vertices)
+
+    def test_plotly_mode_uses_same_exact_data(self):
+        from tests.test_expert_patch_regressions import load_function
+        st = Mock()
+        st.session_state = {}
+        st.radio.return_value = 'Plotly tương tác'
+        figure = Mock(side_effect=lambda spec: spec)
+        render = load_function('render_smart_lab', st=st, go=Mock(Figure=figure))
+        render(linear_region_request(OWNER, 'Toán học'), 'Toán học')
+        self.assertEqual(st.radio.call_args.args[1], ['SVG chính xác', 'Plotly tương tác'])
+        spec = st.plotly_chart.call_args.args[0]
+        vertex_trace = spec['data'][-1]
+        self.assertEqual(sorted(vertex_trace['text']), ['A(0; 7/5)', 'B(7/3; 0)', 'O'])
+        self.assertTrue(any(d.get('line', {}).get('dash') == 'solid' for d in spec['data']))
+
+    def test_plotly_spec_is_accepted_by_plotly(self):
+        try:
+            import plotly.graph_objects as go
+        except ImportError:
+            self.skipTest('plotly chỉ có trên CI/Cloud')
+        from services.inequality_region import region_plotly_spec
+        for text in (OWNER, '2x - y > 1; miền nghiệm', 'x + y <= 4; x - y > -2; 0 <= x <= 3'):
+            fig = go.Figure(region_plotly_spec(parse_constraints(text))[0])
+            self.assertTrue(fig.to_json())
 
     def test_local_route_runs_before_ai_and_prompt_has_type(self):
         src = (Path(__file__).resolve().parents[1] / 'app.py').read_text(encoding='utf-8')

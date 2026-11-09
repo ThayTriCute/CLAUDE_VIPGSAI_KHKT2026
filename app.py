@@ -2,7 +2,7 @@ def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
     from services import bbt_display_contract, inequality_region, lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation
-    for module, revision in ((bbt_display_contract, 2026110911), (inequality_region, 2026110912), (lesson_sources, 2026110802), (curriculum_policy, 2026110903),
+    for module, revision in ((bbt_display_contract, 2026110911), (inequality_region, 2026110913), (lesson_sources, 2026110802), (curriculum_policy, 2026110903),
                              (lab_scope, 2026110901), (lesson_export, 2026110911),
                              (text_boundaries, 2026110801), (socratic_context, 2026110901),
                              (philosophy_rotation, 2026110801)):
@@ -5547,7 +5547,7 @@ def render_smart_lab(data, current_subject=""):
 
     if dtype == 'linear_region' and current_subject not in ("Ngữ văn", "Lịch sử", "Địa lý", "Giáo dục công dân", "Giáo dục kinh tế và pháp luật", "Lịch sử & Địa lý", "Tiếng Anh"):
         # Miền nghiệm hệ BPT bậc nhất hai ẩn (Toán 10 KNTT): dựng tại chỗ, tọa độ đỉnh chính xác, không gọi AI.
-        from services.inequality_region import parse_constraints, region_svg, _constraint_text, _frac_tex
+        from services.inequality_region import parse_constraints, region_svg, region_plotly_spec, _constraint_text, _frac_tex
         constraints = parse_constraints('; '.join(str(c) for c in data.get('constraints', [])))
         if not constraints:
             st.warning('Chưa đọc được bất phương trình bậc nhất hai ẩn x, y. Ví dụ: x >= 0; y >= 0; 3x + 5y <= 7.')
@@ -5555,7 +5555,13 @@ def render_smart_lab(data, current_subject=""):
         st.markdown('### 📐 Biểu diễn miền nghiệm của hệ bất phương trình bậc nhất hai ẩn')
         st.latex(r'\begin{cases}' + r'\\'.join(_constraint_text(c, tex=True) for c in constraints) + r'\end{cases}')
         diagram, info = region_svg(constraints)
-        st.markdown(diagram, unsafe_allow_html=True)
+        visual_mode = st.radio('Cách hiển thị miền nghiệm để đối chiếu:', ['SVG chính xác', 'Plotly tương tác'], key=lab_key('compare_linear_region'), horizontal=True)
+        if visual_mode == 'SVG chính xác':
+            st.markdown(diagram, unsafe_allow_html=True)
+        else:
+            st.caption('Đồ thị tương tác: cùng dữ liệu chính xác với bản SVG; rê chuột để xem phương trình bờ và tọa độ đỉnh.')
+            spec, _ = region_plotly_spec(constraints)
+            st.plotly_chart(go.Figure(spec), width='stretch', key=lab_key('linear_region_plot'))
         if info['status'] == 'empty':
             st.warning('Hệ vô nghiệm: không có điểm nào thỏa mãn đồng thời mọi bất phương trình.')
         elif info['status'] == 'degenerate':
