@@ -10,6 +10,25 @@ from services.web_question_contract import graph_identification_answer_leak, WEB
 from services.context_recovery import repair_exam_context
 
 
+# Các hàm render BBT trong app.py phụ thuộc bảng ký hiệu module-level (_MOET_*) và vài
+# hàm hỗ trợ dùng chung. Khi trích hàm bằng AST phải nạp kèm các phụ thuộc này, nếu không
+# sẽ NameError lúc gọi (ví dụ _render_math_html_token dùng _MOET_SYM_RE).
+_SUPPORT_FUNCS = ('_normalize_bbt_discontinuity', '_moet_plaintext_math')
+
+
+def _load_renderer(tree, namespace, func_names):
+    namespace.setdefault('re', __import__('re'))
+    namespace.setdefault('html', html)
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(
+                isinstance(t, ast.Name) and t.id.startswith('_MOET') for t in node.targets):
+            exec(compile(ast.Module(body=[node], type_ignores=[]), 'renderer-support', 'exec'), namespace)
+    for name in tuple(func_names) + _SUPPORT_FUNCS:
+        node = next((n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == name), None)
+        if node is not None:
+            exec(compile(ast.Module(body=[node], type_ignores=[]), 'renderer-test', 'exec'), namespace)
+
+
 class TestVisualTableAnswerLeak(unittest.TestCase):
     def test_double_bar_and_limits_preserved_and_aligned(self):
         raw = "x | -inf | -2 | -1 | 0 | +inf\ny' | + | 0 | - | || | - | 0 | +\ny | 2 | 4 | -inf || +inf | 0 | 2"
@@ -19,10 +38,7 @@ class TestVisualTableAnswerLeak(unittest.TestCase):
         self.assertEqual(rows[2][5], r'-\infty || +\infty')
         namespace = {'html': html}
         tree = ast.parse(Path('app.py').read_text(encoding='utf-8'))
-        for name in ('_render_math_html_token', '_normalize_moet_bbt_grid', '_build_svg_bbt_from_rows', 'question_visual_html'):
-            node = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == name)
-            namespace['re'] = __import__('re')
-            exec(compile(ast.Module(body=[node], type_ignores=[]), 'renderer-test', 'exec'), namespace)
+        _load_renderer(tree, namespace, ('_render_math_html_token', '_normalize_moet_bbt_grid', '_build_svg_bbt_from_rows', 'question_visual_html'))
         output = namespace['question_visual_html']({'bbt': raw})
         self.assertIn('<table', output)
         self.assertIn('∞', output)
@@ -33,9 +49,7 @@ class TestVisualTableAnswerLeak(unittest.TestCase):
         from html.parser import HTMLParser
         namespace = {'html': html, 're': re}
         tree = ast.parse(Path('app.py').read_text(encoding='utf-8'))
-        for name in ('_render_math_html_token', '_normalize_moet_bbt_grid', '_build_svg_bbt_from_rows'):
-            node = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == name)
-            exec(compile(ast.Module(body=[node], type_ignores=[]), 'bbt-contrast-test', 'exec'), namespace)
+        _load_renderer(tree, namespace, ('_render_math_html_token', '_normalize_moet_bbt_grid', '_build_svg_bbt_from_rows'))
         class Cells(HTMLParser):
             def handle_starttag(self, tag, attrs):
                 if tag == 'td':
@@ -54,9 +68,7 @@ class TestVisualTableAnswerLeak(unittest.TestCase):
     def test_missing_variation_direction_does_not_invent_alternating_arrows(self):
         namespace={'html':html, 're':__import__('re')}
         tree=ast.parse(Path('app.py').read_text(encoding='utf-8'))
-        for name in ('_render_math_html_token','_normalize_moet_bbt_grid','_build_svg_bbt_from_rows'):
-            node=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name==name)
-            exec(compile(ast.Module(body=[node],type_ignores=[]),'bbt-direction-test','exec'),namespace)
+        _load_renderer(tree, namespace, ('_render_math_html_token','_normalize_moet_bbt_grid','_build_svg_bbt_from_rows'))
         x=['x',r'-\infty','1',r'+\infty']
         missing=['y',r'+\infty','0',r'+\infty']
         grid=namespace['_normalize_moet_bbt_grid'](x,[],missing)

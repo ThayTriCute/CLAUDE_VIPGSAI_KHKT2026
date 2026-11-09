@@ -2,9 +2,9 @@ def _refresh_t1_context_services():
     """Refresh changed lesson policy/source modules once in a retained worker."""
     from importlib import reload
     from services import lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation
-    for module, revision in ((lesson_sources, 2026110802), (curriculum_policy, 2026110805),
-                             (lab_scope, 2026110805), (lesson_export, 2026110802),
-                             (text_boundaries, 2026110801), (socratic_context, 2026110704),
+    for module, revision in ((lesson_sources, 2026110802), (curriculum_policy, 2026110903),
+                             (lab_scope, 2026110901), (lesson_export, 2026110901),
+                             (text_boundaries, 2026110801), (socratic_context, 2026110901),
                              (philosophy_rotation, 2026110801)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
             reload(module)
@@ -3023,9 +3023,26 @@ def render_exam_clock():
 
 # ==============================================================================
 
+def _normalize_bbt_discontinuity(s):
+    """Chuẩn hóa mọi biến thể ký hiệu tiệm cận đứng (vạch kép) về '||' chuẩn nội bộ.
+
+    Lý do: các model sinh BBT đôi khi xuất \\parallel, \\Vert, ∥ (U+2225) hay ║ thay vì
+    '||'. Nếu không chuẩn hóa, bộ dựng không nhận ra cột tiệm cận -> (1) in mã TeX thô
+    '\\parallel' ra hình, (2) dồn 'giới-hạn-trái ∥ giới-hạn-phải' vào một ô nên ±∞ bị đặt
+    sai cao độ. Quy về '||' để renderer vẽ VẠCH ĐÔI bằng nét vector (SVG/đường kẻ), hiển
+    thị đồng nhất trên Android/iOS/Windows/Mac, không phụ thuộc font hệ thống.
+    Chỉ đổi các ký hiệu tiệm cận; không đụng dấu '|' phân tách cột hay trị tuyệt đối |x|.
+    """
+    if not s:
+        return s
+    s = re.sub(r'\\(?:parallel|shortparallel|Vert)\b', '||', s)
+    s = s.replace('∥', '||').replace('║', '||').replace('⫲', '||')
+    return s
+
 def parse_and_align_bbt(raw_bbt):
 
     raw_str = str(raw_bbt).strip()
+    raw_str = _normalize_bbt_discontinuity(raw_str)
     raw_str = re.sub(r'\\+nearrow\b|\\nearrow', '↗', raw_str)
     raw_str = re.sub(r'\\+searrow\b|\\searrow', '↘', raw_str)
     raw_str = re.sub(r'\\n(?!earrow)', '\n', raw_str)
@@ -5610,7 +5627,8 @@ def render_smart_lab(data, current_subject=""):
     if dtype == 'bio_osmosis':
         from services.lab_scope import osmosis_state
         st.markdown('### Thẩm thấu — dự đoán, đổi điều kiện và giải thích')
-        st.caption('Mô hình định tính theo SGK Sinh10 trang66–67, không phải phép đo hoặc phim tế bào thật. Xét ban đầu cùng nhiệt độ/áp suất, màng cho nước qua và không cho chất tan đang xét qua. Nồng độ là số hạt tan hiệu dụng; không đồng nhất mọi mol chất tan với độ trương.')
+        source_scope = data.get('source_scope') or 'SGK Sinh10 trang66–67'
+        st.caption(f'Mô hình định tính theo {source_scope}, không phải phép đo hoặc phim tế bào thật. Xét ban đầu cùng nhiệt độ/áp suất, màng cho nước qua và không cho chất tan đang xét qua. Nồng độ là số hạt tan hiệu dụng; không đồng nhất mọi mol chất tan với độ trương.')
         cell = st.radio('Loại tế bào:', ['Động vật', 'Thực vật có thành'], horizontal=True, key=lab_key('osmosis_cell'))
         c1, c2 = st.columns(2)
         inside = c1.slider('Hạt tan hiệu dụng bên trong (đơn vị tương đối)', 0, 600, 300, 25, key=lab_key('osmosis_inside'))
@@ -5640,7 +5658,7 @@ def render_smart_lab(data, current_subject=""):
         writer = csv.writer(stream)
         writer.writerow(['cell_type', 'inside_effective_relative', 'outside_effective_relative', 'initial_net_direction', 'scope'])
         writer.writerow([cell, inside, outside, model['direction'], 'qualitative_model_not_measurement'])
-        st.download_button('Tải cấu hình và kết quả mô hình (.csv)', stream.getvalue().encode('utf-8-sig'), 'Sinh10_tham_thau_mo_hinh.csv', 'text/csv', key=lab_key('osmosis_csv'))
+        st.download_button('Tải cấu hình và kết quả mô hình (.csv)', stream.getvalue().encode('utf-8-sig'), f'Sinh{int(data.get("source_grade", 10))}_tham_thau_mo_hinh.csv', 'text/csv', key=lab_key('osmosis_csv'))
         st.markdown(f'[Nguồn SGK đã đối chiếu]({data["source_url"]})')
         return
 
@@ -6914,6 +6932,10 @@ def render_smart_lab(data, current_subject=""):
                 root = exact_center_x if center else min(exact_critical, key=lambda r: abs(float(sp.re(r.evalf()))-x_value))
                 ordinate = exact_center_y if center else sp.simplify(exact_cubic.subs(exact_var, root))
                 return sp.sstr(root) + '; ' + sp.sstr(ordinate)
+            def exact_latex_coordinate(x_value, y_value, center=False):
+                root = exact_center_x if center else min(exact_critical, key=lambda r: abs(float(sp.re(r.evalf())) - x_value))
+                ordinate = exact_center_y if center else sp.simplify(exact_cubic.subs(exact_var, root))
+                return sp.latex(root) + '; ' + sp.latex(ordinate)
 
             # Tính toán Điểm uốn / Tâm đối xứng
             x_uon = -fb / (3.0 * fa)
@@ -6922,8 +6944,8 @@ def render_smart_lab(data, current_subject=""):
             # Tính toán Cực trị
             delta_prime = (fb ** 2) - 3.0 * fa * fc
             has_extrema = delta_prime > 1e-6
-            c_info = [f"📌 **Tâm ĐX / Điểm uốn:** $I({x_uon:.2f}; {y_uon:.2f})$"]
-            c_info.append(f"📌 **Giao trục tung $Oy$:** $(0; {fd:.2f})$")
+            c_info = [f"📌 **Tâm ĐX / Điểm uốn:** $I({exact_latex_coordinate(x_uon, y_uon, center=True)})$"]
+            c_info.append(f"📌 **Giao trục tung $Oy$:** $(0; {sp.latex(sp.Rational(str(fd)))})$")
 
             x_cd, y_cd, x_ct, y_ct = None, None, None, None
             if has_extrema:
@@ -6940,8 +6962,8 @@ def render_smart_lab(data, current_subject=""):
                     x_ct, y_ct = min(x_cand1, x_cand2), (y_cand1 if x_cand1 < x_cand2 else y_cand2)
                     x_cd, y_cd = max(x_cand1, x_cand2), (y_cand2 if x_cand1 < x_cand2 else y_cand1)
 
-                c_info.append(f"🔴 **Điểm cực đại:** $CĐ({x_cd:.2f}; {y_cd:.2f})$")
-                c_info.append(f"🟠 **Điểm cực tiểu:** $CT({x_ct:.2f}; {y_ct:.2f})$")
+                c_info.append(f"🔴 **Điểm cực đại:** $CĐ({exact_latex_coordinate(x_cd, y_cd)})$")
+                c_info.append(f"🟠 **Điểm cực tiểu:** $CT({exact_latex_coordinate(x_ct, y_ct)})$")
             else:
                 c_info.append("ℹ️ Hàm số đơn điệu, không có cực trị.")
 
@@ -7057,14 +7079,14 @@ def render_smart_lab(data, current_subject=""):
 
             st.latex(function_formula_latex([fa, fb], [fc, fd]))
             info_lines = [
-                f"📌 **Tiệm cận đứng (TCĐ):** $x = {x_tc_dung:.2f}$",
-                f"📌 **Tiệm cận ngang (TCN):** $y = {y_tc_ngang:.2f}$",
-                f"🎯 **Tâm đối xứng:** $I({x_tc_dung:.2f}; {y_tc_ngang:.2f})$"
+                f"📌 **Tiệm cận đứng (TCĐ):** $x = {sp.latex(-qd/qc)}$",
+                f"📌 **Tiệm cận ngang (TCN):** $y = {sp.latex(qa/qc)}$",
+                f"🎯 **Tâm đối xứng:** $I({sp.latex(-qd/qc)}; {sp.latex(qa/qc)})$"
             ]
             if y_oy is not None:
-                info_lines.append(f"📍 **Giao trục tung $Oy$:** $(0; {y_oy:.2f})$")
+                info_lines.append(f"📍 **Giao trục tung $Oy$:** $(0; {sp.latex(qb/qd)})$")
             if x_ox is not None:
-                info_lines.append(f"📍 **Giao trục hoành $Ox$:** $({x_ox:.2f}; 0)$")
+                info_lines.append(f"📍 **Giao trục hoành $Ox$:** $({sp.latex(-qb/qa)}; 0)$")
 
             st.caption("Tọa độ chính xác, đường gióng và giao trục được thể hiện trong hình bên cạnh.")
 
@@ -7173,12 +7195,12 @@ def render_smart_lab(data, current_subject=""):
 
             st.latex(function_formula_latex([fa, fb, fc], [fd, fe]))
             info_lines_21 = [
-                f"📌 **Tiệm cận đứng:** $x = {x_tc_dung:.2f}$",
-                f"📌 **Tiệm cận xiên:** $y = {m_slope:.2f}x + ({n_intercept:.2f})$",
-                f"🎯 **Tâm đối xứng:** $I({x_tam_dx:.2f}; {y_tam_dx:.2f})$"
+                f"📌 **Tiệm cận đứng:** $x = {sp.latex(center_x21)}$",
+                f"📌 **Tiệm cận xiên:** $y = {sp.latex(slope21)}x + ({sp.latex(intercept21)})$",
+                f"🎯 **Tâm đối xứng:** $I({sp.latex(center_x21)}; {sp.latex(center_y21)})$"
             ]
             if y_oy is not None:
-                info_lines_21.append(f"📍 **Giao trục tung $Oy$:** $(0; {y_oy:.2f})$")
+                info_lines_21.append(f"📍 **Giao trục tung $Oy$:** $(0; {sp.latex(qc21/qe21)})$")
 
             x_cd_21, y_cd_21, x_ct_21, y_ct_21 = None, None, None, None
             lbl_x_cd, lbl_y_cd, lbl_x_ct, lbl_y_ct = "", "", "", ""
@@ -7291,19 +7313,28 @@ def render_smart_lab(data, current_subject=""):
 
             x_dinh = -fb / (2 * fa)
             y_dinh = fa * x_dinh**2 + fb * x_dinh + fc
+            import sympy as sp
+            _qa2, _qb2, _qc2 = (sp.Rational(str(v)) for v in (fa, fb, fc))
+            _xv2 = sp.Symbol('x', real=True)
+            _quad2 = _qa2 * _xv2**2 + _qb2 * _xv2 + _qc2
+            _ex_dinh_x = -_qb2 / (2 * _qa2)
+            _ex_dinh_y = sp.simplify(_quad2.subs(_xv2, _ex_dinh_x))
+            _ex_roots2 = sorted((r for r in sp.solve(_quad2, _xv2) if r.is_real), key=lambda r: float(r))
+            _ptex = lambda ex: str(ex).replace('sqrt', '√').replace('**', '^').replace('*', '·')
             st.info(f"**$y = {fa}x^2 + ({fb})x + ({fc})$**")
 
             p_lines = [
-                f"📌 **Đỉnh Parabol:** $I({x_dinh:.2f}; {y_dinh:.2f})$",
-                f"📌 **Trục đối xứng:** $x = {x_dinh:.2f}$",
-                f"📍 **Giao trục tung $Oy$:** $(0; {fc:.2f})$"
+                f"📌 **Đỉnh Parabol:** $I({sp.latex(_ex_dinh_x)}; {sp.latex(_ex_dinh_y)})$",
+                f"📌 **Trục đối xứng:** $x = {sp.latex(_ex_dinh_x)}$",
+                f"📍 **Giao trục tung $Oy$:** $(0; {sp.latex(_qc2)})$"
             ]
             delta_p = fb**2 - 4.0 * fa * fc
             if delta_p >= 0:
                 sq_dp = math.sqrt(delta_p)
                 xp1 = (-fb - sq_dp) / (2.0 * fa)
                 xp2 = (-fb + sq_dp) / (2.0 * fa)
-                p_lines.append(f"📍 **Giao trục hoành $Ox$:** $({xp1:.2f}; 0)$, $({xp2:.2f}; 0)$")
+                _rtex = ", ".join(f"$({sp.latex(r)}; 0)$" for r in _ex_roots2)
+                p_lines.append(f"📍 **Giao trục hoành $Ox$:** {_rtex}")
             st.caption("<br>".join(p_lines), unsafe_allow_html=True)
 
         with c2:
@@ -7330,20 +7361,21 @@ def render_smart_lab(data, current_subject=""):
 
             # Đỉnh I
             fig.add_trace(go.Scatter(x=[x_dinh], y=[y_dinh], mode='markers+text', marker=dict(size=10, color='gold', symbol='diamond'),
-                                     text=[f'I({x_dinh:.1f}; {y_dinh:.1f})'], textposition="top center", name='Đỉnh I'))
+                                     text=[f'I({_ptex(_ex_dinh_x)}; {_ptex(_ex_dinh_y)})'], textposition="top center", name='Đỉnh I'))
             fig.add_trace(go.Scatter(x=[x_dinh, x_dinh, 0], y=[0, y_dinh, y_dinh], mode='lines', line=dict(color='gold', width=1.2, dash='dot'), hoverinfo='skip', showlegend=False))
 
             # Giao Oy
             if y_min <= fc <= y_max:
                 fig.add_trace(go.Scatter(x=[0], y=[fc], mode='markers+text', marker=dict(size=8, color='#34d399', symbol='cross'),
-                                         text=[f'(0; {fc:.1f})'], textposition="middle right", name='Giao Oy'))
+                                         text=[f'(0; {_ptex(_qc2)})'], textposition="middle right", name='Giao Oy'))
 
             # Giao Ox
             if delta_p >= 0:
-                for xp in [xp1, xp2]:
-                    if x_min <= xp <= x_max and abs(xp) > 0.15:
-                        fig.add_trace(go.Scatter(x=[xp], y=[0], mode='markers+text', marker=dict(size=7, color='#06b6d4', symbol='circle-open'),
-                                                 text=[f'({xp:.1f}; 0)'], textposition="bottom center", name='Giao Ox', showlegend=False))
+                for _r in _ex_roots2:
+                    _rx = float(_r)
+                    if x_min <= _rx <= x_max and abs(_rx) > 0.15:
+                        fig.add_trace(go.Scatter(x=[_rx], y=[0], mode='markers+text', marker=dict(size=7, color='#06b6d4', symbol='circle-open'),
+                                                 text=[f'({_ptex(_r)}; 0)'], textposition="bottom center", name='Giao Ox', showlegend=False))
 
             setup_pedagogical_oxy(fig, [x_min, x_max], [y_min, y_max])
             fig.update_layout(title="Đồ thị Parabol Bậc 2 (Tối ưu co giãn • Kèm Đỉnh, Trục ĐX & Giao trục)", height=520, showlegend=True)
@@ -9593,6 +9625,7 @@ def render_bbt_to_webp_base64(raw_bbt: str) -> str:
 
     try:
         raw_str = str(raw_bbt).strip()
+        raw_str = _normalize_bbt_discontinuity(raw_str)
         raw_str = re.sub(r'\\+nearrow\b|\\nearrow', '↗', raw_str)
         raw_str = re.sub(r'\\+searrow\b|\\searrow', '↘', raw_str)
         raw_str = raw_str.replace('>>', '↗').replace('>', '↗')
@@ -9606,6 +9639,7 @@ def render_bbt_to_webp_base64(raw_bbt: str) -> str:
             s = s.replace('+inf', '+∞').replace('-inf', '-∞').replace('inf', '∞')
             s = re.sub(r'\\+(?:nearrow|searrow)', '', s).replace('↗', '').replace('↘', '').strip()
             s = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', r'\1/\2', s)
+            s = _moet_plaintext_math(s)
             return s
 
 
@@ -10427,6 +10461,149 @@ def render_bbt_to_webp_base64(raw_bbt: str) -> str:
 
         return ""
 
+from fractions import Fraction as _GFraction
+
+
+def _g_isqrt_free(n):
+    n = int(n)
+    if n < 0:
+        raise ValueError
+    if n == 0:
+        return 0, 1
+    k, s, i = 1, n, 2
+    while i * i <= s:
+        sq = i * i
+        while s % sq == 0:
+            s //= sq; k *= i
+        i += 1
+    return k, s
+
+
+def _g_frac(v):
+    return v if isinstance(v, _GFraction) else _GFraction(v).limit_denominator(100000)
+
+
+def _g_ftex(fr):
+    fr = _g_frac(fr)
+    if fr.denominator == 1:
+        return str(fr.numerator)
+    sg = '-' if fr < 0 else ''
+    return r'%s\dfrac{%d}{%d}' % (sg, abs(fr.numerator), fr.denominator)
+
+
+class _GER:
+    """Phần tử p + q*sqrt(s) của trường Q(sqrt(s)) — tọa độ cực trị chính xác (vô tỷ)."""
+    __slots__ = ('p', 'q', 's')
+
+    def __init__(self, p, q=0, s=1):
+        p = _g_frac(p); q = _g_frac(q)
+        if s == 0:
+            s = 1
+        if s == 1 or q == 0:
+            p, q, s = p + (q if s == 1 else _GFraction(0)), _GFraction(0), 1
+        self.p, self.q, self.s = p, q, s
+
+    @classmethod
+    def rat(cls, v):
+        return cls(_g_frac(v), 0, 1)
+
+    def _cs(self, o):
+        if self.q == 0:
+            return o.s
+        if o.q == 0:
+            return self.s
+        if self.s != o.s:
+            raise ValueError
+        return self.s
+
+    def __add__(self, o):
+        o = o if isinstance(o, _GER) else _GER.rat(o); ss = self._cs(o)
+        return _GER(self.p + o.p, self.q + o.q, ss)
+
+    def __mul__(self, o):
+        o = o if isinstance(o, _GER) else _GER.rat(o); ss = self._cs(o)
+        return _GER(self.p * o.p + self.q * o.q * ss, self.p * o.q + self.q * o.p, ss)
+
+    def __truediv__(self, o):
+        o = o if isinstance(o, _GER) else _GER.rat(o)
+        den = o.p * o.p - o.q * o.q * o.s
+        if den == 0:
+            raise ZeroDivisionError
+        num = self * _GER(o.p, -o.q, o.s)
+        return _GER(num.p / den, num.q / den, num.s)
+
+    def fval(self):
+        return float(self.p) + float(self.q) * math.sqrt(self.s)
+
+    def rational(self):
+        return self.q == 0
+
+    def tex(self):
+        if self.rational():
+            return _g_ftex(self.p)
+        q = self.q; rad = r'\sqrt{%d}' % self.s
+        if abs(q) == 1:
+            mag = rad
+        elif q.denominator == 1:
+            mag = r'%d%s' % (abs(q.numerator), rad)
+        else:
+            mag = r'\dfrac{%d%s}{%d}' % (abs(q.numerator), rad, q.denominator)
+        if self.p == 0:
+            return mag if q > 0 else '-' + mag
+        return _g_ftex(self.p) + (' + ' if q > 0 else ' - ') + mag
+
+
+def _g_quad_roots(A, B, C):
+    A = _g_frac(A); B = _g_frac(B); C = _g_frac(C)
+    if A == 0:
+        return []
+    disc = B * B - 4 * A * C
+    if disc < 0:
+        return []
+    k, s = _g_isqrt_free(disc.numerator * disc.denominator)
+    coef = _GFraction(k, disc.denominator)
+    p = -B / (2 * A); q = coef / (2 * A)
+    return [_GER(p, -q, s), _GER(p, q, s)]
+
+
+def _g_rat_tex_or_none(v):
+    fr = _GFraction(v).limit_denominator(1000)
+    return _g_ftex(fr) if abs(float(fr) - v) <= 1e-9 * max(1, abs(v)) else None
+
+
+def _g_approx(v):
+    t = ('%.3f' % v).rstrip('0').rstrip('.')
+    return r'\approx %s' % (t if t not in ('', '-0') else '0')
+
+
+def _graph_exact_point_labels(px, py, label, dtype, a, b, c, d, e):
+    """Nhãn (x_tex, y_tex) chính xác cho điểm quan trọng; vô tỷ giữ căn thức, không làm tròn."""
+    xt = _g_rat_tex_or_none(px); yt = _g_rat_tex_or_none(py)
+    if xt is not None and yt is not None:
+        return xt, yt
+    roots = []; fexact = None
+    if dtype in ('cubic', 'func_3') and label == 'CĐ/CT':
+        roots = _g_quad_roots(3 * a, 2 * b, c)
+        fexact = lambda X: _GER.rat(a) * X * X * X + _GER.rat(b) * X * X + _GER.rat(c) * X + _GER.rat(d)
+    elif dtype == 'func_2_1' and label == 'CĐ/CT':
+        roots = _g_quad_roots(a * d, 2 * a * e, b * e - c * d)
+        fexact = lambda X: (_GER.rat(a) * X * X + _GER.rat(b) * X + _GER.rat(c)) / (_GER.rat(d) * X + _GER.rat(e))
+    for r in roots:
+        if abs(r.fval() - px) < 1e-6:
+            try:
+                if xt is None:
+                    xt = r.tex()
+                if yt is None and abs(fexact(r).fval() - py) < 1e-6:
+                    yt = fexact(r).tex()
+            except Exception:
+                pass
+            break
+    if xt is None:
+        xt = _g_approx(px)
+    if yt is None:
+        yt = _g_approx(py)
+    return xt, yt
+
 @st.cache_data(show_spinner=False, max_entries=512)
 def render_math_graph_to_webp_base64(graph_data, extra_points=None, xlabel=r'$x$', ylabel=r'$y$') -> str:
 
@@ -10696,13 +10873,15 @@ def render_math_graph_to_webp_base64(graph_data, extra_points=None, xlabel=r'$x$
 
         # 3. Điền các con số nguyên NGAY TRÊN TRỤC Ox và Oy (ẩn số 0 ở gốc để không đè chữ O)
 
+        lab_x = [p[0] for p in key_points if p[3] and abs(p[0]) > 0.2 and x_low <= p[0] <= x_high and y_low <= p[1] <= y_high]
+        lab_y = [p[1] for p in key_points if p[3] and abs(p[1]) > 0.2 and x_low <= p[0] <= x_high and y_low <= p[1] <= y_high]
         ax.xaxis.set_major_locator(plt.MultipleLocator(step_x))
 
         ax.yaxis.set_major_locator(plt.MultipleLocator(step_y))
 
-        ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{int(v)}" if math.isclose(v, round(v), abs_tol=1e-4) and not math.isclose(v, 0, abs_tol=1e-4) and v <= x_high else ""))
+        ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: "" if (math.isclose(v, 0, abs_tol=1e-4) or v > x_high or not math.isclose(v, round(v), abs_tol=1e-4) or any(abs(v - lx) < 0.42 * step_x for lx in lab_x)) else f"{int(v)}"))
 
-        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{int(v)}" if math.isclose(v, round(v), abs_tol=1e-4) and not math.isclose(v, 0, abs_tol=1e-4) and v <= y_high else ""))
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: "" if (math.isclose(v, 0, abs_tol=1e-4) or v > y_high or not math.isclose(v, round(v), abs_tol=1e-4) or any(abs(v - ly) < 0.42 * step_y for ly in lab_y)) else f"{int(v)}"))
 
         ax.tick_params(axis='both', which='major', labelsize=9.5, pad=2)
 
@@ -10800,6 +10979,62 @@ def render_math_graph_to_webp_base64(graph_data, extra_points=None, xlabel=r'$x$
 
 
 
+        # NHÃN TỌA ĐỘ (owner 05/11): giao trục ghi tọa độ chính xác; chật thì chú giải ①②③
+        _CIRC = '①②③④⑤⑥⑦⑧⑨'
+        _seen_x = []; _seen_y = []; _legend = []; _nleg = 0
+        for _px, _py, _plabel, _pdong in key_points:
+            if not _pdong:
+                continue
+            if not (x_low <= _px <= x_high and y_low <= _py <= y_high):
+                continue
+            if abs(_px) < 0.25 * step_x and abs(_py) < 0.25 * step_y:
+                continue
+            _xt, _yt = _graph_exact_point_labels(_px, _py, _plabel, dtype, a, b, c, d, e)
+            _near_o = abs(_px) < 0.55 * step_x and abs(_py) < 0.55 * step_y
+            _clash_x = abs(_px) > 0.2 and any(abs(_px - s) < 0.42 * step_x for s in _seen_x)
+            _clash_y = abs(_py) > 0.2 and any(abs(_py - s) < 0.42 * step_y for s in _seen_y)
+            if _near_o or _clash_x or _clash_y:
+                _mark = _CIRC[_nleg] if _nleg < len(_CIRC) else '(%d)' % (_nleg + 1)
+                ax.annotate(_mark, xy=(_px, _py), xytext=(_px + 0.14 * step_x, _py + 0.16 * step_y),
+                            ha='left', va='bottom', fontsize=9, fontweight='bold', color='#b91c1c', annotation_clip=False)
+                _legend.append(_mark + " $(" + _xt + ";\\ " + _yt + ")$"); _nleg += 1
+                continue
+            if abs(_px) > 0.2:
+                ax.annotate("$" + _xt + "$", xy=(_px, 0), xytext=(_px, -0.16 * step_y),
+                            ha='center', va='top', fontsize=8.0, color='#b91c1c', annotation_clip=False)
+                _seen_x.append(_px)
+            if abs(_py) > 0.2:
+                ax.annotate("$" + _yt + "$", xy=(0, _py), xytext=(-0.14 * step_x, _py),
+                            ha='right', va='center', fontsize=8.0, color='#b91c1c', annotation_clip=False)
+                _seen_y.append(_py)
+        if _legend:
+            _xr = (x_low - 0.2, x_high + pad_x + 0.2); _yr = (y_low - 0.2, y_high + pad_y + 0.2)
+            def _gfrac(vx, vy):
+                return ((vx - _xr[0]) / (_xr[1] - _xr[0]), (vy - _yr[0]) / (_yr[1] - _yr[0]))
+            _curve = []
+            if dtype in ("func_1_1", "func_2_1") and asymptotes_v:
+                _xvv = asymptotes_v[0]
+                for _xb in (np.linspace(x_low, _xvv - 0.04, 120), np.linspace(_xvv + 0.04, x_high, 120)):
+                    _yb = f(_xb)
+                    for _xx, _yy in zip(_xb, _yb):
+                        if np.isfinite(_yy) and y_low <= _yy <= y_high:
+                            _curve.append(_gfrac(_xx, _yy))
+            else:
+                _xs = np.linspace(x_low, x_high, 240); _ys = f(_xs)
+                for _xx, _yy in zip(_xs, _ys):
+                    if np.isfinite(_yy) and y_low <= _yy <= y_high:
+                        _curve.append(_gfrac(_xx, _yy))
+            _w = 0.40; _h = min(0.5, 0.09 * max(1, len(_legend)) + 0.04)
+            _corners = {'tl': (0.02, 0.98, 'left', 'top'), 'tr': (0.98, 0.98, 'right', 'top'),
+                        'bl': (0.02, 0.02, 'left', 'bottom'), 'br': (0.98, 0.02, 'right', 'bottom')}
+            def _gcost(cc):
+                fx, fy, ha, va = cc
+                x0 = fx - (_w if ha == 'right' else 0); x1 = fx + (0 if ha == 'right' else _w)
+                y0 = fy - (_h if va == 'top' else 0); y1 = fy + (0 if va == 'top' else _h)
+                return sum(1 for cx, cy in _curve if x0 - 0.02 < cx < x1 + 0.02 and y0 - 0.02 < cy < y1 + 0.02)
+            _fx, _fy, _ha, _va = min(_corners.values(), key=_gcost)
+            ax.text(_fx, _fy, "\n".join(_legend), transform=ax.transAxes, ha=_ha, va=_va,
+                    fontsize=7.6, color='#b91c1c', linespacing=1.6)
         buf = io.BytesIO()
 
         plt.savefig(buf, format='webp', bbox_inches='tight', pad_inches=0.03, transparent=False, facecolor='#ffffff')
@@ -10874,6 +11109,57 @@ def station1_master_sovereign_brain_gate(raw_text: str, subject: str = "Toán h�
 # ==============================================================================
 # ENGINE TRỰC QUAN HÓA SƯ PHẠM ĐA MÔN - ĐA LỚP & BBT CHUẨN BỘ GD&ĐT (TKZ-TAB)
 # ==============================================================================
+# Ánh xạ macro LaTeX phổ biến (đa môn 6-12) -> Unicode BMP phổ cập mọi thiết bị,
+# dùng trong _render_math_html_token để KHÔNG lọt mã TeX thô ra màn hình học sinh.
+# Không gồm \sqrt, \frac, \dfrac (xử lý cấu trúc riêng) và \circ ở mũ (xử lý độ riêng).
+_MOET_MATH_SYMBOLS = {
+    'leq': '≤', 'le': '≤', 'geq': '≥', 'ge': '≥', 'neq': '≠', 'ne': '≠',
+    'approx': '≈', 'equiv': '≡', 'sim': '∼', 'propto': '∝', 'cong': '≅',
+    'Leftrightarrow': '⇔', 'Longleftrightarrow': '⇔', 'leftrightarrow': '↔',
+    'Rightarrow': '⇒', 'Longrightarrow': '⇒', 'rightarrow': '→', 'longrightarrow': '→',
+    'Leftarrow': '⇐', 'leftarrow': '←', 'rightleftharpoons': '⇌', 'mapsto': '↦',
+    'to': '→', 'uparrow': '↑', 'downarrow': '↓',
+    'times': '×', 'cdot': '·', 'div': '÷', 'ast': '∗', 'star': '⋆',
+    'bullet': '•', 'circ': '∘', 'setminus': '∖', 'oplus': '⊕', 'otimes': '⊗',
+    'cup': '∪', 'cap': '∩', 'subseteq': '⊆', 'subset': '⊂', 'supseteq': '⊇',
+    'supset': '⊃', 'in': '∈', 'notin': '∉', 'ni': '∋', 'forall': '∀',
+    'exists': '∃', 'nexists': '∄', 'varnothing': '∅', 'emptyset': '∅',
+    'land': '∧', 'lor': '∨', 'neg': '¬', 'therefore': '∴', 'because': '∵',
+    'angle': '∠', 'perp': '⊥', 'parallel': '∥', 'triangle': '△', 'degree': '°',
+    'partial': '∂', 'nabla': '∇', 'int': '∫', 'oint': '∮', 'sum': '∑',
+    'prod': '∏', 'infty': '∞', 'pm': '±', 'mp': '∓',
+    'alpha': 'α', 'beta': 'β', 'gamma': 'γ', 'delta': 'δ', 'epsilon': 'ε',
+    'varepsilon': 'ε', 'zeta': 'ζ', 'eta': 'η', 'theta': 'θ', 'vartheta': 'ϑ',
+    'iota': 'ι', 'kappa': 'κ', 'lambda': 'λ', 'mu': 'μ', 'nu': 'ν', 'xi': 'ξ',
+    'rho': 'ρ', 'varrho': 'ϱ', 'sigma': 'σ', 'varsigma': 'ς', 'tau': 'τ',
+    'upsilon': 'υ', 'phi': 'φ', 'varphi': 'φ', 'chi': 'χ', 'psi': 'ψ', 'omega': 'ω',
+    'pi': 'π', 'varpi': 'ϖ',
+    'Gamma': 'Γ', 'Delta': 'Δ', 'Theta': 'Θ', 'Lambda': 'Λ', 'Xi': 'Ξ',
+    'Pi': 'Π', 'Sigma': 'Σ', 'Upsilon': 'Υ', 'Phi': 'Φ', 'Psi': 'Ψ', 'Omega': 'Ω',
+    'sin': 'sin ', 'cos': 'cos ', 'tan': 'tan ', 'cot': 'cot ', 'sec': 'sec ',
+    'csc': 'csc ', 'ln': 'ln ', 'log': 'log ', 'lg': 'lg ', 'exp': 'exp ',
+    'lim': 'lim ', 'max': 'max ', 'min': 'min ', 'gcd': 'gcd ', 'deg': 'deg ',
+    'ldots': '…', 'dots': '…', 'cdots': '⋯', 'vdots': '⋮', 'ddots': '⋱', 'prime': '′',
+}
+_MOET_SYM_RE = re.compile(
+    r'\\(' + '|'.join(sorted(map(re.escape, _MOET_MATH_SYMBOLS), key=len, reverse=True)) + r')(?![a-zA-Z])'
+)
+_MOET_BLACKBOARD = {'N': 'ℕ', 'Z': 'ℤ', 'Q': 'ℚ', 'R': 'ℝ', 'C': 'ℂ'}
+def _moet_plaintext_math(s):
+    """Chuyển macro LaTeX -> Unicode THUẦN cho ngữ cảnh vẽ chữ (matplotlib/WebP, SVG text):
+    √, phân số a/b, độ °, ký hiệu đa môn; gỡ macro chưa ánh xạ. Không để lọt mã TeX ra ảnh.
+    Dùng cho ô BBT ảnh WebP (Trạm 3) nơi matplotlib vẽ chữ thuần, không mathtext."""
+    if not s:
+        return s
+    s = re.sub(r'\\sqrt\s*\{([^{}]+)\}', r'√(\1)', s)
+    s = re.sub(r'\\sqrt\s*(\d+)', r'√\1', s)
+    s = re.sub(r'\\(?:d|t)?frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}', r'\1/\2', s)
+    s = re.sub(r'<sup>\s*\\circ\s*</sup>', '°', s)
+    s = re.sub(r'\^\s*\{?\s*\\circ\s*\}?', '°', s)
+    s = _MOET_SYM_RE.sub(lambda m: _MOET_MATH_SYMBOLS[m.group(1)], s)
+    s = re.sub(r'\\mathbb\s*\{([NZQRC])\}', lambda m: _MOET_BLACKBOARD[m.group(1)], s)
+    s = re.sub(r'\\[a-zA-Z]+', '', s).replace('{', '').replace('}', '')
+    return s
 def _render_math_html_token(raw_val: str) -> str:
     """Chuyển đổi biểu thức LaTeX (phân số, căn thức, số mũ, vô cực) sang HTML sắc nét trong BBT."""
     if not raw_val:
@@ -10881,6 +11167,7 @@ def _render_math_html_token(raw_val: str) -> str:
     s = raw_val.strip()
     s = re.sub(r'^\$+|\$+$', '', s).strip()
     s = s.replace('⟦DBL_BAR⟧', '||')
+    s = s.replace('\\parallel', '∥').replace('\\Vert', '∥')
 
     # Chuẩn hóa ký hiệu vô cực & đặc biệt
     s = re.sub(r'\+\\infty|\+\s*∞', '+∞', s)
@@ -10913,6 +11200,14 @@ def _render_math_html_token(raw_val: str) -> str:
     s = re.sub(r'_([0-9a-zA-Z])', r'<sub>\1</sub>', s)
 
     # Dọn dẹp dấu $ hoặc ngoặc nhọn dư thừa
+    # An toàn hiển thị đa môn: chuẩn hóa độ (^circ -> °), map ký hiệu LaTeX phổ biến
+    # -> Unicode, rồi gỡ mọi macro chưa ánh xạ để KHÔNG lọt mã TeX thô cho học sinh.
+    s = re.sub(r'<sup>\s*\\circ\s*</sup>', '°', s)
+    s = re.sub(r'\^\s*\{?\s*\\circ\s*\}?', '°', s)
+    s = s.replace('\\%', '%').replace('\\,', '').replace('\\;', '').replace('\\:', '').replace('\\!', '').replace('\\ ', ' ')
+    s = _MOET_SYM_RE.sub(lambda m: _MOET_MATH_SYMBOLS[m.group(1)], s)
+    s = re.sub(r'\\mathbb\{([NZQRC])\}', lambda m: _MOET_BLACKBOARD[m.group(1)], s)
+    s = re.sub(r'\\[a-zA-Z]+', '', s)
     s = s.replace('$', '').replace('{', '').replace('}', '')
     return s.strip()
 
@@ -10920,6 +11215,7 @@ def _render_math_html_token(raw_val: str) -> str:
 def _parse_bbt_cells_safe(line: str) -> list:
     """Tách ô bảng Markdown nhưng bảo vệ tuyệt đối ký hiệu tiệm cận đứng || và trị tuyệt đối |x|."""
     s = line.strip()
+    s = _normalize_bbt_discontinuity(s)
     # 1. Bảo vệ ký hiệu không xác định / tiệm cận đứng || (bắt || độc lập hoặc trong ô/chữ, không bắt cột trống | |)
     s = re.sub(r'(?<!\|)\|\|(?!\|)', '⟦DBL_BAR⟧', s)
     # 2. Bảo vệ trị tuyệt đối |...| bên trong cặp $...$
@@ -16832,14 +17128,14 @@ if selected_station == station_labels[3]:
 
                 import hmac
 
-                configured = str(get_secret("ADMIN_PASS", "sha256:bbbb18c2d250cbc4f780cd5311f633083b7c0eebd91c29b3e06420fb363bb986")).strip()
+                configured = str(get_secret("ADMIN_PASS", "")).strip()
 
                 clean_pass = (password or "").strip()
 
                 locked_until = st.session_state.get("admin_locked_until", 0.0)
                 is_valid = time.monotonic() >= locked_until and admin_password_matches(clean_pass, configured)
                 if not configured:
-                    st.error("Chưa cấu hình ADMIN_PASS trong Streamlit Secrets. Giáo viên cần thiết lập trước khi mở khu vực dữ liệu.")
+                    st.error("Chưa cấu hình ADMIN_PASS trong Streamlit Secrets. Giáo viên cần thiết lập (dạng 'sha256:<hash>') trước khi mở khu vực dữ liệu.")
                 elif time.monotonic() < locked_until:
                     st.error("Đã thử sai nhiều lần. Vui lòng chờ 60 giây trước khi thử lại.")
 
