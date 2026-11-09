@@ -11,7 +11,7 @@ from markdown_it import MarkdownIt
 from services.academic_context import academic_context
 
 ROOT = Path(__file__).resolve().parents[1]
-T1_CONTEXT_REVISION = 2026110802
+T1_CONTEXT_REVISION = 2026110901
 _TOKENS = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$)")
 
 
@@ -35,12 +35,73 @@ def renderer_assets():
     return css, notebook, js.replace("</script", r"<\/script")
 
 
+def _assessment_parts(text):
+    """Recognize real four-choice questions, protecting literal code and math."""
+    masked = _TOKENS.sub(lambda m: ''.join('\n' if c == '\n' else '¤' for c in m[0]), text)
+    starts = [m.start() for m in re.finditer(
+        r'(?m)^(?=(?:\*{0,2}Câu\s+\d+[.:]|#{1,6}\s|---+\s*$))', masked)]
+    starts = sorted(set([0, *starts, len(text)]))
+    for a, b in zip(starts, starts[1:]):
+        block, scan = text[a:b], masked[a:b]
+        if not re.match(r'^\*{0,2}Câu\s+\d+[.:]', scan):
+            yield block, None
+            continue
+        fields = list(re.finditer(r'(?<!\S)(?:\*{0,2})(CORRECT|HINT|EXPLAIN)\s*:\s*(?:\*{0,2})', scan))
+        end = fields[0].start() if fields else len(block)
+        labels = list(re.finditer(r'(?m)^[ \t]*(?:\*{0,2})([A-D])\.(?:\*{0,2})[ \t]+', scan[:end]))
+        if [m[1] for m in labels] != list('ABCD'):
+            labels = list(re.finditer(r'(?<!\S)(?:\*{0,2})([A-D])\.(?:\*{0,2})[ \t]+', scan[:end]))
+        if [m[1] for m in labels] != list('ABCD'):
+            if fields:
+                answers = {m[1]: block[m.end():(fields[i + 1].start() if i + 1 < len(fields) else len(block))].strip()
+                           for i, m in enumerate(fields)}
+                yield block, dict(stem=block[:end].strip(), options=[], answers=answers)
+            else:
+                yield block, None
+            continue
+        options = [block[m.end():(labels[i + 1].start() if i < 3 else end)].strip()
+                   for i, m in enumerate(labels)]
+        if not all(options):
+            answers = {m[1]: block[m.end():(fields[i + 1].start() if i + 1 < len(fields) else len(block))].strip()
+                       for i, m in enumerate(fields)}
+            yield block, dict(stem=block[:end].strip(), options=[], answers=answers) if fields else None
+            continue
+        answers = {m[1]: block[m.end():(fields[i + 1].start() if i + 1 < len(fields) else len(block))].strip()
+                   for i, m in enumerate(fields)}
+        yield block, dict(stem=block[:labels[0].start()].strip(), options=options, answers=answers)
+
+
+def student_assessment_text(text):
+    """Student image/Markdown input excludes answer fields, not schema or code."""
+    from services.text_boundaries import student_essay_text
+    text = student_essay_text(text, separate_steps=False)
+    parts = []
+    for block, question in _assessment_parts(text):
+        parts.append(block if question is None else question['stem'] + '\n\n' + '\n\n'.join(
+            f'{letter}. {option}' for letter, option in zip('ABCD', question['options'])) + '\n\n')
+    return re.sub(r'(?im)^(#{1,6}\s*PHẦN\s*2[^\n]*?)\s+SOCRATIC\s*$', r'\1', ''.join(parts))
+
+
 def lesson_body_html(lesson, trusted_svgs=()):
     """Protect math/code separately; never convert formulas to approximate Unicode."""
     from services.text_boundaries import student_essay_text
     # Same student-facing boundary as live essays, for every subject and grade.
     # The full JSON archive retains these author fields for assessment logic.
     lesson = student_essay_text(lesson)
+    quiz_fragments = {}
+    quiz_parts = []
+    for block, question in _assessment_parts(lesson):
+        if question is None:
+            quiz_parts.append(block)
+            continue
+        token = 'GSAIQUIZ' + hashlib.sha256(block.encode()).hexdigest() + 'END'
+        options = ''.join('<div class="mc-option"><span class="mc-label">' + letter +
+                          '.</span><div class="mc-option-text">' + lesson_body_html(option) + '</div></div>'
+                          for letter, option in zip('ABCD', question['options']))
+        quiz_fragments[token] = ('<section class="mc-question">' + lesson_body_html(question['stem']) +
+                                 '<div class="mc-options">' + options + '</div></section>')
+        quiz_parts.append('\n\n' + token + '\n\n')
+    lesson = re.sub(r'(?im)^(#{1,6}\s*PHẦN\s*2[^\n]*?)\s+SOCRATIC\s*$', r'\1', ''.join(quiz_parts))
     # Raw generated HTML remains escaped. Only exact fragments authored in the
     # matched local review may pass through, never SVG examples inside code.
     visuals = {}
@@ -104,6 +165,8 @@ def lesson_body_html(lesson, trusted_svgs=()):
         body = body.replace(token, value)
     for token, svg in visuals.items():
         body = body.replace('<p>' + token + '</p>', svg).replace(token, svg)
+    for token, fragment in quiz_fragments.items():
+        body = body.replace('<p>' + token + '</p>', fragment).replace(token, fragment)
     if naked_math:
         body = '<p class="notice" data-source-issue="math-delimiter">Có lệnh công thức chưa nằm trong dấu phân cách toán học; cần sửa nội dung trước khi in.</p>' + body
     return body
@@ -146,6 +209,19 @@ def build_lesson_html(subject, grade, topic, lesson, style="handwritten"):
                     if isinstance(rule, dict) and isinstance(rule.get('after'), str)
                     for match in re.finditer(r'<svg\b[^>]*>[\s\S]*?</svg>', rule['after'])]
     body = lesson_body_html(lesson, trusted_svgs=trusted_svgs)
+    from services.text_boundaries import student_essay_text
+    answer_rows = []
+    for _, question in _assessment_parts(student_essay_text(lesson, separate_steps=False)):
+        if question is None or not question['answers']:
+            continue
+        number = re.match(r'^\*{0,2}(Câu\s+\d+)', question['stem'])[1]
+        fields = ''.join('<p><strong>' + label + ':</strong></p>' + lesson_body_html(question['answers'][key])
+                         for key, label in [('CORRECT', 'Đáp án'), ('HINT', 'Gợi ý'), ('EXPLAIN', 'Giải thích')]
+                         if question['answers'].get(key))
+        answer_rows.append('<section><h4>' + html.escape(number) + '</h4>' + fields + '</section>')
+    if answer_rows:
+        body += ('<details class="answer-key"><summary>Đáp án và gợi ý — dành cho giáo viên</summary>' +
+                 '<p>Phần này chỉ xuất hiện trên bản in khi được mở trước khi in.</p>' + ''.join(answer_rows) + '</details>')
     if subject == 'Toán học':
         from services.function_visuals import with_function_visuals
         body = with_function_visuals(body, topic, lesson)
@@ -168,6 +244,7 @@ def build_lesson_html(subject, grade, topic, lesson, style="handwritten"):
 h1{font-size:30px;line-height:1.2;color:#b51e35;text-align:center;margin:10px 0 20px}h2,h3,h4{color:#b51e35;line-height:1.25;break-after:avoid}h2{font-size:1.2em}h3{font-size:1.1em}
 .context{text-align:center;font:15px system-ui;margin-bottom:20px;color:#334155}.source-note{font:13px system-ui;border-top:1px solid #bcae94;padding-top:12px;margin-top:24px;color:#475569}
 article{font-size:17px;line-height:1.6}article p{margin:0 0 .75em}article li{margin:.25em 0}article table{border-collapse:collapse;width:100%;font-size:.85em}td,th{border:1px solid #9e998e;padding:6px;vertical-align:top}
+.mc-question{margin:1em 0;break-inside:avoid}.mc-options{display:grid;grid-template-columns:repeat(var(--option-columns,1),minmax(0,1fr));gap:.35em 1.2em;margin:.4em 0 .8em}.mc-option{display:flex;gap:.35em;min-width:0;align-items:baseline;break-inside:avoid}.mc-label{flex:none;font-weight:600;white-space:nowrap}.mc-option-text{min-width:0;overflow-wrap:anywhere}.mc-option-text>p{margin:0}.answer-key{margin-top:2em;border-top:1px solid currentColor;padding-top:1em}.answer-key>summary{cursor:pointer;font-weight:600}.answer-key[open]{break-before:page}@media print{.answer-key:not([open]){display:none}.answer-key>summary{list-style:none}}
 pre{white-space:pre-wrap;overflow-wrap:anywhere;background:transparent;padding:10px;font:14px/1.4 monospace}code{font-family:monospace;font-size:.8em}article pre code{background:transparent}.katex{font-size:1.02em}.katex-display{overflow-x:auto;overflow-y:hidden;margin:.7em 0}
 .formula-error{outline:2px solid #b91c1c;color:#991b1b;white-space:pre-wrap;font-family:monospace}.monochrome,.monochrome h1,.monochrome h2,.monochrome h3,.monochrome h4{color:#111}.monochrome .paper{background:#fff}
 .color .paper{background:#fff}.color h2{border-left:4px solid #0891b2;padding-left:10px}.notice{color:#b91c1c}
@@ -225,15 +302,23 @@ for(const table of document.querySelectorAll('article table')){
  dirs.forEach((d,k)=>{const color=d==='up'?up:down;label((xs[k]+xs[k+1])/2,117,data[1].slice(points[k]+1,points[k+1]).join(''),color);const x1=xs[k]+45,x2=xs[k+1]-45,y1=d==='up'?270:180,y2=d==='up'?180:270;add('line',{x1,y1,x2,y2,stroke:color,'stroke-width':2.8});const a=Math.atan2(y2-y1,x2-x1),size=16;add('path',{d:`M ${x2-size*Math.cos(a-.5)} ${y2-size*Math.sin(a-.5)} L ${x2} ${y2} L ${x2-size*Math.cos(a+.5)} ${y2-size*Math.sin(a+.5)} Z`,fill:color,stroke:color});});
  const wrapper=document.createElement('div');wrapper.style.cssText='overflow-x:auto;margin:16px 0;break-inside:avoid';wrapper.append(svg);table.replaceWith(wrapper);
 }
-await document.fonts.ready;status.textContent=errors?'Có '+errors+' công thức cần kiểm tra; chưa cho in.':'Đã dựng công thức. Có thể in hoặc lưu PDF.';status.className=errors?'notice':'';
+await document.fonts.ready;
+function fitOptions(){for(const group of document.querySelectorAll('.mc-options')){
+ const choices=[...group.children];if(choices.length!==4)continue;
+ const width=group.getBoundingClientRect().width,gap=parseFloat(getComputedStyle(group).columnGap)||0;
+ const widths=choices.map(choice=>{const probe=choice.cloneNode(true);probe.style.cssText='position:fixed;visibility:hidden;left:-10000px;top:0;display:flex;width:max-content;max-width:none;white-space:nowrap';group.append(probe);const n=probe.getBoundingClientRect().width;probe.remove();return n;});
+ const longest=Math.max(...widths);const columns=longest*4+gap*3<=width?4:longest*2+gap<=width?2:1;
+ group.style.setProperty('--option-columns',columns);group.dataset.columns=String(columns);
+}}
+fitOptions();new ResizeObserver(fitOptions).observe(document.querySelector('.paper'));window.addEventListener('beforeprint',fitOptions);matchMedia('print').addEventListener('change',fitOptions);
+status.textContent=errors?'Có '+errors+' công thức cần kiểm tra; chưa cho in.':'Đã dựng công thức. Có thể in hoặc lưu PDF.';status.className=errors?'notice':'';
 const print=document.getElementById('print');print.disabled=errors>0;print.onclick=()=>window.print();document.documentElement.dataset.renderErrors=String(errors);document.documentElement.dataset.renderReady='true';
 })();</script></body></html>'''
 
 
 def handwritten_prompt(subject, grade, topic, lesson):
     subject, grade = academic_context(subject, grade)
-    from services.text_boundaries import student_essay_text
-    lesson = student_essay_text(lesson, separate_steps=False)
+    lesson = student_assessment_text(lesson)
     return json.dumps({"purpose": "STYLE REFERENCE ONLY — use deterministic HTML/PDF for authoritative text and formulas",
                        "subject": subject, "grade": grade, "title": topic, "content": lesson,
                        "style": {"paper": "cream graph paper #F5EEDC", "binding": "black spiral on the left",
@@ -244,6 +329,7 @@ def handwritten_prompt(subject, grade, topic, lesson):
                        "rules": ["Use only the supplied lesson content and context", "Never invent or alter formulas, facts, examples or figures", "All graph and variation-table panels inside the infographic must have transparent backgrounds, including label backdrops, so the parent infographic paper/grid shows through; never put them on an opaque white rectangle", "When the supplied lesson calls for a graph, draw the actual graph of its stated function; include projections of extrema and symmetry centers to both coordinate axes, exact irrational coordinates and axis intercept coordinates, with collision-free labels; never replace exact coordinates with rounded decimals or a verbal description",
                                  "Preserve chemical, physical, mathematical and language notation for this subject",
                                  "Do not render internal author metadata OUTCOME, COGNITIVE_REASON or COGNITIVE_STEPS as student-facing text",
+                                 "Keep CORRECT, HINT and EXPLAIN out of the student question sheet; answers belong to a separate teacher key. Visible interface headings and labels must be Vietnamese; preserve authentic foreign-language lesson text and quotations. Keep options A–D in order, use four columns only if all fit, otherwise two columns or one option per line after measuring rendered text and formulas; never squeeze text or detach a label from its option",
                                  "Use multiple pages instead of cutting or shrinking content", "Render variation tables as transparent panels over the infographic background; use large green rising/red falling arrows, aligned critical values and split one-sided limits at vertical discontinuities; never substitute tiny Unicode arrows in a flat grid", "Do not copy any subject matter or identity from a style reference"]}, ensure_ascii=False, indent=2)
 
 
@@ -253,7 +339,7 @@ def faithful_infographic_data(subject, grade, topic, lesson):
         raise ValueError("Không có nội dung bài học để trích xuất infographic.")
     from services.text_boundaries import student_essay_text
     source_digest = hashlib.sha256(lesson.encode()).hexdigest()
-    lesson = student_essay_text(lesson, separate_steps=False)
+    lesson = student_assessment_text(lesson)
     md = MarkdownIt("commonmark", {"html": False}).enable("table")
     title, rows = str(topic or subject), []
     tokens = md.parse(lesson)

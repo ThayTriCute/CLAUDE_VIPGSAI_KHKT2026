@@ -1,5 +1,7 @@
 ## Owner yêu cầu làm liên tục theo Goal — 07/11/2026
 
+Owner09/11/2026: trước sửa xuất/infographic, đọc docs/AI_SYSTEM_WIDE_VERIFICATION.md. Phiếu học sinh không lộ CORRECT/HINT/EXPLAIN; giữ JSON/parser gốc, tách phụ lục giáo viên đóng mặc định. Dùng chung student_assessment_text/lesson_body_html cho mọi môn/lớp, đo phương án sau dựng công thức/font để chọn4/2/1cột và kiểmChrome. Nhãn giao diện tiếngViệt, không dịch ngữ liệu ngoại ngữ thật. Không chỉ vá một fileHTML hoặc xóa đáp án trong dữ liệu gốc; không tự nhận đạt mọi thể thức đềBộ.
+
 Goal của chat đã được kích hoạt theo yêu cầu owner: tiếp công việc được giao qua các lượt, không dừng chỉ để báo trạng thái hoặc ghi bàn giao. Tự đọc/ghi checkpoint sau mốc rồi làm bước kế tiếp. Chỉ chờ khi đang có tác vụ phụ thuộc thực sự, cần đầu vào bắt buộc, hoặc giới hạn hệ thống; không tạo scheduler/chat/AI bổ sung. Không tuyên bố chạy nền nếu Goal/tác vụ không thực sự hoạt động. Các quy tắc nguồn, không gọi AI trùng, nghiệm thu đúng bằng chứng và phát hành theo khối vẫn giữ nguyên.
 ## Quy tắc owner xác nhận 07/11/2026 — bảo toàn bài đã duyệt khi xây bộ lọc
 

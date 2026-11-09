@@ -3,7 +3,7 @@ import re
 
 from services.academic_context import canonical_subject, folded
 
-T1_CONTEXT_REVISION = 2026110704
+T1_CONTEXT_REVISION = 2026110901
 
 
 def complete_verified_quote_reference(reply, references):
@@ -26,7 +26,9 @@ def complete_verified_quote_reference(reply, references):
         if (reference.get('source_verified') is True and quote and author and locator
                 and url.startswith('https://') and folded(quote) in normalized
                 and folded(author) in normalized):
-            if url not in text:
+            # A whole-book URL alone is not the supplied quote's location.
+            # References inside code are examples, not teaching provenance.
+            if url not in prose or folded(locator) not in normalized:
                 text += '\n\nNguồn đối chiếu: [' + str(author) + ' — ' + str(locator) + '](' + url + ').'
             note = reference.get('translation_note', '')
             if note and note not in text:

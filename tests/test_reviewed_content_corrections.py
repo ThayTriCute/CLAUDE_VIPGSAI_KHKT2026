@@ -266,5 +266,24 @@ class ReviewedContentCorrectionTests(unittest.TestCase):
             self.assertEqual(corrected['options'], quiz['options'])
 
 
+
+    def test_chemistry11_repairs_keep_keys_and_require_pressure_conditions(self):
+        topic = 'Khái niệm về cân bằng hóa học — Hóa học 11, KNTT, Bài 1'
+        review = reviewed_lesson_sources('Hóa học', 11, topic)
+        original = '\n'.join(r['before'] for r in review['content_corrections']) + '\nCORRECT: D\nCORRECT: A\nCORRECT: C'
+        fixed = apply_reviewed_content_corrections(original, 'Hóa học', 11, topic)
+        self.assertIn('tổng hệ số khí', fixed)
+        self.assertIn('khí trơ ở thể tích không đổi', fixed)
+        self.assertIn('0.25', fixed)
+        self.assertIn('thứ nguyên khác nhau', fixed)
+        self.assertEqual(len([l for l in fixed.splitlines() if l.startswith('EXPLAIN:')]), 3)
+        self.assertNotIn('tức là chiều tỏa thêm nhiệt', fixed)
+        self.assertEqual([l for l in fixed.splitlines() if l.startswith('CORRECT:')],
+                         ['CORRECT: D', 'CORRECT: A', 'CORRECT: C'])
+        self.assertEqual(fixed, apply_reviewed_content_corrections(fixed, 'Hóa học', 11, topic))
+        self.assertEqual(original, apply_reviewed_content_corrections(original, 'Hóa học', 10, topic))
+        self.assertEqual(original, apply_reviewed_content_corrections(original, 'Vật lý', 11, topic))
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -4,6 +4,14 @@ from services.philosophy_rotation import MODERN
 
 
 class QuoteReferenceCompletionTests(unittest.TestCase):
+    def test_existing_book_url_still_needs_exact_quote_locator(self):
+        ref=next(x for x in MODERN if x['author']=='John Stuart Mill')
+        original='John Stuart Mill: "'+ref['quote']+'". '+ref['source_url']
+        fixed=complete_verified_quote_reference(original,[ref])
+        self.assertTrue(fixed.startswith(original))
+        self.assertIn(ref['source_locator'],fixed)
+        self.assertEqual(fixed,complete_verified_quote_reference(fixed,[ref]))
+
     def test_internal_guidance_marker_removed_but_code_and_math_preserved(self):
         from services.philosophy_rotation import GUIDANCE
         marker=GUIDANCE.splitlines()[0]

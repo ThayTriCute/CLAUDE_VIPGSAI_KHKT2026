@@ -4,7 +4,7 @@ import math
 
 from services.academic_context import academic_context, canonical_subject
 
-T1_CONTEXT_REVISION = 2026110805
+T1_CONTEXT_REVISION = 2026110901
 
 
 def oscillator_equation_latex(amplitude, omega, phase):
@@ -105,12 +105,20 @@ def osmosis_state(inside, outside, plant=False):
 def osmosis_lab_request(command, subject, grade, topic):
     from services.academic_context import folded
     from services.lesson_sources import reviewed_lesson_sources
-    if canonical_subject(subject) != 'Sinh học' or int(grade) != 10 or 'tham thau' not in folded(command):
+    if canonical_subject(subject) != 'Sinh học' or 'tham thau' not in folded(command):
         return None
     review = reviewed_lesson_sources(subject, grade, topic)
-    if review.get('id') != 'kntt-sinh10-membrane-20261107' or review['status'] != 'reviewed_requirements_source':
+    if review['status'] != 'reviewed_requirements_source':
         return None
-    return dict(type='bio_osmosis', source_url=review['sources'][0]['url'])
+    # Existing accepted lesson keeps its source; other grades opt in only through
+    # an exact reviewed profile, never by inferring scope from a keyword alone.
+    if review.get('id') == 'kntt-sinh10-membrane-20261107':
+        return dict(type='bio_osmosis', source_url=review['sources'][0]['url'])
+    model = review.get('osmosis_model')
+    if not isinstance(model, dict) or not isinstance(model.get('locator'), str) or not model['locator'].strip():
+        return None
+    return dict(type='bio_osmosis', source_url=review['sources'][0]['url'],
+                source_scope=model['locator'], source_grade=int(grade))
 
 
 def reaction_rate_table_request(command, subject, grade, topic):
