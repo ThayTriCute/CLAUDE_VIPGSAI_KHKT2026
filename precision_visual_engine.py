@@ -21,6 +21,174 @@ import math
 import json
 import copy
 
+from fractions import Fraction as _PveFraction
+
+
+# ==============================================================================
+# B1 (owner 05/11/2026): nhãn tọa độ CHÍNH XÁC — hữu tỷ in phân số, vô tỷ in căn
+# thức rút gọn; KHÔNG làm tròn nhãn. Chỉ tọa độ VẼ mới lấy mẫu số thực. Mọi nhãn
+# "chính xác" đều tự kiểm với giá trị float; lệch thì lùi về dạng xấp xỉ có dấu ≈,
+# nên không bao giờ in ra một nhãn chính xác SAI. Thuần stdlib, test tại chỗ.
+# ==============================================================================
+_PVE_RAT_DEN = 100000
+
+
+def _pve_as_fraction(value):
+    if isinstance(value, _PveFraction):
+        return value
+    return _PveFraction(value).limit_denominator(_PVE_RAT_DEN)
+
+
+def _pve_frac_tex(fr):
+    fr = _pve_as_fraction(fr)
+    if fr.denominator == 1:
+        return str(fr.numerator)
+    sign = "-" if fr < 0 else ""
+    return r"%s\dfrac{%d}{%d}" % (sign, abs(fr.numerator), fr.denominator)
+
+
+def _pve_simplify_radical(radicand_int):
+    n = int(radicand_int)
+    if n < 0:
+        raise ValueError("radicand must be non-negative")
+    if n == 0:
+        return 0, 1
+    k, s = 1, n
+    i = 2
+    while i * i <= s:
+        sq = i * i
+        while s % sq == 0:
+            s //= sq
+            k *= i
+        i += 1
+    return k, s
+
+
+class _PveExactReal:
+    """Phần tử p + q*sqrt(s) của trường Q(sqrt(s)); q == 0 nghĩa là hữu tỷ."""
+    __slots__ = ("p", "q", "s")
+
+    def __init__(self, p, q=0, s=1):
+        p = _pve_as_fraction(p)
+        q = _pve_as_fraction(q)
+        if s == 0:
+            s = 1
+        if s == 1 or q == 0:
+            p, q, s = p + (q if s == 1 else _PveFraction(0)), _PveFraction(0), 1
+        self.p, self.q, self.s = p, q, s
+
+    @classmethod
+    def rational(cls, value):
+        return cls(_pve_as_fraction(value), 0, 1)
+
+    def _compat_s(self, other):
+        if self.q == 0:
+            return other.s
+        if other.q == 0:
+            return self.s
+        if self.s != other.s:
+            raise ValueError("incompatible radicals")
+        return self.s
+
+    def __add__(self, other):
+        other = other if isinstance(other, _PveExactReal) else _PveExactReal.rational(other)
+        s = self._compat_s(other)
+        return _PveExactReal(self.p + other.p, self.q + other.q, s)
+
+    def __mul__(self, other):
+        other = other if isinstance(other, _PveExactReal) else _PveExactReal.rational(other)
+        s = self._compat_s(other)
+        return _PveExactReal(self.p * other.p + self.q * other.q * s,
+                             self.p * other.q + self.q * other.p, s)
+
+    def __truediv__(self, other):
+        other = other if isinstance(other, _PveExactReal) else _PveExactReal.rational(other)
+        denom = other.p * other.p - other.q * other.q * other.s
+        if denom == 0:
+            raise ZeroDivisionError("division by zero in Q(sqrt(s))")
+        conj = _PveExactReal(other.p, -other.q, other.s)
+        num = self * conj
+        return _PveExactReal(num.p / denom, num.q / denom, num.s)
+
+    def to_float(self):
+        return float(self.p) + float(self.q) * math.sqrt(self.s)
+
+    def is_rational(self):
+        return self.q == 0
+
+    def to_latex(self):
+        if self.is_rational():
+            return _pve_frac_tex(self.p)
+        q = self.q
+        rad = r"\sqrt{%d}" % self.s
+        if abs(q) == 1:
+            surd_mag = rad
+        elif q.denominator == 1:
+            surd_mag = r"%d%s" % (abs(q.numerator), rad)
+        else:
+            surd_mag = r"\dfrac{%d%s}{%d}" % (abs(q.numerator), rad, q.denominator)
+        if self.p == 0:
+            return surd_mag if q > 0 else "-" + surd_mag
+        joiner = " + " if q > 0 else " - "
+        return _pve_frac_tex(self.p) + joiner + surd_mag
+
+
+def _pve_quadratic_roots(A, B, C):
+    A = _pve_as_fraction(A); B = _pve_as_fraction(B); C = _pve_as_fraction(C)
+    if A == 0:
+        return []
+    delta = B * B - 4 * A * C
+    if delta < 0:
+        return []
+    num, den = delta.numerator, delta.denominator
+    k, s = _pve_simplify_radical(num * den)
+    sqrt_delta_coeff = _PveFraction(k, den)
+    p = -B / (2 * A)
+    q = sqrt_delta_coeff / (2 * A)
+    r1 = _PveExactReal(p, -q, s)
+    r2 = _PveExactReal(p, q, s)
+    return sorted([r1, r2], key=lambda r: r.to_float())
+
+
+def _pve_round_tex(value, decimals):
+    txt = ("%.*f" % (decimals, value)).rstrip("0").rstrip(".")
+    return txt if txt not in ("", "-0") else "0"
+
+
+def _pve_coord_label(exact, reference_float, decimals=3, tol=1e-6):
+    """Trả (latex, is_exact). Chỉ nhận 'chính xác' khi khớp giá trị float."""
+    try:
+        tex = exact.to_latex()
+        if abs(exact.to_float() - reference_float) <= tol * max(1.0, abs(reference_float)):
+            return tex, True
+    except (ValueError, ZeroDivisionError, OverflowError):
+        pass
+    return (r"\approx %s" % _pve_round_tex(reference_float, decimals)), False
+
+
+def _pve_rational_label(value):
+    tex, _ = _pve_coord_label(_PveExactReal.rational(value), float(value))
+    return tex
+
+
+def _pve_linear_tex(m, n, var="x"):
+    """RHS tiệm cận xiên 'm*var + n' với m,n chính xác (phân số)."""
+    m = _pve_as_fraction(m); n = _pve_as_fraction(n)
+    if m == 0:
+        mx = ""
+    elif m == 1:
+        mx = var
+    elif m == -1:
+        mx = "-" + var
+    else:
+        mx = _pve_frac_tex(m) + var
+    if n == 0:
+        return mx or "0"
+    if not mx:
+        return _pve_frac_tex(n)
+    sign = " + " if n > 0 else " - "
+    return mx + sign + _pve_frac_tex(abs(n))
+
 # ------------------------------------------------------------------------------
 # 1. NHÓM TOÁN HỌC: PHỤC DỰNG ĐỒ THỊ 2D, BBT, MSLGN & TOÁN MÔ HÌNH HÓA THỰC TIỄN
 # ------------------------------------------------------------------------------
@@ -309,13 +477,15 @@ def build_rational_1_1_tikz(a: float, b: float, c: float, d: float) -> str:
     y_max = max(5.0, yv + 3.5)
     d1_end = xv - 0.2
     d2_start = xv + 0.2
+    xv_lbl = _pve_rational_label(xv)  # nhãn chính xác, không làm tròn
+    yv_lbl = _pve_rational_label(yv)
 
     return rf"""\begin{{tikzpicture}}[scale=0.75, >=stealth]
 \draw[->] ({x_min-0.5:.1f},0) -- ({x_max+0.5:.1f},0) node[right] {{$x$}};
 \draw[->] (0,{y_min-0.5:.1f}) -- (0,{y_max+0.5:.1f}) node[above] {{$y$}};
 \node[below left] at (0,0) {{$O$}};
-\draw[dashed, red, thick] ({xv:.2f},{y_min:.1f}) -- ({xv:.2f},{y_max:.1f}) node[above] {{$x={xv:g}$}};
-\draw[dashed, blue, thick] ({x_min:.1f},{yv:.2f}) -- ({x_max:.1f},{yv:.2f}) node[right] {{$y={yv:g}$}};
+\draw[dashed, red, thick] ({xv:.2f},{y_min:.1f}) -- ({xv:.2f},{y_max:.1f}) node[above] {{$x={xv_lbl}$}};
+\draw[dashed, blue, thick] ({x_min:.1f},{yv:.2f}) -- ({x_max:.1f},{yv:.2f}) node[right] {{$y={yv_lbl}$}};
 \draw[domain={x_min:.1f}:{d1_end:.2f}, smooth, variable=\x, blue, thick] plot ({{\x}}, {{({a}*\x + {b})/({c}*\x + {d})}});
 \draw[domain={d2_start:.2f}:{x_max:.1f}, smooth, variable=\x, blue, thick] plot ({{\x}}, {{({a}*\x + {b})/({c}*\x + {d})}});
 \end{{tikzpicture}}"""
@@ -363,15 +533,7 @@ def build_rational_2_1_tikz(a: float, b: float, c: float, d: float, e: float) ->
     B = 2.0 * a * e
     C = b * e - c * d
     delta = B**2 - 4.0 * A * C
-    crit_pts = []
-    if delta > 1e-5 and abs(A) > 1e-5:
-        x1 = (-B - math.sqrt(delta)) / (2.0 * A)
-        x2 = (-B + math.sqrt(delta)) / (2.0 * A)
-        for x_c in [x1, x2]:
-            denom = d * x_c + e
-            if abs(denom) > 1e-4:
-                y_c = (a * x_c**2 + b * x_c + c) / denom
-                crit_pts.append((x_c, y_c))
+    exact_roots = _pve_quadratic_roots(A, B, C) if abs(A) > 1e-5 else []
     x_min = min(-4.5, xv - 3.5)
     x_max = max(4.5, xv + 3.5)
     y_min = -6.0
@@ -379,21 +541,29 @@ def build_rational_2_1_tikz(a: float, b: float, c: float, d: float, e: float) ->
     d1_end = xv - 0.25
     d2_start = xv + 0.25
     crit_tikz = ""
-    for pt in crit_pts:
-        xc, yc = pt
-        if y_min <= yc <= y_max:
-            crit_tikz += f"\\filldraw[red] ({xc:.2f},{yc:.2f}) circle (1.5pt) node[above right] {{(${xc:.1f};{yc:.1f}$)}};\n"
-            crit_tikz += f"\\draw[dotted, gray] ({xc:.2f},0) -- ({xc:.2f},{yc:.2f}) -- (0,{yc:.2f});\n"
+    for r in exact_roots:
+        xc = r.to_float()
+        denom_f = d * xc + e
+        if abs(denom_f) <= 1e-4:
+            continue
+        yc = (a * xc**2 + b * xc + c) / denom_f
+        if not (y_min <= yc <= y_max):
+            continue
+        # Nhãn tọa độ chính xác (giữ căn thức/phân số); tọa độ VẼ vẫn là số thực.
+        x_lbl, _ = _pve_coord_label(r, xc)
+        y_exact = (_PveExactReal.rational(a) * r * r
+                   + _PveExactReal.rational(b) * r
+                   + _PveExactReal.rational(c)) / (_PveExactReal.rational(d) * r
+                   + _PveExactReal.rational(e))
+        y_lbl, _ = _pve_coord_label(y_exact, yc)
+        crit_tikz += f"\\filldraw[red] ({xc:.2f},{yc:.2f}) circle (1.5pt) node[above right] {{(${x_lbl};\\,{y_lbl}$)}};\n"
+        crit_tikz += f"\\draw[dotted, gray] ({xc:.2f},0) -- ({xc:.2f},{yc:.2f}) -- (0,{yc:.2f});\n"
     y_I = m_slant * xv + n_slant
     i_tikz = ""
     if y_min <= y_I <= y_max:
         i_tikz = f"\\filldraw[purple] ({xv:.2f},{y_I:.2f}) circle (1.8pt) node[left] {{$I$}};\n"
-    if m_slant == 1.0:
-        slant_label = f"y = x + {n_slant:g}" if n_slant > 0 else (f"y = x {n_slant:g}" if n_slant < 0 else "y = x")
-    elif m_slant == -1.0:
-        slant_label = f"y = -x + {n_slant:g}" if n_slant > 0 else (f"y = -x {n_slant:g}" if n_slant < 0 else "y = -x")
-    else:
-        slant_label = f"y = {m_slant:g}x + {n_slant:g}" if n_slant != 0 else f"y = {m_slant:g}x"
+    slant_label = "y = " + _pve_linear_tex(m_slant, n_slant)
+    xv_lbl = _pve_rational_label(xv)
 
     return rf"""\begin{{tikzpicture}}[scale=0.75, >=stealth]
 \draw[->] ({x_min-0.5:.1f},0) -- ({x_max+0.5:.1f},0) node[right] {{$x$}};
@@ -401,7 +571,7 @@ def build_rational_2_1_tikz(a: float, b: float, c: float, d: float, e: float) ->
 \node[below left] at (0,0) {{$O$}};
 
 % Tiệm cận đứng
-\draw[dashed, red, thick] ({xv:.2f},{y_min:.1f}) -- ({xv:.2f},{y_max:.1f}) node[above] {{$x={xv:g}$}};
+\draw[dashed, red, thick] ({xv:.2f},{y_min:.1f}) -- ({xv:.2f},{y_max:.1f}) node[above] {{$x={xv_lbl}$}};
 
 % Tiệm cận xiên
 \draw[dashed, red, thick] ({x_min:.1f},{{{m_slant}*{x_min:.1f} + {n_slant}}}) -- ({x_max:.1f},{{{m_slant}*{x_max:.1f} + {n_slant}}}) node[above right] {{${slant_label}$}};
