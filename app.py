@@ -13504,38 +13504,12 @@ if selected_station == station_labels[1]:
     if uploaded_files:
 
         for up_f in uploaded_files:
-
-            try:
-
-                if up_f.size > 12 * 1024 * 1024:
-
-                    continue
-
-                up_f.seek(0)
-
-                with Image.open(up_f) as raw_image:
-
-                    if raw_image.width * raw_image.height > 25000000:
-
-                        continue
-
-                    raw_image.load()
-
-                    im_rgb = raw_image.convert("RGB")
-
-                    im_rgb.thumbnail((2200, 2200))
-
-                    student_images.append(im_rgb)
-
-            except Exception as exc:
-
-                exc_str = str(exc)
-
-                if "heif" in exc_str.lower() or "heic" in exc_str.lower() or getattr(up_f, 'name', '').lower().endswith('.heic'):
-
-                    st.warning(f"⚠️ Ảnh '{getattr(up_f, 'name', 'HEIC')}' lưu định dạng HEIC. Em hãy dùng Camera chụp trực tiếp gửi Thầy nhé!")
-
-
+            from services.upload_images import load_student_image
+            im_rgb, upload_notice = load_student_image(up_f, getattr(up_f, 'name', 'ảnh'))
+            if im_rgb is not None:
+                student_images.append(im_rgb)
+            elif upload_notice:
+                st.warning(upload_notice)
 
     # 2. Thu thập từ camera (các trang đã thêm hoặc trang vừa chụp)
 
