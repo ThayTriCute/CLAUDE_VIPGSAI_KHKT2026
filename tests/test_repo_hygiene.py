@@ -42,6 +42,14 @@ class RepoHygieneTests(unittest.TestCase):
                     leaks.append(f'{label}: {path.relative_to(ROOT)}')
         self.assertEqual(leaks, [], 'Phát hiện chuỗi dạng bí mật trong kho công khai — gỡ và ĐỔI khóa ngay.')
 
+    def test_no_bytecode_or_runtime_database_is_tracked(self):
+        files = tracked_files()
+        if files is None:
+            self.skipTest('Không phải bản Git (ví dụ thư mục tải zip).')
+        bad = [str(p.relative_to(ROOT)) for p in files
+               if p.suffix in ('.pyc', '.db', '.sqlite', '.sqlite3') or '__pycache__' in p.parts]
+        self.assertEqual(bad, [], 'Không commit bytecode hay CSDL chạy thật (có thể chứa dữ liệu học sinh).')
+
 
 if __name__ == '__main__':
     unittest.main()
