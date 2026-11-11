@@ -5,30 +5,32 @@
 # Lưu ý: Các module 'lzma', 'gzip', 'json' là Python Standard Libraries (Built-in)
 # đã tích hợp sẵn từ Python 3.3+, không cần cài qua pip để tránh xung đột thư viện.
 # ==============================================================================
-streamlit>=1.50
-google-genai>=2.6.0
-pillow
-pandas
-numpy
-requests
-plotly
-scipy
-pillow-heif
-qrcode
-matplotlib
-pypdf
-python-docx
+# Chặn trên = bản lớn kế tiếp sau bản CI đã kiểm (11/11/2026: Python 3.10 và 3.11, 892 test).
+# Mục đích: Cloud cài lại không tự nhảy sang bản lớn chưa kiểm. Nâng trần chỉ sau khi CI xanh.
+streamlit>=1.50,<2
+google-genai>=2.6.0,<4
+pillow<14
+pandas<4
+numpy<3
+requests<3
+plotly<8
+scipy<2
+pillow-heif<2
+qrcode<9
+matplotlib<4
+pypdf<8
+python-docx<2
 
-lxml
-pdfplumber
-pymupdf
-sympy
-orjson
-zstandard
+lxml<7
+pdfplumber<0.12
+pymupdf<3
+sympy<2
+orjson<4
+zstandard<1
 
 # Research station Excel import engines
-openpyxl>=3.1
-xlrd>=2.0.1
+openpyxl>=3.1,<4
+xlrd>=2.0.1,<3
 
 # Incremental bank parsing limits peak RAM during XZ decompression
 ijson>=3.3,<4
