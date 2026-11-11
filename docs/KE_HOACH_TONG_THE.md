@@ -34,3 +34,4 @@
 ## Nhật ký mốc
 - 11/11/2026: lập kế hoạch; mở PR đợt 1 (P0-1, P0-2, P0-3).
 - 11/11/2026: P3-1 Trạm 2 — vá lỗi thật: ảnh >12MB hoặc >25MP (điện thoại 48–50MP) bị bỏ qua im lặng. Nay `services/upload_images.py` nhận JPEG tới 120MP (giải mã thu nhỏ), xoay đúng chiều EXIF, mọi ảnh bị từ chối đều có thông báo. Test: `tests/test_upload_images.py`. Phần còn lại của Trạm 2 (chấm, bút tích, radar, chat) đã đọc hết, chưa thấy lỗi cơ chế khác.
+- 11/11/2026: P3-1 Trạm 4 đã đọc hết. Vá 2 điểm yếu bảo mật: (1) khóa dò mật khẩu quản trị chỉ theo phiên → thêm khóa mức tiến trình (15 lần sai/10 phút → khóa 2 phút) trong `services/admin_guard.py`; (2) CSV nhật ký có thể chứa công thức Excel từ tên học sinh → vô hiệu hóa bằng `csv_safe`. Thống kê (t-test, Hake, Cronbach) không thấy lỗi cơ chế. Còn lại của P3-1: Lab, infographic.

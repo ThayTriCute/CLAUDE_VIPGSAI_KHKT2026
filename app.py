@@ -17025,11 +17025,13 @@ if selected_station == station_labels[3]:
                 clean_pass = (password or "").strip()
 
                 locked_until = st.session_state.get("admin_locked_until", 0.0)
-                is_valid = time.monotonic() >= locked_until and admin_password_matches(clean_pass, configured)
+                from services.admin_guard import admin_globally_locked, record_admin_failure
+                global_locked = admin_globally_locked()
+                is_valid = not global_locked and time.monotonic() >= locked_until and admin_password_matches(clean_pass, configured)
                 if not configured:
                     st.error("Chưa cấu hình ADMIN_PASS trong Streamlit Secrets. Giáo viên cần thiết lập (dạng 'sha256:<hash>') trước khi mở khu vực dữ liệu.")
-                elif time.monotonic() < locked_until:
-                    st.error("Đã thử sai nhiều lần. Vui lòng chờ 60 giây trước khi thử lại.")
+                elif global_locked or time.monotonic() < locked_until:
+                    st.error("Đã thử sai nhiều lần. Vui lòng chờ khoảng 2 phút trước khi thử lại.")
 
                 if is_valid:
 
@@ -17042,10 +17044,12 @@ if selected_station == station_labels[3]:
                 else:
 
                     st.session_state.auth_failures = st.session_state.get("auth_failures", 0) + 1
+                    if configured and clean_pass and not global_locked:
+                        record_admin_failure()
                     if st.session_state.auth_failures >= 5:
                         st.session_state.admin_locked_until = time.monotonic() + 60
                         st.session_state.auth_failures = 0
-                    if configured and time.monotonic() >= locked_until:
+                    if configured and not global_locked and time.monotonic() >= locked_until:
                         st.error("Mật khẩu không đúng. Vui lòng liên hệ giáo viên phụ trách.")
 
         st.stop()
@@ -17082,11 +17086,12 @@ if selected_station == station_labels[3]:
 
     if logs:
 
+        from services.admin_guard import csv_safe
         frame = pd.DataFrame(logs)
 
         st.dataframe(display_frame(frame), width="stretch")
 
-        st.download_button("Tải nhật ký (CSV)", frame.to_csv(index=False).encode("utf-8-sig"), "nhat_ky_hoc_tap.csv", "text/csv")
+        st.download_button("Tải nhật ký (CSV)", csv_safe(frame).to_csv(index=False).encode("utf-8-sig"), "nhat_ky_hoc_tap.csv", "text/csv")
 
     else:
 
