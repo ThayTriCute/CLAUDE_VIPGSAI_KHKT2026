@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
     - name: Checkout code
@@ -37,6 +37,11 @@ jobs:
       run: |
         python -c "from tests.test_local_voice_server import TestClient; assert TestClient is not None, 'Voice test dependencies unavailable'"
         python -m unittest tests.test_local_voice_server -v
+
+    - name: Step 0 - Static gate (undefined names, syntax)
+      run: |
+        python -m pip install "ruff>=0.9,<1"
+        ruff check --isolated --select E9,F63,F7,F82 app.py precision_visual_engine.py real_exam_engine.py database.py lesson_infographic_engine.py services models
 
     - name: Step 1 - Syntax & Compilation Integrity Check
       run: |
