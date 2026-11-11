@@ -5565,6 +5565,15 @@ def render_dynamic_python_lab(python_code: str):
 
 
 def render_smart_lab(data, current_subject=""):
+    def _lab_slider(label, min_value=None, max_value=None, value=None, step=None, **kwargs):
+        """st.slider cho Lab: hệ số AI trả về ngoài khoảng được đưa về biên và báo rõ, không làm sập trang."""
+        if isinstance(min_value, (int, float)) and isinstance(max_value, (int, float)) and not isinstance(value, (tuple, list)) and value is not None:
+            from services.lab_safe import clamp_slider_value
+            requested = value
+            value, changed = clamp_slider_value(min_value, max_value, value)
+            if changed:
+                st.caption(f"⚠️ {label} giá trị yêu cầu ({requested}) nằm ngoài khoảng điều chỉnh [{min_value}; {max_value}] nên đang hiển thị {value}. Kết quả bên dưới ứng với giá trị đang hiển thị.")
+        return st.slider(label, min_value, max_value, value, step, **kwargs)
     from services.lab_state import lab_control_scope
     control_scope = lab_control_scope(data, current_subject,
         st.session_state.get("active_context_key", ""), st.session_state.get("lab_request_revision", 0))
@@ -5765,8 +5774,8 @@ def render_smart_lab(data, current_subject=""):
         with tabs[1]:
             st.latex(r'2NO+O_2\rightarrow2NO_2,\qquad v=kC_{NO}^{2}C_{O_2}')
             st.caption('Dùng biểu thức thực nghiệm được nêu ở SGK trang95. Giữ nhiệt độ, môi trường và k; tính tỉ số tốc độ, không tự cho một k thực nghiệm hoặc suy số mũ từ mọi phương trình.')
-            no_ratio = st.slider('Nồng độ NO so với ban đầu (lần)', 0.0, 3.0, 1.0, step=.1, key=lab_key('rate_no'))
-            oxygen_ratio = st.slider('Nồng độ O₂ so với ban đầu (lần)', 0.0, 3.0, 1.0, step=.1, key=lab_key('rate_o2'))
+            no_ratio = _lab_slider('Nồng độ NO so với ban đầu (lần)', 0.0, 3.0, 1.0, step=.1, key=lab_key('rate_no'))
+            oxygen_ratio = _lab_slider('Nồng độ O₂ so với ban đầu (lần)', 0.0, 3.0, 1.0, step=.1, key=lab_key('rate_o2'))
             ratio = experimental_rate_ratio(no_ratio, oxygen_ratio)
             st.metric('v mới / v ban đầu', f'{ratio:.4g}')
             fig = go.Figure(go.Bar(x=['Ban đầu', 'Sau thay đổi'], y=[1, ratio], marker_color=['#94a3b8', '#38bdf8']))
@@ -5775,8 +5784,8 @@ def render_smart_lab(data, current_subject=""):
             st.markdown('**Kiểm chứng:** tăng riêng NO gấp đôi, rồi tăng riêng O₂ gấp đôi. Vì sao hai kết quả khác nhau? Đây là so sánh ở cùng điều kiện, không phải tăng áp suất tổng bằng khí trơ.')
         with tabs[2]:
             st.caption('Bài toán giả định riêng: γ không đổi từ 20 đến 50°C; không gán hệ số này thành kết quả đo cho H₂O₂ hoặc NO ở hai phần trước.')
-            gamma = st.slider('Hệ số nhiệt độ γ giả định', 1.0, 4.0, 2.0, step=.1, key=lab_key('rate_gamma'))
-            temperature = st.slider('Nhiệt độ so với mốc 20°C', 20, 50, 20, key=lab_key('rate_temperature'))
+            gamma = _lab_slider('Hệ số nhiệt độ γ giả định', 1.0, 4.0, 2.0, step=.1, key=lab_key('rate_gamma'))
+            temperature = _lab_slider('Nhiệt độ so với mốc 20°C', 20, 50, 20, key=lab_key('rate_temperature'))
             factor = temperature_rate_ratio(gamma, 20, temperature)
             st.metric('v(T) / v(20°C)', f'{factor:.5g}')
             st.latex(r'\frac{v(T)}{v(20)}=\gamma^{(T-20)/10}')
@@ -5795,7 +5804,7 @@ def render_smart_lab(data, current_subject=""):
         height = st.number_input('Độ cao H (m)', min_value=0.01, max_value=10000.0, value=float(data['height']), key=lab_key('throw_h'))
         speed = st.number_input('Vận tốc ngang ban đầu v₀ (m/s)', min_value=0.01, max_value=10000.0, value=float(data['speed']), key=lab_key('throw_v'))
         gravity = st.number_input('Gia tốc trọng trường g (m/s²)', min_value=0.01, max_value=10000.0, value=float(data['gravity']), key=lab_key('throw_g'))
-        fraction = st.slider('Tiến trình bay (%)', 0, 100, 0, key=lab_key('throw_progress')) / 100
+        fraction = _lab_slider('Tiến trình bay (%)', 0, 100, 0, key=lab_key('throw_progress')) / 100
         compare = st.checkbox('So sánh với vật thả rơi cùng lúc, cùng độ cao', value=True, key=lab_key('throw_compare'))
         state = horizontal_throw_state(height, speed, gravity, fraction)
         columns = st.columns(3)
@@ -5835,7 +5844,7 @@ def render_smart_lab(data, current_subject=""):
         st.markdown('### Phân loại đất theo khoảng pH đã nêu')
         st.caption('Mô hình đọc số đo giả định trong phạm vi 0–14, không đo đất thật hoặc tính liều cải tạo. Hai ngưỡng lấy nguyên từ lệnh, gồm cả hai đầu khoảng trung tính theo quy ước phân loại đất.')
         low, high = data['low'], data['high']
-        ph = st.slider('pH mẫu đất giả định', 0.0, 14.0, 7.0, step=0.01, key=lab_key('soil_ph'))
+        ph = _lab_slider('pH mẫu đất giả định', 0.0, 14.0, 7.0, step=0.01, key=lab_key('soil_ph'))
         band = classify_closed_band(ph, low, high)
         names = {'below': 'Đất chua', 'within': 'Đất trung tính theo khoảng đã nêu', 'above': 'Đất kiềm'}
         st.write(f'pH = {ph:g}: {names[band]}. Khoảng trung tính: {low:g} ≤ pH ≤ {high:g}.')
@@ -5861,7 +5870,7 @@ def render_smart_lab(data, current_subject=""):
         st.markdown('### Đèn tự động — điều khiển hai ngưỡng')
         st.caption('Mô hình định tính, độ sáng quy ước 0–100; không phải lux hay hướng dẫn đấu điện. Ngưỡng lấy từ yêu cầu, vùng giữa giữ trạng thái trước đó.')
         state_key = lab_key('light_on')
-        light = st.slider('Độ sáng quy ước', 0.0, 100.0, 50.0, key=lab_key('light_level'))
+        light = _lab_slider('Độ sáng quy ước', 0.0, 100.0, 50.0, key=lab_key('light_level'))
         power = st.checkbox('Có nguồn điện', value=True, key=lab_key('light_power'))
         if st.button('Đặt lại trạng thái đèn', key=lab_key('light_reset')):
             st.session_state[state_key] = False
@@ -5944,7 +5953,7 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("⚙️ **Thông số điều chỉnh Hình không gian:**")
 
-            h_val = st.slider("Chiều cao h:", 1.5, 6.0, float(data.get("h", 4.0)), 0.5, key=lab_key("lab_geo3d_h"))
+            h_val = _lab_slider("Chiều cao h:", 1.5, 6.0, float(data.get("h", 4.0)), 0.5, key=lab_key("lab_geo3d_h"))
 
             show_faces = st.checkbox("Tô mờ các mặt phẳng (3D Surfaces)", value=True, key=lab_key("lab_geo3d_faces"))
 
@@ -6236,15 +6245,15 @@ def render_smart_lab(data, current_subject=""):
 
             else:
 
-                fa = st.slider("Cơ số a (a > 0, a ≠ 1):", 0.1, 4.5, float(data.get("base", 2.0)), 0.1, key=lab_key("lab_exp_a"))
+                fa = _lab_slider("Cơ số a (a > 0, a ≠ 1):", 0.1, 4.5, float(data.get("base", 2.0)), 0.1, key=lab_key("lab_exp_a"))
 
 
 
 
-            fk = st.slider("Hệ số k:", -3.0, 3.0, float(data.get("k", 1.0)), 0.5, key=lab_key("lab_exp_k"))
+            fk = _lab_slider("Hệ số k:", -3.0, 3.0, float(data.get("k", 1.0)), 0.5, key=lab_key("lab_exp_k"))
 
 
-            fc = st.slider("Hệ số tịnh tiến c:", -4.0, 4.0, float(data.get("c", 0.0)), 0.5, key=lab_key("lab_exp_c"))
+            fc = _lab_slider("Hệ số tịnh tiến c:", -4.0, 4.0, float(data.get("c", 0.0)), 0.5, key=lab_key("lab_exp_c"))
 
 
 
@@ -6323,17 +6332,17 @@ def render_smart_lab(data, current_subject=""):
 
             else:
 
-                fa = st.slider("Cơ số a (a > 0, a ≠ 1):", 0.1, 4.5, float(data.get("base", 2.0)), 0.1, key=lab_key("lab_log_a"))
+                fa = _lab_slider("Cơ số a (a > 0, a ≠ 1):", 0.1, 4.5, float(data.get("base", 2.0)), 0.1, key=lab_key("lab_log_a"))
 
 
 
 
 
-            fk = st.slider("Hệ số k:", -3.0, 3.0, float(data.get("k", 1.0)), 0.5, key=lab_key("lab_log_k"))
+            fk = _lab_slider("Hệ số k:", -3.0, 3.0, float(data.get("k", 1.0)), 0.5, key=lab_key("lab_log_k"))
 
 
 
-            fc = st.slider("Hệ số tịnh tiến c:", -4.0, 4.0, float(data.get("c", 0.0)), 0.5, key=lab_key("lab_log_c"))
+            fc = _lab_slider("Hệ số tịnh tiến c:", -4.0, 4.0, float(data.get("c", 0.0)), 0.5, key=lab_key("lab_log_c"))
 
 
 
@@ -6433,9 +6442,9 @@ def render_smart_lab(data, current_subject=""):
 
             st.info(f"**Hàm số:** $y = {math_str}$")
 
-            sa = st.slider("Cận dưới a:", -10.0, 10.0, sa_def, 0.5, key=lab_key("lab_area_a"))
+            sa = _lab_slider("Cận dưới a:", -10.0, 10.0, sa_def, 0.5, key=lab_key("lab_area_a"))
 
-            sb = st.slider("Cận trên b:", -10.0, 10.0, sb_def, 0.5, key=lab_key("lab_area_b"))
+            sb = _lab_slider("Cận trên b:", -10.0, 10.0, sb_def, 0.5, key=lab_key("lab_area_b"))
 
 
 
@@ -6583,11 +6592,11 @@ def render_smart_lab(data, current_subject=""):
 
             st.info(f"**Đường giới hạn:** $y = {math_str}$")
 
-            sa = st.slider("Cận dưới a:", -8.0, 8.0, a_def, 0.5, key=lab_key("lab_revolve_a"))
+            sa = _lab_slider("Cận dưới a:", -8.0, 8.0, a_def, 0.5, key=lab_key("lab_revolve_a"))
 
-            sb = st.slider("Cận trên b:", -8.0, 8.0, b_def, 0.5, key=lab_key("lab_revolve_b"))
+            sb = _lab_slider("Cận trên b:", -8.0, 8.0, b_def, 0.5, key=lab_key("lab_revolve_b"))
 
-            angle_deg = st.slider("Góc quay quanh trục Ox:", 30, 360, 360, 15, key=lab_key("lab_revolve_angle"))
+            angle_deg = _lab_slider("Góc quay quanh trục Ox:", 30, 360, 360, 15, key=lab_key("lab_revolve_angle"))
 
 
 
@@ -6757,11 +6766,11 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("⚙️ **Thông số Dao động điều hòa ($x = A\\cos(\\omega t + \\varphi)$):**")
 
-            p_A = st.slider("Biên độ A (cm):", 1.0, 15.0, float(data.get("A", 5.0)), 0.5, key=lab_key("lab_osc_A"))
+            p_A = _lab_slider("Biên độ A (cm):", 1.0, 15.0, float(data.get("A", 5.0)), 0.5, key=lab_key("lab_osc_A"))
 
-            p_omega = st.slider("Tần số góc ω (rad/s):", 0.5, 10.0, float(data.get("omega", 2.0)), 0.5, key=lab_key("lab_osc_w"))
+            p_omega = _lab_slider("Tần số góc ω (rad/s):", 0.5, 10.0, float(data.get("omega", 2.0)), 0.5, key=lab_key("lab_osc_w"))
 
-            p_phi = st.slider("Pha ban đầu φ (rad):", -np.pi, np.pi, float(data.get("phi", 0.0)), np.pi/6, format="%.2f", key=lab_key("lab_osc_phi"))
+            p_phi = _lab_slider("Pha ban đầu φ (rad):", -np.pi, np.pi, float(data.get("phi", 0.0)), np.pi/6, format="%.2f", key=lab_key("lab_osc_phi"))
 
 
 
@@ -6835,11 +6844,11 @@ def render_smart_lab(data, current_subject=""):
         with c1:
             st.caption("⚙️ Thang pH — mô hình dung dịch lý tưởng ở 25 °C")
             if current_subject == 'Khoa học tự nhiên':
-                ph_value = st.slider('Giá trị pH (thang KNTT 1–14):', 1.0, 14.0, -float(data.get('log_h', -7.0)),
+                ph_value = _lab_slider('Giá trị pH (thang KNTT 1–14):', 1.0, 14.0, -float(data.get('log_h', -7.0)),
                                      0.5, key=lab_key('lab_ph_value'))
                 log_h = -ph_value
             else:
-                log_h = st.slider("log₁₀([H⁺]/c°), c° = 1 mol/L:", -14.0, 0.0,
+                log_h = _lab_slider("log₁₀([H⁺]/c°), c° = 1 mol/L:", -14.0, 0.0,
                                   float(data.get('log_h', -7.0)), 0.5, key=lab_key('lab_ph_log_h'))
             state = ideal_ph(log_h)
             if current_subject != 'Khoa học tự nhiên':
@@ -6890,9 +6899,9 @@ def render_smart_lab(data, current_subject=""):
                        'Kp(T) tính từ dữ liệu nhiệt hóa NIST. Kết quả không phải hiệu suất công nghiệp; '
                        'chưa xét khí thực, chuyển pha hoặc tốc độ phản ứng/xúc tác.')
 
-            c_temp = st.slider("Nhiệt độ T (°C):", 100, 700, int(data.get("temp", 450)), 50, key=lab_key("lab_eq_t"))
+            c_temp = _lab_slider("Nhiệt độ T (°C):", 100, 700, int(data.get("temp", 450)), 50, key=lab_key("lab_eq_t"))
 
-            c_p = st.slider("Áp suất P (bar):", 10, 300, int(data.get("p", 200)), 10, key=lab_key("lab_eq_p"))
+            c_p = _lab_slider("Áp suất P (bar):", 10, 300, int(data.get("p", 200)), 10, key=lab_key("lab_eq_p"))
 
 
 
@@ -6980,13 +6989,13 @@ def render_smart_lab(data, current_subject=""):
         c1, c2 = st.columns([1.2, 2.8])
         with c1:
             st.caption("⚙️ **Thay đổi hệ số hàm bậc 3:**")
-            fa = st.slider("Hệ số a:", -3.0, 3.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_f3_a"))
+            fa = _lab_slider("Hệ số a:", -3.0, 3.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_f3_a"))
             if fa == 0:
                 st.error("Hàm bậc ba yêu cầu a khác 0. Hãy chọn lại hệ số a.")
                 return
-            fb = st.slider("Hệ số b:", -5.0, 5.0, float(data.get("b", -3.0)), 0.5, key=lab_key("lab_f3_b"))
-            fc = st.slider("Hệ số c:", -5.0, 5.0, float(data.get("c", 0.0)), 0.5, key=lab_key("lab_f3_c"))
-            fd = st.slider("Hệ số d:", -5.0, 5.0, float(data.get("d", 2.0)), 0.5, key=lab_key("lab_f3_d"))
+            fb = _lab_slider("Hệ số b:", -5.0, 5.0, float(data.get("b", -3.0)), 0.5, key=lab_key("lab_f3_b"))
+            fc = _lab_slider("Hệ số c:", -5.0, 5.0, float(data.get("c", 0.0)), 0.5, key=lab_key("lab_f3_c"))
+            fd = _lab_slider("Hệ số d:", -5.0, 5.0, float(data.get("d", 2.0)), 0.5, key=lab_key("lab_f3_d"))
             st.latex(function_formula_latex([fa, fb, fc, fd]))
 
             import sympy as sp
@@ -7122,13 +7131,13 @@ def render_smart_lab(data, current_subject=""):
         c1, c2 = st.columns([1.2, 2.8])
         with c1:
             st.caption("⚙️ **Thay đổi hệ số hàm phân thức bậc 1/1:**")
-            fa = st.slider("Hệ số a:", -4.0, 4.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_f11_a"))
-            fb = st.slider("Hệ số b:", -5.0, 5.0, float(data.get("b", 1.0)), 0.5, key=lab_key("lab_f11_b"))
-            fc = st.slider("Hệ số c:", -4.0, 4.0, float(data.get("c", 1.0)), 0.5, key=lab_key("lab_f11_c"))
+            fa = _lab_slider("Hệ số a:", -4.0, 4.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_f11_a"))
+            fb = _lab_slider("Hệ số b:", -5.0, 5.0, float(data.get("b", 1.0)), 0.5, key=lab_key("lab_f11_b"))
+            fc = _lab_slider("Hệ số c:", -4.0, 4.0, float(data.get("c", 1.0)), 0.5, key=lab_key("lab_f11_c"))
             if fc == 0:
                 st.error("Mẫu số bậc nhất yêu cầu c khác 0. Hãy chọn lại hệ số c.")
                 return
-            fd = st.slider("Hệ số d:", -5.0, 5.0, float(data.get("d", -1.0)), 0.5, key=lab_key("lab_f11_d"))
+            fd = _lab_slider("Hệ số d:", -5.0, 5.0, float(data.get("d", -1.0)), 0.5, key=lab_key("lab_f11_d"))
 
             if abs(fa * fd - fb * fc) < 1e-12:
                 st.error("Hàm phân thức 1/1 đang suy biến: ad - bc phải khác 0. Hãy chọn lại hệ số.")
@@ -7218,17 +7227,17 @@ def render_smart_lab(data, current_subject=""):
         c1, c2 = st.columns([1.2, 2.8])
         with c1:
             st.caption("⚙️ **Hệ số hàm phân thức bậc 2/1:**")
-            fa = st.slider("a:", -3.0, 3.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_f21_a"))
+            fa = _lab_slider("a:", -3.0, 3.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_f21_a"))
             if fa == 0:
                 st.error("Tử số bậc hai yêu cầu a khác 0. Hãy chọn lại hệ số a.")
                 return
-            fb = st.slider("b:", -5.0, 5.0, float(data.get("b", -2.0)), 0.5, key=lab_key("lab_f21_b"))
-            fc = st.slider("c:", -5.0, 5.0, float(data.get("c", 2.0)), 0.5, key=lab_key("lab_f21_c"))
-            fd = st.slider("d:", -3.0, 3.0, float(data.get("d", 1.0)), 0.5, key=lab_key("lab_f21_d"))
+            fb = _lab_slider("b:", -5.0, 5.0, float(data.get("b", -2.0)), 0.5, key=lab_key("lab_f21_b"))
+            fc = _lab_slider("c:", -5.0, 5.0, float(data.get("c", 2.0)), 0.5, key=lab_key("lab_f21_c"))
+            fd = _lab_slider("d:", -3.0, 3.0, float(data.get("d", 1.0)), 0.5, key=lab_key("lab_f21_d"))
             if fd == 0:
                 st.error("Mẫu số bậc nhất yêu cầu d khác 0. Hãy chọn lại hệ số d.")
                 return
-            fe = st.slider("e:", -5.0, 5.0, float(data.get("e", -1.0)), 0.5, key=lab_key("lab_f21_e"))
+            fe = _lab_slider("e:", -5.0, 5.0, float(data.get("e", -1.0)), 0.5, key=lab_key("lab_f21_e"))
 
             if abs(fa * fe**2 - fb * fe * fd + fc * fd**2) < 1e-12:
                 st.error("Hàm phân thức 2/1 đang suy biến do tử và mẫu có nhân tử chung. Hãy chọn lại hệ số.")
@@ -7373,10 +7382,10 @@ def render_smart_lab(data, current_subject=""):
         c1, c2 = st.columns([1.2, 2.8])
         with c1:
             st.caption("⚙️ **Hệ số Parabol bậc 2 ($y = ax^2 + bx + c$):**")
-            fa = st.slider("Hệ số a:", -4.0, 4.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_p2_a"))
+            fa = _lab_slider("Hệ số a:", -4.0, 4.0, float(data.get("a", 1.0)), 0.5, key=lab_key("lab_p2_a"))
             if fa == 0: fa = 1.0
-            fb = st.slider("Hệ số b:", -6.0, 6.0, float(data.get("b", -2.0)), 0.5, key=lab_key("lab_p2_b"))
-            fc = st.slider("Hệ số c:", -6.0, 6.0, float(data.get("c", -1.0)), 0.5, key=lab_key("lab_p2_c"))
+            fb = _lab_slider("Hệ số b:", -6.0, 6.0, float(data.get("b", -2.0)), 0.5, key=lab_key("lab_p2_b"))
+            fc = _lab_slider("Hệ số c:", -6.0, 6.0, float(data.get("c", -1.0)), 0.5, key=lab_key("lab_p2_c"))
 
             x_dinh = -fb / (2 * fa)
             y_dinh = fa * x_dinh**2 + fb * x_dinh + fc
@@ -7458,11 +7467,11 @@ def render_smart_lab(data, current_subject=""):
 
             st.caption("⚙️ **Tọa độ Điểm & Vectơ Vị Trí $\\overrightarrow{OM}$ trong Oxyz:**")
 
-            mx = st.slider("Tọa độ x (Hoành độ):", -5.0, 5.0, float(data.get("x", 2.0)), 0.5, key=lab_key("lab_3d_x"))
+            mx = _lab_slider("Tọa độ x (Hoành độ):", -5.0, 5.0, float(data.get("x", 2.0)), 0.5, key=lab_key("lab_3d_x"))
 
-            my = st.slider("Tọa độ y (Tung độ):", -5.0, 5.0, float(data.get("y", 3.0)), 0.5, key=lab_key("lab_3d_y"))
+            my = _lab_slider("Tọa độ y (Tung độ):", -5.0, 5.0, float(data.get("y", 3.0)), 0.5, key=lab_key("lab_3d_y"))
 
-            mz = st.slider("Tọa độ z (Cao độ):", -5.0, 5.0, float(data.get("z", 4.0)), 0.5, key=lab_key("lab_3d_z"))
+            mz = _lab_slider("Tọa độ z (Cao độ):", -5.0, 5.0, float(data.get("z", 4.0)), 0.5, key=lab_key("lab_3d_z"))
 
             om_length = math.sqrt(mx**2 + my**2 + mz**2)
 
@@ -13324,7 +13333,18 @@ QUY TẮC PHÂN LOẠI MÔ HÌNH:
             st.warning('Chưa dựng được phép gán biến theo biểu thức này. Không thay bằng đồ thị hoặc mô hình mẫu khác bài.')
         else:
             st.caption("Dữ liệu trực quan đã được nhận. Sơ đồ không tự có chức năng mô phỏng; cần kiểm nội dung và các điều khiển theo yêu cầu.")
-            render_smart_lab(data, subject)
+            from services.lab_safe import sanitize_lab_data
+            safe_lab_data = sanitize_lab_data(data)
+            if safe_lab_data is None:
+                st.warning("Dữ liệu Lab nhận được chưa đúng định dạng nên chưa dựng được mô hình. Em diễn đạt lại yêu cầu rõ hơn rồi bấm tạo lại nhé.")
+            else:
+                try:
+                    render_smart_lab(safe_lab_data, subject)
+                except Exception as lab_exc:
+                    if type(lab_exc).__name__ in ("RerunException", "StopException"):
+                        raise
+                    logging.exception("Lab render failed: type=%s", safe_lab_data.get("type"))
+                    st.warning("Chưa dựng được mô hình với dữ liệu này (hệ số hoặc biểu thức ngoài phạm vi hỗ trợ). Em chỉnh lại yêu cầu rồi bấm tạo lại; các phần khác của bài học không bị ảnh hưởng.")
 
 
 
@@ -17025,11 +17045,13 @@ if selected_station == station_labels[3]:
                 clean_pass = (password or "").strip()
 
                 locked_until = st.session_state.get("admin_locked_until", 0.0)
-                is_valid = time.monotonic() >= locked_until and admin_password_matches(clean_pass, configured)
+                from services.admin_guard import admin_globally_locked, record_admin_failure
+                global_locked = admin_globally_locked()
+                is_valid = not global_locked and time.monotonic() >= locked_until and admin_password_matches(clean_pass, configured)
                 if not configured:
                     st.error("Chưa cấu hình ADMIN_PASS trong Streamlit Secrets. Giáo viên cần thiết lập (dạng 'sha256:<hash>') trước khi mở khu vực dữ liệu.")
-                elif time.monotonic() < locked_until:
-                    st.error("Đã thử sai nhiều lần. Vui lòng chờ 60 giây trước khi thử lại.")
+                elif global_locked or time.monotonic() < locked_until:
+                    st.error("Đã thử sai nhiều lần. Vui lòng chờ khoảng 2 phút trước khi thử lại.")
 
                 if is_valid:
 
@@ -17042,10 +17064,12 @@ if selected_station == station_labels[3]:
                 else:
 
                     st.session_state.auth_failures = st.session_state.get("auth_failures", 0) + 1
+                    if configured and clean_pass and not global_locked:
+                        record_admin_failure()
                     if st.session_state.auth_failures >= 5:
                         st.session_state.admin_locked_until = time.monotonic() + 60
                         st.session_state.auth_failures = 0
-                    if configured and time.monotonic() >= locked_until:
+                    if configured and not global_locked and time.monotonic() >= locked_until:
                         st.error("Mật khẩu không đúng. Vui lòng liên hệ giáo viên phụ trách.")
 
         st.stop()
@@ -17082,11 +17106,12 @@ if selected_station == station_labels[3]:
 
     if logs:
 
+        from services.admin_guard import csv_safe
         frame = pd.DataFrame(logs)
 
         st.dataframe(display_frame(frame), width="stretch")
 
-        st.download_button("Tải nhật ký (CSV)", frame.to_csv(index=False).encode("utf-8-sig"), "nhat_ky_hoc_tap.csv", "text/csv")
+        st.download_button("Tải nhật ký (CSV)", csv_safe(frame).to_csv(index=False).encode("utf-8-sig"), "nhat_ky_hoc_tap.csv", "text/csv")
 
     else:
 
