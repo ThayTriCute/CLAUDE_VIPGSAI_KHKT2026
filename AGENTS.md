@@ -1,5 +1,9 @@
 ## KẾ HOẠCH TỔNG THỂ — owner 11/11/2026 (mọi ca AI/mô hình)
 
+## ⛔ PHẠM VI THAO TÁC — chủ dự án 11/11/2026 (bắt buộc, mọi ca AI)
+
+CHỈ thao tác trong: (1) thư mục dự án trên ổ D do chủ dự án chỉ định `D:\CLAUDE_FINAL KHKT 2026\VIP_DEMO_GSAITHPT2026-main_THẨM ĐỊNH LÚC 10H_NGÀY 9_11_2026)\`, và (2) repo GitHub. TUYỆT ĐỐI KHÔNG ghi/đè/xoá bất cứ thứ gì trong ổ F (kho sách textbook_archive_6_12, reviewed_lesson_packets...); F chỉ ĐỌC tham khảo, không bao giờ GHI. Gói neo đi theo đường: repo → PR → chủ dự án merge → chủ dự án pull về D. Không đồng bộ sang F.
+
 Trước khi làm, đọc `docs/KE_HOACH_TONG_THE.md`: bảng việc theo ưu tiên, trạng thái và nhật ký mốc. Làm cuốn chiếu theo đúng thứ tự, tự động không chờ nhắc; xong mốc nào cập nhật trạng thái + nhật ký mốc trong tệp đó và nhật ký bàn giao ở ổ D. Khi cần chủ dự án thao tác, hướng dẫn từng bước bấm cụ thể (chủ dự án không lập trình).
 
 ## Owner yêu cầu làm liên tục theo Goal — 07/11/2026
