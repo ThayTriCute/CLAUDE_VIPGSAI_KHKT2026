@@ -44,3 +44,10 @@ turbo_enterprise_optimizer.py
 # Runtime teacher revisions and generated exams stay outside source control
 **/teacher_uploaded_exams.json.versions/
 data/exam_cache/
+
+# Runtime data — never commit (student data lives here)
+data/*.db
+data/*.db-wal
+data/*.db-shm
+*.sqlite
+*.sqlite3

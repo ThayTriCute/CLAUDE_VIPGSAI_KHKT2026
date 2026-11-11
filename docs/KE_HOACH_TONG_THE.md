@@ -34,3 +34,4 @@
 ## Nhật ký mốc
 - 11/11/2026: lập kế hoạch; mở PR đợt 1 (P0-1, P0-2, P0-3).
 - 11/11/2026: P3-1 Trạm 2 — vá lỗi thật: ảnh >12MB hoặc >25MP (điện thoại 48–50MP) bị bỏ qua im lặng. Nay `services/upload_images.py` nhận JPEG tới 120MP (giải mã thu nhỏ), xoay đúng chiều EXIF, mọi ảnh bị từ chối đều có thông báo. Test: `tests/test_upload_images.py`. Phần còn lại của Trạm 2 (chấm, bút tích, radar, chat) đã đọc hết, chưa thấy lỗi cơ chế khác.
+- 11/11/2026: PR #21, #22 đã merge (main `b3f64ee`). P1-1: gỡ theo dõi 28 `.pyc` + `data/gsai_learning.db` (bản trong Git rỗng 0 dòng ở cả 4 bảng; `database.py` tự tạo lại), thêm luật .gitignore + test chặn tái phạm. Nếu Cloud không lên bản mới sau merge: Manage app → ⋮ → Reboot app.
