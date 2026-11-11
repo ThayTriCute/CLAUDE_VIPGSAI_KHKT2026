@@ -17080,6 +17080,39 @@ if selected_station == station_labels[3]:
 
         st.rerun()
 
+    with st.expander("🩺 Sức khỏe hệ thống", expanded=True):
+        from services.system_health import collect_health, health_summary
+        from services.build_info import build_info
+        try:
+            _hv = {}
+            for _lib in ("streamlit", "pandas", "numpy", "google.genai"):
+                try:
+                    _mod = __import__(_lib, fromlist=["__version__"])
+                    _hv[_lib.split(".")[0]] = getattr(_mod, "__version__", "?")
+                except Exception:
+                    pass
+            import platform as _pf
+            _hv["Python"] = _pf.python_version()
+            _health_rows = collect_health(
+                build=build_info(),
+                key_count=len(active_keys_pool),
+                db_ok=db_manager is not None,
+                db_records=len(db_manager.get_all_logs()) if db_manager else 0,
+                pending_sync=len(st.session_state.get("pending_sync", {})),
+                versions=_hv,
+            )
+            _overall, _nwarn, _nerr = health_summary(_health_rows)
+            _badge = {"ok": "🟢 Hệ thống bình thường", "warn": f"🟡 {_nwarn} mục cần lưu ý", "err": f"🔴 {_nerr} mục cần xử lý"}[_overall]
+            st.markdown(f"**{_badge}**")
+            _icon = {"ok": "🟢", "warn": "🟡", "err": "🔴"}
+            for _r in _health_rows:
+                st.markdown(f"{_icon[_r['status']]} **{_r['label']}:** {_r['value']}")
+                if _r["hint"]:
+                    st.caption(f"↳ {_r['hint']}")
+            st.caption("Bảng chỉ hiển thị số lượng khóa, không bao giờ hiển thị giá trị khóa API.")
+        except Exception as _he:
+            st.info(f"Chưa dựng được bảng sức khỏe hệ thống: {_he}")
+
 
 
     st.markdown("### Nhật ký và đồng bộ")
