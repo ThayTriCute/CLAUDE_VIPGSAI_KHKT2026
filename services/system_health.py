@@ -12,7 +12,7 @@ def _row(label, value, status, hint=""):
 
 
 def collect_health(*, build=None, key_count=0, db_ok=False, db_records=0,
-                   pending_sync=0, versions=None):
+                   pending_sync=0, versions=None, ai_used=None, ai_limit=None):
     rows = []
 
     build = build or {}
@@ -50,6 +50,14 @@ def collect_health(*, build=None, key_count=0, db_ok=False, db_records=0,
     else:
         rows.append(_row("Sự kiện chờ đồng bộ", f"{pending} sự kiện chưa xác nhận", WARN,
                          "Vào mục Nhật ký bấm 'Thử gửi lại sự kiện' hoặc tải file dự phòng."))
+
+    if ai_limit is not None:
+        used = max(0, int(ai_used or 0))
+        limit = int(ai_limit)
+        remaining = max(0, limit - used)
+        status = ERR if remaining == 0 else WARN if remaining <= 5 else OK
+        hint = "Phiên này đã chạm giới hạn; học sinh cần tải lại trang để hỏi tiếp." if remaining == 0 else ""
+        rows.append(_row("Lượt gọi AI trong phiên", f"{used}/{limit} (còn {remaining})", status, hint))
 
     for name, value in (versions or {}).items():
         rows.append(_row(name, str(value), OK))

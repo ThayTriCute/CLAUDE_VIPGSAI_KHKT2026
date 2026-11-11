@@ -12,7 +12,18 @@ class TestStreamRecovery(unittest.TestCase):
         source = Path(__file__).resolve().parents[1].joinpath("app.py").read_text(encoding="utf-8")
         tree = ast.parse(source)
         function = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "stream_gemini_with_fallback")
-        state = SimpleNamespace(get=lambda key: None)
+        class _State(dict):
+            # Giống st.session_state thật: vừa truy cập theo mục ["k"] vừa theo thuộc tính .k
+            def __getattr__(self, key):
+                try:
+                    return self[key]
+                except KeyError as exc:
+                    raise AttributeError(key) from exc
+
+            def __setattr__(self, key, value):
+                self[key] = value
+
+        state = _State()
 
         def broken_stream(**kwargs):
             yield SimpleNamespace(text="Phần trả lời đã nhận")
@@ -24,6 +35,7 @@ class TestStreamRecovery(unittest.TestCase):
         client.models.generate_content_stream.side_effect = broken_stream
         fallback = Mock(return_value="duplicate answer")
         namespace = {"get_active_model_queue": lambda: ["gemini-2-test"],
+                     "get_secret": lambda *a, **k: "",
                      "active_keys_pool": ["test-only"], "st": SimpleNamespace(session_state=state),
                      "time": time, "DEFAULT_PEDAGOGICAL_SYSTEM_INSTRUCTION": "test",
                      "types": SimpleNamespace(GenerateContentConfig=lambda **kwargs: SimpleNamespace(**kwargs),

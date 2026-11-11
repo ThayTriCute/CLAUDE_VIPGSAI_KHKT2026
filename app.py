@@ -2423,6 +2423,13 @@ def call_gemini_with_fallback(prompt_or_contents, system_instruction=None, json_
 
         raise RuntimeError("Chưa cấu hình GEMINI_API_KEY. Thêm Key vào sidebar hoặc Streamlit Secrets.")
 
+    from services.ai_budget import ai_call_limit, is_over_budget, over_budget_message
+    _ai_limit = ai_call_limit(get_secret("MAX_AI_CALLS_PER_SESSION", ""))
+    _ai_used = st.session_state.get("ai_calls_used", 0)
+    if is_over_budget(_ai_used, _ai_limit):
+        raise RuntimeError(over_budget_message(_ai_limit))
+    st.session_state["ai_calls_used"] = _ai_used + 1
+
 
 
     # Ưu tiên key đang chạy tốt nhất trong phiên để đạt tốc độ 1 chạm tức thì
@@ -2621,6 +2628,13 @@ def stream_gemini_with_fallback(prompt_or_contents, system_instruction=None):
     if not active_keys_pool:
 
         raise RuntimeError("Chưa cấu hình GEMINI_API_KEY. Thêm Key vào sidebar hoặc Streamlit Secrets.")
+
+    from services.ai_budget import ai_call_limit, is_over_budget, over_budget_message
+    _ai_limit = ai_call_limit(get_secret("MAX_AI_CALLS_PER_SESSION", ""))
+    _ai_used = st.session_state.get("ai_calls_used", 0)
+    if is_over_budget(_ai_used, _ai_limit):
+        raise RuntimeError(over_budget_message(_ai_limit))
+    st.session_state["ai_calls_used"] = _ai_used + 1
 
 
 
@@ -17083,6 +17097,7 @@ if selected_station == station_labels[3]:
     with st.expander("🩺 Sức khỏe hệ thống", expanded=True):
         from services.system_health import collect_health, health_summary
         from services.build_info import build_info
+        from services.ai_budget import ai_call_limit
         try:
             _hv = {}
             for _lib in ("streamlit", "pandas", "numpy", "google.genai"):
@@ -17099,6 +17114,8 @@ if selected_station == station_labels[3]:
                 db_ok=db_manager is not None,
                 db_records=len(db_manager.get_all_logs()) if db_manager else 0,
                 pending_sync=len(st.session_state.get("pending_sync", {})),
+                ai_used=st.session_state.get("ai_calls_used", 0),
+                ai_limit=ai_call_limit(get_secret("MAX_AI_CALLS_PER_SESSION", "")),
                 versions=_hv,
             )
             _overall, _nwarn, _nerr = health_summary(_health_rows)
