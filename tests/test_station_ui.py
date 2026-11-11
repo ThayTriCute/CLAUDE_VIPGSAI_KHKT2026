@@ -360,7 +360,7 @@ class TestStationUI(unittest.TestCase):
         at = self.app()
         at.session_state["selected_station"] = "📊 Trạm 4: Dữ Liệu & Nghiên Cứu"
         at.run()
-        next(t for t in at.text_input if t.label == "Mật khẩu quản trị:").set_value("GiaoVienKHKT@2026")
+        next(t for t in at.text_input if t.label == "Mật khẩu quản trị:").set_value("legacy-default-password")
         next(b for b in at.button if b.label == "🔓 Mở khóa").click().run()
         self.assertFalse(at.session_state.get("tab4_authenticated", False) if hasattr(at.session_state, "get") else "tab4_authenticated" in at.session_state and at.session_state["tab4_authenticated"])
         next(t for t in at.text_input if t.label == "Mật khẩu quản trị:").set_value("qa-private-password")

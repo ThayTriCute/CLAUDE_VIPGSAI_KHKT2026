@@ -1,3 +1,7 @@
+## KẾ HOẠCH TỔNG THỂ — owner 11/11/2026 (mọi ca AI/mô hình)
+
+Trước khi làm, đọc `docs/KE_HOACH_TONG_THE.md`: bảng việc theo ưu tiên, trạng thái và nhật ký mốc. Làm cuốn chiếu theo đúng thứ tự, tự động không chờ nhắc; xong mốc nào cập nhật trạng thái + nhật ký mốc trong tệp đó và nhật ký bàn giao ở ổ D. Khi cần chủ dự án thao tác, hướng dẫn từng bước bấm cụ thể (chủ dự án không lập trình).
+
 ## Owner yêu cầu làm liên tục theo Goal — 07/11/2026
 
 Owner09/11/2026: trước sửa xuất/infographic, đọc docs/AI_SYSTEM_WIDE_VERIFICATION.md. Phiếu học sinh không lộ CORRECT/HINT/EXPLAIN; giữ JSON/parser gốc, tách phụ lục giáo viên đóng mặc định. Dùng chung student_assessment_text/lesson_body_html cho mọi môn/lớp, đo phương án sau dựng công thức/font để chọn4/2/1cột và kiểmChrome. Nhãn giao diện tiếngViệt, không dịch ngữ liệu ngoại ngữ thật. Không chỉ vá một fileHTML hoặc xóa đáp án trong dữ liệu gốc; không tự nhận đạt mọi thể thức đềBộ.

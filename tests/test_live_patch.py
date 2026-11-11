@@ -17,8 +17,8 @@ class TestValidatedBoundaries(unittest.TestCase):
         self.assertEqual(split_api_keys("one, two;one\nthree"), ["one", "two", "three"])
 
     def test_admin_requires_configured_secret(self):
-        self.assertFalse(admin_password_matches("GiaoVienKHKT@2026", ""))
-        self.assertFalse(admin_password_matches("GiaoVienKHKT@2026", "private-test-password"))
+        self.assertFalse(admin_password_matches("legacy-default-password", ""))
+        self.assertFalse(admin_password_matches("legacy-default-password", "private-test-password"))
         self.assertTrue(admin_password_matches("private-test-password", "private-test-password"))
 
     def test_integer_answers_do_not_enable_implicit_rounding(self):

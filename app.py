@@ -1786,6 +1786,12 @@ with st.sidebar.expander("⚖️ Căn Cứ Pháp Quy Bộ GD&ĐT Hiện Hành", 
 
 
 st.sidebar.info("💡 **Triết lý:** Dưỡng thiện tâm - Ươm nhân tài • Dẫn dắt tư duy tự học!")
+# Dấu phiên bản: giúp xác minh Cloud đã chạy đúng commit (services.build_info).
+try:
+    from services.build_info import build_label
+    st.sidebar.caption(build_label())
+except Exception:
+    pass
 
 
 
