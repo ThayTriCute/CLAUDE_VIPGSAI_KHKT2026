@@ -41,3 +41,6 @@
 - 11/11/2026: PHÁT HIỆN mã chết — `lesson_infographic_engine.py` (2.158 dòng) được import là `lie` nhưng không chỗ nào gọi. Chủ dự án chọn GIỮ NGUYÊN (phương án B), chỉ ghi chú. Ca sau đừng tưởng đây là mã đang chạy.
 - 11/11/2026: Chủ dự án xác nhận ĐÃ ĐỔI `ADMIN_PASS` → khép lại rủi ro mật khẩu công khai.
 - 11/11/2026: P2-2 XONG — bảng '🩺 Sức khỏe hệ thống' trong Trạm 4 (admin): bản dựng, số khóa Gemini (chỉ số lượng, không lộ giá trị), CSDL + số bản ghi, sự kiện chờ đồng bộ, phiên bản thư viện. `services/system_health.py` + test. PR mới.
+- 11/11/2026: PR #25 đã merge (main `bd295d7`) — bảng Sức khỏe hệ thống đã lên main.
+- 11/11/2026: Đọc nốt công thức Lab ảo (func_2_1, func_1_1, area, revolve_ox, oxyz...). An toàn: dùng sympy số hữu tỉ chính xác + chặn suy biến (ad-bc≠0, mẫu≠0); chuỗi hàm do AI/người dùng nhập được chạy qua `safe_eval_func` (AST allowlist, `__builtins__={}`, chặn dunder/attribute ngoài np|math, giới hạn số node & hằng) — KHÔNG phải eval tự do. Cộng với lưới `lab_safe` (PR #24), Lab coi như đã nghiệm thu mức cơ chế. KHÔNG có lỗi mới.
+- TRẠNG THÁI P3-1: XONG (Trạm 1→4 + Lab + infographic). Còn chờ: P2-1 cần chủ dự án cho con số 'tối đa lượt hỏi AI/phiên'; P3-3 (mở rộng gói neo SGK) tùy chọn.
