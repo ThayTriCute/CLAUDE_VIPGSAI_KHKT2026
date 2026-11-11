@@ -173,6 +173,51 @@ def local_textbook_grounding(subject, grade, topic):
     return result
 
 
+def grounded_lesson_topics(subject, grade):
+    """Danh sách chủ đề (đúng tên bài) đang có gói neo cho môn/lớp này.
+
+    Dùng để Trạm 1 gợi ý đúng tên bài có nguồn, nhờ đó khi học sinh chọn thì
+    local_textbook_grounding khớp chính xác và neo được. Trả về [] khi thiếu kho
+    hoặc lỗi — không bao giờ ném lỗi làm hỏng giao diện chọn bài.
+    """
+    try:
+        subject, grade = academic_context(subject, grade)
+    except (ValueError, TypeError):
+        return []
+    env_root = os.environ.get('GSAI_TEXTBOOK_ARCHIVE_ROOT')
+    if env_root:
+        candidates = [Path(env_root)]
+    else:
+        base = Path(__file__).resolve()
+        candidates = [base.parents[2] / 'textbook_archive_6_12', base.parents[1] / 'textbook_archive_6_12']
+    index = next((c / 'reviewed_lesson_packets' / 'index.json' for c in candidates
+                  if (c / 'reviewed_lesson_packets' / 'index.json').is_file()), None)
+    if index is None:
+        return []
+    try:
+        if index.stat().st_size > 1_000_000:
+            return []
+        catalogue = json.loads(index.read_text(encoding='utf-8'))
+        entries = catalogue.get('entries') if isinstance(catalogue, dict) else None
+        if not isinstance(entries, list):
+            return []
+        topics = []
+        for row in entries:
+            if not isinstance(row, dict):
+                continue
+            try:
+                if academic_context(row.get('subject'), row.get('grade')) != (subject, grade):
+                    continue
+            except (ValueError, TypeError):
+                continue
+            topic = row.get('topic')
+            if isinstance(topic, str) and topic.strip() and topic not in topics:
+                topics.append(topic)
+        return sorted(topics)
+    except (OSError, ValueError, TypeError):
+        return []
+
+
 def lesson_source_review_html(subject, grade, topic):
     from services.lesson_export import lesson_body_html
     review = reviewed_lesson_sources(subject, grade, topic)

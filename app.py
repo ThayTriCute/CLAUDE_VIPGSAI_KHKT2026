@@ -22,7 +22,7 @@ from services.curriculum_policy import (T1_CONTEXT_REVISION as CURRICULUM_POLICY
 from copy import deepcopy
 from services.academic_context import canonical_subject, academic_context, validate_exam_context
 from services.lesson_export import build_lesson_html, handwritten_prompt
-from services.lesson_sources import books_for, lesson_references, PUBLISHER_PORTAL, PUBLISHER_DIGITAL_LIBRARY, NATIONAL_SCHOOL_TEXTBOOK_LIBRARY, textbook_update_notice
+from services.lesson_sources import books_for, lesson_references, PUBLISHER_PORTAL, PUBLISHER_DIGITAL_LIBRARY, NATIONAL_SCHOOL_TEXTBOOK_LIBRARY, textbook_update_notice, grounded_lesson_topics
 from services.lab_scope import lesson_context_examples, function_formula_latex, oscillator_equation_latex
 from services.text_boundaries import option_markdown_label, chemical_display_markdown
 from qa_runtime import (split_api_keys, admin_password_matches, normalize_bool, display_frame,
@@ -11909,7 +11909,9 @@ if selected_station == station_labels[0]:
     curr_curriculum = BIGDATA_CURRICULUM.get(subject, {}).get(grade_num, [])
     st.caption("Chủ đề gợi ý do ứng dụng biên tập; cần đối chiếu yêu cầu cần đạt và mục lục/đính chính KNTT theo phiên bản sách.")
 
-    lesson_select_options = ["-- Chọn chủ đề gợi ý để đối chiếu KNTT --"] + curr_curriculum + ["Tự gõ bài học khác bên dưới..."]
+    grounded_options = grounded_lesson_topics(subject, grade_num)
+    lesson_select_options = (["-- Chọn chủ đề gợi ý để đối chiếu KNTT --"]
+                             + grounded_options + curr_curriculum + ["Tự gõ bài học khác bên dưới..."])
 
     chosen_sgk_lesson = st.selectbox(
 
@@ -11927,7 +11929,7 @@ if selected_station == station_labels[0]:
 
     if chosen_sgk_lesson and chosen_sgk_lesson != "-- Chọn chủ đề gợi ý để đối chiếu KNTT --" and chosen_sgk_lesson != "Tự gõ bài học khác bên dưới...":
 
-        default_lesson_txt = chosen_sgk_lesson.split(":")[-1].strip() if ":" in chosen_sgk_lesson else chosen_sgk_lesson
+        default_lesson_txt = re.sub(r"^\s*(?:Chuyên đề|Bài|Chủ đề)\s*\d+\s*:\s*", "", chosen_sgk_lesson).strip()
 
 
 
