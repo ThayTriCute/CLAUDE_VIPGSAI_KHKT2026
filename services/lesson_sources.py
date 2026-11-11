@@ -98,17 +98,24 @@ def local_textbook_grounding(subject, grade, topic):
     catalogue. A missing packet is explicit, including on hosts without F:.
     """
     subject, grade = academic_context(subject, grade)
-    root = Path(os.environ.get('GSAI_TEXTBOOK_ARCHIVE_ROOT') or
-                Path(__file__).resolve().parents[2] / 'textbook_archive_6_12')
     result = {'status': 'archive_unavailable', 'source_order': 'local_xz_before_online',
               'page_content_loaded': False, 'semantic_acceptance': False,
               'online_lookup_performed': False}
-    if not root.is_dir():
+    # Nếu CÓ cấu hình biến môi trường (máy QA trỏ tới kho đầy đủ trên F:) thì chỉ dùng đúng
+    # nó — cấu hình sai vẫn là archive_unavailable, không âm thầm dùng kho khác. Nếu KHÔNG đặt
+    # biến (chính là trên Cloud), tự tìm kho mount cạnh repo rồi tới gói neo nhỏ đi kèm repo,
+    # để Trạm 1 vẫn bám nguồn khi chạy Cloud. Chỉ gói diễn giải có trích dẫn đi kèm repo; sách gốc thì không.
+    env_root = os.environ.get('GSAI_TEXTBOOK_ARCHIVE_ROOT')
+    if env_root:
+        candidates = [Path(env_root)]
+    else:
+        base = Path(__file__).resolve()
+        candidates = [base.parents[2] / 'textbook_archive_6_12', base.parents[1] / 'textbook_archive_6_12']
+    index = next((c / 'reviewed_lesson_packets' / 'index.json' for c in candidates
+                  if (c / 'reviewed_lesson_packets' / 'index.json').is_file()), None)
+    if index is None:
         return result
     result['status'] = 'no_exact_reviewed_packet'
-    index = root / 'reviewed_lesson_packets' / 'index.json'
-    if not index.is_file():
-        return result
     try:
         if index.stat().st_size > 1_000_000:
             raise ValueError('Source index too large')
