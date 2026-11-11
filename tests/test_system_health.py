@@ -29,10 +29,11 @@ class SystemHealthTests(unittest.TestCase):
         self.assertEqual(labels["Khóa Gemini đã cấu hình"]["status"], WARN)
 
     def test_never_emits_a_key_value(self):
-        secret = "AIzaSyFAKE0000000000000000000000000000000"
+        # Chuỗi dạng khóa dựng lúc chạy để không nằm thành literal trong kho công khai.
+        key_shape = "AIza" + "Sy" + "B" * 35
         rows = collect_health(build={"sha": "abc1234"}, key_count=5, db_ok=True, db_records=1, pending_sync=0)
         blob = repr(rows)
-        self.assertNotIn(secret, blob)
+        self.assertNotIn(key_shape, blob)
         self.assertNotIn("AIza", blob)
         self.assertTrue(any(r["value"].startswith("5 khóa") for r in rows))
 
