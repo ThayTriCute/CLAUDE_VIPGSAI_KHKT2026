@@ -42,18 +42,17 @@ class ItemLanguagePolicyTests(unittest.TestCase):
             ),
             "",
         )
-        # English subject may keep English stems
+        # English subject: EN stems OK; VI stems not hard-blocked (prompt-led).
         self.assertEqual(
             item_display_language_issue("Choose the correct answer to complete the sentence.", "Tiếng Anh"),
             "",
         )
-        # English subject must not use Vietnamese exam stems
         self.assertEqual(
             item_display_language_issue(
                 "Cho hàm số $y=x^2$. Mệnh đề nào sau đây đúng?",
                 "Tiếng Anh",
             ),
-            "vietnamese_stem_on_english_subject",
+            "",
         )
 
     def test_prompts_carry_language_rule_all_subjects(self):

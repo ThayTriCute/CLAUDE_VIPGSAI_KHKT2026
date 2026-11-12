@@ -3,7 +3,7 @@ def _refresh_t1_context_services():
     from importlib import reload
     from services import bbt_display_contract, inequality_region, plot_labels, lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation, station1_scope
     from data import curriculum_data
-    for module, revision in ((bbt_display_contract, 2026110911), (inequality_region, 2026110914), (plot_labels, 2026110914), (lesson_sources, 2026110802), (curriculum_policy, 2026111221),
+    for module, revision in ((bbt_display_contract, 2026110911), (inequality_region, 2026110914), (plot_labels, 2026110914), (lesson_sources, 2026110802), (curriculum_policy, 2026111222),
                              (lab_scope, 2026110901), (lesson_export, 2026110911),
                              (text_boundaries, 2026110801), (socratic_context, 2026110901),
                              (philosophy_rotation, 2026110801), (station1_scope, 2026110920),

@@ -11,7 +11,7 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026111221
+T1_CONTEXT_REVISION = 2026111222
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
 
 # Stem tiếng Anh điển hình của đề thi AI (Toán/KH) — không phải ngữ liệu trích dẫn.
@@ -24,16 +24,6 @@ _EN_EXAM_STEM_RE = re.compile(
     r"maximum value of the|minimum value of the|how many solutions|"
     r"the following statements|given the function|consider the function"
     r")\b",
-    re.I,
-)
-_VI_EXAM_STEM_RE = re.compile(
-    r"(cho hàm số|mệnh đề nào|đồng biến|nghịch biến|tiệm cận|"
-    r"phương trình|khoảng nào|giá trị lớn nhất|giá trị nhỏ nhất|"
-    r"trong các khẳng định|đúng hay sai|chọn đáp án)",
-    re.I,
-)
-_VI_DIACRITIC_RE = re.compile(
-    r"[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]",
     re.I,
 )
 
@@ -73,17 +63,18 @@ def _strip_math_for_language_scan(text):
 
 
 def item_display_language_issue(text, subject):
-    """Trả mã lỗi nếu stem/mệnh đề lệch ngôn ngữ môn; '' nếu chấp nhận được."""
+    """Trả mã lỗi nếu stem/mệnh đề lệch ngôn ngữ môn; '' nếu chấp nhận được.
+
+    Cổng cứng chỉ chặn stem kiểu đề tiếng Anh trên môn không phải Tiếng Anh
+    (lỗi AI sinh Toán/KH bằng EN). Môn Tiếng Anh không bị chặn cứng bằng
+    heuristic tiếng Việt: đề TA hợp lệ dùng EN, còn hướng dẫn/QA/recovery
+    fixture có thể lẫn Việt; chất lượng stem TA đi qua prompt, không qua gate này.
+    """
     subject = canonical_subject(subject)
     cleaned = _strip_math_for_language_scan(text)
     if not cleaned.strip():
         return ""
     if subject == "Tiếng Anh":
-        # Đề Tiếng Anh: stem/mệnh đề không được viết kiểu đề kiểm tra tiếng Việt
-        if _VI_EXAM_STEM_RE.search(cleaned) or (
-            _VI_DIACRITIC_RE.search(cleaned) and len(re.findall(r"[A-Za-zÀ-ỹ]{3,}", cleaned)) >= 6
-        ):
-            return "vietnamese_stem_on_english_subject"
         return ""
     if _EN_EXAM_STEM_RE.search(cleaned):
         return "english_stem_outside_english_subject"
