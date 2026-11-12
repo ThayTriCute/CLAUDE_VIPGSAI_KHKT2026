@@ -1,0 +1,93 @@
+{
+  "checked_at": "2026-11-12",
+  "scope": "Neo pháp lý Trạm 5 (tư vấn tâm lý học đường). Ưu tiên VB mới nhất đang hiệu lực; VB cũ hơn vẫn dùng nếu còn hiệu lực tại ngày tư vấn. Không chứng nhận đã đọc toàn văn hay nghiệm thu pháp lý tự động.",
+  "selection_rule": "newest_in_force_OR_older_still_in_force; refresh via trusted official channels",
+  "trusted_channels": [
+    "https://vbpl.vn",
+    "https://congbao.chinhphu.vn",
+    "https://vanban.chinhphu.vn",
+    "https://moet.gov.vn"
+  ],
+  "documents": [
+    {
+      "code": "102/2016/QH13",
+      "name": "Luật Trẻ em",
+      "issued_on": "2016-04-05",
+      "effective_from": "2017-06-01",
+      "scope": "child_protection",
+      "status": "partially_amended",
+      "role": "Quyền trẻ em, bảo vệ, lắng nghe ý kiến phù hợp độ tuổi",
+      "url": "https://vbpl.vn/van-ban/chi-tiet/luat-tre-em-so-102-2016-qh13--101871",
+      "note": "VB cũ hơn nhưng vẫn là luật nền; CSDL ghi hết hiệu lực một phần do sửa đổi/bổ sung — vẫn áp dụng phần còn hiệu lực. Đọc cùng văn bản sửa đổi.",
+      "checked_at": "2026-11-12",
+      "verification_scope": "document_identity_and_partial_effectivity_label; not_full_article_mapping"
+    },
+    {
+      "code": "43/2019/QH14",
+      "name": "Luật Giáo dục",
+      "issued_on": "2019-06-14",
+      "effective_from": "2020-07-01",
+      "scope": "education",
+      "status": "partially_amended",
+      "role": "Mục tiêu giáo dục toàn diện, môi trường giáo dục lành mạnh",
+      "url": "https://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID=139764",
+      "note": "Còn hiệu lực; đọc cùng Luật 123/2025/QH15 (sửa đổi) và bản hợp nhất khi đối chiếu điều khoản.",
+      "amendments_observed": ["123/2025/QH15"],
+      "checked_at": "2026-11-12",
+      "verification_scope": "document_identity_status_with_amendment_chain; not_consolidated_certificate"
+    },
+    {
+      "code": "123/2025/QH15",
+      "name": "Luật sửa đổi, bổ sung một số điều của Luật Giáo dục",
+      "issued_on": "2025-12-10",
+      "effective_from": "2026-01-01",
+      "scope": "education",
+      "status": "amending",
+      "role": "Cập nhật Luật Giáo dục; đọc cùng 43/2019/QH14",
+      "url": "https://vanban.chinhphu.vn/?docid=216504&pageid=27160",
+      "note": "Văn bản sửa đổi mới hơn; một số khoản có lộ trình hiệu lực riêng — đối chiếu bản chính thức trước khi viện dẫn điều khoản.",
+      "checked_at": "2026-11-12",
+      "verification_scope": "official_metadata_issue_and_effective_date; not_full_article_mapping"
+    },
+    {
+      "code": "80/2017/NĐ-CP",
+      "name": "Nghị định quy định về môi trường giáo dục an toàn, lành mạnh, thân thiện, phòng, chống bạo lực học đường",
+      "issued_on": "2017-07-17",
+      "effective_from": "2017-09-05",
+      "scope": "school_safety",
+      "status": "active",
+      "role": "Phòng chống bạo lực học đường; trách nhiệm nhà trường/gia đình",
+      "url": "https://vanban.chinhphu.vn/default.aspx?docid=190430&pageid=27160",
+      "corroborating_source_url": "https://vbpl.vn/TW/Pages/vbpq-toanvan.aspx?ItemID=128348",
+      "note": "VB năm 2017 nhưng CSDL ghi còn hiệu lực — đúng kiểu 'cũ nhưng còn hiệu lực'. Không nhầm với NĐ 79/2017.",
+      "checked_at": "2026-11-12",
+      "verification_scope": "official_docid_190430_and_vbpl_ItemID_128348_identity; still_in_force_label"
+    },
+    {
+      "code": "22/2021/TT-BGDĐT",
+      "name": "Thông tư đánh giá học sinh THCS và THPT",
+      "issued_on": "2021-07-20",
+      "effective_from": "2021-09-05",
+      "scope": "assessment",
+      "status": "active",
+      "role": "Đánh giá vì sự tiến bộ; tránh gắn nhãn tiêu cực từ điểm số",
+      "url": "https://vbpl.vn/tw/Pages/vbpq-van-ban-goc.aspx?ItemID=150073",
+      "note": "Đang hiệu lực; sẽ được sửa bởi TT 89/2026 từ 01/12/2026 — không áp sớm nội dung sắp HL.",
+      "checked_at": "2026-11-12",
+      "verification_scope": "shared_with_curriculum_registry; counseling_use_non_labeling_only"
+    },
+    {
+      "code": "89/2026/TT-BGDĐT",
+      "name": "Thông tư sửa đổi TT 27/2020 và TT 22/2021 về đánh giá học sinh",
+      "issued_on": "2026-10-16",
+      "effective_from": "2026-12-01",
+      "scope": "assessment",
+      "status": "upcoming",
+      "role": "Cập nhật khung đánh giá sau ngày hiệu lực; không áp dụng sớm trong tư vấn",
+      "url": "https://vanban.chinhphu.vn/?docid=220070&pageid=27160&typegroupid=6",
+      "note": "Đã ban hành, chưa hiệu lực trước 01/12/2026. Khi đến ngày HL, ưu tiên bản mới + phần còn HL của TT 22/2021.",
+      "checked_at": "2026-11-12",
+      "verification_scope": "official_metadata_effective_date_only; shared_upcoming_with_curriculum_registry"
+    }
+  ]
+}
