@@ -345,6 +345,12 @@ if "tram2_count" not in st.session_state: st.session_state.tram2_count = 0
 
 if "tram3_count" not in st.session_state: st.session_state.tram3_count = 0
 
+if "tram5_count" not in st.session_state: st.session_state.tram5_count = 0
+
+if "counseling_messages" not in st.session_state: st.session_state.counseling_messages = []
+
+if "counseling_logs" not in st.session_state: st.session_state.counseling_logs = []
+
 if "chat" not in st.session_state: st.session_state.chat = None
 
 if "current_lesson" not in st.session_state: st.session_state.current_lesson = ""
@@ -1353,7 +1359,7 @@ def fetch_remote_sheet_logs(webhook_url: str, token: str):
 
 
 
-if st.session_state.get("tab4_authenticated", False) and not st.session_state.global_stats_loaded and re.match(r"^https://script\.google\.com/macros/s/[^/]+/exec", sheet_webhook_url):
+if (st.session_state.get("teacher_authenticated") or st.session_state.get("tab4_authenticated", False)) and not st.session_state.global_stats_loaded and re.match(r"^https://script\.google\.com/macros/s/[^/]+/exec", sheet_webhook_url):
 
     data_gs = fetch_remote_sheet_logs(sheet_webhook_url, str(get_secret("SHEET_WEBHOOK_TOKEN", "")))
 
@@ -1469,7 +1475,7 @@ if previous_context_key is not None and previous_context_key != current_context_
 
         st.session_state.setdefault("abandoned_attempts", []).append({"attempt_id": st.session_state.get("attempt_id"), "exam": st.session_state.get("exam_data"), "answers": dict(st.session_state.get("exam_answers", {})), "context": st.session_state.get("exam_context", {}), "saved_at": get_vn_time()})
 
-        st.warning("Đã giữ bản bài đang làm trong phiên trước khi đổi môn/lớp. Có thể tải bản lưu tại Trạm 4.")
+        st.warning("Đã giữ bản bài đang làm trong phiên trước khi đổi môn/lớp. Có thể tải bản lưu tại Trạm 5.")
 
     # HỌC SINH VỪA ĐỔI MÔN HOẶC ĐỔI KHỐI LỚP TRÊN THANH BÊN
 
@@ -1663,6 +1669,92 @@ for _event_id, _future in list(st.session_state.get("sheet_sync_futures", {}).it
             logging.warning("Background Sheets synchronization did not complete")
         st.session_state.sheet_sync_futures.pop(_event_id, None)
 
+with st.sidebar.expander("💾 Hồ sơ cá nhân trên thiết bị (Trạm 1–5)", expanded=False):
+    from services.personal_journey_vault import (
+        LOCALSTORAGE_KEY,
+        PURGEABLE_SESSION_KEYS,
+        apply_vault_to_session_payload,
+        build_personal_snapshot,
+        compare_snapshots,
+        compress_vault,
+        decompress_vault,
+        ethics_banner_md,
+        summarize_station_progress,
+    )
+    st.caption(ethics_banner_md())
+    _vault_logs = list(st.session_state.get("analytics_logs") or []) + list(st.session_state.get("counseling_logs") or [])
+    _prog_now = summarize_station_progress(_vault_logs, name=student_name)
+    st.markdown(
+        f"Trạm3: **{_prog_now.get('tram3_trend')}**"
+        f" (điểm gần nhất: {_prog_now.get('tram3_last_score')}) · "
+        f"Trạm4 WHO-5: **{_prog_now.get('tram5_trend')}**"
+        f" (Δ={_prog_now.get('tram5_who5_delta')})"
+    )
+    if st.button("📦 Nén & tải hồ sơ cá nhân (.gsai.xz)", key="personal_vault_export_btn", width="stretch"):
+        _snap = build_personal_snapshot(
+            student_name=student_name,
+            grade=grade,
+            subject=subject,
+            analytics_logs=st.session_state.get("analytics_logs") or [],
+            counseling_logs=st.session_state.get("counseling_logs") or [],
+            feedback_logs=st.session_state.get("feedback_logs") or [],
+            tram_counts={
+                "tram1": int(st.session_state.get("tram1_count") or 0),
+                "tram2": int(st.session_state.get("tram2_count") or 0),
+                "tram3": int(st.session_state.get("tram3_count") or 0),
+                "tram5": int(st.session_state.get("tram5_count") or 0),
+            },
+            current_topic=str(st.session_state.get("current_topic") or ""),
+        )
+        _prev = st.session_state.get("personal_vault_last")
+        st.session_state.personal_vault_delta = compare_snapshots(_prev if isinstance(_prev, dict) else None, _snap)
+        st.session_state.personal_vault_last = _snap
+        _blob = compress_vault(_snap)
+        _safe_name = "".join(ch if ch.isalnum() or ch in "-_" else "_" for ch in (student_name or "an_danh"))[:40]
+        st.download_button(
+            "⬇️ Tải file nén về máy",
+            data=_blob,
+            file_name=f"gsai_vault_{_safe_name}.gsai.xz",
+            mime="application/x-xz",
+            key="personal_vault_download_btn",
+            width="stretch",
+        )
+        st.success("Đã tạo bản nén trên thiết bị. Giữ file này để khôi phục ngữ cảnh/tiến bộ.")
+        if st.session_state.personal_vault_delta.get("notes"):
+            st.info(" · ".join(st.session_state.personal_vault_delta["notes"]))
+    _up = st.file_uploader("Khôi phục từ file .gsai.xz trên máy", type=["xz"], key="personal_vault_upload")
+    if _up is not None and st.button("♻️ Nạp lại hồ sơ vào phiên", key="personal_vault_restore_btn"):
+        try:
+            _restored = decompress_vault(_up.getvalue())
+            _payload = apply_vault_to_session_payload(_restored)
+            for _k, _v in _payload.items():
+                if _k.startswith("restored_"):
+                    continue
+                st.session_state[_k] = _v
+            st.session_state.personal_vault_last = _restored
+            st.success("Đã khôi phục ngữ cảnh/tiến bộ từ thiết bị vào phiên hiện tại.")
+            st.rerun()
+        except Exception as _ve:
+            st.error(f"Không đọc được hồ sơ: {_ve}")
+    st.caption(f"Lưu trên máy/điện thoại (PWA): tải `.gsai.xz` về thiết bị. Khóa dự phòng: `{LOCALSTORAGE_KEY}`.")
+    if st.button("🗑️ Xóa hồ sơ phiên trên thiết bị này", key="personal_vault_purge_btn"):
+        for _k in PURGEABLE_SESSION_KEYS:
+            if _k not in st.session_state:
+                continue
+            if isinstance(st.session_state.get(_k), list):
+                st.session_state[_k] = []
+            elif isinstance(st.session_state.get(_k), dict):
+                st.session_state[_k] = {}
+            else:
+                st.session_state[_k] = None
+        for _k in ("tram1_count", "tram2_count", "tram3_count", "tram5_count"):
+            st.session_state[_k] = 0
+        st.components.v1.html(
+            f"<script>try{{localStorage.removeItem({LOCALSTORAGE_KEY!r});}}catch(e){{}}</script>",
+            height=0,
+        )
+        st.warning("Đã xóa dữ liệu phiên cá nhân trên thiết bị (không xóa file .gsai.xz đã tải về).")
+        st.rerun()
 with st.sidebar.expander("🛠️ Báo lỗi ứng dụng & Góp ý trải nghiệm", expanded=False):
 
     fb_category = st.selectbox("Loại vấn đề gặp phải:", ["📷 Lỗi nhận diện chữ", "📊 Lỗi đồ thị Lab", "🤖 AI giải thích khó hiểu", "⏳ Ứng dụng chậm", "💡 Đề xuất mới"])
@@ -1801,7 +1893,7 @@ with st.sidebar.expander("⚖️ Căn Cứ Pháp Quy Bộ GD&ĐT Hiện Hành", 
 
 
 
-st.sidebar.info("💡 **Triết lý:** Dưỡng thiện tâm - Ươm nhân tài • Dẫn dắt tư duy tự học!")
+st.sidebar.info("💡 **Triết lý:** Dưỡng thiện tâm - Ươm nhân tài • Học · Luyện · Khảo thí · Nghiên cứu · Tư vấn học đường")
 # Dấu phiên bản: giúp xác minh Cloud đã chạy đúng commit (services.build_info).
 try:
     from services.build_info import build_label
@@ -2084,6 +2176,15 @@ def get_cross_station_pedagogical_context(current_station: int) -> str:
         ctx_parts.append("• Trạm 3 (Khảo thí): Em đã kết thúc lượt trao đổi sau thi; không suy nắm vững cả đề chỉ từ tín hiệu kết thúc hoặc điểm số.")
     elif st.session_state.get('tram3_count', 0) > 0 or len(st.session_state.get('tram3_chat_messages', [])) > 0:
         ctx_parts.append("• Trạm 3 (Khảo thí): Em đã tham gia thi thử và đang lắng nghe phân tích sau thi.")
+
+    # Thông tin Trạm 4 (tư vấn học đường — độc lập)
+    counsel_n = len(st.session_state.get("counseling_messages") or [])
+    counsel_logs = len(st.session_state.get("counseling_logs") or [])
+    if counsel_n or counsel_logs:
+        ctx_parts.append(
+            f"• Trạm 4 (Tư vấn tâm lý học đường): Em đã có {max(counsel_logs, counsel_n and 1)} lượt đồng hành cảm xúc–ứng xử; "
+            "đây là hỗ trợ sư phạm, không phải kết luận lâm sàng."
+        )
 
     if not ctx_parts:
         return "Học sinh đang bắt đầu hành trình học tập tại Trạm " + str(current_station) + "."
@@ -2468,15 +2569,21 @@ def call_gemini_with_fallback(prompt_or_contents, system_instruction=None, json_
 
     deadline = time.monotonic() + 240
 
+    from services.school_counseling import is_tram5_locked_instruction
+    _tram5_locked = is_tram5_locked_instruction(system_instruction)
     if json_mode:
         effective_si = system_instruction if system_instruction else "Bạn là Chuyên gia Khảo thí và AI Engine chuyên nghiệp. Hãy phân tích và xuất dữ liệu định dạng JSON hợp lệ 100% tuân thủ cấu trúc yêu cầu, không thêm bất kỳ văn bản đàm thoại nào ngoài JSON."
+    elif _tram5_locked:
+        # Tram 5 lock overrides tutor/exam default SI.
+        effective_si = system_instruction
     else:
         effective_si = f"{DEFAULT_PEDAGOGICAL_SYSTEM_INSTRUCTION}\n\n{system_instruction}" if system_instruction else DEFAULT_PEDAGOGICAL_SYSTEM_INSTRUCTION
 
-    from services.text_boundaries import with_teaching_step_layout
-    effective_si = with_teaching_step_layout(effective_si)
-    from services.curriculum_policy import with_academic_grounding
-    effective_si = with_academic_grounding(effective_si)
+    if not _tram5_locked:
+        from services.text_boundaries import with_teaching_step_layout
+        effective_si = with_teaching_step_layout(effective_si)
+        from services.curriculum_policy import with_academic_grounding
+        effective_si = with_academic_grounding(effective_si)
 
     with st.status("Gia sư AI đang tiếp nhận yêu cầu...", expanded=True) as status_box:
 
@@ -2668,11 +2775,16 @@ def stream_gemini_with_fallback(prompt_or_contents, system_instruction=None):
 
     deadline = time.monotonic() + 180
 
-    effective_si = f"{DEFAULT_PEDAGOGICAL_SYSTEM_INSTRUCTION}\n\n{system_instruction}" if system_instruction else DEFAULT_PEDAGOGICAL_SYSTEM_INSTRUCTION
-    from services.text_boundaries import with_teaching_step_layout
-    effective_si = with_teaching_step_layout(effective_si)
-    from services.curriculum_policy import with_academic_grounding
-    effective_si = with_academic_grounding(effective_si)
+    from services.school_counseling import is_tram5_locked_instruction
+    _tram5_locked = is_tram5_locked_instruction(system_instruction)
+    if _tram5_locked:
+        effective_si = system_instruction
+    else:
+        effective_si = f"{DEFAULT_PEDAGOGICAL_SYSTEM_INSTRUCTION}\n\n{system_instruction}" if system_instruction else DEFAULT_PEDAGOGICAL_SYSTEM_INSTRUCTION
+        from services.text_boundaries import with_teaching_step_layout
+        effective_si = with_teaching_step_layout(effective_si)
+        from services.curriculum_policy import with_academic_grounding
+        effective_si = with_academic_grounding(effective_si)
 
 
 
@@ -7831,13 +7943,15 @@ def parse_quiz_questions(text):
 st.markdown('<div class="main-header"><div class="main-title">🏫 GIA SƯ AI - HỆ SINH THÁI LỚP HỌC ĐẢO NGƯỢC</div><div class="sub-title">Trường THPT Tân Hiệp (An Giang) • Tác giả: Thầy Phan Minh Trí • Đồng hành từ Lớp 6 đến Lớp 12</div><div style="margin-top: 8px;"><span class="badge-tag">Bộ sách: Kết Nối Tri Thức Với Cuộc Sống</span><span class="badge-tag" style="border-color: #34d399; color: #34d399; margin-left: 8px;">Theo chủ đề GDPT 2018 • Nội dung cần giáo viên duyệt</span></div></div>', unsafe_allow_html=True)
 
 # ==============================================================================
-# 7.1 THANH ĐIỀU HƯỚNG 4 TRẠM NẰM NGANG PHÍA SAU DÒNG KẺ TIÊU ĐỀ (TOP STATION NAVBAR)
+# 7.1 THANH ĐIỀU HƯỚNG 5 TRẠM (TOP STATION NAVBAR)
+# Thứ tự UI: 1→2→3→Trạm 4 (tâm lý, HS)→Trạm 5 (dữ liệu/nghiên cứu, MK GV).
 # ==============================================================================
 station_labels = [
     "📖 Trạm 1: Học Tập & Phòng Lab",
     "✍️ Trạm 2: Gia Sư Socratic & Nộp Bài",
     "📝 Trạm 3: Luyện Tập & Khảo Thí",
-    "📊 Trạm 4: Dữ Liệu & Nghiên Cứu"
+    "💚 Trạm 4: Tư Vấn Tâm Lý Học Đường",
+    "📊 Trạm 5: Dữ Liệu & Nghiên Cứu",
 ]
 
 if "selected_station" not in st.session_state:
@@ -7851,7 +7965,7 @@ if "sb_station_radio_selector" not in st.session_state:
 elif st.session_state.sb_station_radio_selector != st.session_state.selected_station:
     st.session_state.sb_station_radio_selector = st.session_state.selected_station
 
-st.markdown('<div style="font-size: 13px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.8px; margin-top: -12px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">🧭 KHÔNG GIAN HỌC TẬP & KHẢO THÍ SƯ PHẠM (CHỌN TRẠM HOẠT ĐỘNG):</div>', unsafe_allow_html=True)
+st.markdown('<div style="font-size: 13px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.8px; margin-top: -12px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">🧭 HỆ SINH THÁI GDPT 2018 • 5 TRẠM (CHỌN TRẠM HOẠT ĐỘNG):</div>', unsafe_allow_html=True)
 
 def navigate_to_station(label):
     if label in station_labels:
@@ -7859,8 +7973,8 @@ def navigate_to_station(label):
         st.session_state.sb_station_radio_selector = label
 
 
-nav_t1, nav_t2, nav_t3, nav_t4 = st.columns(4)
-for idx_st, (col_st, label_st) in enumerate(zip([nav_t1, nav_t2, nav_t3, nav_t4], station_labels)):
+nav_t1, nav_t2, nav_t3, nav_t4, nav_t5 = st.columns(5)
+for idx_st, (col_st, label_st) in enumerate(zip([nav_t1, nav_t2, nav_t3, nav_t4, nav_t5], station_labels)):
     with col_st:
         is_cur_active = (st.session_state.selected_station == label_st)
         btn_type = "primary" if is_cur_active else "secondary"
@@ -14795,7 +14909,7 @@ if selected_station == station_labels[2]:
 
                 measure_student_id = ""
 
-                if st.session_state.get("tab4_authenticated"):
+                if (st.session_state.get("teacher_authenticated") or st.session_state.get("tab4_authenticated")):
 
                     measure_phase = st.selectbox("Mục đích bài đo (giáo viên)", ["practice", "pre", "post"])
 
@@ -15916,8 +16030,8 @@ if selected_station == station_labels[2]:
 
                         if st.button("🏛️ Nạp Shard Quốc Gia", key="btn_save_national_shard", width="stretch"):
 
-                            if not st.session_state.get("tab4_authenticated", False):
-                                st.warning("Cần mở khóa quản trị ở Trạm 4 trước khi cập nhật ngân hàng chung.")
+                            if not (st.session_state.get("teacher_authenticated") or st.session_state.get("tab4_authenticated", False)):
+                                st.warning("Cần mở khóa quản trị ở Trạm 5 trước khi cập nhật ngân hàng chung.")
                             else:
 
                                 with st.spinner("Đang chạy 5 TẦNG KIỂM ĐỊNH CHẤT LƯỢNG (Quality Gate) & Nạp vào Shard Quốc Gia..."):
@@ -16875,7 +16989,7 @@ if selected_station == station_labels[2]:
 
             if sheet_webhook_url and not sync_ok:
 
-                st.warning("Đã lưu vào CSDL cục bộ; chưa xác nhận đồng bộ Sheets. Vào Trạm 4 để tải dữ liệu hoặc gửi lại.")
+                st.warning("Đã lưu vào CSDL cục bộ; chưa xác nhận đồng bộ Sheets. Vào Trạm 5 để tải dữ liệu hoặc gửi lại.")
 
 
 
@@ -17147,69 +17261,47 @@ if selected_station == station_labels[2]:
 
 # ------------------------------------------------------------------------------
 
-if selected_station == station_labels[3]:
+if selected_station == station_labels[4]:
 
     st.subheader("📊 Dữ liệu học tập & nghiên cứu")
 
-    if not st.session_state.get("tab4_authenticated", False):
-
-        with st.form("admin_auth_form", clear_on_submit=False):
-
+    st.caption("Trạm 5 dành **giáo viên / chủ dự án** (nhật ký, nghiên cứu, nạp shard). Học sinh tương tác tâm lý ở **Trạm 4** — không cần mật khẩu.")
+    st.info("Trạm 5 **cần mật khẩu giáo viên** (`ADMIN_PASS`). Trạm 4 (tâm lý) mở cho học sinh — không khóa.")
+    if not (st.session_state.get("teacher_authenticated") or st.session_state.get("tab4_authenticated", False)):
+        with st.form("tab4_teacher_auth_form", clear_on_submit=False):
             col_p1, col_p2 = st.columns([2.8, 1.2])
-
             with col_p1:
-
-                password = st.text_input("Mật khẩu quản trị:", type="password", key="tab4_password_input", placeholder="Nhập mật khẩu quản trị...")
-
+                password = st.text_input(
+                    "Mật khẩu giáo viên:",
+                    type="password",
+                    key="tab4_password_input",
+                    placeholder="Nhập mật khẩu giáo viên...",
+                )
             with col_p2:
-
                 st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-
-                btn_unlock = st.form_submit_button("🔓 Mở khóa", type="primary", width="stretch")
-
+                btn_unlock = st.form_submit_button("🔓 Mở khóa Trạm 5", type="primary", width="stretch")
             if btn_unlock:
-
-                import hmac
-
                 configured = str(get_secret("ADMIN_PASS", "")).strip()
-
                 clean_pass = (password or "").strip()
-
                 locked_until = st.session_state.get("admin_locked_until", 0.0)
                 from services.admin_guard import admin_globally_locked, record_admin_failure
                 global_locked = admin_globally_locked()
-                is_valid = not global_locked and time.monotonic() >= locked_until and admin_password_matches(clean_pass, configured)
+                is_valid = (
+                    not global_locked
+                    and time.monotonic() >= locked_until
+                    and admin_password_matches(clean_pass, configured)
+                )
                 if not configured:
-                    st.error(
-                        "Chưa cấu hình ADMIN_PASS trong Streamlit Secrets — "
-                        "ô mật khẩu bên trên chưa thể mở khóa cho đến khi có file cấu hình local."
-                    )
-                    st.markdown(
-                        """
-**Thiết lập từng bước (máy local):**
-1. Trong thư mục chạy app, tạo/sửa file `.streamlit/secrets.toml` (file này **không** đưa lên GitHub).
-2. Chọn một mật khẩu gốc (ví dụ mật khẩu giáo viên tự đặt).
-3. Tạo mã băm: chạy `python scripts/make_admin_pass_hash.py` rồi nhập mật khẩu gốc; script in ra một dòng dạng `ADMIN_PASS = "sha256:...."` .
-4. Dán đúng dòng đó vào `.streamlit/secrets.toml` và **lưu file**.
-5. **Restart** Streamlit (`Ctrl+C` rồi `streamlit run app.py`).
-6. Quay lại Trạm 4, gõ **mật khẩu gốc** (không gõ chuỗi `sha256:...`) rồi bấm **Mở khóa**.
-
-`sha256:<hash>` nghĩa là: app chỉ lưu **mã băm một chiều** của mật khẩu, không lưu mật khẩu thô trong secrets. Khi anh gõ mật khẩu, app băm lại và so khớp với hash đã cấu hình.
-                        """
-                    )
+                    st.error("Chưa cấu hình ADMIN_PASS trong Streamlit Secrets.")
+                    st.caption("Chạy `python scripts/make_admin_pass_hash.py` rồi ghi vào `.streamlit/secrets.toml`, restart app.")
                 elif global_locked or time.monotonic() < locked_until:
                     st.error("Đã thử sai nhiều lần. Vui lòng chờ khoảng 2 phút trước khi thử lại.")
-
                 if is_valid:
-
+                    st.session_state.teacher_authenticated = True
                     st.session_state.tab4_authenticated = True
-
                     st.session_state.auth_failures = 0
-
                     st.rerun()
-
                 else:
-
                     st.session_state.auth_failures = st.session_state.get("auth_failures", 0) + 1
                     if configured and clean_pass and not global_locked:
                         record_admin_failure()
@@ -17217,18 +17309,17 @@ if selected_station == station_labels[3]:
                         st.session_state.admin_locked_until = time.monotonic() + 60
                         st.session_state.auth_failures = 0
                     if configured and not global_locked and time.monotonic() >= locked_until:
-                        st.error("Mật khẩu không đúng. Vui lòng liên hệ giáo viên phụ trách.")
-
+                        st.error("Mật khẩu không đúng. Chỉ giáo viên / chủ dự án được mở Trạm 5.")
         if not str(get_secret("ADMIN_PASS", "")).strip():
-            st.info("Thiếu `.streamlit/secrets.toml` → ADMIN_PASS. Xem hướng dẫn ngay dưới ô mật khẩu sau khi bấm Mở khóa, hoặc chạy `python scripts/make_admin_pass_hash.py`.")
-
+            st.info("Thiếu ADMIN_PASS trong `.streamlit/secrets.toml`.")
         st.stop()
 
-    if st.button("Khóa khu vực quản trị"):
-
+    if st.button("Khóa Trạm 5 (giáo viên)", key="tab4_lock_btn"):
+        st.session_state.teacher_authenticated = False
         st.session_state.tab4_authenticated = False
-
         st.rerun()
+
+
 
     with st.expander("🩺 Sức khỏe hệ thống", expanded=True):
         from services.system_health import collect_health, health_summary
@@ -17272,7 +17363,7 @@ if selected_station == station_labels[3]:
 
     db_logs = db_manager.get_all_logs() if db_manager else []
 
-    local_logs = st.session_state.get("analytics_logs", []) + st.session_state.get("feedback_logs", [])
+    local_logs = st.session_state.get("analytics_logs", []) + st.session_state.get("feedback_logs", []) + st.session_state.get("counseling_logs", [])
 
     combined = st.session_state.get("global_logs", []) + db_logs + local_logs
 
@@ -17357,8 +17448,69 @@ if selected_station == station_labels[3]:
 
         st.info("Chưa có chẩn đoán. Sau khi nhận xét bài ở Trạm 2, lỗi kiến thức sẽ xuất hiện tại đây.")
 
+    st.markdown("### Ngữ liệu Trạm 4 → nghiên cứu (tư vấn học đường)")
+    try:
+        from services.tram5_outcome_metrics import collect_who5_pre_post_pairs, summarize_who5_pairs, outcome_events
+        _who_pairs = collect_who5_pre_post_pairs(logs)
+        _who_sum = summarize_who5_pairs(_who_pairs)
+        _out_n = len(outcome_events(logs))
+        if _out_n:
+            st.caption(f"Có {_out_n} lần đo COUNSELING_OUTCOME_CHECKIN (WHO-5 NC / check-in GSAI / mục tiêu tuần).")
+            if _who_sum.get("n_pairs"):
+                _w1, _w2, _w3, _w4 = st.columns(4)
+                _w1.metric("Cặp WHO-5 pre–post", str(_who_sum["n_pairs"]))
+                _w2.metric("WHO-5 TB trước", f'{_who_sum["mean_pre"]:.0f}')
+                _w3.metric("WHO-5 TB sau", f'{_who_sum["mean_post"]:.0f}')
+                _w4.metric("Δ WHO-5", f'{_who_sum["mean_delta"]:+.0f}', delta=f'{(_who_sum["improved_share"] or 0)*100:.0f}% cặp tăng')
+                st.caption("Theo dõi giáo dục phi thương mại (WHO-5 CC BY-NC-SA). Không suy nhân quả / không chẩn đoán.")
+        else:
+            st.caption("Chưa có chỉ số đo từ Trạm 4 (WHO-5 / check-in).")
+    except Exception as _woe:
+        st.caption(f"Chưa hiển thị được tổng hợp WHO-5: {_woe}")
 
+    counsel_rows = [x for x in logs if x.get("type") == "SCHOOL_COUNSELING_SESSION"]
+    _teacher_view = bool(st.session_state.get("teacher_authenticated") or st.session_state.get("tab4_authenticated", False))
+    if counsel_rows:
+        if _teacher_view:
+            st.caption(f"Có {len(counsel_rows)} phiên tư vấn (GV): cờ an toàn + excerpt rút gọn — không xuất raw ra nghiên cứu công khai.")
+            st.dataframe(
+                display_frame(pd.DataFrame([{
+                    "time": r.get("time"),
+                    "name": r.get("name"),
+                    "grade": r.get("grade"),
+                    "theme": r.get("theme_label"),
+                    "crisis": (r.get("safety") or {}).get("crisis"),
+                    "violence": (r.get("safety") or {}).get("violence"),
+                    "user_excerpt": (r.get("user_excerpt") or "")[:160],
+                } for r in counsel_rows])),
+                width="stretch",
+            )
+        else:
+            st.caption(f"Có {len(counsel_rows)} phiên tư vấn học đường. Excerpt chỉ hiện khi GV đã mở khóa Trạm 5.")
+    else:
+        st.info("Chưa có phiên Trạm 4. Khi học sinh đồng hành tư vấn, gói ngữ liệu sẽ về đây cho nghiên cứu (không lộ secrets).")
 
+    st.markdown("### Xuất nghiên cứu an toàn (GV — ẩn danh)")
+    from services.personal_journey_vault import ethics_banner_md, research_safe_events
+    st.caption(ethics_banner_md())
+    if not (st.session_state.get("teacher_authenticated") or st.session_state.get("tab4_authenticated", False)):
+        st.info("Để tải bản nghiên cứu đã ẩn danh, giáo viên mở khóa tại **Trạm 5** trước (ADMIN_PASS). Học sinh vẫn xem được hồ sơ cá nhân hóa bên dưới.")
+    else:
+        _safe_rows = research_safe_events(logs)
+        if _safe_rows:
+            _safe_df = pd.DataFrame(_safe_rows)
+            st.dataframe(display_frame(_safe_df), width="stretch")
+            from services.admin_guard import csv_safe
+            st.download_button(
+                "⬇️ Tải CSV nghiên cứu (đã ẩn danh / không PII tư vấn thô)",
+                data=csv_safe(_safe_df).to_csv(index=False).encode("utf-8-sig"),
+                file_name="gsai_research_safe.csv",
+                mime="text/csv",
+                key="research_safe_export_btn",
+            )
+            st.caption("Bản này dùng mã nghiên cứu HS-…, bỏ excerpt tư vấn và secrets — minh bạch học thuật, giữ đạo đức & ATTT.")
+        else:
+            st.caption("Chưa có sự kiện để xuất bản nghiên cứu an toàn.")
     st.markdown("### Hồ sơ cá nhân hóa người học (từ dữ liệu quan sát)")
 
     try:
@@ -17394,7 +17546,7 @@ if selected_station == station_labels[3]:
                     key="dl_tram4_pairs_csv",
                 )
         else:
-            st.info("Chưa có cặp Pre/Post quan sát. Ở Trạm 3 hãy gắn phase=pre rồi post cùng student_id để Trạm 4 cá nhân hóa và đối chiếu trước–sau.")
+            st.info("Chưa có cặp Pre/Post quan sát. Ở Trạm 3 hãy gắn phase=pre rồi post cùng student_id để Trạm 5 cá nhân hóa và đối chiếu trước–sau.")
     except Exception as _t4e:
         st.warning(f"Chưa dựng được hồ sơ cá nhân hóa: {_t4e}")
 
@@ -17798,3 +17950,246 @@ if selected_station == station_labels[3]:
         st.download_button("Tải yêu cầu để gửi người phát triển", improvement, "yeu_cau_cai_tien.txt", "text/plain")
 
     st.caption("Thay đổi mã nguồn cần bản sửa, kiểm thử và duyệt trước triển khai. Ứng dụng không nhận GitHub Token và không tự đẩy mã lên main.")
+
+# ------------------------------------------------------------------------------
+# TRẠM 4 (HỌC SINH TƯƠNG TÁC): TƯ VẤN TÂM LÝ HỌC ĐƯỜNG — không MK
+# Nhớ ngữ cảnh Trạm 1–3; truyền gói SCHOOL_COUNSELING_SESSION sang Trạm 5 (dữ liệu).
+# ------------------------------------------------------------------------------
+
+if selected_station == station_labels[3]:
+    from services.school_counseling import (
+        CONCERN_THEMES,
+        PHILOSOPHY,
+        TRAM5_LOCK_MARKER,
+        build_journey_context,
+        build_research_packet,
+        counseling_system_instruction,
+        crisis_resources_md,
+        enforce_tram5_reply,
+        growth_micro_plan,
+        is_crisis_text,
+        is_violence_disclosure,
+        legal_anchor_markdown,
+        safety_banner,
+    )
+    try:
+        from services.tram4_learner_insights import weak_topics as _counsel_weak_topics
+    except Exception:
+        _counsel_weak_topics = lambda logs, student_id="": []
+
+
+    st.caption("Trạm 4 mở cho **học sinh** tương tác tư vấn tâm lý học đường. Công cụ dữ liệu/nghiên cứu (MK) nằm ở **Trạm 5**.")
+
+    st.markdown(
+        """
+<div style="padding:18px 20px;border-radius:14px;border:1px solid rgba(52,211,153,0.35);
+background:linear-gradient(135deg, rgba(6,78,59,0.35), rgba(15,23,42,0.65));margin-bottom:12px;">
+  <div style="font-size:22px;font-weight:800;color:#6ee7b7;">💚 Trạm 4 · Tư vấn tâm lý học đường (học sinh tương tác)</div>
+  <div style="color:#cbd5e1;margin-top:6px;font-size:14px;">
+    Nhà tâm lý học đường · hành vi sư phạm · triết gia giáo dục — <b>Dưỡng thiện tâm · Ươm nhân tài</b>.
+    Đồng hành để em tự tin, lương thiện, sống có ích, yêu quê hương và Tổ quốc Việt Nam trong khuôn khổ pháp luật & thuần phong mỹ tục.
+  </div>
+</div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.info(safety_banner())
+
+    with st.expander("Neo pháp lý & đạo đức tư vấn (đối chiếu bản chính thức)", expanded=False):
+        _extra_legal = []
+        try:
+            _extra_legal = legal_references()
+        except Exception:
+            pass
+        st.markdown(legal_anchor_markdown(_extra_legal))
+
+    _journey = get_cross_station_pedagogical_context(5)
+    _last_score = None
+    for _ev in reversed(st.session_state.get("analytics_logs") or []):
+        if isinstance(_ev, dict) and _ev.get("type") == "EXAM_RESULT":
+            try:
+                _last_score = float(_ev.get("score"))
+                break
+            except (TypeError, ValueError):
+                pass
+    _weak = _counsel_weak_topics(st.session_state.get("analytics_logs") or [], student_id="")
+    _journey_full = build_journey_context(
+        student_name=student_name,
+        grade=grade,
+        subject=subject,
+        cross_station_text=_journey,
+        analytics_logs=st.session_state.get("analytics_logs") or [],
+        weak_topics=_weak,
+        last_exam_score=_last_score,
+    )
+    with st.expander("Ngữ cảnh hành trình Trạm 1–3 (để Thầy tư vấn nhớ em)", expanded=True):
+        st.code(_journey_full, language="text")
+
+    theme_labels = [t[1] for t in CONCERN_THEMES]
+    theme_keys = [t[0] for t in CONCERN_THEMES]
+
+    theme_choice = st.selectbox("Chủ đề đồng hành hôm nay (GV ghi nhận với HS):", theme_labels, key="counsel_theme_select")
+    theme_key = theme_keys[theme_labels.index(theme_choice)]
+
+    with st.expander("📏 Đo tiến bộ học đường (0đ · WHO-5 NC + check-in GSAI) — chỉ GV", expanded=True):
+        from services.tram5_outcome_metrics import (
+            SCHOOL_CHECKIN_ITEMS,
+            WHO5_ITEMS_VI,
+            WHO5_SCALE_VI,
+            build_outcome_checkin,
+            who5_attribution_md,
+        )
+        st.markdown(who5_attribution_md())
+        _ophase = st.radio(
+            "Mốc đo",
+            ["session", "pre", "post"],
+            format_func=lambda x: {"session": "Theo phiên", "pre": "Đầu đợt (pre)", "post": "Cuối đợt (post)"}[x],
+            horizontal=True,
+            key="counsel_outcome_phase",
+        )
+        st.markdown("**Check-in học đường GSAI (0–10)**")
+        _school_ans = {}
+        for _k, _lab, _inv in SCHOOL_CHECKIN_ITEMS:
+            _school_ans[_k] = st.slider(_lab, 0, 10, 5, key=f"counsel_sc_{_k}")
+        _goal_txt = st.text_input("Mục tiêu tuần của em (GBO giáo dục):", key="counsel_weekly_goal_txt", placeholder="VD: Mỗi ngày học 25 phút rồi nghỉ")
+        _goal_prog = st.slider("Mức đạt mục tiêu tuần (0–10)", 0, 10, 0, key="counsel_weekly_goal_prog")
+        _who5_vals = None
+        if _ophase in ("pre", "post"):
+            st.markdown("**WHO-5** — trong **hai tuần** gần nhất, điều nào gần với cảm nhận của em nhất?")
+            _who5_vals = []
+            _opts = [f"{s} — {lab}" for s, lab in WHO5_SCALE_VI]
+            _opt_scores = [s for s, _ in WHO5_SCALE_VI]
+            for _i, _item in enumerate(WHO5_ITEMS_VI):
+                _pick = st.selectbox(f"{_i+1}. {_item}", _opts, index=2, key=f"counsel_who5_{_i}")
+                _who5_vals.append(_opt_scores[_opts.index(_pick)])
+        if st.button("💾 Lưu chỉ số sang Trạm 5", type="primary", key="counsel_outcome_save_btn"):
+            try:
+                _out = build_outcome_checkin(
+                    student_name=student_name,
+                    grade=grade,
+                    subject=subject,
+                    phase=_ophase,
+                    who5_scores=_who5_vals,
+                    school_answers=_school_ans,
+                    weekly_goal_text=_goal_txt or "Mục tiêu tuần",
+                    weekly_goal_progress=_goal_prog,
+                    theme_key=theme_key,
+                    theme_label=theme_choice,
+                )
+                st.session_state.counseling_logs.append(_out)
+                st.session_state.analytics_logs.append(_out)
+                st.success(
+                    "Đã lưu chỉ số giáo dục sang Trạm 5."
+                    + (
+                        f" WHO-5 = {_out['who5']['percent_0_100']}/100."
+                        if _out.get("who5")
+                        else ""
+                    )
+                )
+                if (_out.get("who5") or {}).get("below_screening_hint_50"):
+                    st.warning(
+                        "WHO-5 < 50: gợi ý GV quan tâm thêm và khuyến khích em nói với người lớn tin cậy / 111 khi cần. "
+                        "Không phải chẩn đoán."
+                    )
+            except Exception as _oe:
+                st.error(f"Chưa lưu được chỉ số: {_oe}")
+
+    st.markdown("#### Bản đồ trưởng thành tuần này")
+    for _i, _step in enumerate(growth_micro_plan(theme_key), 1):
+        st.markdown(f"{_i}. {_step}")
+
+    c_col1, c_col2 = st.columns([1, 1])
+    with c_col1:
+        if st.button("🔄 Bắt đầu phiên lắng nghe mới", key="counsel_reset_btn"):
+            st.session_state.counseling_messages = []
+            st.rerun()
+    with c_col2:
+        st.caption(f"Số lượt tư vấn đã lưu sang Trạm 5: {len(st.session_state.get('counseling_logs') or [])}")
+
+    for _m in st.session_state.counseling_messages:
+        with st.chat_message(_m.get("role", "assistant")):
+            st.markdown(_m.get("content") or "")
+
+    _user_msg = st.chat_input("Em hãy kể bằng lời của mình — Thầy đang lắng nghe…", key="counsel_chat_input")
+    if _user_msg:
+        st.session_state.counseling_messages.append({"role": "user", "content": _user_msg})
+        _crisis = is_crisis_text(_user_msg)
+        _violence = is_violence_disclosure(_user_msg)
+        if _crisis or _violence:
+            _safe = crisis_resources_md()
+            if _violence and not _crisis:
+                _safe = (
+                    "### An toàn trước xung đột / xâm hại\n"
+                    "- Em không có lỗi khi bị làm tổn thương.\n"
+                    "- Hãy báo **GVCN / ban giám hiệu / người giám hộ** và giữ bằng chứng nếu liên quan mạng.\n"
+                    "- Tổng đài bảo vệ trẻ em **111**.\n\n"
+                ) + _safe
+            st.session_state.counseling_messages.append({"role": "assistant", "content": _safe})
+            _packet = build_research_packet(
+                student_name=student_name,
+                grade=grade,
+                subject=subject,
+                theme_key=theme_key,
+                theme_label=theme_choice,
+                user_message=_user_msg,
+                assistant_message=_safe,
+                journey_context=_journey_full,
+                safety_flags={"crisis": _crisis, "violence": _violence},
+            )
+            st.session_state.counseling_logs.append(_packet)
+            st.session_state.analytics_logs.append(_packet)
+            st.session_state.tram5_count = st.session_state.get("tram5_count", 0) + 1
+            st.rerun()
+        else:
+            _legal = legal_anchor_markdown()
+            _sys = counseling_system_instruction(
+                student_name=student_name,
+                grade=grade,
+                subject=subject,
+                theme_label=theme_choice,
+                journey_context=_journey_full,
+                legal_block=_legal,
+            )
+            _history_txt = "\n".join(
+                f"{'Học sinh' if m.get('role')=='user' else 'Thầy tư vấn'}: {m.get('content')}"
+                for m in st.session_state.counseling_messages[-12:]
+            )
+            _prompt = (
+                f"Lịch sử phiên gần đây:\n{_history_txt}\n\n"
+                f"Hãy đáp lời học sinh vừa nói, đúng vai trò tư vấn học đường."
+            )
+            try:
+                with st.spinner("Thầy đang lắng nghe và suy nghĩ cùng em…"):
+                    _reply = call_gemini_with_fallback(_prompt, system_instruction=_sys, json_mode=False)
+                if not isinstance(_reply, str):
+                    _reply = str(_reply)
+                _reply, _enforce_flags = enforce_tram5_reply(_reply)
+            except Exception as _ce:
+                _reply = (
+                    "Thầy tạm thời chưa kết nối được AI trong phiên này. "
+                    f"Em vẫn có thể làm các bước trưởng thành phía trên và nói chuyện với người lớn tin cậy.\n\n"
+                    f"(Chi tiết kỹ thuật cho GV: {_ce})"
+                )
+            st.session_state.counseling_messages.append({"role": "assistant", "content": _reply})
+            _packet = build_research_packet(
+                student_name=student_name,
+                grade=grade,
+                subject=subject,
+                theme_key=theme_key,
+                theme_label=theme_choice,
+                user_message=_user_msg,
+                assistant_message=_reply,
+                journey_context=_journey_full,
+                safety_flags={"crisis": False, "violence": False},
+                enforcement_flags=list(locals().get("_enforce_flags") or []),
+            )
+            st.session_state.counseling_logs.append(_packet)
+            st.session_state.analytics_logs.append(_packet)
+            st.session_state.tram5_count = st.session_state.get("tram5_count", 0) + 1
+            st.rerun()
+
+    st.markdown("---")
+    st.caption(
+        f"Trạm 4 độc lập · AI khóa triết lý {TRAM5_LOCK_MARKER} · triết lý {PHILOSOPHY}. "
+        "Không chấm điểm nhân phẩm. Gói phiên gửi sang Trạm 5 (đã rút gọn, có cờ an toàn)."
+    )

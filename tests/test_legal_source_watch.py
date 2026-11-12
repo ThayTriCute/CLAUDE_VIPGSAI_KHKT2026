@@ -1,7 +1,15 @@
 import copy
 import unittest
 from unittest.mock import Mock, patch
-from services.legal_source_watch import DISCOVERY_URL, EducationLinks, fetch_source, official_url, scan_sources
+from services.legal_source_watch import (
+    DISCOVERY_URL,
+    EducationLinks,
+    document_in_force,
+    effectivity_label,
+    fetch_source,
+    official_url,
+    scan_sources,
+)
 
 
 class LegalSourceWatchTests(unittest.TestCase):
@@ -57,6 +65,20 @@ class LegalSourceWatchTests(unittest.TestCase):
         self.assertEqual(report['status'], 'review_required')
         self.assertEqual(report['failures'][0]['reason'], 'TimeoutError')
         self.assertFalse(report['registry_modified'])
+
+    def test_effectivity_keeps_old_still_in_force_and_marks_upcoming(self):
+        old = {'code': '80/2017', 'effective_from': '2017-09-05', 'status': 'active'}
+        upcoming = {'code': '89/2026', 'effective_from': '2026-12-01', 'status': 'upcoming'}
+        self.assertTrue(document_in_force(old, '2026-11-12'))
+        self.assertEqual(effectivity_label(old, '2026-11-12'), 'còn hiệu lực')
+        self.assertFalse(document_in_force(upcoming, '2026-11-12'))
+        self.assertTrue(document_in_force(upcoming, '2026-11-12', include_upcoming=True))
+        self.assertIn('chưa có hiệu lực', effectivity_label(upcoming, '2026-11-12'))
+
+    def test_discovery_keywords_include_school_safety(self):
+        parser = EducationLinks(DISCOVERY_URL)
+        parser.feed('<a href="/safe.htm">Phòng chống bạo lực học đường</a>')
+        self.assertEqual(len(parser.links), 1)
 
 
 if __name__ == '__main__':

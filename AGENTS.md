@@ -1,3 +1,18 @@
+## TRẠM 5 — KHÓA CỨNG AI (owner 12/11/2026) — ĐỌC HD TRƯỚC MỌI LƯỢT
+
+**TUYỆT ĐỐI:** Mọi lượt AI / mọi mô hình khi làm việc với hệ thống Trạm 5 (tư vấn tâm lý học đường) **phải đọc hết** `docs/AI_TRAM5_COUNSELING_LOCK.md` trước khi sửa code, viết prompt, gọi model hoặc kết luận. Bản rút inject runtime: `docs/AI_TRAM5_COUNSELING_LOCK.txt`. Rule Cursor: `.cursor/rules/tram5-counseling-lock.mdc`.
+
+**Phân quyền:** Trạm 4 **mở cho học sinh** tương tác (không khóa station). Trạm 5 **chỉ giáo viên**, mở bằng `ADMIN_PASS` → `teacher_authenticated`. Không khóa nhầm Trạm 4.
+
+Mục tiêu: **tránh ảo giác AI, tránh quên ngữ cảnh, tránh bịa chuyện không có cơ sở pháp lý chuẩn** của Bộ / Chính phủ / kênh khả tín.
+
+1. Triết lý bất biến: **Dưỡng thiện tâm – Ươm nhân tài**.
+2. Runtime bắt buộc: system instruction phải chứa marker `[TRAM5_COUNSELING_LOCK_V1]` **và** nội dung HD owner từ `counseling_system_instruction()` / `tram5_hard_lock_block()`. `call_gemini_with_fallback` / `stream_gemini_with_fallback` **không** gắn DEFAULT_PEDAGOGICAL / teaching-step / academic-grounding đè lên khóa này. Đo tiến bộ 0đ: WHO-5 (CC BY-NC-SA) + check-in GSAI → `COUNSELING_OUTCOME_CHECKIN` → Trạm 4.
+3. Neo pháp lý: `data/counseling_legal_references.json` — VB mới nhất đang hiệu lực **và/hoặc** VB cũ còn hiệu lực; chỉ kênh khả tín (vbpl / congbao / vanban.chinhphu / moet). **Không bịa** điều/khoản; không dùng URL lệch văn bản (vd NĐ 80/2017 = docid 190430). Thiếu căn cứ → nói cần đối chiếu bản chính thức, không khẳng định như đã thẩm định.
+4. Ranh giới: không chẩn đoán lâm sàng, không kê đơn, không hướng dẫn tự hại; khủng hoảng → 111/115 + người lớn tin cậy. Không chấm điểm nhân phẩm. Nhớ ngữ cảnh phiên / hành trình đã truyền vào prompt.
+5. Hậu kiểm: `enforce_tram5_reply` trước khi lưu chat/packet; packet `SCHOOL_COUNSELING_SESSION` sang Trạm 4.
+6. Trạm 5 độc lập (không đánh số đè Trạm 4 nghiên cứu). Sửa Trạm 5 phải giữ khóa + HD này; không “tối ưu” bằng cách trộn vai gia sư khảo thí.
+
 ## KẾ HOẠCH TỔNG THỂ — owner 11/11/2026 (mọi ca AI/mô hình)
 
 ## ⛔ PHẠM VI THAO TÁC — chủ dự án 11/11/2026 (bắt buộc, mọi ca AI)

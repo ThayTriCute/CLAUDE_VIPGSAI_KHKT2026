@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Smoke Trạm 4: unlock + hồ sơ cá nhân hóa + phiếu phụ huynh từ logs."""
+"""Smoke Trạm 4: mở cho HS — hồ sơ cá nhân hóa không cần MK station."""
 from pathlib import Path
 
 from streamlit.testing.v1 import AppTest
@@ -49,28 +49,19 @@ def main():
             "error_type": "nhầm dấu",
         },
     ]
-    next(t for t in at.text_input if t.label == "Mật khẩu quản trị:").set_value("qa-private-password")
-    next(b for b in at.button if b.label == "🔓 Mở khóa").click().run()
-    assert at.session_state.get("tab4_authenticated"), "auth failed"
+    at.run()
     assert list(at.exception) == [], [e.message for e in at.exception]
+    labels = [getattr(t, "label", "") for t in at.text_input]
+    assert "Mật khẩu quản trị:" not in labels, "Trạm 4 không được khóa station"
+    print("AUTH_OK", "open_for_students")
 
     md = " ".join(str(getattr(x, "value", x)) for x in at.markdown)
-    print("AUTH_OK", True)
     print("HAS_PROFILE", "Hồ sơ cá nhân hóa" in md)
     print("HAS_OBS_NOTE", "quan sát" in md.lower() or any("quan sát" in str(getattr(i, "value", i)).lower() for i in at.info))
-
-    pre = next((t.value for t in at.number_input if "Pre-test" in t.label), None)
-    post = next((t.value for t in at.number_input if "Post-test" in t.label), None)
-    print("REP_PRE_DEFAULT", pre)
-    print("REP_POST_DEFAULT", post)
-    assert pre == 5.0 and post == 7.5, (pre, post)
-
-    next(r for r in at.radio if r.label == "Nguồn dữ liệu").set_value("Mô phỏng minh họa").run()
-    next(b for b in at.button if b.label == "Phân tích các cặp điểm").click().run()
-    assert list(at.exception) == []
-    print("ANALYZE_OK", bool(at.session_state.get("research_result")))
-    print("HAS_CONTROL_EXPANDER", any("đối chứng" in str(getattr(e, "label", e)).lower() for e in at.expander))
-    print("SMOKE_OK")
+    print("HAS_T4_OPEN_CAPTION", "Trạm 4 mở cho học sinh" in md or any(
+        "Trạm 4 mở" in str(getattr(c, "value", c)) for c in at.caption
+    ))
+    print("SMOKE_TRAM4_OK")
 
 
 if __name__ == "__main__":

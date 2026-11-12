@@ -19,7 +19,16 @@ def main():
     previous_path = folder / 'latest.json'
     previous = json.loads(previous_path.read_text(encoding='utf-8')) if previous_path.exists() else {}
     registry = json.loads((ROOT / 'data/legal_references.json').read_text(encoding='utf-8'))
-    report = scan_sources(registry, previous, checked_at=datetime.now(timezone.utc).isoformat())
+    counseling_path = ROOT / 'data/counseling_legal_references.json'
+    extra = []
+    if counseling_path.is_file():
+        extra.append(json.loads(counseling_path.read_text(encoding='utf-8')))
+    report = scan_sources(
+        registry,
+        previous,
+        checked_at=datetime.now(timezone.utc).isoformat(),
+        extra_registries=extra,
+    )
     temp = folder / 'latest.tmp'
     temp.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
     temp.replace(previous_path)
