@@ -2847,7 +2847,7 @@ def prepare_paired_data(frame, pre_col, post_col, minutes_col=None):
 
 
 
-from qa_runtime import paired_statistics
+from qa_runtime import paired_statistics, between_group_gain_statistics
 
 
 def render_exam_clock():
@@ -9341,7 +9341,37 @@ def render_parent_progress_report(current_student_nm, current_subj, current_gr, 
 
     st.caption("Công cụ chuẩn hóa sư phạm giúp Giáo viên & Học sinh xuất bản Phiếu báo cáo tiến bộ học tập, gửi Phụ huynh đồng hành (In PDF A4 hoặc gửi Zalo).")
 
+    from services.tram4_learner_insights import parent_report_defaults
+    _rep_defaults = parent_report_defaults(
+        logs_data or [],
+        preferred_name=current_student_nm or "",
+        preferred_subject=current_subj or "",
+        preferred_grade=current_gr or "",
+    )
+    if _rep_defaults.get("source") == "observed_pair":
+        st.info(_rep_defaults.get("note") or "Đã tự điền Pre/Post từ nhật ký quan sát.")
+    else:
+        st.caption(_rep_defaults.get("note") or "Chưa có cặp Pre/Post — nhập tay điểm thật, không dùng điểm mẫu giả.")
 
+    _default_name = _rep_defaults.get("name") or current_student_nm or ""
+    _default_subj = _rep_defaults.get("subject") or current_subj or "Toán học"
+    _default_grade = _rep_defaults.get("grade") or current_gr or "Lớp 12"
+    _default_pre = float(_rep_defaults["pre"]) if _rep_defaults.get("pre") is not None else 0.0
+    _default_post = float(_rep_defaults["post"]) if _rep_defaults.get("post") is not None else 0.0
+    _default_mins = int(_rep_defaults["minutes"]) if _rep_defaults.get("minutes") is not None else 30
+    _default_mins = max(10, min(120, _default_mins))
+
+    # Seed session_state trước widget (tránh vừa value= vừa gán key).
+    _rep_sig = (
+        f"{_rep_defaults.get('source')}|{_default_name}|{_default_subj}|{_default_pre}|{_default_post}"
+    )
+    if st.session_state.get("_rep_defaults_sig") != _rep_sig:
+        if _rep_defaults.get("source") == "observed_pair" or "rep_pre" not in st.session_state:
+            st.session_state["rep_name"] = _default_name
+            st.session_state["rep_pre"] = _default_pre
+            st.session_state["rep_post"] = _default_post
+            st.session_state["rep_mins"] = _default_mins
+        st.session_state["_rep_defaults_sig"] = _rep_sig
 
     with st.expander("📝 Cấu hình & Xuất Phiếu Báo Cáo Học Tập Cá Nhân Hóa", expanded=True):
 
@@ -9349,18 +9379,19 @@ def render_parent_progress_report(current_student_nm, current_subj, current_gr, 
 
         with col_cfg1:
 
-            st_name_report = st.text_input("Họ và tên học sinh:", value=current_student_nm or "Nguyễn Văn A", key="rep_name")
+            st_name_report = st.text_input("Họ và tên học sinh:", key="rep_name")
 
             report_subjects = [
                 "Toán học", "Vật lý", "Hóa học", "Sinh học", "Khoa học tự nhiên",
                 "Ngữ văn", "Tiếng Anh", "Lịch sử", "Địa lý", "Lịch sử & Địa lý",
                 "Giáo dục kinh tế và pháp luật", "Giáo dục công dân", "Tin học", "Công nghệ"
             ]
-            st_subj_report = st.selectbox("Môn học báo cáo:", report_subjects, index=0 if current_subj not in report_subjects else report_subjects.index(current_subj), key="rep_subj")
+            st_subj_report = st.selectbox("Môn học báo cáo:", report_subjects, index=0 if _default_subj not in report_subjects else report_subjects.index(_default_subj), key="rep_subj")
 
         with col_cfg3:
 
-            st_grade_report = st.selectbox("Khối lớp:", [f"Lớp {i}" for i in range(6, 13)], index=6 if current_gr not in [f"Lớp {i}" for i in range(6, 13)] else [f"Lớp {i}" for i in range(6, 13)].index(current_gr), key="rep_grade")
+            _grade_opts = [f"Lớp {i}" for i in range(6, 13)]
+            st_grade_report = st.selectbox("Khối lớp:", _grade_opts, index=6 if _default_grade not in _grade_opts else _grade_opts.index(_default_grade), key="rep_grade")
 
 
 
@@ -9368,15 +9399,15 @@ def render_parent_progress_report(current_student_nm, current_subj, current_gr, 
 
         with col_sc1:
 
-            pre_val = st.number_input("Điểm trước can thiệp (Pre-test):", min_value=0.0, max_value=10.0, value=5.5, step=0.25, key="rep_pre")
+            pre_val = st.number_input("Điểm trước can thiệp (Pre-test):", min_value=0.0, max_value=10.0, step=0.25, key="rep_pre")
 
         with col_sc2:
 
-            post_val = st.number_input("Điểm sau can thiệp (Post-test):", min_value=0.0, max_value=10.0, value=8.5, step=0.25, key="rep_post")
+            post_val = st.number_input("Điểm sau can thiệp (Post-test):", min_value=0.0, max_value=10.0, step=0.25, key="rep_post")
 
         with col_sc3:
 
-            study_mins = st.number_input("Thời gian tự học TB (phút/ngày):", min_value=10, max_value=120, value=30, step=5, key="rep_mins")
+            study_mins = st.number_input("Thời gian tự học TB (phút/ngày):", min_value=10, max_value=120, step=5, key="rep_mins")
 
 
 
@@ -17149,7 +17180,23 @@ if selected_station == station_labels[3]:
                 global_locked = admin_globally_locked()
                 is_valid = not global_locked and time.monotonic() >= locked_until and admin_password_matches(clean_pass, configured)
                 if not configured:
-                    st.error("Chưa cấu hình ADMIN_PASS trong Streamlit Secrets. Giáo viên cần thiết lập (dạng 'sha256:<hash>') trước khi mở khu vực dữ liệu.")
+                    st.error(
+                        "Chưa cấu hình ADMIN_PASS trong Streamlit Secrets — "
+                        "ô mật khẩu bên trên chưa thể mở khóa cho đến khi có file cấu hình local."
+                    )
+                    st.markdown(
+                        """
+**Thiết lập từng bước (máy local):**
+1. Trong thư mục chạy app, tạo/sửa file `.streamlit/secrets.toml` (file này **không** đưa lên GitHub).
+2. Chọn một mật khẩu gốc (ví dụ mật khẩu giáo viên tự đặt).
+3. Tạo mã băm: chạy `python scripts/make_admin_pass_hash.py` rồi nhập mật khẩu gốc; script in ra một dòng dạng `ADMIN_PASS = "sha256:...."` .
+4. Dán đúng dòng đó vào `.streamlit/secrets.toml` và **lưu file**.
+5. **Restart** Streamlit (`Ctrl+C` rồi `streamlit run app.py`).
+6. Quay lại Trạm 4, gõ **mật khẩu gốc** (không gõ chuỗi `sha256:...`) rồi bấm **Mở khóa**.
+
+`sha256:<hash>` nghĩa là: app chỉ lưu **mã băm một chiều** của mật khẩu, không lưu mật khẩu thô trong secrets. Khi anh gõ mật khẩu, app băm lại và so khớp với hash đã cấu hình.
+                        """
+                    )
                 elif global_locked or time.monotonic() < locked_until:
                     st.error("Đã thử sai nhiều lần. Vui lòng chờ khoảng 2 phút trước khi thử lại.")
 
@@ -17171,6 +17218,9 @@ if selected_station == station_labels[3]:
                         st.session_state.auth_failures = 0
                     if configured and not global_locked and time.monotonic() >= locked_until:
                         st.error("Mật khẩu không đúng. Vui lòng liên hệ giáo viên phụ trách.")
+
+        if not str(get_secret("ADMIN_PASS", "")).strip():
+            st.info("Thiếu `.streamlit/secrets.toml` → ADMIN_PASS. Xem hướng dẫn ngay dưới ô mật khẩu sau khi bấm Mở khóa, hoặc chạy `python scripts/make_admin_pass_hash.py`.")
 
         st.stop()
 
@@ -17306,6 +17356,47 @@ if selected_station == station_labels[3]:
     else:
 
         st.info("Chưa có chẩn đoán. Sau khi nhận xét bài ở Trạm 2, lỗi kiến thức sẽ xuất hiện tại đây.")
+
+
+
+    st.markdown("### Hồ sơ cá nhân hóa người học (từ dữ liệu quan sát)")
+
+    try:
+        from services.tram4_learner_insights import build_learner_profiles, cohort_summary, collect_pre_post_pairs
+        _cohort = cohort_summary(logs)
+        _profiles = build_learner_profiles(logs)
+        _pairs_obs = collect_pre_post_pairs(logs)
+        if _cohort.get("n_pairs"):
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Cặp Pre–Post", f"{_cohort['n_pairs']}")
+            c2.metric("TB trước", f"{_cohort['mean_pre']:.2f}")
+            c3.metric("TB sau", f"{_cohort['mean_post']:.2f}")
+            c4.metric("Δ trung bình", f"{_cohort['mean_delta']:+.2f}", delta=f"{(_cohort['improved_share'] or 0)*100:.0f}% HS tăng điểm")
+            st.caption("Số liệu ghép theo student_id + môn + lớp từ nhật ký/CSDL. Không suy ra nhân quả nếu thiếu nhóm đối chứng.")
+            with st.expander("Chi tiết hồ sơ từng học sinh", expanded=True):
+                for _p in _profiles:
+                    if not _p.get("pair_count") and not _p.get("weak_topics"):
+                        continue
+                    _delta_txt = f"Δ TB {_p['mean_delta']:+.2f}" if _p.get("pair_count") else "chưa có Pre/Post"
+                    _bkt = f" · BKT≈{_p['bkt_mastery']:.2f}" if _p.get("bkt_mastery") is not None else ""
+                    st.markdown(f"**{_p.get('name') or _p.get('student_id')}** — {_delta_txt}{_bkt}")
+                    if _p.get("subjects"):
+                        st.dataframe(pd.DataFrame(_p["subjects"]), width="stretch", hide_index=True)
+                    if _p.get("weak_topics"):
+                        st.caption("Chủ đề lỗi (Trạm 2): " + ", ".join("%s×%s" % (t["topic"], t["count"]) for t in _p["weak_topics"][:5]))
+                    st.caption(_p.get("recommendation") or "")
+            if _pairs_obs:
+                st.download_button(
+                    "Tải bảng Pre–Post cá nhân hóa (CSV)",
+                    pd.DataFrame(_pairs_obs).to_csv(index=False).encode("utf-8-sig"),
+                    "ho_so_pre_post_ca_nhan.csv",
+                    "text/csv",
+                    key="dl_tram4_pairs_csv",
+                )
+        else:
+            st.info("Chưa có cặp Pre/Post quan sát. Ở Trạm 3 hãy gắn phase=pre rồi post cùng student_id để Trạm 4 cá nhân hóa và đối chiếu trước–sau.")
+    except Exception as _t4e:
+        st.warning(f"Chưa dựng được hồ sơ cá nhân hóa: {_t4e}")
 
 
 
@@ -17514,6 +17605,54 @@ if selected_station == station_labels[3]:
             st.info("Có bằng chứng về khác biệt trung bình ở ngưỡng 0,05." if result["p"] < .05 else "Chưa có đủ bằng chứng về khác biệt trung bình ở ngưỡng 0,05.")
 
         st.caption("Kiểm định giả định các học sinh độc lập và phân phối chênh lệch phù hợp. So sánh trước–sau đơn nhóm không chứng minh tác động nhân quả. Muốn đánh giá can thiệp cần thiết kế nhóm đối chứng và đề đo tương đương.")
+
+        with st.expander("Đối chứng: nhóm dùng app vs không dùng app (Welch / Mann–Whitney)", expanded=False):
+            st.markdown(
+                "Tải bảng nhóm **không dùng app** (cột `student_id,pre,post`). "
+                "Nhóm dùng app lấy từ lần Phân tích Pre–Post vừa chạy. "
+                "Kết quả mô tả chênh lệch tiến bộ giữa hai nhóm; chỉ suy nhân quả khi phân nhóm ngẫu nhiên và pre-test tương đương."
+            )
+            ctrl_file = st.file_uploader("CSV/Excel nhóm đối chứng (không dùng app)", type=["csv", "xlsx", "xls"], key="control_group_upload")
+            if ctrl_file is not None and st.button("So sánh với nhóm đối chứng", key="analyze_between_groups"):
+                try:
+                    ctrl_df = pd.read_csv(ctrl_file) if ctrl_file.name.lower().endswith(".csv") else pd.read_excel(ctrl_file)
+                    ctrl_cols = ctrl_df.columns.tolist()
+                    c_pre = "pre" if "pre" in ctrl_cols else ctrl_cols[1]
+                    c_post = "post" if "post" in ctrl_cols else ctrl_cols[2]
+                    ctrl_paired, ctrl_removed = prepare_paired_data(ctrl_df, c_pre, c_post, None)
+                    bg = between_group_gain_statistics(
+                        data[pre_col], data[post_col],
+                        ctrl_paired[c_pre], ctrl_paired[c_post],
+                    )
+                    st.session_state["between_group_result"] = {"result": bg, "removed": ctrl_removed, "demo": analysis["demo"]}
+                except Exception as exc:
+                    st.session_state.pop("between_group_result", None)
+                    st.error(str(exc))
+            bg_state = st.session_state.get("between_group_result")
+            if bg_state and bg_state.get("result"):
+                bg = bg_state["result"]
+                if bg_state.get("demo"):
+                    st.warning("Nhóm app đang lấy từ dữ liệu mô phỏng — không dùng làm minh chứng hiệu quả.")
+                b1, b2, b3 = st.columns(3)
+                b1.metric("Δ nhóm dùng app", f"{bg['gain_app']:+.3f} (N={bg['n_app']})")
+                b2.metric("Δ nhóm đối chứng", f"{bg['gain_control']:+.3f} (N={bg['n_control']})")
+                b3.metric("Chênh lệch Δ (app − chứng)", f"{bg['gain_difference']:+.3f}")
+                _hake_app = "—" if bg.get("hake_app") is None else f"{bg['hake_app']:.3f}"
+                _hake_ctrl = "—" if bg.get("hake_control") is None else f"{bg['hake_control']:.3f}"
+                st.write(f"Hake ⟨g⟩ app={_hake_app}; đối chứng={_hake_ctrl}.")
+                if bg.get("p") is not None:
+                    st.write(
+                        f"Welch t trên Δ: t={bg['t']:.4f}, p={bg['p']:.6g}"
+                        + (f"; Cohen's d={bg['cohens_d']:.3f}" if bg.get("cohens_d") is not None else "")
+                        + (f"; Mann–Whitney p={bg['mannwhitney_p']:.6g}" if bg.get("mannwhitney_p") is not None else "")
+                        + "."
+                    )
+                    st.info("Có bằng chứng khác biệt tiến bộ giữa hai nhóm ở ngưỡng 0,05." if bg["p"] < 0.05 else "Chưa đủ bằng chứng khác biệt tiến bộ giữa hai nhóm ở ngưỡng 0,05.")
+                if bg.get("pretest_p") is not None:
+                    st.caption(
+                        f"Pre-test tương đương? p={bg['pretest_p']:.6g} → "
+                        + ("có thể coi nền ban đầu tương đương (p≥0.05)." if bg.get("baseline_equivalent") else "hai nhóm lệch nền pre-test — thận trọng khi gán tác động cho app.")
+                    )
 
         chart_data = pd.DataFrame({"Trước": data[pre_col], "Sau": data[post_col]})
 
