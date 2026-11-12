@@ -11,8 +11,108 @@ from services.academic_context import academic_context, canonical_subject, folde
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
-T1_CONTEXT_REVISION = 2026110920
+T1_CONTEXT_REVISION = 2026111222
 REGISTRY = Path(__file__).resolve().parents[1] / "data/legal_references.json"
+
+# Stem tiếng Anh điển hình của đề thi AI (Toán/KH) — không phải ngữ liệu trích dẫn.
+_EN_EXAM_STEM_RE = re.compile(
+    r"\b("
+    r"find the|what is the|which of the following|choose the correct|"
+    r"for the function|the function is|the variance|standard deviation|"
+    r"calculated as|on the interval|center of symmetry|grouped data|"
+    r"according to the|complete the sentence|the passage below|"
+    r"maximum value of the|minimum value of the|how many solutions|"
+    r"the following statements|given the function|consider the function"
+    r")\b",
+    re.I,
+)
+
+
+def item_language_policy(subject):
+    """Ngôn ngữ hiển thị câu hỏi theo môn — dùng chung Trạm 1/2/3, mọi lớp."""
+    subject = canonical_subject(subject)
+    if subject == "Tiếng Anh":
+        return {
+            "code": "en",
+            "prompt": (
+                "Môn Tiếng Anh: câu hỏi, đoạn đọc/nghe và phương án viết bằng tiếng Anh phù hợp lớp; "
+                "giải thích/gợi mở có thể bằng tiếng Việt. Không đổi đề thành tiếng Việt."
+            ),
+        }
+    return {
+        "code": "vi",
+        "prompt": (
+            f"Môn {subject}: toàn bộ câu hỏi, mệnh đề Đúng/Sai, phương án và yêu cầu trả lời ngắn "
+            "viết bằng tiếng Việt (chữ quốc ngữ), đúng văn phong đề kiểm tra Việt Nam. "
+            "Công thức và ký hiệu toán–khoa học giữ LaTeX/Latin chuẩn (f(x), Δ, σ…). "
+            "TUYỆT ĐỐI không viết đề/mệnh đề bằng tiếng Anh chỉ vì nội dung là toán hoặc khoa học. "
+            "Chỉ giữ nguyên văn ngoại ngữ khi là ngữ liệu trích dẫn có nguồn (thơ/văn/tài liệu) "
+            "và câu hỏi vẫn đặt bằng tiếng Việt."
+        ),
+    }
+
+
+def _strip_math_for_language_scan(text):
+    s = str(text or "")
+    s = re.sub(r"\$\$[\s\S]*?\$\$", " ", s)
+    s = re.sub(r"\$[^$]*\$", " ", s)
+    s = re.sub(r"\\\[[\s\S]*?\\\]", " ", s)
+    s = re.sub(r"\\\([\s\S]*?\\\)", " ", s)
+    s = re.sub(r"`[^`]*`", " ", s)
+    return s
+
+
+def item_display_language_issue(text, subject):
+    """Trả mã lỗi nếu stem/mệnh đề lệch ngôn ngữ môn; '' nếu chấp nhận được.
+
+    Cổng cứng chỉ chặn stem kiểu đề tiếng Anh trên môn không phải Tiếng Anh
+    (lỗi AI sinh Toán/KH bằng EN). Môn Tiếng Anh không bị chặn cứng bằng
+    heuristic tiếng Việt: đề TA hợp lệ dùng EN, còn hướng dẫn/QA/recovery
+    fixture có thể lẫn Việt; chất lượng stem TA đi qua prompt, không qua gate này.
+    """
+    subject = canonical_subject(subject)
+    cleaned = _strip_math_for_language_scan(text)
+    if not cleaned.strip():
+        return ""
+    if subject == "Tiếng Anh":
+        return ""
+    if _EN_EXAM_STEM_RE.search(cleaned):
+        return "english_stem_outside_english_subject"
+    return ""
+
+
+def validate_exam_item_language(exam, subject):
+    """Chặn giao đề khi câu hỏi/mệnh đề viết sai ngôn ngữ môn (đa môn × lớp)."""
+    subject = canonical_subject(subject)
+    for part, questions in question_groups(exam):
+        for idx, question in enumerate(questions):
+            if not isinstance(question, dict):
+                continue
+            for field in ("q",):
+                issue = item_display_language_issue(question.get(field, ""), subject)
+                if issue:
+                    raise ValueError(
+                        f"Câu {part}[{idx + 1}] viết bằng ngôn ngữ không khớp môn {subject}; "
+                        "cần sinh lại hoặc thay câu tiếng Việt trước khi giao đề."
+                    )
+            for s_idx, stmt in enumerate(question.get("stmts") or []):
+                if not isinstance(stmt, dict):
+                    continue
+                issue = item_display_language_issue(stmt.get("t") or stmt.get("q") or "", subject)
+                if issue:
+                    raise ValueError(
+                        f"Mệnh đề {part}[{idx + 1}].{chr(97 + s_idx)} viết bằng ngôn ngữ không khớp môn {subject}; "
+                        "cần sinh lại hoặc thay mệnh đề tiếng Việt trước khi giao đề."
+                    )
+            for opt in question.get("opt") or []:
+                # Chỉ chặn khi cả phương án là câu tiếng Anh dài kiểu đề, không chặn "A. (1;+∞)"
+                body = re.sub(r"^[A-Da-d]\s*[\)\.\-:]\s*", "", str(opt)).strip()
+                if len(body) >= 24 and item_display_language_issue(body, subject):
+                    raise ValueError(
+                        f"Phương án câu {part}[{idx + 1}] viết bằng ngôn ngữ không khớp môn {subject}; "
+                        "cần sinh lại đề đúng tiếng Việt."
+                    )
+    return exam
 
 
 def label_declared_paraphrases(text):
@@ -371,6 +471,7 @@ def policy_prompt(subject, grade, station, topic="", pathway=""):
                      "mục đích, quan hệ nghĩa hoặc dấu hiệu trong câu trước khi so sánh các lựa chọn. "
                      "Định nghĩa/dịch nghĩa và kết luận đáp án chỉ đặt trong explain sau nộp bài."
                      if subject == "Tiếng Anh" else "")
+    language_guidance = item_language_policy(subject)["prompt"]
     self_study_guidance = (
         "TRẠM 1 — BẢN TÓM TẮT BÀI HỌC CHO HỌC SINH TỰ HỌC: Gia sư trực tiếp giải thích "
         "kiến thức cốt lõi, rõ ràng, cô đọng, vừa sức; giữ khái niệm, quy tắc/công thức và điều kiện "
@@ -381,6 +482,7 @@ def policy_prompt(subject, grade, station, topic="", pathway=""):
         if str(station) == "1" else "")
     return f"""\n[NGỮ CẢNH CHƯƠNG TRÌNH — ngày áp dụng {evaluation_day}; ngày rà soát nguồn {POLICY_DATE}]
 Trạm {station}; môn {subject}; lớp {grade}; chủ đề {topic}; định hướng {pathway or 'chưa khai báo'}.
+{language_guidance}
 {hint_guidance}
 {self_study_guidance}
 Chương trình GDPT 2018 đọc cùng các sửa đổi còn áp dụng: {codes}.
@@ -469,6 +571,7 @@ def prepare_exam_for_delivery(exam, subject, grade, duration=45, custom_request=
             if question_scope_issue(question, request_scope):
                 raise ValueError("Câu hỏi chưa khớp yêu cầu chỉ hàm bậc ba; cần thay đúng phạm vi trước khi xuất đề.")
             texts.extend(str(question.get(k, "")) for k in ("q", "explain"))
+    validate_exam_item_language(result, subject)
     check_current_facts("\n".join(texts))
     payload = {k: result[k] for k in ("p1", "p2", "p3", "part_doc_hieu", "part_viet") if k in result}
     result["curriculum_audit"] = {
@@ -842,7 +945,12 @@ def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
                   "p1": [{"q": "Câu hỏi", "opt": ["A. ...", "B. ...", "C. ...", "D. ..."], "ans": "B", "topic": "Chủ đề", "explain": "Gợi ý phương pháp"}],
                   "p2": [{"q": "Ngữ liệu", "stmts": [{"t": "Mệnh đề", "a": True}], "topic": "Chủ đề", "explain": "Gợi ý"}],
                   "p3": [{"q": "Câu trả lời ngắn", "ans": "2.5", "topic": "Chủ đề", "explain": "Gợi ý"}]}
-        structure = f"Sinh đúng số câu p1/p2/p3 = {tuple(counts)}. Phần có 0 câu phải là []. Mỗi câu p2 có đúng 4 mệnh đề boolean. p3 có đáp số, đơn vị và quy tắc làm tròn rõ ràng. Tiếng Anh: câu hỏi, đoạn đọc và phương án bằng tiếng Anh; giải thích có thể bằng tiếng Việt."
+        lang = item_language_policy(subject)["prompt"]
+        structure = (
+            f"Sinh đúng số câu p1/p2/p3 = {tuple(counts)}. Phần có 0 câu phải là []. "
+            "Mỗi câu p2 có đúng 4 mệnh đề boolean. p3 có đáp số, đơn vị và quy tắc làm tròn rõ ràng. "
+            + lang
+        )
     evidence_schema = {"level": "", "learning_outcome": "", "cognitive_rationale": "", "solution_steps": [],
                        "hint": "Câu hỏi gợi mở theo riêng ngữ cảnh câu này; không giải hộ hoặc đưa đáp án"}
     for key in ("p1", "p2", "p3", "part_viet"):
@@ -861,6 +969,7 @@ def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
 
 
 ACADEMIC_GROUNDING_GUIDANCE = """[BỘ LỌC CHƯƠNG TRÌNH VÀ NGUỒN — DÙNG CHUNG]
+NGÔN NGỮ ĐỀ/BÀI THEO MÔN (MỌI TRẠM, MỌI LỚP): Môn không phải Tiếng Anh — câu hỏi, mệnh đề, phương án và yêu cầu TLN phải bằng tiếng Việt; công thức giữ LaTeX/Latin. Không viết đề Toán/Lý/Hóa/Sinh/... bằng tiếng Anh dù nội dung là STEM. Môn Tiếng Anh — stem và options bằng tiếng Anh; giải thích có thể tiếng Việt. Ngữ liệu trích dẫn ngoại ngữ (Văn/Sử) được giữ nguyên văn khi có nguồn; câu hỏi vẫn tiếng Việt.
 OUTCOME, COGNITIVE_REASON và COGNITIVE_STEPS là metadata tác giả theo schema để hệ thống đánh giá; giữ đúng khóa khi schema yêu cầu, không chèn các nhãn này vào lời giảng, lời gia sư hoặc chữ trong hình/infographic cho học sinh. Tầng hiển thị/xuất phải lọc metadata, không đổi tên khóa hoặc xóa dữ liệu gốc để che lỗi.
 CORRECT, HINT và EXPLAIN vẫn giữ trong dữ liệu câu hỏi theo schema để parser/chấm bài dùng; không đưa đáp án/gợi ý/giải thích cạnh câu hỏi trên phiếu học sinh hoặc ảnh infographic. Đáp án thuộc phần giáo viên tách riêng và đóng mặc định. Bố trí A–D theo độ rộng chữ/công thức thực tế: đủ chỗ mới4cột, nếu không dùng2cột hoặc mỗi phương án một dòng; giữ thứ tự, khóa đáp án và cỡ chữ đọc được. Nhãn giao diện dùng tiếng Việt, giữ ngữ liệu ngoại ngữ thật và ví dụ mã nguyên vẹn. Không coi bố cục đẹp là chứng nhận đúng mọi quy cách đề chính thức.
 Đồ thị, phương trình, bảng và Lab phải dùng cùng hệ số, dấu, đơn vị và phiên bản nguồn; không làm tròn hệ số rồi vẫn ghi dấu bằng với mô hình khác. Giữ biểu thức chính xác khi có căn cứ; nếu chỉ trình bày số gần đúng, ghi rõ gần đúng và độ chính xác. Không trộn số liệu hoặc đơn vị từ bản mẫu với bản tái bản.
