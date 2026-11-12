@@ -3,7 +3,7 @@ def _refresh_t1_context_services():
     from importlib import reload
     from services import bbt_display_contract, inequality_region, plot_labels, lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation, station1_scope
     from data import curriculum_data
-    for module, revision in ((bbt_display_contract, 2026110911), (inequality_region, 2026110914), (plot_labels, 2026110914), (lesson_sources, 2026110802), (curriculum_policy, 2026110920),
+    for module, revision in ((bbt_display_contract, 2026110911), (inequality_region, 2026110914), (plot_labels, 2026110914), (lesson_sources, 2026110802), (curriculum_policy, 2026111221),
                              (lab_scope, 2026110901), (lesson_export, 2026110911),
                              (text_boundaries, 2026110801), (socratic_context, 2026110901),
                              (philosophy_rotation, 2026110801), (station1_scope, 2026110920),
@@ -18,7 +18,7 @@ _refresh_t1_context_services()
 
 from services.context_recovery import repair_exam_context, recover_visual
 from services.cognitive_levels import annotate_question, level_caption
-from services.curriculum_policy import (T1_CONTEXT_REVISION as CURRICULUM_POLICY_REVISION, assessment_profile, legal_references, upcoming_legal_references, policy_evaluation_date, matrix_html, prepare_exam_for_delivery, validate_exam_structure, validate_lesson_policy, correct_khtn8_lime_soil_confusion, lesson_generation_request as build_curriculum_lesson_request, exam_generation_request as build_curriculum_exam_request)
+from services.curriculum_policy import (T1_CONTEXT_REVISION as CURRICULUM_POLICY_REVISION, assessment_profile, item_display_language_issue, legal_references, upcoming_legal_references, policy_evaluation_date, matrix_html, prepare_exam_for_delivery, validate_exam_structure, validate_lesson_policy, correct_khtn8_lime_soil_confusion, lesson_generation_request as build_curriculum_lesson_request, exam_generation_request as build_curriculum_exam_request)
 from copy import deepcopy
 from services.academic_context import canonical_subject, academic_context, validate_exam_context
 from services.lesson_export import build_lesson_html, handwritten_prompt
@@ -155,11 +155,27 @@ except Exception:
     db_manager = None
 
 try:
-    from services.scoring_service import calculate_part2_statement_score, grade_part1, grade_part2, grade_part3
+    from importlib import reload as _reload_scoring
+    import qa_runtime as _qa_runtime_for_scoring
+    _reload_scoring(_qa_runtime_for_scoring)
+    import services.scoring_service as _scoring_service_mod
+    if getattr(_scoring_service_mod, "T3_SCORING_REVISION", None) != 2026111219:
+        _reload_scoring(_scoring_service_mod)
+    from services.scoring_service import calculate_part2_statement_score, grade_part1, grade_part2, grade_part3, grade_exam_by_profile
+    if not callable(grade_exam_by_profile):
+        raise RuntimeError("grade_exam_by_profile không callable sau reload")
 except Exception as _e_sc:
     logging.warning("Không thể nạp services.scoring_service: %s", _e_sc)
     def calculate_part2_statement_score(c):
         return {1: 0.1, 2: 0.25, 3: 0.5, 4: 1.0}.get(c, 0.0)
+    def grade_exam_by_profile(exam, user_answers, subject, grade):
+        # Stub an toàn: ép reload lần nữa rồi chấm — không raise làm gãy phòng thi
+        from importlib import reload as _reload_fb
+        import qa_runtime as _qa_fb
+        _reload_fb(_qa_fb)
+        import services.scoring_service as _sc_fb
+        _reload_fb(_sc_fb)
+        return _sc_fb.grade_exam_by_profile(exam, user_answers, subject, grade)
 
 try:
     from services.state_service import init_centralized_session_state, safe_get_state, reset_exam_session
@@ -3574,18 +3590,46 @@ def render_question_source_badge(q, idx=None):
 
 
 def question_visual_html(question):
-    """Render only supplied visual data; never guess a new graph from an answer."""
+    """Render only supplied visual data; never guess a new graph from an answer.
+
+    Ưu tiên ảnh WebP đã render; chỉ xuất SVG khi render chính thất bại.
+    Đồ thị: một luồng duy nhất (WebP hệ số → hình nguồn nếu fail; không hiện kép).
+    """
     pieces = []
     raw_bbt = str(question.get("bbt") or "").strip()
     if raw_bbt and raw_bbt.lower() not in {"null", "none", "{}"}:
-        from services.bbt_display_contract import aligned_bbt_rows
-        aligned = aligned_bbt_rows(raw_bbt)
-        if aligned:
-            safe_rows = [[html.escape(cell) for cell in row] for row in aligned]
-            pieces.append(_build_svg_bbt_from_rows(*safe_rows))
+        b64_bbt = ""
+        try:
+            b64_bbt = render_bbt_to_webp_base64(raw_bbt) or ""
+        except Exception:
+            b64_bbt = ""
+        if b64_bbt:
+            pieces.append(
+                "<div style='display:flex;justify-content:center;margin:8px auto'>"
+                "<img alt='Bảng biến thiên chuẩn Bộ GD&ĐT' style='max-width:100%;height:auto;border-radius:6px' src='"
+                + html.escape(b64_bbt, quote=True) + "'/></div>"
+            )
         else:
-            # Unknown/two-row formats remain visible without splitting double bars.
-            pieces.append("<pre style='overflow-x:auto;white-space:pre'>" + html.escape(raw_bbt) + "</pre>")
+            # Chỉ khi WebP thất bại mới xuất SVG / pre an toàn (không để \nearrow lộ KaTeX)
+            from services.bbt_display_contract import aligned_bbt_rows
+            aligned = aligned_bbt_rows(raw_bbt)
+            svg_or_html = ""
+            if aligned:
+                safe_rows = [[html.escape(cell) for cell in row] for row in aligned]
+                svg_or_html = _build_svg_bbt_from_rows(*safe_rows) or ""
+            if not svg_or_html:
+                try:
+                    svg_or_html = format_pedagogical_bbt_html(raw_bbt, is_dark_mode=True) or ""
+                except Exception:
+                    svg_or_html = ""
+            if svg_or_html:
+                pieces.append(svg_or_html)
+            else:
+                safe_txt = re.sub(r'\\+nearrow\b|\\nearrow', '↗', raw_bbt)
+                safe_txt = re.sub(r'\\+searrow\b|\\searrow', '↘', safe_txt)
+                safe_txt = safe_txt.replace(r'\infty', '∞').replace('+∞', '+∞').replace('-∞', '-∞')
+                safe_txt = safe_txt.replace(r'+\infty', '+∞').replace(r'-\infty', '-∞')
+                pieces.append("<pre style='overflow-x:auto;white-space:pre'>" + html.escape(safe_txt) + "</pre>")
     grouped = question.get("mslgn_data")
     if isinstance(grouped, dict):
         groups, frequencies = grouped.get("groups", []), grouped.get("freq", [])
@@ -3598,13 +3642,22 @@ def question_visual_html(question):
             pieces.append(sanitize_svg_for_markdown(str(visual["svg"])))
     function = question.get("f")
     required = {"func_3": {"a", "b", "c", "d"}, "cubic": {"a", "b", "c", "d"}, "func_1_1": {"a", "b", "c", "d"}, "func_2_1": {"a", "b", "c", "d", "e"}, "parabola": {"a", "b", "c"}, "func_2": {"a", "b", "c"}}
-    if isinstance(function, dict) and function.get("type") in required and required[function["type"]] <= function.keys():
-        image = render_math_graph_to_webp_base64(dict(function))
+    coeff_ok = isinstance(function, dict) and function.get("type") in required and required[function["type"]] <= function.keys()
+    source = question.get("image_base64") or question.get("image_url") or question.get("image")
+    has_source = isinstance(source, str) and source.startswith(("data:image/png;base64,", "data:image/jpeg;base64,", "data:image/webp;base64,"))
+    # Một luồng đồ thị: ưu tiên hình nguồn (đã render); WebP hệ số chỉ khi thiếu hình nguồn
+    graph_done = False
+    if has_source:
+        pieces.append("<img alt='Hình trong ngữ liệu nguồn' style='max-width:100%' src='" + html.escape(source, quote=True) + "'/>")
+        graph_done = True
+    elif coeff_ok:
+        try:
+            image = render_math_graph_to_webp_base64(dict(function))
+        except Exception:
+            image = ""
         if image:
             pieces.append("<img alt='Đồ thị theo hệ số đã cung cấp' style='max-width:100%' src='" + html.escape(image, quote=True) + "'/>")
-    image = question.get("image_base64") or question.get("image_url") or question.get("image")
-    if isinstance(image, str) and image.startswith(("data:image/png;base64,", "data:image/jpeg;base64,", "data:image/webp;base64,")):
-        pieces.append("<img alt='Hình trong ngữ liệu nguồn' style='max-width:100%' src='" + html.escape(image, quote=True) + "'/>")
+            graph_done = True
     if not pieces and any(term in str(question.get("q", "")).lower() for term in ("hình vẽ bên", "hình bên", "đồ thị như hình", "bảng biến thiên như hình")):
         pieces.append("<p style='color:#b45309'>Thiếu dữ liệu hình gốc để đối chiếu; không tự dựng hình mẫu. Cần giáo viên kiểm tra câu này.</p>")
     return "\n".join(pieces)
@@ -14174,6 +14227,7 @@ if selected_station == station_labels[2]:
     def render_fast_visual(q, q_id=None):
         if not isinstance(q, dict):
             return
+        # question_visual_html: WebP trước, SVG chỉ khi fail; đồ thị một luồng
         rendered = question_visual_html(deepcopy(q))
         if rendered:
             st.markdown(rendered, unsafe_allow_html=True)
@@ -14699,6 +14753,13 @@ if selected_station == station_labels[2]:
 
                 st.session_state.exam_time_mins = exam_time_mins
 
+                st.checkbox(
+                    "🔒 Làm bài kín (nhắc tắt gợi mở Socratic — dùng khi đo pre/post)",
+                    value=bool(st.session_state.get("tram3_sealed_mode", False)),
+                    key="tram3_sealed_mode",
+                    help="Khi tắt: luyện tập Socratic bình thường. Khi bật: cảnh báo làm bài kín."
+                )
+
                 measure_phase = "practice"
 
                 measure_student_id = ""
@@ -14720,6 +14781,23 @@ if selected_station == station_labels[2]:
                 # --- KHU VỰC KHỞI ĐỘNG BÀI THI CHO THÍ SINH (ACTION CENTER - BUỒNG LÁI COCKPIT) ---
 
                 real_exams_list = ree.get_baseline_full_exams(subject, grade_num) if ree else []
+                from services.tram3_exam_ux import find_exam_by_access_code, filter_exams_for_listing, is_teacher_uploaded_exam
+                from services.exam_delivery import exam_delivery_held
+                real_exams_list = filter_exams_for_listing(real_exams_list, exclude_held_fn=exam_delivery_held)
+                _qp = {}
+                try:
+                    _qp = dict(st.query_params)
+                except Exception:
+                    _qp = {}
+                _access_code = str(_qp.get("exam_code") or st.session_state.get("tram3_access_code_input") or "").strip()
+                if _access_code:
+                    _matched = find_exam_by_access_code(real_exams_list, _access_code, identity_fn=exam_storage_identity)
+                    if _matched is not None:
+                        st.success(f"🔗 Đã khớp mã đề `{_access_code}` — xác nhận rồi nạp. Chưa tự vào phòng thi.")
+                        st.session_state["tram3_deep_link_exam"] = _matched
+                    else:
+                        st.warning(f"Không tìm thấy đề mã `{_access_code}` đúng môn/lớp đang chọn (hoặc đề đang bị giữ thẩm định).")
+                st.text_input("Mã đề / mã truy cập (từ QR hoặc giáo viên giao):", value=_access_code, key="tram3_access_code_input")
 
 
 
@@ -14816,6 +14894,8 @@ if selected_station == station_labels[2]:
                     if ck2_count > 0: filter_opts.append(f"🎯 Cuối HK2 ({ck2_count} đề)")
 
                     if thithu_count > 0: filter_opts.append(f"🏛️ Thi thử ({thithu_count} đề)")
+                    _gv_n = sum(1 for it in real_exams_list if is_teacher_uploaded_exam(it))
+                    if _gv_n > 0: filter_opts.append(f"👨‍🏫 Đề giáo viên đã lưu ({_gv_n} đề)")
 
 
 
@@ -14838,6 +14918,7 @@ if selected_station == station_labels[2]:
                         elif "Cuối HK2" in filter_ex_type: filtered_exams = ck2_exams or real_exams_list
 
                         elif "Thi thử" in filter_ex_type: filtered_exams = thithu_exams or real_exams_list
+                        elif "Đề giáo viên" in filter_ex_type: filtered_exams = [e for e in real_exams_list if is_teacher_uploaded_exam(e)] or real_exams_list
 
 
 
@@ -14871,7 +14952,10 @@ if selected_station == station_labels[2]:
 
                     if btn_load_chosen or btn_load_random:
 
-                        if btn_load_random:
+                        if (not btn_load_random) and st.session_state.get("tram3_deep_link_exam") is not None:
+                            sel_real_item = st.session_state.get("tram3_deep_link_exam")
+                            st.session_state["tram3_deep_link_exam"] = None
+                        elif btn_load_random:
                             random.seed(time.time_ns())
                             if "seen_whole_exam_codes" not in st.session_state:
                                 st.session_state.seen_whole_exam_codes = set()
@@ -16084,6 +16168,16 @@ if selected_station == station_labels[2]:
 
 
 
+            if st.session_state.get("gv_parsed_exam_temp") or st.session_state.get("exam_data"):
+                _exp_obj = st.session_state.get("gv_parsed_exam_temp") or st.session_state.get("exam_data")
+                if isinstance(_exp_obj, dict) and (_exp_obj.get("p1") or _exp_obj.get("p2") or _exp_obj.get("p3") or _exp_obj.get("part_doc_hieu")):
+                    with st.expander("🖨️ In đề trắng / xuất bản trước khi vào phòng thi", expanded=False):
+                        st.caption("Soạn xong có thể phát đề giấy hoặc QR trước giờ làm. Mặc định không kèm đáp án.")
+                        try:
+                            render_exam_export_suite(_exp_obj, subject, grade_num, st.session_state.get("exam_time_mins", 45), include_ans_default=False, key_prefix="gv_pre")
+                        except Exception as _ex:
+                            st.warning(f"Chưa xuất được bản nháp: {_ex}")
+
             st.caption(assessment_profile(subject, grade_num)["note"])
 
     elif st.session_state.exam_state == "testing":
@@ -16117,6 +16211,26 @@ if selected_station == station_labels[2]:
 
 
 
+        # Cảnh báo ngôn ngữ đề theo môn (shared policy) — không tự dịch câu đã sinh sai
+        _lang_bad = []
+        for _part_key in ("p1", "p2", "p3"):
+            for _qi, _qq in enumerate(exam.get(_part_key) or []):
+                if not isinstance(_qq, dict):
+                    continue
+                if item_display_language_issue(_qq.get("q", ""), subject):
+                    _lang_bad.append(f"{_part_key.upper()}.{_qi + 1}")
+                for _si, _st in enumerate(_qq.get("stmts") or []):
+                    if isinstance(_st, dict) and item_display_language_issue(_st.get("t") or "", subject):
+                        _lang_bad.append(f"{_part_key.upper()}.{_qi + 1}{chr(97 + _si)}")
+        if _lang_bad:
+            st.error(
+                "⚠️ Đề đang mở có câu/mệnh đề viết bằng **tiếng Anh** trong khi môn không phải Tiếng Anh: "
+                + ", ".join(_lang_bad[:12])
+                + ("…" if len(_lang_bad) > 12 else "")
+                + ". Nội dung toán/khoa học vẫn phải đặt câu bằng **tiếng Việt**. "
+                "Hãy tạo lại đề (AI) hoặc chọn đề khác — hệ thống đã chặn giao đề lệch ngôn ngữ."
+            )
+
         if st.session_state.get("custom_request_text"):
 
             req_str = st.session_state.custom_request_text
@@ -16135,7 +16249,15 @@ if selected_station == station_labels[2]:
 
         render_exam_clock()
 
-        st.caption("Bài tự nộp khi hết giờ. Hệ thống tự động lưu nháp mỗi 15 giây (chống mất bài nếu rớt mạng).")
+        from services.tram3_exam_ux import answer_sheet_cells, render_answer_sheet_html
+        _sheet_cells = answer_sheet_cells(exam, st.session_state.get("exam_answers", {}), subject)
+        _sheet_html = render_answer_sheet_html(_sheet_cells)
+        if _sheet_html:
+            st.markdown(_sheet_html, unsafe_allow_html=True)
+        if st.session_state.get("tram3_sealed_mode"):
+            st.warning("🔒 Chế độ làm bài kín đang bật (buổi đo pre/post): hạn chế mở gợi mở Socratic.")
+
+        st.caption("Bài tự nộp khi hết giờ. Hệ thống tự động lưu nháp mỗi 15 giây (chống mất bài nếu rớt mạng). Nháp trình duyệt ưu tiên ô chữ; trắc nghiệm/Đ-S được giữ trong phiên Streamlit.")
 
 
 
@@ -16302,7 +16424,7 @@ if selected_station == station_labels[2]:
 
                     render_question_source_badge(q, idx)
 
-                    st.markdown(f"**Câu {original_question_number(exam, q, idx+1)}:** {clean_question_bbt_text(q.get('q'))}")
+                    st.markdown(f"**Câu {original_question_number(exam, q, idx+1)}:** {sanitize_katex_latex(clean_question_bbt_text(q.get('q')))}")
 
                     render_fast_visual(q, f"test_p1_{idx}")
 
@@ -16342,7 +16464,7 @@ if selected_station == station_labels[2]:
 
                     render_question_source_badge(q, idx)
 
-                    st.markdown(f"**Câu {original_question_number(exam, q, idx+1)}:** {clean_question_bbt_text(q.get('q'))}")
+                    st.markdown(f"**Câu {original_question_number(exam, q, idx+1)}:** {sanitize_katex_latex(clean_question_bbt_text(q.get('q')))}")
 
                     render_fast_visual(q, f"test_p2_{idx}")
 
@@ -16387,7 +16509,7 @@ if selected_station == station_labels[2]:
 
                     render_question_source_badge(q, idx)
 
-                    st.markdown(f"**Câu {original_question_number(exam, q, idx+1)}:** {clean_question_bbt_text(q.get('q'))}")
+                    st.markdown(f"**Câu {original_question_number(exam, q, idx+1)}:** {sanitize_katex_latex(clean_question_bbt_text(q.get('q')))}")
 
                     render_fast_visual(q, f"test_p3_{idx}")
 
@@ -16401,7 +16523,7 @@ if selected_station == station_labels[2]:
 
                         key=f"t3_p3_{idx}",
 
-                        max_chars=6,
+                        max_chars=16,
 
                         placeholder="Ví dụ: 2.5, -3, 12, -0.75, 12.5...",
 
@@ -16594,99 +16716,49 @@ if selected_station == station_labels[2]:
 
         else:
 
-            # 1. Chấm Phần I (Trắc nghiệm 4 lựa chọn)
+            # 1–3. Chấm điểm thống nhất qua scoring_service.grade_exam_by_profile (đa môn/đa lớp)
 
-            p1_items = exam.get("p1", [])
+            graded = grade_exam_by_profile(exam, st.session_state.exam_answers, subject, grade_num)
 
-            base_p1, base_p2, base_p3 = assessment_profile(subject, grade_num)["weights"]
-            if subject == "Tiếng Anh":
-                base_p1, base_p2, base_p3 = 10.0, 0.0, 0.0
+            score_p1 = graded["score_p1"]
 
-            active_max = sum(weight for part, weight in zip(("p1", "p2", "p3"), (base_p1, base_p2, base_p3)) if exam.get(part))
+            score_p2 = graded["score_p2"]
 
-            scale = 10.0/active_max if active_max else 0.0
+            score_p3 = graded["score_p3"]
 
-            w_p1_total = base_p1*scale if exam.get("p1") else 0.0
+            w_p1_total = graded["w_p1"]
 
-            p1_correct = 0
+            w_p2_total = graded["w_p2"]
 
-            if p1_items:
+            w_p3_total = graded["w_p3"]
 
-                for idx, q in enumerate(p1_items):
+            p1_items = exam.get("p1", []) or []
 
-                    user_a = st.session_state.exam_answers.get(f"p1_{idx}", "")
+            p2_items = exam.get("p2", []) or []
 
-                    user_letter = re.sub(r'[^A-D]', '', user_a.strip()[:3]).upper()[:1] if user_a else ""
+            p3_items = exam.get("p3", []) or []
 
-                    if mcq_answer_matches(q, user_a): p1_correct += 1
+            p1_correct = graded["p1_correct"]
 
-                score_p1 = round((p1_correct / len(p1_items)) * w_p1_total, 2)
+            p3_correct = graded["p3_correct"]
 
+            total_score = graded["total"]
 
-
-            # 2. Chấm Phần II (Trắc nghiệm Đúng/Sai bậc 0.1 - 0.25 - 0.5 - 1.0)
-
-            p2_items = exam.get("p2", [])
-
-            w_p2_total = base_p2*scale if exam.get("p2") else 0.0
-
-            if p2_items:
-
-                w_per_q2 = w_p2_total / len(p2_items)
-
-                for idx, q in enumerate(p2_items):
-
-                    correct_stmts_cnt = 0
-
-                    stmts = q.get("stmts", [])
-
-                    for s_idx, stmt in enumerate(stmts):
-
-                        user_choice = st.session_state.exam_answers.get(f"p2_{idx}_{s_idx}", "")
-
-                        expected_bool = normalize_bool(stmt["a"] if "a" in stmt else stmt.get("ans"))
-
-                        if (user_choice == "Đúng" and expected_bool is True) or (user_choice == "Sai" and expected_bool is False):
-
-                            correct_stmts_cnt += 1
-
-
-
-                    score_p2 += calculate_part2_statement_score(correct_stmts_cnt) * w_per_q2
-
-                score_p2 = round(score_p2, 2)
-
-
-
-            # 3. Chấm Phần III (Trả lời ngắn)
-
-            p3_items = exam.get("p3", [])
-
-            w_p3_total = base_p3*scale if exam.get("p3") else 0.0
-
-            p3_correct = 0
-
-            if p3_items:
-
-                for idx, q in enumerate(p3_items):
-
-                    user_ans_str = str(st.session_state.exam_answers.get(f"p3_{idx}", "")).strip().replace(',', '.')
-
-                    expected_ans_str = str(q.get("ans", "")).strip().replace(',', '.')
-
-                    if numeric_answer_matches(user_ans_str, expected_ans_str, q.get("rounding_decimals")):
-
-                        p3_correct += 1
-
-                score_p3 = round((p3_correct / len(p3_items)) * w_p3_total, 2)
-
-
-
-            total_score = min(10.0, round(score_p1 + score_p2 + score_p3, 2))
+            p2_caption = graded["p2_label"]
 
 
 
             st.success(f"🏆 **ĐIỂM LUYỆN TẬP CỦA {student_name}: {total_score} / 10.0 ĐIỂM**")
+
+            if graded.get("scope") == "practice":
+
+                st.caption("Điểm luyện tập theo lớp; không phải chứng nhận thi tốt nghiệp Bộ GD&ĐT.")
+
+            elif graded.get("scope") == "graduation_reference":
+
+                st.caption("Tham chiếu cấu trúc QĐ 764; đề trong app là luyện tập, chưa được Bộ thẩm định.")
+
+
 
             if subject == "Tiếng Anh":
 
@@ -16700,23 +16772,35 @@ if selected_station == station_labels[2]:
 
                 c_sc3.metric("Khung Năng Lực CEFR", "Chưa đánh giá", "Cần bài đánh giá năng lực chuẩn hóa")
 
-            elif is_social_or_tech_subject(subject):
-
-                c_sc1, c_sc2 = st.columns(2)
-
-                c_sc1.metric("Phần I: TN 4 Lựa Chọn", f"{score_p1:.2f} / {w_p1_total:.1f} đ", f"{p1_correct}/{len(p1_items)} câu đúng" if p1_items else "")
-
-                c_sc2.metric("Phần II: Đúng/Sai (0.1-0.25-0.5-1.0)", f"{score_p2:.2f} / {w_p2_total:.1f} đ", "Thang điểm luyện tập")
-
             else:
 
-                c_sc1, c_sc2, c_sc3 = st.columns(3)
+                # Metric theo phần thật có trên đề (không ẩn P3 của Địa lý / STEM)
 
-                c_sc1.metric("Phần I: TN 4 Lựa Chọn", f"{score_p1:.2f} / {w_p1_total:.1f} đ", f"{p1_correct}/{len(p1_items)} câu đúng" if p1_items else "")
+                cols = []
 
-                c_sc2.metric("Phần II: Đúng/Sai (0.1-0.25-0.5-1.0)", f"{score_p2:.2f} / {w_p2_total:.1f} đ", "Thang điểm luyện tập")
+                if graded["has_p1"]:
 
-                c_sc3.metric("Phần III: Trả Lời Ngắn", f"{score_p3:.2f} / {w_p3_total:.1f} đ", f"{p3_correct}/{len(p3_items)} câu đúng" if p3_items else "")
+                    cols.append(("Phần I: TN 4 Lựa Chọn", f"{score_p1:.2f} / {w_p1_total:.1f} đ", f"{p1_correct}/{len(p1_items)} câu đúng"))
+
+                if graded["has_p2"]:
+
+                    cols.append((f"Phần II: Đúng/Sai ({p2_caption})", f"{score_p2:.2f} / {w_p2_total:.1f} đ", "Theo số ý đúng mỗi câu"))
+
+                if graded["has_p3"]:
+
+                    cols.append(("Phần III: Trả Lời Ngắn", f"{score_p3:.2f} / {w_p3_total:.1f} đ", f"{p3_correct}/{len(p3_items)} câu đúng"))
+
+                if not cols:
+
+                    st.info("Đề chưa có phần trắc nghiệm để hiển thị điểm thành phần.")
+
+                else:
+
+                    metric_cols = st.columns(len(cols))
+
+                    for col, (label, value, delta) in zip(metric_cols, cols):
+
+                        col.metric(label, value, delta)
 
 
 

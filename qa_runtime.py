@@ -56,6 +56,30 @@ def numeric_answer_matches(user_answer, expected_answer, decimals=None):
         return False
 
 
+def _looks_numeric(value):
+    text = "" if value is None else str(value).strip().replace(",", ".")
+    if not text:
+        return False
+    try:
+        return Decimal(text).is_finite()
+    except (InvalidOperation, ValueError, TypeError, OverflowError):
+        return False
+
+
+def short_answer_matches(user_answer, expected_answer, decimals=None):
+    """TLN đa môn: ưu tiên số (±0.015 / rounding); đáp án văn bản thì so khớp chuẩn hóa."""
+    if numeric_answer_matches(user_answer, expected_answer, decimals):
+        return True
+    user = "" if user_answer is None else str(user_answer).strip()
+    expected = "" if expected_answer is None else str(expected_answer).strip()
+    if not user or not expected:
+        return False
+    if _looks_numeric(expected):
+        return False
+    norm = lambda s: re.sub(r"\s+", " ", str(s).strip().casefold().replace(",", "."))
+    return norm(user) == norm(expected)
+
+
 def parse_grade(value):
     match = re.fullmatch(r"(?:Lớp\s*)?(\d{1,2})", str(value).strip(), re.IGNORECASE)
     if not match or not 6 <= int(match.group(1)) <= 12:
@@ -63,16 +87,45 @@ def parse_grade(value):
     return int(match.group(1))
 
 
+def canonicalize_mcq_key(question):
+    """Chuẩn hóa ans về A|B|C|D khi khóa là chữ cái hoặc nguyên văn phương án."""
+    options = [str(o).strip() for o in (question.get("opt") or [])]
+    raw = str(question.get("ans") or "").strip()
+    if not raw:
+        return ""
+    letter = re.sub(r"[^A-Da-d]", "", raw[:3]).upper()[:1]
+    if letter in {"A", "B", "C", "D"} and (not options or ord(letter) - ord("A") < len(options)):
+        return letter
+    if raw in options:
+        return chr(ord("A") + options.index(raw))
+    compact = re.sub(r"^[A-Da-d]\s*[\)\.\-:]\s*", "", raw).strip()
+    for idx, opt in enumerate(options):
+        opt_body = re.sub(r"^[A-Da-d]\s*[\)\.\-:]\s*", "", opt).strip()
+        if compact and compact == opt_body:
+            return chr(ord("A") + idx)
+        if raw == opt_body:
+            return chr(ord("A") + idx)
+    return ""
+
+
 def mcq_answer_matches(question, selected):
     if selected is None or not str(selected).strip():
         return False
     selected = str(selected).strip()
     options = [str(o).strip() for o in question.get("opt", [])]
-    expected = str(question.get("ans") or "").strip().upper()
+    expected = canonicalize_mcq_key(question)
     if expected not in {"A", "B", "C", "D"}:
         return False
     if selected in options:
         return options.index(selected) == ord(expected) - ord("A")
+    sel_letter = re.sub(r"[^A-Da-d]", "", selected[:3]).upper()[:1]
+    if sel_letter in {"A", "B", "C", "D"}:
+        return sel_letter == expected
+    sel_body = re.sub(r"^[A-Da-d]\s*[\)\.\-:]\s*", "", selected).strip()
+    exp_idx = ord(expected) - ord("A")
+    if 0 <= exp_idx < len(options):
+        exp_body = re.sub(r"^[A-Da-d]\s*[\)\.\-:]\s*", "", options[exp_idx]).strip()
+        return bool(sel_body) and sel_body == exp_body
     return selected.upper() == expected
 
 

@@ -180,6 +180,12 @@ def _question_issue(question, part, subject, grade):
         validate_exam_structure({part: [question]}, subject)
     except (ValueError, TypeError):
         return "missing_or_invalid_question_data"
+    from services.curriculum_policy import item_display_language_issue
+    if item_display_language_issue(question.get("q", ""), subject):
+        return "display_language_mismatch"
+    for stmt in question.get("stmts") or []:
+        if isinstance(stmt, dict) and item_display_language_issue(stmt.get("t") or "", subject):
+            return "display_language_mismatch"
     # Proven identity error from Cloud2344. Inspect the stem only: an incorrect
     # option or true/false statement can be an intentional distractor.
     if subject in {"Khoa học tự nhiên", "Hóa học"}:
