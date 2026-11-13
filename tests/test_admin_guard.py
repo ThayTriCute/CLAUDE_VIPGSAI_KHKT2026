@@ -37,11 +37,15 @@ class CsvSafetyTests(unittest.TestCase):
         self.assertEqual(frame["name"][0], "=HYPERLINK(\"http://x\")")
 
     def test_app_uses_guard(self):
+        import re
         with open("app.py", encoding="utf-8") as handle:
             source = handle.read()
-        self.assertIn("csv_safe(frame).to_csv", source)
-        self.assertIn("not global_locked and time.monotonic() >= locked_until and admin_password_matches", source)
-        self.assertIn("record_admin_failure()", source)
+        # Chuẩn hoá khoảng trắng để không phụ thuộc cách xuống dòng/format của biểu thức
+        # (giữ nguyên kiểm invariant bảo mật dù code được format lại thành nhiều dòng).
+        normalized = re.sub(r"\s+", " ", source)
+        self.assertIn("csv_safe(frame).to_csv", normalized)
+        self.assertIn("not global_locked and time.monotonic() >= locked_until and admin_password_matches", normalized)
+        self.assertIn("record_admin_failure()", normalized)
 
 
 if __name__ == "__main__":
