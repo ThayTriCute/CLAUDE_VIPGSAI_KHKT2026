@@ -146,9 +146,13 @@ def _event_station(event: Dict[str, Any]) -> int:
         return 2
     if t == "EXAM_RESULT" or event.get("station") == 3:
         return 3
-    if t in {"SCHOOL_COUNSELING_SESSION", "COUNSELING_OUTCOME_CHECKIN"} or event.get("station_from") == 5:
+    # Counseling/outcome metrics feed vault keys tram5_* (research-bound).
+    # Provenance on packets is station_from=4 → station_to=5 (UI); do not trust legacy swapped fields.
+    if t in {"SCHOOL_COUNSELING_SESSION", "COUNSELING_OUTCOME_CHECKIN"}:
         return 5
-    if event.get("station") == 4 or t.startswith("RESEARCH"):
+    if t.startswith("RESEARCH") or event.get("station") == 5 or event.get("station_to") == 5:
+        return 5
+    if event.get("station") == 4:
         return 4
     return 0
 

@@ -49,5 +49,7 @@ data/exam_cache/
 data/*.db
 data/*.db-wal
 data/*.db-shm
+data/admin_guard_state.json
+data/admin_guard_state.tmp
 *.sqlite
 *.sqlite3

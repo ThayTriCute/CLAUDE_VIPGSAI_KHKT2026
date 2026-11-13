@@ -1,4 +1,4 @@
-"""Bảng 'Sức khỏe hệ thống' cho khu quản trị Trạm 4.
+"""Bảng 'Sức khỏe hệ thống' cho khu quản trị Trạm 5 (dữ liệu & nghiên cứu).
 
 Thuần hàm, không đọc secrets và KHÔNG BAO GIỜ nhận hay trả về giá trị khóa API —
 chỉ nhận SỐ LƯỢNG khóa đã cấu hình. App truyền sẵn các tín hiệu vào đây để dễ kiểm thử.

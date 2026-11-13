@@ -170,6 +170,7 @@ class ExpertRegressionTests(unittest.TestCase):
 
     def test_shared_bank_write_requires_existing_admin_authentication(self):
         from unittest.mock import Mock
+        from services.station_auth import is_teacher_authenticated
         node = next(n for n in ast.walk(TREE) if isinstance(n,ast.If)
                     and isinstance(n.test,ast.Call) and isinstance(n.test.func,ast.Attribute)
                     and n.test.func.attr=='button' and n.test.args
@@ -177,7 +178,8 @@ class ExpertRegressionTests(unittest.TestCase):
         writer = Mock()
         st = SimpleNamespace(session_state={}, button=lambda *args,**kwargs:True, warning=Mock(), spinner=Mock())
         exec(compile(ast.Module(body=[node],type_ignores=[]),'shard-auth-test','exec'),
-             {'st':st,'ree':SimpleNamespace(append_exam_to_national_shard=writer),'p_gv':{}})
+             {'st':st,'ree':SimpleNamespace(append_exam_to_national_shard=writer),'p_gv':{},
+              'is_teacher_authenticated': is_teacher_authenticated})
         writer.assert_not_called()
         st.warning.assert_called_once()
         st.spinner.assert_not_called()

@@ -1,4 +1,4 @@
-"""Trạm 4: chống dò mật khẩu qua nhiều phiên và chống công thức độc trong CSV."""
+"""Trạm 5: chống dò mật khẩu (RAM + file bền) và chống công thức độc trong CSV."""
 import unittest
 
 import pandas as pd
@@ -26,6 +26,17 @@ class GlobalLockTests(unittest.TestCase):
         self.assertFalse(g.record_admin_failure(now=g.WINDOW_SECONDS + 100.0))
         self.assertFalse(g.admin_globally_locked(now=g.WINDOW_SECONDS + 100.0))
 
+    def test_persisted_lock_survives_reload(self):
+        """now=None ghi file; module reload vẫn thấy khóa."""
+        import importlib
+        g.reset_admin_guard()
+        for _ in range(g.MAX_FAILURES):
+            g.record_admin_failure()
+        self.assertTrue(g.admin_globally_locked())
+        importlib.reload(g)
+        self.assertTrue(g.admin_globally_locked())
+        g.reset_admin_guard()
+
 
 class CsvSafetyTests(unittest.TestCase):
     def test_formula_like_text_is_neutralised_numbers_untouched(self):
@@ -37,15 +48,14 @@ class CsvSafetyTests(unittest.TestCase):
         self.assertEqual(frame["name"][0], "=HYPERLINK(\"http://x\")")
 
     def test_app_uses_guard(self):
-        import re
         with open("app.py", encoding="utf-8") as handle:
             source = handle.read()
-        # Chuẩn hoá khoảng trắng để không phụ thuộc cách xuống dòng/format của biểu thức
-        # (giữ nguyên kiểm invariant bảo mật dù code được format lại thành nhiều dòng).
-        normalized = re.sub(r"\s+", " ", source)
-        self.assertIn("csv_safe(frame).to_csv", normalized)
-        self.assertIn("not global_locked and time.monotonic() >= locked_until and admin_password_matches", normalized)
-        self.assertIn("record_admin_failure()", normalized)
+        # Cho phép xuống dòng trong `is_valid = (...)` — vẫn phải có đủ 3 điều kiện.
+        self.assertIn("csv_safe(frame).to_csv", source)
+        self.assertIn("not global_locked", source)
+        self.assertIn("time.monotonic() >= locked_until", source)
+        self.assertIn("admin_password_matches(", source)
+        self.assertIn("record_admin_failure()", source)
 
 
 if __name__ == "__main__":

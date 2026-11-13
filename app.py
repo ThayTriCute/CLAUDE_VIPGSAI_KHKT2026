@@ -183,6 +183,9 @@ except Exception as _e_st:
     logging.warning("Không thể nạp services.state_service: %s", _e_st)
     init_centralized_session_state = None
 
+from services.station_auth import is_teacher_authenticated, set_teacher_authenticated
+from services.station_nav import STATION_LABELS, ensure_station_selection, navigate_to_station, force_tram5
+
 try:
     from models.exam_models import QuestionModel, StatementModel
 except Exception as _e_em:
@@ -1359,7 +1362,7 @@ def fetch_remote_sheet_logs(webhook_url: str, token: str):
 
 
 
-if (st.session_state.get("teacher_authenticated") or st.session_state.get("tab4_authenticated", False)) and not st.session_state.global_stats_loaded and re.match(r"^https://script\.google\.com/macros/s/[^/]+/exec", sheet_webhook_url):
+if is_teacher_authenticated(st.session_state) and not st.session_state.global_stats_loaded and re.match(r"^https://script\.google\.com/macros/s/[^/]+/exec", sheet_webhook_url):
 
     data_gs = fetch_remote_sheet_logs(sheet_webhook_url, str(get_secret("SHEET_WEBHOOK_TOKEN", "")))
 
@@ -1410,6 +1413,10 @@ st.sidebar.selectbox(
 )
 
 st.sidebar.caption("💡 Tự động fallback đa tầng an toàn khi Google quá tải.")
+st.sidebar.caption(
+    "🔒 **Quyền riêng tư:** Key/API chỉ trong phiên. Nội dung chat có thể gửi tới Gemini để phản hồi. "
+    "Hồ sơ đầy đủ lưu trên thiết bị (`.gsai.xz`). Tư vấn Trạm 4 **không** là hồ sơ bệnh án / không chẩn đoán lâm sàng."
+)
 
 st.sidebar.markdown("---")
 
@@ -1448,6 +1455,11 @@ available_subjects = (
 )
 
 from services.widget_state import retained_subject_index
+# Nếu môn đang lưu không còn trong danh sách khối mới (VD Vật lý → Lớp 8), reset trước khi render.
+_prev_subj = st.session_state.get("subject_selector")
+if _prev_subj not in available_subjects:
+    _fallback_i = retained_subject_index(st.session_state.get("active_context_key"), available_subjects)
+    st.session_state.subject_selector = available_subjects[_fallback_i]
 subject = st.sidebar.selectbox("📚 Môn học cần hỗ trợ:", available_subjects,
                               index=retained_subject_index(st.session_state.get('active_context_key'), available_subjects),
                               key="subject_selector")
@@ -1481,11 +1493,18 @@ if previous_context_key is not None and previous_context_key != current_context_
 
     # RESET TRIỆT ĐỂ BỘ NHỚ CỦA MÔN CŨ ĐỂ KHÔNG BỊ TRỘN LẪN BÀI HỌC (CHỐNG RÂU ÔNG NỌ CẮM CẰM BÀ KIA)
 
+    # Reset checkbox chuyên đề Trạm 3 + câu trả lời bài thi khi đổi môn/lớp.
     for widget_key in list(st.session_state):
-        if str(widget_key).startswith(("t3_p1_", "t3_p2_", "t3_p3_", "q_")):
+        sk = str(widget_key)
+        if sk.startswith(("t3_p1_", "t3_p2_", "t3_p3_", "q_", "cb_t3_", "cb_")):
             del st.session_state[widget_key]
+    st.session_state.pop("kntt_lesson_sel", None)
+    st.session_state.pop("topic_input_main", None)
+    st.session_state["_kntt_lesson_sel_ctx"] = current_context_key
+
     st.session_state.tram1_chat_history = []
     st.session_state.pop("research_result", None)
+    st.session_state.pop("between_group_result", None)
 
     st.session_state.current_lesson = ""
 
@@ -7946,41 +7965,24 @@ st.markdown('<div class="main-header"><div class="main-title">🏫 GIA SƯ AI - 
 # 7.1 THANH ĐIỀU HƯỚNG 5 TRẠM (TOP STATION NAVBAR)
 # Thứ tự UI: 1→2→3→Trạm 4 (tâm lý, HS)→Trạm 5 (dữ liệu/nghiên cứu, MK GV).
 # ==============================================================================
-station_labels = [
-    "📖 Trạm 1: Học Tập & Phòng Lab",
-    "✍️ Trạm 2: Gia Sư Socratic & Nộp Bài",
-    "📝 Trạm 3: Luyện Tập & Khảo Thí",
-    "💚 Trạm 4: Tư Vấn Tâm Lý Học Đường",
-    "📊 Trạm 5: Dữ Liệu & Nghiên Cứu",
-]
-
-if "selected_station" not in st.session_state:
-    st.session_state.selected_station = station_labels[0]
-elif st.session_state.selected_station not in station_labels:
-    st.session_state.selected_station = station_labels[0]
-
-# Khởi tạo hoặc bảo đảm đồng bộ cho key của sidebar radio
-if "sb_station_radio_selector" not in st.session_state:
-    st.session_state.sb_station_radio_selector = st.session_state.selected_station
-elif st.session_state.sb_station_radio_selector != st.session_state.selected_station:
-    st.session_state.sb_station_radio_selector = st.session_state.selected_station
+station_labels = list(STATION_LABELS)
+ensure_station_selection(st.session_state, station_labels)
 
 st.markdown('<div style="font-size: 13px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.8px; margin-top: -12px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">🧭 HỆ SINH THÁI GDPT 2018 • 5 TRẠM (CHỌN TRẠM HOẠT ĐỘNG):</div>', unsafe_allow_html=True)
 
-def navigate_to_station(label):
-    if label in station_labels:
-        st.session_state.selected_station = label
-        st.session_state.sb_station_radio_selector = label
-
-
 nav_t1, nav_t2, nav_t3, nav_t4, nav_t5 = st.columns(5)
+# Tránh on_click: Enter trong ô MK form có thể kích nút đầu trang trước khi xử lý unlock.
+_nav_clicked = None
 for idx_st, (col_st, label_st) in enumerate(zip([nav_t1, nav_t2, nav_t3, nav_t4, nav_t5], station_labels)):
     with col_st:
         is_cur_active = (st.session_state.selected_station == label_st)
         btn_type = "primary" if is_cur_active else "secondary"
         btn_title = f"⭐ {label_st}" if is_cur_active else label_st
-        st.button(btn_title, key=f"top_nav_station_{idx_st}", type=btn_type, width="stretch",
-                  on_click=navigate_to_station, args=(label_st,))
+        if st.button(btn_title, key=f"top_nav_station_{idx_st}", type=btn_type, width="stretch"):
+            _nav_clicked = label_st
+if _nav_clicked and not st.session_state.get("_ignore_top_nav_once"):
+    navigate_to_station(st.session_state, _nav_clicked, station_labels)
+st.session_state.pop("_ignore_top_nav_once", None)
 
 st.markdown('<div style="border-bottom: 1px solid rgba(51, 65, 85, 0.45); margin-top: 6px; margin-bottom: 18px;"></div>', unsafe_allow_html=True)
 
@@ -12111,13 +12113,17 @@ if selected_station == station_labels[0]:
     lesson_select_options = (["-- Chọn chủ đề gợi ý để đối chiếu KNTT --"]
                              + grounded_options + curr_curriculum + ["Tự gõ bài học khác bên dưới..."])
 
+    # Key ổn định (không gắn môn/lớp): đổi ngữ cảnh chỉ reset value, tránh KeyError $$ID-… cũ.
+    if st.session_state.get("_kntt_lesson_sel_ctx") != current_context_key:
+        st.session_state.pop("kntt_lesson_sel", None)
+        st.session_state["_kntt_lesson_sel_ctx"] = current_context_key
     chosen_sgk_lesson = st.selectbox(
 
         "🎯 Chọn chủ đề gợi ý theo môn/lớp:",
 
         lesson_select_options,
 
-        key=f"kntt_lesson_sel_{current_context_key}"
+        key="kntt_lesson_sel"
 
     )
 
@@ -12143,7 +12149,7 @@ if selected_station == station_labels[0]:
 
             placeholder=curr_ph,
 
-            key=f"topic_input_{current_context_key}"
+            key="topic_input_main"
 
         )
 
@@ -12153,7 +12159,7 @@ if selected_station == station_labels[0]:
 
         btn_submit_lesson = st.button("🚀 Soạn bài học", key=f"btn_soan_{current_context_key}", type="primary", width="stretch")
 
-
+    st.caption("⌨️ Gõ xong tên bài → **Enter** (hoặc bấm ra ngoài ô) rồi mới bấm **Soạn bài học** để Streamlit nhận đủ nội dung.")
 
     if curr_curriculum:
 
@@ -14079,7 +14085,7 @@ if selected_station == station_labels[1]:
 
 
 
-    # Khởi tạo tin nhắn chào mừng sư phạm nếu chưa có tin nhắn nào
+    # Khởi tạo / sửa lời chào nếu sidebar vừa có tên (tránh kẹt “Ẩn danh”)
     if "messages" not in st.session_state or not st.session_state.messages:
         welcome_intro = (
             f"Thầy chào em **{student_name}**! Thầy là Gia sư Socratic đồng hành cùng em trong môn **{subject} - Lớp {grade_num}**.\n\n"
@@ -14088,6 +14094,15 @@ if selected_station == station_labels[1]:
             f"- Hoặc **gõ trực tiếp câu hỏi / bài toán** vào khung chat bên dưới (hoặc bấm Mic nói) để Thầy trò mình cùng khám phá, thấu suốt kiến thức nhé!"
         )
         st.session_state.messages = [{"role": "assistant", "content": welcome_intro}]
+    elif (
+        student_name != "Ẩn danh"
+        and st.session_state.messages
+        and st.session_state.messages[0].get("role") == "assistant"
+        and "**Ẩn danh**" in str(st.session_state.messages[0].get("content") or "")
+    ):
+        st.session_state.messages[0]["content"] = str(st.session_state.messages[0]["content"]).replace(
+            "**Ẩn danh**", f"**{student_name}**", 1
+        )
 
     for idx_m, m in enumerate(st.session_state.get("messages", [])):
         # Complete the latest new-runtime closure from its verified plan only;
@@ -14746,7 +14761,7 @@ if selected_station == station_labels[2]:
 
                         for idx_t, t_name in enumerate(l12):
 
-                            if st.checkbox(t_name, value=(idx_t == 0), key=f"cb_12_{current_context_key}_{idx_t}"):
+                            if st.checkbox(t_name, value=(idx_t == 0), key=f"cb_t3_12_{idx_t}"):
 
                                 chosen_topics.append(f"[Lớp 12] {t_name}")
 
@@ -14758,7 +14773,7 @@ if selected_station == station_labels[2]:
 
                         for idx_t, t_name in enumerate(l11):
 
-                            if st.checkbox(t_name, value=False, key=f"cb_11_{current_context_key}_{idx_t}"):
+                            if st.checkbox(t_name, value=False, key=f"cb_t3_11_{idx_t}"):
 
                                 chosen_topics.append(f"[Lớp 11] {t_name}")
 
@@ -14770,7 +14785,7 @@ if selected_station == station_labels[2]:
 
                         for idx_t, t_name in enumerate(l10):
 
-                            if st.checkbox(t_name, value=False, key=f"cb_10_{current_context_key}_{idx_t}"):
+                            if st.checkbox(t_name, value=False, key=f"cb_t3_10_{idx_t}"):
 
                                 chosen_topics.append(f"[Lớp 10] {t_name}")
 
@@ -14786,7 +14801,7 @@ if selected_station == station_labels[2]:
 
                         for idx_t, t_name in enumerate(l11):
 
-                            if st.checkbox(t_name, value=(idx_t == 0), key=f"cb_11_{current_context_key}_{idx_t}"):
+                            if st.checkbox(t_name, value=(idx_t == 0), key=f"cb_t3_11_{idx_t}"):
 
                                 chosen_topics.append(f"[Lớp 11] {t_name}")
 
@@ -14798,7 +14813,7 @@ if selected_station == station_labels[2]:
 
                         for idx_t, t_name in enumerate(l10):
 
-                            if st.checkbox(t_name, value=False, key=f"cb_10_{current_context_key}_{idx_t}"):
+                            if st.checkbox(t_name, value=False, key=f"cb_t3_10_{idx_t}"):
 
                                 chosen_topics.append(f"[Lớp 10] {t_name}")
 
@@ -14810,7 +14825,7 @@ if selected_station == station_labels[2]:
 
                     for idx_t, t_name in enumerate(lg):
 
-                        if st.checkbox(t_name, value=(idx_t == 0), key=f"cb_{current_context_key}_{idx_t}"):
+                        if st.checkbox(t_name, value=(idx_t == 0), key=f"cb_t3_g_{idx_t}"):
 
                             chosen_topics.append(f"[Lớp {grade_num}] {t_name}")
 
@@ -14909,7 +14924,7 @@ if selected_station == station_labels[2]:
 
                 measure_student_id = ""
 
-                if (st.session_state.get("teacher_authenticated") or st.session_state.get("tab4_authenticated")):
+                if is_teacher_authenticated(st.session_state):
 
                     measure_phase = st.selectbox("Mục đích bài đo (giáo viên)", ["practice", "pre", "post"])
 
@@ -16030,7 +16045,7 @@ if selected_station == station_labels[2]:
 
                         if st.button("🏛️ Nạp Shard Quốc Gia", key="btn_save_national_shard", width="stretch"):
 
-                            if not (st.session_state.get("teacher_authenticated") or st.session_state.get("tab4_authenticated", False)):
+                            if not is_teacher_authenticated(st.session_state):
                                 st.warning("Cần mở khóa quản trị ở Trạm 5 trước khi cập nhật ngân hàng chung.")
                             else:
 
@@ -17257,7 +17272,7 @@ if selected_station == station_labels[2]:
 
 # ------------------------------------------------------------------------------
 
-# TRẠM 4: NHẬT KÝ VÀ PHÂN TÍCH TỪ DỮ LIỆU THỰC
+# TRẠM 5: NHẬT KÝ VÀ PHÂN TÍCH TỪ DỮ LIỆU THỰC (UI station_labels[4])
 
 # ------------------------------------------------------------------------------
 
@@ -17266,8 +17281,9 @@ if selected_station == station_labels[4]:
     st.subheader("📊 Dữ liệu học tập & nghiên cứu")
 
     st.caption("Trạm 5 dành **giáo viên / chủ dự án** (nhật ký, nghiên cứu, nạp shard). Học sinh tương tác tâm lý ở **Trạm 4** — không cần mật khẩu.")
-    st.info("Trạm 5 **cần mật khẩu giáo viên** (`ADMIN_PASS`). Trạm 4 (tâm lý) mở cho học sinh — không khóa.")
-    if not (st.session_state.get("teacher_authenticated") or st.session_state.get("tab4_authenticated", False)):
+    _t5_teacher = is_teacher_authenticated(st.session_state)
+    if not _t5_teacher:
+        st.info("Trạm 5 **cần mật khẩu giáo viên** (`ADMIN_PASS`). Trạm 4 (tâm lý) mở cho học sinh — không khóa.")
         with st.form("tab4_teacher_auth_form", clear_on_submit=False):
             col_p1, col_p2 = st.columns([2.8, 1.2])
             with col_p1:
@@ -17294,29 +17310,35 @@ if selected_station == station_labels[4]:
                 if not configured:
                     st.error("Chưa cấu hình ADMIN_PASS trong Streamlit Secrets.")
                     st.caption("Chạy `python scripts/make_admin_pass_hash.py` rồi ghi vào `.streamlit/secrets.toml`, restart app.")
-                elif global_locked or time.monotonic() < locked_until:
+                elif global_locked:
                     st.error("Đã thử sai nhiều lần. Vui lòng chờ khoảng 2 phút trước khi thử lại.")
+                elif time.monotonic() < locked_until:
+                    st.error("Đã thử sai nhiều lần. Vui lòng chờ khoảng 1 phút trước khi thử lại.")
                 if is_valid:
-                    st.session_state.teacher_authenticated = True
-                    st.session_state.tab4_authenticated = True
+                    set_teacher_authenticated(st.session_state, True)
                     st.session_state.auth_failures = 0
+                    # Giữ Trạm 5 sau rerun (Enter/MK form không kéo về Trạm 1).
+                    force_tram5(st.session_state, station_labels)
+                    st.session_state["_ignore_top_nav_once"] = True
                     st.rerun()
                 else:
-                    st.session_state.auth_failures = st.session_state.get("auth_failures", 0) + 1
-                    if configured and clean_pass and not global_locked:
-                        record_admin_failure()
-                    if st.session_state.auth_failures >= 5:
-                        st.session_state.admin_locked_until = time.monotonic() + 60
-                        st.session_state.auth_failures = 0
-                    if configured and not global_locked and time.monotonic() >= locked_until:
+                    if clean_pass:
+                        st.session_state.auth_failures = st.session_state.get("auth_failures", 0) + 1
+                        if configured and not global_locked:
+                            record_admin_failure()
+                        if st.session_state.auth_failures >= 5:
+                            st.session_state.admin_locked_until = time.monotonic() + 60
+                            st.session_state.auth_failures = 0
+                    if configured and not global_locked and time.monotonic() >= locked_until and clean_pass:
                         st.error("Mật khẩu không đúng. Chỉ giáo viên / chủ dự án được mở Trạm 5.")
         if not str(get_secret("ADMIN_PASS", "")).strip():
             st.info("Thiếu ADMIN_PASS trong `.streamlit/secrets.toml`.")
         st.stop()
 
+    st.success("Đã mở khóa Trạm 5 — khu giáo viên / nghiên cứu.")
     if st.button("Khóa Trạm 5 (giáo viên)", key="tab4_lock_btn"):
-        st.session_state.teacher_authenticated = False
-        st.session_state.tab4_authenticated = False
+        set_teacher_authenticated(st.session_state, False)
+        force_tram5(st.session_state, station_labels)
         st.rerun()
 
 
@@ -17469,48 +17491,41 @@ if selected_station == station_labels[4]:
         st.caption(f"Chưa hiển thị được tổng hợp WHO-5: {_woe}")
 
     counsel_rows = [x for x in logs if x.get("type") == "SCHOOL_COUNSELING_SESSION"]
-    _teacher_view = bool(st.session_state.get("teacher_authenticated") or st.session_state.get("tab4_authenticated", False))
     if counsel_rows:
-        if _teacher_view:
-            st.caption(f"Có {len(counsel_rows)} phiên tư vấn (GV): cờ an toàn + excerpt rút gọn — không xuất raw ra nghiên cứu công khai.")
-            st.dataframe(
-                display_frame(pd.DataFrame([{
-                    "time": r.get("time"),
-                    "name": r.get("name"),
-                    "grade": r.get("grade"),
-                    "theme": r.get("theme_label"),
-                    "crisis": (r.get("safety") or {}).get("crisis"),
-                    "violence": (r.get("safety") or {}).get("violence"),
-                    "user_excerpt": (r.get("user_excerpt") or "")[:160],
-                } for r in counsel_rows])),
-                width="stretch",
-            )
-        else:
-            st.caption(f"Có {len(counsel_rows)} phiên tư vấn học đường. Excerpt chỉ hiện khi GV đã mở khóa Trạm 5.")
+        st.caption(f"Có {len(counsel_rows)} phiên tư vấn (GV): cờ an toàn + excerpt rút gọn — không xuất raw ra nghiên cứu công khai.")
+        st.dataframe(
+            display_frame(pd.DataFrame([{
+                "time": r.get("time"),
+                "name": r.get("name"),
+                "grade": r.get("grade"),
+                "theme": r.get("theme_label"),
+                "crisis": (r.get("safety") or {}).get("crisis"),
+                "violence": (r.get("safety") or {}).get("violence"),
+                "user_excerpt": (r.get("user_excerpt") or "")[:160],
+            } for r in counsel_rows])),
+            width="stretch",
+        )
     else:
         st.info("Chưa có phiên Trạm 4. Khi học sinh đồng hành tư vấn, gói ngữ liệu sẽ về đây cho nghiên cứu (không lộ secrets).")
 
     st.markdown("### Xuất nghiên cứu an toàn (GV — ẩn danh)")
     from services.personal_journey_vault import ethics_banner_md, research_safe_events
     st.caption(ethics_banner_md())
-    if not (st.session_state.get("teacher_authenticated") or st.session_state.get("tab4_authenticated", False)):
-        st.info("Để tải bản nghiên cứu đã ẩn danh, giáo viên mở khóa tại **Trạm 5** trước (ADMIN_PASS). Học sinh vẫn xem được hồ sơ cá nhân hóa bên dưới.")
+    _safe_rows = research_safe_events(logs)
+    if _safe_rows:
+        _safe_df = pd.DataFrame(_safe_rows)
+        st.dataframe(display_frame(_safe_df), width="stretch")
+        from services.admin_guard import csv_safe
+        st.download_button(
+            "⬇️ Tải CSV nghiên cứu (đã ẩn danh / không PII tư vấn thô)",
+            data=csv_safe(_safe_df).to_csv(index=False).encode("utf-8-sig"),
+            file_name="gsai_research_safe.csv",
+            mime="text/csv",
+            key="research_safe_export_btn",
+        )
+        st.caption("Bản này dùng mã nghiên cứu HS-…, bỏ excerpt tư vấn và secrets — minh bạch học thuật, giữ đạo đức & ATTT.")
     else:
-        _safe_rows = research_safe_events(logs)
-        if _safe_rows:
-            _safe_df = pd.DataFrame(_safe_rows)
-            st.dataframe(display_frame(_safe_df), width="stretch")
-            from services.admin_guard import csv_safe
-            st.download_button(
-                "⬇️ Tải CSV nghiên cứu (đã ẩn danh / không PII tư vấn thô)",
-                data=csv_safe(_safe_df).to_csv(index=False).encode("utf-8-sig"),
-                file_name="gsai_research_safe.csv",
-                mime="text/csv",
-                key="research_safe_export_btn",
-            )
-            st.caption("Bản này dùng mã nghiên cứu HS-…, bỏ excerpt tư vấn và secrets — minh bạch học thuật, giữ đạo đức & ATTT.")
-        else:
-            st.caption("Chưa có sự kiện để xuất bản nghiên cứu an toàn.")
+        st.caption("Chưa có sự kiện để xuất bản nghiên cứu an toàn.")
     st.markdown("### Hồ sơ cá nhân hóa người học (từ dữ liệu quan sát)")
 
     try:
@@ -17538,9 +17553,10 @@ if selected_station == station_labels[4]:
                         st.caption("Chủ đề lỗi (Trạm 2): " + ", ".join("%s×%s" % (t["topic"], t["count"]) for t in _p["weak_topics"][:5]))
                     st.caption(_p.get("recommendation") or "")
             if _pairs_obs:
+                from services.admin_guard import csv_safe
                 st.download_button(
                     "Tải bảng Pre–Post cá nhân hóa (CSV)",
-                    pd.DataFrame(_pairs_obs).to_csv(index=False).encode("utf-8-sig"),
+                    csv_safe(pd.DataFrame(_pairs_obs)).to_csv(index=False).encode("utf-8-sig"),
                     "ho_so_pre_post_ca_nhan.csv",
                     "text/csv",
                     key="dl_tram4_pairs_csv",
@@ -17704,10 +17720,12 @@ if selected_station == station_labels[4]:
                     result = paired_statistics(paired[pre_col], paired[post_col])
 
                     st.session_state.research_result = {"data": paired, "result": result, "pre": pre_col, "post": post_col, "minutes": min_col, "demo": is_demo, "source": source, "removed": removed}
+                    st.session_state.pop("between_group_result", None)
 
                 except Exception as exc:
 
                     st.session_state.pop("research_result", None)
+                    st.session_state.pop("between_group_result", None)
 
                     st.error(str(exc))
 
@@ -17754,7 +17772,10 @@ if selected_station == station_labels[4]:
 
             st.write(f"Khoảng tin cậy 95% của mức thay đổi: [{result['ci'][0]:.3f}; {result['ci'][1]:.3f}].")
 
-            st.info("Có bằng chứng về khác biệt trung bình ở ngưỡng 0,05." if result["p"] < .05 else "Chưa có đủ bằng chứng về khác biệt trung bình ở ngưỡng 0,05.")
+            if analysis.get("demo"):
+                st.caption("Kết quả mô phỏng — không dùng làm minh chứng hiệu quả ứng dụng.")
+            else:
+                st.info("Có bằng chứng về khác biệt trung bình ở ngưỡng 0,05." if result["p"] < .05 else "Chưa có đủ bằng chứng về khác biệt trung bình ở ngưỡng 0,05.")
 
         st.caption("Kiểm định giả định các học sinh độc lập và phân phối chênh lệch phù hợp. So sánh trước–sau đơn nhóm không chứng minh tác động nhân quả. Muốn đánh giá can thiệp cần thiết kế nhóm đối chứng và đề đo tương đương.")
 
@@ -17971,6 +17992,10 @@ if selected_station == station_labels[3]:
         is_violence_disclosure,
         legal_anchor_markdown,
         safety_banner,
+    )
+    st.caption(
+        "🔒 Hội thoại tư vấn có thể gửi tới Gemini trong phiên. Không phải hồ sơ bệnh án; "
+        "không chẩn đoán lâm sàng. Khủng hoảng: người lớn tin cậy · 111 · 115."
     )
     try:
         from services.tram4_learner_insights import weak_topics as _counsel_weak_topics

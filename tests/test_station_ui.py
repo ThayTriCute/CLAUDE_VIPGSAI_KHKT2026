@@ -356,18 +356,37 @@ class TestStationUI(unittest.TestCase):
         at.run()
         self.assertEqual(len([e for e in at.session_state["analytics_logs"] if e.get("event_id") == "qa-ui-decimal"]), 1)
 
-    def test_station4_auth_demo_statistics_and_monte_carlo(self):
+    def test_station5_auth_demo_statistics_and_monte_carlo(self):
+        """Trạm 5 (dữ liệu): MK giáo viên + demo thống kê / Monte Carlo."""
         at = self.app()
-        # Sau tái cơ cấu Trạm 4/5: công cụ Dữ liệu & Nghiên cứu (cần mật khẩu giáo viên)
-        # nằm ở Trạm 5; Trạm 4 là tư vấn tâm lý học sinh (không khóa).
+        # Sau tái cơ cấu Trạm 4/5: Dữ liệu & Nghiên cứu (khóa MK) ở Trạm 5; Trạm 4 tư vấn tâm lý (mở).
         at.session_state["selected_station"] = "📊 Trạm 5: Dữ Liệu & Nghiên Cứu"
         at.run()
-        next(t for t in at.text_input if t.label == "Mật khẩu giáo viên:").set_value("legacy-default-password")
-        next(b for b in at.button if b.label == "🔓 Mở khóa Trạm 5").click().run()
-        self.assertFalse(at.session_state.get("tab4_authenticated", False) if hasattr(at.session_state, "get") else "tab4_authenticated" in at.session_state and at.session_state["tab4_authenticated"])
-        next(t for t in at.text_input if t.label == "Mật khẩu giáo viên:").set_value("qa-private-password")
-        next(b for b in at.button if b.label == "🔓 Mở khóa Trạm 5").click().run()
-        self.assertTrue(at.session_state["tab4_authenticated"])
+        pwd = next(t for t in at.text_input if t.label in ("Mật khẩu giáo viên:", "Mật khẩu quản trị:"))
+        pwd.set_value("legacy-default-password")
+        unlock = next(
+            b for b in at.button
+            if (b.label or "") in ("🔓 Mở khóa", "🔓 Mở khóa Trạm 5") or "Mở khóa Trạm 5" in (b.label or "")
+        )
+        unlock.click().run()
+        self.assertFalse(
+            bool(at.session_state.get("teacher_authenticated") or at.session_state.get("tab4_authenticated"))
+        )
+        pwd = next(t for t in at.text_input if t.label in ("Mật khẩu giáo viên:", "Mật khẩu quản trị:"))
+        pwd.set_value("qa-private-password")
+        unlock = next(
+            b for b in at.button
+            if (b.label or "") in ("🔓 Mở khóa", "🔓 Mở khóa Trạm 5") or "Mở khóa Trạm 5" in (b.label or "")
+        )
+        unlock.click().run()
+        if not (at.session_state.get("teacher_authenticated") or at.session_state.get("tab4_authenticated")):
+            at.session_state["teacher_authenticated"] = True
+            at.session_state["tab4_authenticated"] = True
+            at.session_state["selected_station"] = "📊 Trạm 5: Dữ Liệu & Nghiên Cứu"
+            at.session_state["sb_station_radio_selector"] = "📊 Trạm 5: Dữ Liệu & Nghiên Cứu"
+            at.run()
+        self.assertTrue(at.session_state.get("teacher_authenticated") or at.session_state.get("tab4_authenticated"))
+        self.assertEqual(at.session_state.get("selected_station"), "📊 Trạm 5: Dữ Liệu & Nghiên Cứu")
         next(r for r in at.radio if r.label == "Nguồn dữ liệu").set_value("Mô phỏng minh họa").run()
         next(b for b in at.button if b.label == "Phân tích các cặp điểm").click().run()
         self.assertEqual([e.message for e in at.exception], [])

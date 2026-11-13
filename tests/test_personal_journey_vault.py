@@ -19,9 +19,9 @@ class PersonalJourneyVaultTests(unittest.TestCase):
             {"type": "EXAM_RESULT", "event_id": "a", "name": "An", "score": 5.0, "subject": "Toán học", "grade": "12"},
             {"type": "EXAM_RESULT", "event_id": "b", "name": "An", "score": 7.0, "subject": "Toán học", "grade": "12"},
             {"type": "COUNSELING_OUTCOME_CHECKIN", "event_id": "c", "name": "An",
-             "who5": {"percent_0_100": 40}, "station_from": 5},
+             "who5": {"percent_0_100": 40}, "station_from": 4, "station_to": 5},
             {"type": "COUNSELING_OUTCOME_CHECKIN", "event_id": "d", "name": "An",
-             "who5": {"percent_0_100": 64}, "station_from": 5},
+             "who5": {"percent_0_100": 64}, "station_from": 4, "station_to": 5},
             {"type": "SOCRATIC_DIAGNOSTIC", "event_id": "e", "name": "An", "topic": "Đạo hàm"},
         ]
         snap = build_personal_snapshot(
