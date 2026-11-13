@@ -32,6 +32,7 @@
 3. Không đổi giao diện/tính năng đã duyệt ngoài phạm vi ghi trong bảng.
 
 ## Nhật ký mốc
+- 13/11/2026: **LUẬT NGUỒN (mọi AI):** owner chốt ngưỡng neo/sinh bài **ĐẠT = ≥2/3** cổng VniTeach · Tập huấn NXBGD · THSQG (không bắt buộc đủ 3); phải **ghi rõ sources đã dùng + cổng thiếu**; cấm tuyên bố đủ ba nguồn khi chỉ có 1–2. HD: `docs/AI_TEXTBOOK_SOURCE_RULE.md`; rule `.cursor/rules/textbook-source-grounding.mdc`; inject runtime `ACADEMIC_GROUNDING_GUIDANCE`; test `tests/test_packet_source_rule.py`. Mở chiến dịch neo **THCS lớp 6–9 mọi môn lõi** theo luật này (cuốn chiếu như THPT).
 - 11/11/2026: lập kế hoạch; mở PR đợt 1 (P0-1, P0-2, P0-3).
 - 11/11/2026: P3-1 Trạm 2 — vá lỗi thật: ảnh >12MB hoặc >25MP (điện thoại 48–50MP) bị bỏ qua im lặng. Nay `services/upload_images.py` nhận JPEG tới 120MP (giải mã thu nhỏ), xoay đúng chiều EXIF, mọi ảnh bị từ chối đều có thông báo. Test: `tests/test_upload_images.py`. Phần còn lại của Trạm 2 (chấm, bút tích, radar, chat) đã đọc hết, chưa thấy lỗi cơ chế khác.
 - 11/11/2026: PR #21, #22 đã merge (main `b3f64ee`). P1-1: gỡ theo dõi 28 `.pyc` + `data/gsai_learning.db` (bản trong Git rỗng 0 dòng ở cả 4 bảng; `database.py` tự tạo lại), thêm luật .gitignore + test chặn tái phạm. Nếu Cloud không lên bản mới sau merge: Manage app → ⋮ → Reboot app.
