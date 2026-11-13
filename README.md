@@ -15,7 +15,7 @@
 | Hạng mục | Liên kết |
 | :--- | :--- |
 | **Kho mã nguồn (chính)** | https://github.com/ThayTriCute/CLAUDE_VIPGSAI_KHKT2026 |
-| **Web app (Streamlit Cloud / PWA)** | https://gsaithptth-khkt2026.streamlit.app |
+| **Web app (Streamlit Cloud / PWA)** | https://claudevipdemogsaikhkt2026.streamlit.app |
 | **Tài liệu Drive** | [Thư mục dữ liệu & tài liệu](https://drive.google.com/drive/folders/1ZNIMbaxVSV7NBA3g6MS-Ob7_SbfeWHtv?usp=sharing) |
 
 **File chạy chính:** `app.py`  

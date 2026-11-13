@@ -408,7 +408,7 @@ st.set_page_config(
 
 
 
-APP_URL = get_secret("APP_URL", "https://vip-demo-gsai-khkt2026.streamlit.app")
+APP_URL = get_secret("APP_URL", "https://claudevipdemogsaikhkt2026.streamlit.app")
 
 
 

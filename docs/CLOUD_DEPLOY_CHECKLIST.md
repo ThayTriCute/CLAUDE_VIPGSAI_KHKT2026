@@ -1,6 +1,8 @@
 # Checklist đồng bộ Streamlit Cloud (Trạm 1–5)
 
-**App:** https://gsaithptth-khkt2026.streamlit.app  
+**App:** https://claudevipdemogsaikhkt2026.streamlit.app  
+**Alias:** https://vip-demo-gsai-khkt2026.streamlit.app  
+
 **Repo:** https://github.com/ThayTriCute/CLAUDE_VIPGSAI_KHKT2026  
 **Entry:** `app.py` (alias `Home.py` / `main.py` / `streamlit_app.py`)
 
