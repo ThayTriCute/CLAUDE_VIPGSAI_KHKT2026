@@ -677,9 +677,9 @@ def repair_exam_bbt_m_consistency(exam, subject, grade):
         fixed = []
         for question in questions:
             if isinstance(question, dict):
-                q = dict(question)
-                q.setdefault('subject', subject)
-                fixed.append(repair_bbt_m_three_roots_question(q, subject, grade))
+                # Pass subject as arg only — do not stamp subject onto every item
+                # (would break delivery payload equality + cognitive review hashes).
+                fixed.append(repair_bbt_m_three_roots_question(question, subject, grade))
             else:
                 fixed.append(question)
         result[key] = fixed
