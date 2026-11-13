@@ -1,0 +1,31 @@
+{
+  "mode": "apptest_smoke",
+  "stations": {
+    "📖 Trạm 1: Học Tập & Phòng Lab": {
+      "exc": [],
+      "ok": true
+    },
+    "✍️ Trạm 2: Gia Sư Socratic & Nộp Bài": {
+      "exc": [],
+      "ok": true
+    },
+    "📝 Trạm 3: Luyện Tập & Khảo Thí": {
+      "exc": [],
+      "ok": true
+    },
+    "💚 Trạm 4: Tư Vấn Tâm Lý Học Đường": {
+      "exc": [],
+      "ok": true
+    },
+    "📊 Trạm 5: Dữ Liệu & Nghiên Cứu": {
+      "exc": [],
+      "ok": true
+    }
+  },
+  "ok": true,
+  "tram5_unlock": {
+    "auth": true,
+    "stay_on_t5": true
+  },
+  "generated_at": "2026-11-13T12:04:34.862061+07:00"
+}

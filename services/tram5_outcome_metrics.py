@@ -179,7 +179,7 @@ def build_outcome_checkin(
     theme_key: str = "",
     theme_label: str = "",
 ) -> Dict[str, Any]:
-    """Tạo sự kiện COUNSELING_OUTCOME_CHECKIN đưa sang Trạm 4."""
+    """Tạo sự kiện COUNSELING_OUTCOME_CHECKIN từ Trạm 4 đưa sang Trạm 5 (nghiên cứu)."""
     phase_n = str(phase or "session").strip().casefold()
     if phase_n in {"đầu đợt", "dau dot", "pre_test", "baseline"}:
         phase_n = "pre"
@@ -200,8 +200,8 @@ def build_outcome_checkin(
         "phase": phase_n,
         "bundle_id": BUNDLE_ID,
         "philosophy": "Duong thien tam - Uom nhan tai",
-        "station_from": 5,
-        "station_to": 4,
+        "station_from": 4,
+        "station_to": 5,
         "not_clinical_diagnosis": True,
         "fee_note": "educational_free_stack__no_paid_rom_license",
     }

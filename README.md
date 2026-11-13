@@ -19,8 +19,8 @@
 | **Tài liệu Drive** | [Thư mục dữ liệu & tài liệu](https://drive.google.com/drive/folders/1ZNIMbaxVSV7NBA3g6MS-Ob7_SbfeWHtv?usp=sharing) |
 
 **File chạy chính:** `app.py`  
-**Alias Cloud (cùng nội dung):** `Home.py`, `main.py`, `streamlit_app.py`
-
+**Alias Cloud (cùng nội dung):** `Home.py`, `main.py`, `streamlit_app.py`  
+**Deploy Cloud:** [`docs/CLOUD_DEPLOY_CHECKLIST.md`](docs/CLOUD_DEPLOY_CHECKLIST.md) (Secrets `ADMIN_PASS` dạng `sha256:…`, restart sau mỗi lần đẩy mã)
 ---
 
 ## Năm trạm vận hành (thứ tự nút trên UI)

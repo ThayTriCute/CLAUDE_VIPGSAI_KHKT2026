@@ -50,3 +50,10 @@ jobs:
     - name: Step 2 - Run Automated System Integrity Tests
       run: |
         python -m unittest discover -s tests -p "test_*.py"
+
+    - name: Step 3 - Station smoke (AppTest Trạm 1–5 + Trạm 5 data UI)
+      run: |
+        python -m unittest tests.test_station_ui tests.test_admin_guard tests.test_station_auth -q
+        python scripts/smoke_tram5_data_ui.py
+      env:
+        STREAMLIT_BROWSER_GATHER_USAGE_STATS: "false"

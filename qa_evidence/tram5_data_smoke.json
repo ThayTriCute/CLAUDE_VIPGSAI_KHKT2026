@@ -1,0 +1,31 @@
+{
+  "ok": true,
+  "checks": {
+    "boot_exc": [],
+    "station_picked": true,
+    "initially_locked": true,
+    "authenticated": true,
+    "password_field_gone": true,
+    "has_lock_btn": true,
+    "has_health": true,
+    "has_logs_section": true,
+    "has_research_export": true,
+    "has_who5_block": true,
+    "expanders": [
+      "🩺 Sức khỏe hệ thống",
+      "📝 Cấu hình & Xuất Phiếu Báo Cáo Học Tập Cá Nhân Hóa",
+      "📱 Quét mã QR vào app trên điện thoại",
+      "📲 Cài đặt Icon App vào Điện thoại & Máy tính (PWA)",
+      "💾 Hồ sơ cá nhân trên thiết bị (Trạm 1–5)",
+      "🛠️ Báo lỗi ứng dụng & Góp ý trải nghiệm",
+      "📚 Thư Viện SGK KNTT - Lớp 12 (VniTeach & NXBGD)",
+      "⚖️ Căn Cứ Pháp Quy Bộ GD&ĐT Hiện Hành"
+    ],
+    "download_buttons": [
+      "Tải nhật ký (CSV)",
+      "⬇️ Tải CSV nghiên cứu (đã ẩn danh / không PII tư vấn thô)"
+    ],
+    "post_auth_exc": [],
+    "re_lock_ok": true
+  }
+}

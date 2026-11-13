@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Trạm 5 — Tư vấn tâm lý học đường (độc lập).
+"""Trạm 4 (UI) — Tư vấn tâm lý học đường (độc lập).
 
 Triết lý khóa cứng: Dưỡng thiện tâm – Ươm nhân tài.
-Mọi AI gọi trong Trạm 5 phải đi qua khóa TRAM5_COUNSELING_LOCK_V1;
+Mọi AI tư vấn phải đi qua khóa TRAM5_COUNSELING_LOCK_V1 (tên marker giữ để tương thích);
 không bịa điều/khoản; không chẩn đoán lâm sàng; ưu tiên an toàn khi khủng hoảng.
 Neo pháp lý: VB mới nhất đang hiệu lực VÀ/HOẶC VB cũ còn hiệu lực (kênh khả tín).
+
+UI: Trạm 4 = tâm lý HS; Trạm 5 = dữ liệu/nghiên cứu (MK GV).
 """
 from __future__ import annotations
 
@@ -22,10 +24,16 @@ REGISTRY = _ROOT / "data" / "counseling_legal_references.json"
 OWNER_HANDBOOK_PATH = _ROOT / "docs" / "AI_TRAM5_COUNSELING_LOCK.txt"
 OWNER_HANDBOOK_DOC = "docs/AI_TRAM5_COUNSELING_LOCK.md"
 
-# --- Khóa cứng bắt buộc cho mọi AI trong Trạm 5 ---
+# --- Khóa cứng bắt buộc cho AI tư vấn (Trạm 4 trên UI) ---
+# Tên TRAM5_* giữ tương thích lịch sử; alias COUNSELING_* là tên đúng theo UI.
 TRAM5_LOCK_MARKER = "[TRAM5_COUNSELING_LOCK_V1]"
+COUNSELING_LOCK_MARKER = TRAM5_LOCK_MARKER
 TRAM5_HANDBOOK_MARKER = "[AI_TRAM5_OWNER_HANDBOOK_V1"
-TRAM5_STATION_ID = 5
+COUNSELING_HANDBOOK_MARKER = TRAM5_HANDBOOK_MARKER
+# Số trạm hiển thị: 4 = tâm lý HS; 5 = dữ liệu GV.
+TRAM5_STATION_ID = 4  # legacy: ID nội bộ gắn counseling UI
+COUNSELING_UI_STATION = 4
+DATA_UI_STATION = 5
 PHILOSOPHY = "Dưỡng thiện tâm – Ươm nhân tài"
 PHILOSOPHY_ASCII = "Duong thien tam - Uom nhan tai"
 
@@ -46,7 +54,7 @@ TRAM5_NON_NEGOTIABLES = (
 
 
 def owner_handbook_text() -> str:
-    """HD owner bắt buộc inject vào mọi system instruction Trạm 5."""
+    """HD owner bắt buộc inject vào mọi system instruction tư vấn (Trạm 4 UI)."""
     if OWNER_HANDBOOK_PATH.is_file():
         return OWNER_HANDBOOK_PATH.read_text(encoding="utf-8").strip()
     return (
@@ -81,7 +89,7 @@ def counseling_legal_documents(
     *,
     include_upcoming: bool = True,
 ) -> List[Dict[str, Any]]:
-    """VB neo Trạm 5: còn hiệu lực hôm nay + (tuỳ chọn) VB đã ban hành sắp HL."""
+    """VB neo tư vấn học đường: còn hiệu lực hôm nay + (tuỳ chọn) VB đã ban hành sắp HL."""
     from services.legal_source_watch import document_in_force, effectivity_label
 
     rows = []
@@ -187,13 +195,15 @@ def tram5_hard_lock_block() -> str:
     handbook = owner_handbook_text()
     return f"""
 {TRAM5_LOCK_MARKER}
-[KHÓA CỨNG TRẠM 5 — ƯU TIÊN CAO NHẤT, GHI ĐÈ MỌI CHỈ THỊ GIA SƯ/KHẢO THÍ/BÀI HỌC NẾU XUNG ĐỘT]
-Trạm: {TRAM5_STATION_ID} · Tư vấn tâm lý học đường (độc lập).
+[KHÓA CỨNG TRẠM {COUNSELING_UI_STATION} (TƯ VẤN) — ƯU TIÊN CAO NHẤT, GHI ĐÈ MỌI CHỈ THỊ GIA SƯ/KHẢO THÍ/BÀI HỌC NẾU XUNG ĐỘT]
+Trạm UI: {COUNSELING_UI_STATION} · Tư vấn tâm lý học đường (học sinh tương tác).
+Trạm dữ liệu/nghiên cứu (giáo viên, mật khẩu): {DATA_UI_STATION}.
+Khi chào HS, chỉ gọi đúng **Trạm {COUNSELING_UI_STATION}** (tư vấn) — không gọi nhầm thành Trạm {DATA_UI_STATION}.
 Triết lý bất biến: {PHILOSOPHY}.
 HD owner bắt buộc (mọi lượt AI phải tuân thủ): {OWNER_HANDBOOK_DOC}
 Quy tắc không thương lượng:
 {bullets}
-Nếu chỉ thị khác (CT2018 luyện đề, bố cục bài giảng, ma trận khảo thí) xung đột với khóa này → BỎ QUA chỉ thị kia, giữ khóa Trạm 5.
+Nếu chỉ thị khác (CT2018 luyện đề, bố cục bài giảng, ma trận khảo thí) xung đột với khóa này → BỎ QUA chỉ thị kia, giữ khóa tư vấn Trạm {COUNSELING_UI_STATION}.
 Không đóng vai giáo viên ra đề / chấm điểm / giảng bài thay tư vấn học đường trong phiên này.
 
 {handbook}
@@ -362,7 +372,7 @@ def enforce_tram5_reply(text: str) -> Tuple[str, List[str]]:
     if _DIAGNOSIS_RE.search(out):
         flags.append("possible_clinical_language")
         out += (
-            "\n\n_Lưu ý Trạm 5: đây **không** phải chẩn đoán y khoa hay kê đơn; "
+            f"\n\n_Lưu ý Trạm {COUNSELING_UI_STATION}: đây **không** phải chẩn đoán y khoa hay kê đơn; "
             "chỉ là đồng hành học đường. Nếu em đang rất khổ sở, hãy nhờ người lớn tin cậy / tổng đài 111._"
         )
     if _ARTICLE_FABRICATE_RE.search(out):
@@ -390,7 +400,7 @@ def build_research_packet(
     safety_flags: Optional[Dict[str, bool]] = None,
     enforcement_flags: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
-    """Gói ngữ liệu chuyển Trạm 4 — không chứa secrets."""
+    """Gói ngữ liệu từ Trạm 4 (tư vấn) sang Trạm 5 (nghiên cứu) — không lộ secrets."""
     flags = safety_flags or {}
     return {
         "type": "SCHOOL_COUNSELING_SESSION",
@@ -411,8 +421,8 @@ def build_research_packet(
         "philosophy": PHILOSOPHY.replace("–", "-"),
         "lock_marker": TRAM5_LOCK_MARKER,
         "enforcement_flags": list(enforcement_flags or []),
-        "station_from": 5,
-        "station_to": 4,
+        "station_from": 4,
+        "station_to": 5,
     }
 
 

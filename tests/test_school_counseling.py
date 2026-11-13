@@ -41,8 +41,8 @@ class SchoolCounselingTests(unittest.TestCase):
             safety_flags={"crisis": False, "violence": False},
         )
         self.assertEqual(packet["type"], "SCHOOL_COUNSELING_SESSION")
-        self.assertEqual(packet["station_from"], 5)
-        self.assertEqual(packet["station_to"], 4)
+        self.assertEqual(packet["station_from"], 4)
+        self.assertEqual(packet["station_to"], 5)
         self.assertIn("Dưỡng thiện tâm", packet["philosophy"])
         self.assertEqual(packet["lock_marker"], TRAM5_LOCK_MARKER)
 
