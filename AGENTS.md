@@ -1,3 +1,20 @@
+## ⛔ QUY LUẬT NGUỒN SGK — owner 13/11/2026 (MỌI CA AI / MỌI MÔ HÌNH — ĐỌC TRƯỚC)
+
+**HD đầy đủ:** `docs/AI_TEXTBOOK_SOURCE_RULE.md` · Rule: `.cursor/rules/textbook-source-grounding.mdc` (`alwaysApply`).
+
+Ba cổng chính thức (cột thư viện app — **không** phải SGK/SGV/SBT):
+
+1. https://www.vniteach.com/sach-dien-tu-ket-noi-tri-thuc/
+2. https://taphuan.nxbgd.vn/tap-huan?tab=public
+3. https://www.thsqg.vn/sach
+
+| Ngưỡng | Kết luận |
+|---|---|
+| **≥ 2 / 3** cổng đã đối chiếu đúng môn–lớp–cuốn–bài | **ĐẠT** |
+| 0–1 cổng | **CHƯA ĐẠT** |
+
+**Không bắt buộc đủ cả 3.** Khi lập gói neo / sinh bài **phải ghi rõ** sources đã dùng + cổng còn thiếu; **cấm** tuyên bố “đủ ba nguồn” khi chỉ có 1–2. Link/danh mục ≠ đã đọc; bản mẫu ≠ bản chính thức THSQG. Áp dụng lớp **6–12** (THCS + THPT).
+
 ## TRẠM 4 (UI) — KHÓA CỨNG AI TƯ VẤN (owner 13/11/2026) — ĐỌC HD TRƯỚC MỌI LƯỢT
 
 **UI đúng:** **Trạm 4** = tư vấn tâm lý HS (không MK). **Trạm 5** = dữ liệu/nghiên cứu GV (`ADMIN_PASS` → `teacher_authenticated` qua `services/station_auth.py`).
@@ -82,7 +99,7 @@ Sau phần tự kiểm, lưu bằng chứng/mục chờ owner (như phân trang 
 
 ## Owner 08/11/2026 — rà soát Lịch sử, GDCD, GDKT&PL
 
-Với Lịch sử, GDCD và Giáo dục kinh tế và pháp luật ở mọi lớp/trạm: rà kỹ các khẳng định về đường lối, chính sách, chính trị và pháp luật Việt Nam. Ba nguồn sách chủ dự án yêu cầu là VniTeach, Nền tảng Tập huấn NXBGDVN và Trường Học Số Quốc Gia, đúng ba cột thư viện trong ứng dụng; không hiểu thành ba loại SGK/SGV/SBT hoặc ba bộ sách. Rà soát bài liên quan qua cả ba nguồn này, xác minh đúng môn/lớp/bộ KNTT/ấn bản và phạm vi đã đọc. Cùng một cuốn được dẫn lại ở nhiều cổng không phải ba bằng chứng độc lập; ghi rõ nguồn trùng, thiếu hoặc không truy cập được, không tự coi đã đọc. Bài mẫu không đại diện toàn cuốn. Tách sự kiện/tư liệu gốc, diễn giải lịch sử, nội dung sách và quy định pháp luật hiện hành; không tự gán tác giả, động cơ, lập trường hoặc lời trích cho tư liệu. Nhận thức có góc nhìn khác nhau không có nghĩa mọi nhận định đều đúng hoặc tùy tiện. Khẳng định pháp lý phải có văn bản chính thức đã đọc, điều/khoản liên quan, ngày hiệu lực, sửa đổi và phạm vi áp dụng tại ngày đánh giá; phân biệt bối cảnh lịch sử với luật hiện hành. Thiếu một nguồn bắt buộc thì ghi rõ chưa đối chiếu đủ, không chứng nhận đạt pháp luật Việt Nam hoặc đã đối chiếu đủ ba nguồn sách. Không tự sửa bài đã được chủ dự án duyệt chỉ vì bổ sung hướng dẫn này.
+Với Lịch sử, GDCD và Giáo dục kinh tế và pháp luật ở mọi lớp/trạm: rà kỹ các khẳng định về đường lối, chính sách, chính trị và pháp luật Việt Nam. Ba cổng sách chủ dự án là VniTeach, Nền tảng Tập huấn NXBGDVN và Trường Học Số Quốc Gia, đúng ba cột thư viện trong ứng dụng; không hiểu thành ba loại SGK/SGV/SBT hoặc ba bộ sách. Owner 13/11/2026: ≥2/3 cổng là ĐẠT; ghi rõ cổng đã dùng và cổng thiếu; cấm tuyên bố đủ ba nguồn khi chỉ có 1–2. Cùng một cuốn trên nhiều cổng không phải nhiều bằng chứng nội dung độc lập; không tự coi danh mục là đã đọc. Bài mẫu không đại diện toàn cuốn. Tách sự kiện/tư liệu gốc, diễn giải lịch sử, nội dung sách và quy định pháp luật hiện hành; không tự gán tác giả, động cơ, lập trường hoặc lời trích cho tư liệu. Khẳng định pháp lý phải có văn bản chính thức đã đọc, điều/khoản, ngày hiệu lực và phạm vi áp dụng; phân biệt bối cảnh lịch sử với luật hiện hành. Dưới ngưỡng 2/3 thì ghi rõ chưa đối chiếu đủ. Không tự sửa bài owner đã duyệt chỉ vì bổ sung hướng dẫn này.
 
 Quy tắc được truyền qua ACADEMIC_GROUNDING_GUIDANCE tại cả hai transport JSON/streaming trước model dự phòng. Đây là yêu cầu kiểm chứng, không phải bộ kiểm định tự động hoặc bằng chứng đã kiểm hết sách/pháp luật. Hồ sơ nghiệm thu phải lưu tên/ấn bản/phạm vi đã đọc, nguồn chính thức cho từng khẳng định cần đối chiếu, lỗi và trạng thái chưa xác minh. Giữ bản gốc và các phần owner đã duyệt.
 

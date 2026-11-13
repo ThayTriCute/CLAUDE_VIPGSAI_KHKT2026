@@ -1,0 +1,37 @@
+---
+description: Quy luật neo SGK — đủ ≥2/3 cổng chính thức là ĐẠT; sinh bài phải ghi rõ căn cứ. Mọi ca AI bắt buộc tuân thủ.
+alwaysApply: true
+---
+
+# Neo SGK / sinh bài — quy luật nguồn (owner 13/11/2026)
+
+**ĐỌC CẢ** `docs/AI_TEXTBOOK_SOURCE_RULE.md` trước khi lập gói neo, sửa grounding, hoặc sinh bài Trạm 1–3.
+
+## Ba cổng chính thức (đúng cột thư viện app)
+
+1. **VniTeach** — https://www.vniteach.com/sach-dien-tu-ket-noi-tri-thuc/
+2. **Tập huấn NXBGDVN** — https://taphuan.nxbgd.vn/tap-huan?tab=public
+3. **THSQG** — https://www.thsqg.vn/sach (vd `?lop=6` … `?lop=12`)
+
+Không hiểu thành ba loại SGK/SGV/SBT hay ba bộ sách khác nhau.
+
+## Ngưỡng ĐẠT (bắt buộc)
+
+- **Đủ ≥ 2 / 3 cổng** đã đối chiếu đúng môn–lớp–cuốn–bài → **ĐẠT** (không bắt buộc cả 3).
+- **Chỉ 0–1 cổng** → **CHƯA ĐẠT**; không merge gói neo / không tuyên bố đã neo đủ.
+- Cùng một cuốn xuất hiện ở nhiều cổng = **nguồn trùng** (ghi rõ), không đếm thành 2 bằng chứng nội dung độc lập nếu chưa đọc nội dung.
+- Danh mục/link ≠ đã đọc trang. Bản mẫu (stamp BẢN MẪU) ≠ bản chính thức đang dùng trên THSQG.
+
+## Khi sinh bài / lập gói neo — phải ghi rõ căn cứ
+
+Trong gói `reviewed_lesson_packets` và mọi đầu ra có kiến thức:
+
+1. Liệt kê **từng nguồn đã dùng** (title + URL + locator trang/bài + edition_note).
+2. Ghi **nguồn trong bộ 3 chưa đối chiếu** (nếu có) — không giấu.
+3. **CẤM** viết “đã đối chiếu đủ ba nguồn” khi chỉ có 2 (hoặc ít hơn).
+4. Chỉ dùng `reviewed_excerpt` đã đọc; không bịa trang/YCCĐ/trích dẫn.
+5. Gói đi repo → PR → merge → pull D; **không ghi ổ F**.
+
+## Phạm vi THCS / THPT
+
+Áp dụng mọi môn–lớp **6–12**. Neo THCS (6–9) và THPT (10–12) cùng một quy luật.
