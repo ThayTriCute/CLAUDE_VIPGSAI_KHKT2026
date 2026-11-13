@@ -171,12 +171,195 @@ def _unbounded_integer_parameter_count(raw, text):
     return ''
 
 
+def _question_stem(question):
+    return str(question.get('q') or question.get('question') or '')
+
+
+def _question_options(question):
+    options = question.get('opt')
+    if isinstance(options, list) and options:
+        return options
+    options = question.get('options')
+    return options if isinstance(options, list) else []
+
+
+def _question_answer_key(question):
+    key = str(question.get('ans') or question.get('correct') or '').strip().upper()
+    return key if key in 'ABCD' and len(key) == 1 else ''
+
+
+def _bbt_source(question):
+    raw = question.get('bbt')
+    if not raw:
+        stem = _question_stem(question)
+        if '|' in stem and any(k in stem.lower() for k in ('bảng biến thiên', 'bbt', 'bảng xét dấu')):
+            raw = stem
+    if not raw:
+        return ''
+    from services.bbt_display_contract import aligned_bbt_rows
+    if aligned_bbt_rows(raw):
+        return raw
+    # AI tables often need the same heal path as display before they align.
+    try:
+        from precision_visual_engine import heal_bbt_mathematics
+        healed = heal_bbt_mathematics(str(raw))
+        if healed and aligned_bbt_rows(healed):
+            return healed
+    except Exception:
+        pass
+    return raw
+
+
+def _parse_numeric_cell(value):
+    text = str(value or '').replace('$', '').replace('−', '-').strip()
+    text = text.replace('{', '').replace('}', '')
+    plain = text.replace('\\', '')
+    if plain in ('inf', '+inf', 'infty', '+infty', '∞', '+∞') or (
+            'infty' in plain and not plain.lstrip().startswith('-')):
+        return sp.oo
+    if plain in ('-inf', '-infty', '-∞') or (plain.startswith('-') and 'infty' in plain):
+        return -sp.oo
+    if '||' in text:
+        return None
+    if len(plain) > 24 or not re.fullmatch(r'[+\-]?\d+(?:[./]\d+)?', plain):
+        return None
+    try:
+        return sp.Rational(plain)
+    except (ValueError, TypeError, ZeroDivisionError):
+        return None
+
+
+def _bbt_finite_local_extrema(rows):
+    """Local max/min y-values at critical points (y'=0) from a 3-row aligned BBT."""
+    if not rows or len(rows) != 3:
+        return None
+    points = rows[0][1:]
+    n = len(points)
+    signs = rows[1][2:-1:2]
+    markers = rows[1][3:-1:2]
+    y_cells = rows[2][1:]
+    # Aligned rows interleave arrows: y, ↗, y, ↘, y ...
+    if len(y_cells) == 2 * n - 1:
+        y_vals = y_cells[::2]
+    else:
+        y_vals = y_cells
+    if len(y_vals) != n or len(signs) != n - 1 or len(markers) != max(0, n - 2):
+        return None
+    maxima, minima = [], []
+    for i, marker in enumerate(markers):
+        if marker != '0':
+            continue
+        # Critical point is interior index i+1
+        idx = i + 1
+        left_sign, right_sign = signs[i], signs[i + 1] if i + 1 < len(signs) else ''
+        y = _parse_numeric_cell(y_vals[idx])
+        if y is None or y in (sp.oo, -sp.oo):
+            continue
+        if left_sign == '+' and right_sign == '-':
+            maxima.append(y)
+        elif left_sign == '-' and right_sign == '+':
+            minima.append(y)
+    if not maxima or not minima:
+        return None
+    y_max, y_min = max(maxima), min(minima)
+    if not y_min < y_max:
+        return None
+    return {'y_min': y_min, 'y_max': y_max}
+
+
+def _strip_option_label(option):
+    value = re.sub(r'^[A-D][.)]\s*', '', str(option).strip(), flags=re.I)
+    return value.replace('$', '').replace(r'\left', '').replace(r'\right', '').strip().rstrip('.')
+
+
+def _parse_simple_m_open_interval(option):
+    """Parse open m-interval forms: a<m<b, a < m < b, (a;b) when stem is about m."""
+    value = _strip_option_label(option)
+    value = value.replace('−', '-').replace(' ', '')
+    value = value.replace(r'\le', '≤').replace(r'\ge', '≥').replace(r'\lt', '<').replace(r'\gt', '>')
+    # a < m < b  or  a < m ≤ b etc. — only pure open counts as three-root solution
+    match = re.fullmatch(
+        r'([+\-]?\d+(?:[./]\d+)?)\s*<\s*m\s*<\s*([+\-]?\d+(?:[./]\d+)?)',
+        value)
+    if match:
+        try:
+            return sp.Rational(match[1]), sp.Rational(match[2]), 'open'
+        except (ValueError, TypeError, ZeroDivisionError):
+            return None
+    # Closed / half-open variants (wrong for "đúng 3 nghiệm phân biệt" on generic cubic)
+    for kind, pattern in (
+        ('closed', r'([+\-]?\d+(?:[./]\d+)?)\s*≤\s*m\s*≤\s*([+\-]?\d+(?:[./]\d+)?)'),
+        ('closed', r'([+\-]?\d+(?:[./]\d+)?)\s*\\le\s*m\s*\\le\s*([+\-]?\d+(?:[./]\d+)?)'),
+        ('left_open', r'([+\-]?\d+(?:[./]\d+)?)\s*<\s*m\s*≤\s*([+\-]?\d+(?:[./]\d+)?)'),
+        ('right_open', r'([+\-]?\d+(?:[./]\d+)?)\s*≤\s*m\s*<\s*([+\-]?\d+(?:[./]\d+)?)'),
+    ):
+        match = re.fullmatch(pattern, value)
+        if match:
+            try:
+                return sp.Rational(match[1]), sp.Rational(match[2]), kind
+            except (ValueError, TypeError, ZeroDivisionError):
+                return None
+    return None
+
+
+def _is_three_distinct_roots_m_task(stem):
+    text = folded(stem)
+    if not re.search(r'(?:dung|chinh xac)\s*3\s*nghiem\s*phan\s*biet|(?:co|tim).{0,40}3\s*nghiem\s*phan\s*biet', text):
+        # also: "có đúng 3 nghiệm phân biệt"
+        if '3 nghiem phan biet' not in text and 'ba nghiem phan biet' not in text:
+            return False
+    if not re.search(r'(?:f\s*\(\s*x\s*\)\s*-\s*m|f\s*\(\s*x\s*\)\s*=\s*m|y\s*=\s*m|phuong trinh.{0,20}m)', text):
+        if 'tham so m' not in text and not re.search(r'\bm\b', text):
+            return False
+    return True
+
+
+def _horizontal_line_three_roots_m_conflict(question):
+    """BBT extrema must match the unique open m-interval for exactly 3 distinct roots.
+
+    For a cubic-like BBT with local max Ymax and local min Ymin (Ymin < Ymax),
+    f(x)=m has exactly 3 distinct real roots iff Ymin < m < Ymax.
+    Detects the common AI bug: BBT shows min=1,max=4 but options use 0<m<4.
+    Multi-grade safe: only fires when a complete numeric 3-row BBT is supplied.
+    Subject gate remains in math_condition_conflict (Toán học).
+    """
+    stem = _question_stem(question)
+    if not _is_three_distinct_roots_m_task(stem):
+        return ''
+    from services.bbt_display_contract import aligned_bbt_rows
+    rows = aligned_bbt_rows(_bbt_source(question))
+    extrema = _bbt_finite_local_extrema(rows) if rows else None
+    if not extrema:
+        return ''
+    y_min, y_max = extrema['y_min'], extrema['y_max']
+    options = _question_options(question)
+    if len(options) != 4:
+        return ''
+    truths = []
+    for option in options:
+        parsed = _parse_simple_m_open_interval(option)
+        if not parsed:
+            truths.append(False)
+            continue
+        lo, hi, kind = parsed
+        truths.append(kind == 'open' and lo == y_min and hi == y_max)
+    if sum(truths) == 1:
+        key = _question_answer_key(question)
+        if key and not truths[ord(key) - ord('A')]:
+            return 'bbt_m_three_roots_key_mismatch'
+        return ''
+    if sum(truths) == 0:
+        # No option matches Ymin<m<Ymax — typical wrong bound (0 instead of Ymin).
+        return 'bbt_m_three_roots_options_mismatch'
+    return 'bbt_m_three_roots_choice_not_unique'
+
+
 def _bbt_interval_choice_conflict(question):
     """Prove interval-choice conflicts only for complete numeric supplied tables."""
     from services.bbt_display_contract import aligned_bbt_rows
-    rows = aligned_bbt_rows(question.get('bbt'))
-    options = question.get('opt')
-    task = re.search(r'ham so (?:da cho )?(dong bien|nghich bien) tren khoang nao (?:duoi day|sau day)$', folded(str(question.get('q', ''))))
+    rows = aligned_bbt_rows(question.get('bbt') or _bbt_source(question))
+    options = _question_options(question)
+    task = re.search(r'ham so (?:da cho )?(dong bien|nghich bien) tren khoang nao (?:duoi day|sau day)$', folded(_question_stem(question)))
     if not rows or not task or not isinstance(options, list) or len(options) != 4:
         return ''
     def bound(value):
@@ -253,7 +436,7 @@ def math_condition_conflict(question):
         return ""
     if question.get('subject') and canonical_subject(question['subject']) != 'Toán học':
         return ""
-    raw = str(question.get('q', ''))
+    raw = _question_stem(question)
     if len(raw) > 10000:
         return ""
     text = folded(raw)
@@ -269,6 +452,9 @@ def math_condition_conflict(question):
     bbt_issue = _bbt_interval_choice_conflict(question)
     if bbt_issue:
         return bbt_issue
+    m_roots_issue = _horizontal_line_three_roots_m_conflict(question)
+    if m_roots_issue:
+        return m_roots_issue
     count_issue = _unbounded_integer_parameter_count(raw, text)
     if count_issue:
         answer = str(question.get('ans', '')).strip()

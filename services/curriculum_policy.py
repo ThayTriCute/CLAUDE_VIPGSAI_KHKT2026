@@ -293,15 +293,131 @@ def correct_reviewed_cubic_prior_knowledge(text, subject, grade, topic=""):
     return text
 
 
+def repair_bbt_m_three_roots_question(question, subject=None, grade=None):
+    """Align m-interval options with BBT extrema for 'đúng 3 nghiệm phân biệt'.
+
+    Works for any grade/subject-gated Toán item that supplies a complete numeric
+    3-row BBT. Does not invent extrema; only rewrites a mismatched open interval
+    (common AI bug: 0<m<4 while BBT min=1, max=4) and sets the answer key.
+    Supports both Trạm 1 (`question`/`options`/`correct`) and bank (`q`/`opt`/`ans`).
+    """
+    from services.bbt_display_contract import aligned_bbt_rows
+    from services.math_conditions import (
+        _bbt_finite_local_extrema,
+        _bbt_source,
+        _is_three_distinct_roots_m_task,
+        _parse_simple_m_open_interval,
+        _question_options,
+        _question_stem,
+        math_condition_conflict,
+    )
+
+    subj = subject or question.get('subject') or 'Toán học'
+    if canonical_subject(subj) != 'Toán học':
+        return question
+    # Grade 10–12 calculus; leave other grades untouched if explicitly non-numeric.
+    if grade is not None:
+        try:
+            g = int(grade) if isinstance(grade, int) else normalize_grade(grade)
+        except (TypeError, ValueError):
+            g = None
+        if g is not None and g < 10:
+            return question
+
+    stem = _question_stem(question)
+    if not _is_three_distinct_roots_m_task(stem):
+        return question
+    conflict = math_condition_conflict({
+        **question,
+        'q': stem,
+        'opt': _question_options(question),
+        'ans': question.get('ans') or question.get('correct') or '',
+        'bbt': _bbt_source(question),
+        'subject': 'Toán học',
+    })
+    if conflict not in {
+        'bbt_m_three_roots_options_mismatch',
+        'bbt_m_three_roots_key_mismatch',
+        'bbt_m_three_roots_choice_not_unique',
+    }:
+        # Already consistent (or not applicable).
+        if not conflict:
+            return question
+        return question
+
+    rows = aligned_bbt_rows(_bbt_source(question))
+    extrema = _bbt_finite_local_extrema(rows) if rows else None
+    if not extrema:
+        return question
+    y_min, y_max = extrema['y_min'], extrema['y_max']
+    target = f"{y_min} < m < {y_max}"
+    # Prefer integer display without Rational noise
+    def _fmt(v):
+        if v == int(v):
+            return str(int(v))
+        return str(v)
+
+    target_plain = f"{_fmt(y_min)} < m < {_fmt(y_max)}"
+    target_tex = f"${_fmt(y_min)} < m < {_fmt(y_max)}$"
+
+    result = deepcopy(question)
+    opt_key = 'options' if isinstance(question.get('options'), list) else 'opt'
+    options = list(result.get(opt_key) or [])
+    if len(options) != 4:
+        return question
+
+    # Prefer rewriting an existing open-interval distractor that shares one correct bound.
+    rewrite_at = None
+    for index, option in enumerate(options):
+        parsed = _parse_simple_m_open_interval(option)
+        if not parsed:
+            continue
+        lo, hi, kind = parsed
+        if kind == 'open' and (lo == y_min or hi == y_max or lo == 0 or hi == 0):
+            rewrite_at = index
+            if lo != y_min or hi != y_max:
+                break
+    if rewrite_at is None:
+        # Fall back: first open-interval option, else option C (index 2) as conventional distractor slot.
+        for index, option in enumerate(options):
+            if _parse_simple_m_open_interval(option):
+                rewrite_at = index
+                break
+        if rewrite_at is None:
+            rewrite_at = 2
+
+    letter = chr(65 + rewrite_at)
+    raw_opt = str(options[rewrite_at])
+    if re.match(r'^[A-D][.)]\s*', raw_opt):
+        options[rewrite_at] = f"{letter}. {target_tex}"
+    else:
+        options[rewrite_at] = target_tex
+    result[opt_key] = options
+    if 'correct' in result or opt_key == 'options':
+        result['correct'] = letter
+    if 'ans' in result or opt_key == 'opt':
+        result['ans'] = letter
+    # Keep a lightweight audit trail for teachers (non-PII).
+    result['bbt_m_repair'] = {
+        'y_min': _fmt(y_min),
+        'y_max': _fmt(y_max),
+        'target': target_plain,
+        'conflict': conflict,
+    }
+    return result
+
+
 def repair_reviewed_cubic_question(question, subject, grade):
     """Repair the independently reviewed x^3-3x+1 maximum question only.
 
     Preserve option labels and selection state; do not shuffle on reruns.
     Unknown functions or non-numeric alternatives are left for review.
+    Also applies generic BBT↔m three-roots repair for Toán 10–12.
     """
+    question = repair_bbt_m_three_roots_question(question, subject, grade)
     if subject != "Toán học" or int(grade) != 12:
         return question
-    stem = str(question.get("question", ""))
+    stem = str(question.get("question", "") or question.get("q", ""))
     formula = re.sub(r"[\s${}\\]", "", stem)
     if "x^3-3x+1" not in formula:
         return question
@@ -550,8 +666,28 @@ def question_groups(exam):
         yield "part_doc_hieu", reading["questions"]
 
 
+def repair_exam_bbt_m_consistency(exam, subject, grade):
+    """Proven BBT↔m three-roots repairs across all parts (Toán 10–12)."""
+    if canonical_subject(subject) != 'Toán học':
+        return exam
+    result = deepcopy(exam) if exam is not None else exam
+    if not isinstance(result, dict):
+        return exam
+    for key, questions in question_groups(result):
+        fixed = []
+        for question in questions:
+            if isinstance(question, dict):
+                q = dict(question)
+                q.setdefault('subject', subject)
+                fixed.append(repair_bbt_m_three_roots_question(q, subject, grade))
+            else:
+                fixed.append(question)
+        result[key] = fixed
+    return result
+
+
 def prepare_exam_for_delivery(exam, subject, grade, duration=45, custom_request=""):
-    """Preserve academic payload; do not call heuristic answer/diagram healers."""
+    """Preserve academic payload; only apply proven BBT↔m consistency repairs."""
     subject, grade = validate_exam_context(exam, subject, grade)
     from services.request_scope import explicit_request_scope, question_scope_issue
     request_scope = explicit_request_scope(subject, custom_request)
@@ -573,6 +709,7 @@ def prepare_exam_for_delivery(exam, subject, grade, duration=45, custom_request=
             texts.extend(str(question.get(k, "")) for k in ("q", "explain"))
     validate_exam_item_language(result, subject)
     check_current_facts("\n".join(texts))
+    result = repair_exam_bbt_m_consistency(result, subject, grade)
     payload = {k: result[k] for k in ("p1", "p2", "p3", "part_doc_hieu", "part_viet") if k in result}
     result["curriculum_audit"] = {
         "policy_checked_at": POLICY_DATE, "policy_evaluated_on": policy_evaluation_date(), "textbook": "Kết nối tri thức với cuộc sống",
