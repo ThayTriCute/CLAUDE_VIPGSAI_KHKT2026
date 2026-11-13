@@ -413,6 +413,55 @@
       "topic": "Giới thiệu về trồng trọt — Công nghệ 7, KNTT, Bài 1",
       "path": "kntt-congnghe7-gioi-thieu-trong-trot-bai1-20261113.json.xz",
       "sha256": "1f69fbae68a75aa0fb222814d78eb7b481c66ae1e64d5057602a325c56bfba60"
+    },
+    {
+      "subject": "Toán học",
+      "grade": 8,
+      "topic": "Đơn thức — Toán 8 Tập một, KNTT, Bài 1",
+      "path": "kntt-toan8-don-thuc-bai1-20261113.json.xz",
+      "sha256": "43f10cab734b23d375de980ee1aefffbf7ecd86591285d145082806917bdae1e"
+    },
+    {
+      "subject": "Khoa học tự nhiên",
+      "grade": 8,
+      "topic": "Sử dụng một số hoá chất, thiết bị cơ bản trong phòng thí nghiệm — KHTN 8, KNTT, Bài 1",
+      "path": "kntt-khtn8-hoa-chat-thiet-bi-ptn-bai1-20261113.json.xz",
+      "sha256": "243e0fd0ef2fbb265bd17675c80d803ef0c46abd54066a51a86a9b4e38df6e15"
+    },
+    {
+      "subject": "Ngữ văn",
+      "grade": 8,
+      "topic": "Câu chuyện của lịch sử — Ngữ văn 8 Tập một, KNTT, Bài 1",
+      "path": "kntt-nguvan8-cau-chuyen-lich-su-bai1-20261113.json.xz",
+      "sha256": "10fc96934adcb2c07bcfa058c988fbd43bd77378674a9322ec8a20416be5f401"
+    },
+    {
+      "subject": "Lịch sử & Địa lý",
+      "grade": 8,
+      "topic": "Cách mạng tư sản Anh và chiến tranh giành độc lập của 13 thuộc địa Anh ở Bắc Mỹ — LS&ĐL 8, KNTT, Bài 1",
+      "path": "kntt-lsdl8-cach-mang-tu-san-anh-bai1-20261113.json.xz",
+      "sha256": "0ab943ad5df3082f616bc67ebd10b1b14ee67877a2c4e944ab05d3ba465330bd"
+    },
+    {
+      "subject": "Giáo dục công dân",
+      "grade": 8,
+      "topic": "Tự hào về truyền thống dân tộc Việt Nam — GDCD 8, KNTT, Bài 1",
+      "path": "kntt-gdcd8-truyen-thong-dan-toc-bai1-20261113.json.xz",
+      "sha256": "a38245d4a7fc44605cfe2d4677b549de787495e13f7117cc3552c6cd3b0c5157"
+    },
+    {
+      "subject": "Tin học",
+      "grade": 8,
+      "topic": "Lược sử công cụ tính toán — Tin học 8, KNTT, Bài 1",
+      "path": "kntt-tinhoc8-luoc-su-cong-cu-tinh-toan-bai1-20261113.json.xz",
+      "sha256": "3d99311a113f25d9dd93d0d7c80eac03fd9daaab94dbb10139ca485ec16a06f0"
+    },
+    {
+      "subject": "Công nghệ",
+      "grade": 8,
+      "topic": "Một số tiêu chuẩn trình bày bản vẽ kĩ thuật — Công nghệ 8, KNTT, Bài 1",
+      "path": "kntt-congnghe8-tieu-chuan-ban-ve-bai1-20261113.json.xz",
+      "sha256": "2fda4b7933bf41729a35d9a89e24dc48a7c27ee0bbfa2e6b4e998bac5ee9ebb1"
     }
   ]
 }
