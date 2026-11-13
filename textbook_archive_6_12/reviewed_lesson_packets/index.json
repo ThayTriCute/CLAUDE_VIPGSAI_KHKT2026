@@ -462,6 +462,55 @@
       "topic": "Một số tiêu chuẩn trình bày bản vẽ kĩ thuật — Công nghệ 8, KNTT, Bài 1",
       "path": "kntt-congnghe8-tieu-chuan-ban-ve-bai1-20261113.json.xz",
       "sha256": "2fda4b7933bf41729a35d9a89e24dc48a7c27ee0bbfa2e6b4e998bac5ee9ebb1"
+    },
+    {
+      "subject": "Toán học",
+      "grade": 9,
+      "topic": "Khái niệm phương trình và hệ hai phương trình bậc nhất hai ẩn — Toán 9 Tập một, KNTT, Bài 1",
+      "path": "kntt-toan9-he-pt-bac-nhat-hai-an-bai1-20261113.json.xz",
+      "sha256": "2dbdbaba061ce9b995446ae25a734870735f7483b72f0a57db19a090d0afd020"
+    },
+    {
+      "subject": "Khoa học tự nhiên",
+      "grade": 9,
+      "topic": "Nhận biết một số dụng cụ, hóa chất — Thuyết trình một vấn đề khoa học — KHTN 9, KNTT, Bài 1",
+      "path": "kntt-khtn9-dung-cu-hoa-chat-thuyet-trinh-bai1-20261113.json.xz",
+      "sha256": "2083c1594ab9f76db7bd56e211f561e02ee1d508c2bd8c8cde338dedd6c877ab"
+    },
+    {
+      "subject": "Ngữ văn",
+      "grade": 9,
+      "topic": "Thế giới kì ảo — Ngữ văn 9 Tập một, KNTT, Bài 1 / Chủ đề 1",
+      "path": "kntt-nguvan9-the-gioi-ki-ao-bai1-20261113.json.xz",
+      "sha256": "8aa4d851a74bd8d6eb6b2e3634ffaae8fec623c39f891034213875fbc23b8f08"
+    },
+    {
+      "subject": "Lịch sử & Địa lý",
+      "grade": 9,
+      "topic": "Nước Nga và Liên Xô từ năm 1918 đến năm 1945 — LS&ĐL 9, KNTT, Bài 1",
+      "path": "kntt-lsdl9-nga-lien-xo-1918-1945-bai1-20261113.json.xz",
+      "sha256": "e8fd0d432dbb991c36075fe9f087bedbb8d59255b23704e7f7d1096389bad78d"
+    },
+    {
+      "subject": "Giáo dục công dân",
+      "grade": 9,
+      "topic": "Sống có lí tưởng — GDCD 9, KNTT, Bài 1",
+      "path": "kntt-gdcd9-song-co-li-tuong-bai1-20261113.json.xz",
+      "sha256": "7a0222abb7b7320f9592381d8648bcd78c4b7e2b25bafd3c53181075bf0c9b1c"
+    },
+    {
+      "subject": "Tin học",
+      "grade": 9,
+      "topic": "Thế giới kĩ thuật số — Tin học 9, KNTT, Bài 1",
+      "path": "kntt-tinhoc9-the-gioi-ki-thuat-so-bai1-20261113.json.xz",
+      "sha256": "6d30d6249ed240e1094394b5bf6b73ff3f792cb2eb4df3a3872a2e2eee47ee35"
+    },
+    {
+      "subject": "Công nghệ",
+      "grade": 9,
+      "topic": "Nghề nghiệp trong lĩnh vực kĩ thuật và công nghệ — Công nghệ 9 Định hướng nghề nghiệp, KNTT, Bài 1",
+      "path": "kntt-congnghe9-nghe-ki-thuat-cong-nghe-bai1-20261113.json.xz",
+      "sha256": "9826af1b43b046f285fd7dc82c32940ac28737556a137dddb29e34c1967984fb"
     }
   ]
 }
