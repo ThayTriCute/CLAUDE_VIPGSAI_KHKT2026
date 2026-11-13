@@ -359,6 +359,7 @@ class TestStationUI(unittest.TestCase):
     def test_station5_auth_demo_statistics_and_monte_carlo(self):
         """Trạm 5 (dữ liệu): MK giáo viên + demo thống kê / Monte Carlo."""
         at = self.app()
+        # Sau tái cơ cấu Trạm 4/5: Dữ liệu & Nghiên cứu (khóa MK) ở Trạm 5; Trạm 4 tư vấn tâm lý (mở).
         at.session_state["selected_station"] = "📊 Trạm 5: Dữ Liệu & Nghiên Cứu"
         at.run()
         pwd = next(t for t in at.text_input if t.label in ("Mật khẩu giáo viên:", "Mật khẩu quản trị:"))

@@ -50,8 +50,8 @@ class CsvSafetyTests(unittest.TestCase):
     def test_app_uses_guard(self):
         with open("app.py", encoding="utf-8") as handle:
             source = handle.read()
-        self.assertIn("csv_safe(frame).to_csv", source)
         # Cho phép xuống dòng trong `is_valid = (...)` — vẫn phải có đủ 3 điều kiện.
+        self.assertIn("csv_safe(frame).to_csv", source)
         self.assertIn("not global_locked", source)
         self.assertIn("time.monotonic() >= locked_until", source)
         self.assertIn("admin_password_matches(", source)
