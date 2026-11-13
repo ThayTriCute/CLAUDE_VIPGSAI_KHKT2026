@@ -358,13 +358,15 @@ class TestStationUI(unittest.TestCase):
 
     def test_station4_auth_demo_statistics_and_monte_carlo(self):
         at = self.app()
-        at.session_state["selected_station"] = "📊 Trạm 4: Dữ Liệu & Nghiên Cứu"
+        # Sau tái cơ cấu Trạm 4/5: công cụ Dữ liệu & Nghiên cứu (cần mật khẩu giáo viên)
+        # nằm ở Trạm 5; Trạm 4 là tư vấn tâm lý học sinh (không khóa).
+        at.session_state["selected_station"] = "📊 Trạm 5: Dữ Liệu & Nghiên Cứu"
         at.run()
-        next(t for t in at.text_input if t.label == "Mật khẩu quản trị:").set_value("legacy-default-password")
-        next(b for b in at.button if b.label == "🔓 Mở khóa").click().run()
+        next(t for t in at.text_input if t.label == "Mật khẩu giáo viên:").set_value("legacy-default-password")
+        next(b for b in at.button if b.label == "🔓 Mở khóa Trạm 5").click().run()
         self.assertFalse(at.session_state.get("tab4_authenticated", False) if hasattr(at.session_state, "get") else "tab4_authenticated" in at.session_state and at.session_state["tab4_authenticated"])
-        next(t for t in at.text_input if t.label == "Mật khẩu quản trị:").set_value("qa-private-password")
-        next(b for b in at.button if b.label == "🔓 Mở khóa").click().run()
+        next(t for t in at.text_input if t.label == "Mật khẩu giáo viên:").set_value("qa-private-password")
+        next(b for b in at.button if b.label == "🔓 Mở khóa Trạm 5").click().run()
         self.assertTrue(at.session_state["tab4_authenticated"])
         next(r for r in at.radio if r.label == "Nguồn dữ liệu").set_value("Mô phỏng minh họa").run()
         next(b for b in at.button if b.label == "Phân tích các cặp điểm").click().run()
