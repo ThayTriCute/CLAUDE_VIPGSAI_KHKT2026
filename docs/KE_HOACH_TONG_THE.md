@@ -1,4 +1,4 @@
-# KẾ HOẠCH TỔNG THỂ HOÀN THIỆN GSAI — bản sống (mọi ca AI/mô hình phải đọc và cập nhật)
+﻿# KẾ HOẠCH TỔNG THỂ HOÀN THIỆN GSAI — bản sống (mọi ca AI/mô hình phải đọc và cập nhật)
 
 > Lập 11/11/2026 theo yêu cầu chủ dự án: làm cuốn chiếu, tự động, không chờ nhắc; mọi ca/mô hình
 > tiếp nối theo đúng tài liệu này. Quy trình bắt buộc vẫn là LUẬT 09/11/2026 trong `AGENTS.md`
@@ -66,3 +66,5 @@
 - 13/11/2026: P3-3 — GÓI Địa lí 12 Bài 3 'Sự phân hoá đa dạng của thiên nhiên' (Phần 1, tr.17–26, đọc trọn bài): Mục I (bắc–nam/đông–tây/độ cao 3 đai) + Mục II (ba miền tự nhiên, Phan-xi-păng 3 147 m) + Mục III (ảnh hưởng KT–XH). PR #56 ĐÃ MERGE. Tổng **44 gói**.
 - 13/11/2026: SỰ CỐ & VÁ main đỏ (KHÔNG do gói neo): PR #52 (merge 7873fd4, 'sync BBT extrema with m-interval') làm đỏ 3 test (`test_curriculum_policy::test_export_gate...`, `::test_final_exam_gate...`, `test_cognitive_runtime::test_delivery_preserves...`) vì `services/curriculum_policy.py` dòng ~681 `q.setdefault('subject', subject)` chèn khoá 'subject' vào payload câu hỏi. Một ca AI khác đã vá bằng commit **f95268a** ('stop BBT repair stamping subject; inject teacher auth in shard test') → main XANH lại. (Phiên này KHÔNG đụng nhánh đó theo yêu cầu chủ dự án.) Cũng đã vá 2 test admin cũ sau refactor Trạm 4/5 (PR #51, merge).
 - 13/11/2026: KIỂM TOÀN VẸN 44 gói trên main: index↔đĩa khớp 44/44; 0 gói lỗi (giải nén OK, sha256 khớp, schema/metadata đúng); app `lesson_sources` nạp cả 44 với status `reviewed_excerpt_packet_loaded`. Trạng thái neo HK1: Lịch sử 12 B1–B5 (B5 thiếu Mục 3), Địa lí 12 B1–B3, GDKT&PL 12 B1–B2. BƯỚC KẾ: bổ sung Mục 3 LS12 B5; Địa 12 B4(thực hành-bỏ)/B5; rồi khối 11/10 — chờ trình đọc THSQG nhẹ tải (sáng/tối).
+- 13/11/2026 tối: ĐỐI CHIẾU GitHub main `0fbcba4` — index **73** gói (THCS 28 + THPT 45). THCS 6–9 Bài 1 xong (PR #61–#67). THPT: L10 chỉ 3 gói (thiếu hầu hết Bài 1); L11=13 (đủ môn nhưng mỏng); L12=29 (Toán B1–11, LS B1–5, Địa B1/2/3/5, GDKT B1–2; thiếu Tin 12). Nhật ký bàn giao D: đã append mục đối chiếu — AI khác không làm trùng THCS, không đè gói đã merge.
+- 13/11/2026 đêm: P3-3 THPT — **Tin 12 CS+ICT Bài 1** (dày AI) + **lớp 10 Bài 1** Toán/Lý/Hóa/Sinh/Văn/Tin/CN/Anh (+10 gói → index 83). Nhánh `feat/packet-thpt-tin12-lop10-batch1-20261113`. Không đè THCS/gói cũ. Nhật ký D: append nghiệm thu THPT.

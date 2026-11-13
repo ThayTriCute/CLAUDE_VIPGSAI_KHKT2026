@@ -511,6 +511,76 @@
       "topic": "Nghề nghiệp trong lĩnh vực kĩ thuật và công nghệ — Công nghệ 9 Định hướng nghề nghiệp, KNTT, Bài 1",
       "path": "kntt-congnghe9-nghe-ki-thuat-cong-nghe-bai1-20261113.json.xz",
       "sha256": "9826af1b43b046f285fd7dc82c32940ac28737556a137dddb29e34c1967984fb"
+    },
+    {
+      "subject": "Tin học",
+      "grade": 12,
+      "topic": "Làm quen với Trí tuệ nhân tạo — Tin học 12 Định hướng Khoa học máy tính, KNTT, Bài 1",
+      "path": "kntt-tinhoc12-cs-lam-quen-ai-bai1-20261113.json.xz",
+      "sha256": "0ab5236d359a67c7871fbf1fab7b0725d60befd52ea6188c103e67586ce46d61"
+    },
+    {
+      "subject": "Tin học",
+      "grade": 12,
+      "topic": "Làm quen với Trí tuệ nhân tạo — Tin học 12 Định hướng Tin học ứng dụng, KNTT, Bài 1",
+      "path": "kntt-tinhoc12-ict-lam-quen-ai-bai1-20261113.json.xz",
+      "sha256": "051856647225c4155ae94bc28c4ff90a60680512ca88229e29c0fe8074ddf660"
+    },
+    {
+      "subject": "Toán học",
+      "grade": 10,
+      "topic": "Mệnh đề — Toán 10 Tập một, KNTT, Bài 1",
+      "path": "kntt-toan10-menh-de-bai1-20261113.json.xz",
+      "sha256": "c7f72b5e44f1d20260e2562ed67738683376e42c010e469e773d52f03540c8a5"
+    },
+    {
+      "subject": "Vật lý",
+      "grade": 10,
+      "topic": "Làm quen với Vật lí — Vật lí 10, KNTT, Bài 1",
+      "path": "kntt-vatly10-lam-quen-vat-li-bai1-20261113.json.xz",
+      "sha256": "69af2d9cbd972ee0085715cc45f3ff58b96af09572eeccada2a78c34fabe3410"
+    },
+    {
+      "subject": "Hóa học",
+      "grade": 10,
+      "topic": "Thành phần của nguyên tử — Hóa học 10, KNTT, Bài 1",
+      "path": "kntt-hoa10-thanh-phan-nguyen-tu-bai1-20261113.json.xz",
+      "sha256": "c929771ad90400d72ee3f54bfa49b43632b8edc9d7341f4655573033e3876cf3"
+    },
+    {
+      "subject": "Sinh học",
+      "grade": 10,
+      "topic": "Giới thiệu khái quát môn Sinh học — Sinh học 10, KNTT, Bài 1",
+      "path": "kntt-sinh10-gioi-thieu-sinh-hoc-bai1-20261113.json.xz",
+      "sha256": "68a09d5499cc90ec94765925a97b1749a4a591c60d158d1b1e08939b46589205"
+    },
+    {
+      "subject": "Ngữ văn",
+      "grade": 10,
+      "topic": "Sức hấp dẫn của truyện kể — Ngữ văn 10 Tập một, KNTT, Bài 1",
+      "path": "kntt-van10-suc-hap-dan-truyen-ke-bai1-20261113.json.xz",
+      "sha256": "9665c72a9ddd104b141c768c7c872886aff057064bd3ddc0d8d6b781df252e53"
+    },
+    {
+      "subject": "Tin học",
+      "grade": 10,
+      "topic": "Thông tin và xử lí thông tin — Tin học 10, KNTT, Bài 1",
+      "path": "kntt-tinhoc10-thong-tin-xu-li-bai1-20261113.json.xz",
+      "sha256": "90478def5498cae7d14afdda8cc0c82e88e7d9202e9832d2bb436f982d5a32fc"
+    },
+    {
+      "subject": "Công nghệ",
+      "grade": 10,
+      "topic": "Bài mở đầu — Công nghệ 10 Thiết kế và công nghệ, KNTT, Bài 1",
+      "path": "kntt-cn10-thiet-ke-cong-nghe-mo-dau-bai1-20261113.json.xz",
+      "sha256": "5afece5e8b1473404525a72a8d0101426170818bd5be78604c7331e51e52398a"
+    },
+    {
+      "subject": "Tiếng Anh",
+      "grade": 10,
+      "topic": "Unit 1 — Getting Started / Language — Tiếng Anh 10 Global Success",
+      "path": "globalsuccess-anh10-unit1-getting-started-20261113.json.xz",
+      "sha256": "ec494cbe11d756372bb0abd29452e722fed111c3bd5e9e22a917236c53addb4f"
     }
   ]
 }
