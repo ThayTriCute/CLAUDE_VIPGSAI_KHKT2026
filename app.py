@@ -159,7 +159,7 @@ try:
     import qa_runtime as _qa_runtime_for_scoring
     _reload_scoring(_qa_runtime_for_scoring)
     import services.scoring_service as _scoring_service_mod
-    if getattr(_scoring_service_mod, "T3_SCORING_REVISION", None) != 2026111415:
+    if getattr(_scoring_service_mod, "T3_SCORING_REVISION", None) != 2026111417:
         _reload_scoring(_scoring_service_mod)
     from services.scoring_service import (
         calculate_part2_statement_score,
@@ -180,7 +180,7 @@ except Exception as _e_sc:
             return "không có Phần II"
         if abs(float(w_per_question) - 1.0) < 1e-9:
             return "0.1-0.25-0.5-1.0 (QĐ 764)"
-        return "thang luyện tập tỷ lệ theo bậc QĐ 764"
+        return "Thang điểm luyện tập tỷ lệ theo bậc QĐ 764 (0.1-0.25-0.5-1.0)"
     def grade_exam_by_profile(exam, user_answers, subject, grade):
         # Stub an toàn: ép reload lần nữa rồi chấm — không raise làm gãy phòng thi
         from importlib import reload as _reload_fb
