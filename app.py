@@ -197,7 +197,7 @@ except Exception as _e_st:
     init_centralized_session_state = None
 
 from services.station_auth import is_teacher_authenticated, set_teacher_authenticated
-from services.station_nav import STATION_LABELS, STATION_BUTTON_LABELS, ensure_station_selection, navigate_to_station, force_tram5
+from services.station_nav import STATION_LABELS, ensure_station_selection, navigate_to_station, force_tram5
 
 try:
     from models.exam_models import QuestionModel, StatementModel
@@ -545,19 +545,21 @@ st.markdown("""
 
     }
 
-    /* THANH ĐIỀU HƯỚNG 4 TRẠM NẰM NGANG PHÍA SAU DÒNG KẺ TIÊU ĐỀ (TOP STATION NAVBAR) */
-    div[data-testid="stHorizontalBlock"] button[key^="top_nav_station_"] {
+    /* THANH ĐIỀU HƯỚNG 5 TRẠM — tên đầy đủ, xuống dòng trong nút, không cắt cụt. */
+    div[class*="st-key-top_nav_station_"] button {
         font-size: 13.5px !important;
         font-weight: 700 !important;
-        padding: 0.65rem 0.6rem !important;
+        padding: 0.65rem 0.55rem !important;
         border-radius: 10px !important;
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        white-space: nowrap !important;
-        text-overflow: ellipsis !important;
+        white-space: normal !important;
+        height: auto !important;
+        min-height: 4.6rem !important;
+        line-height: 1.25 !important;
     }
 
-    div[data-testid="stHorizontalBlock"] button[key^="top_nav_station_"][kind="primary"],
-    div[data-testid="stHorizontalBlock"] button[key^="top_nav_station_"][data-testid="baseButton-primary"] {
+    div[class*="st-key-top_nav_station_"] button[kind="primary"],
+    div[class*="st-key-top_nav_station_"] button[data-testid="stBaseButton-primary"] {
         background: linear-gradient(135deg, #0284c7, #2563eb) !important;
         color: #ffffff !important;
         border: 2px solid #38bdf8 !important;
@@ -565,15 +567,15 @@ st.markdown("""
         transform: translateY(-2px) !important;
     }
 
-    div[data-testid="stHorizontalBlock"] button[key^="top_nav_station_"][kind="secondary"],
-    div[data-testid="stHorizontalBlock"] button[key^="top_nav_station_"][data-testid="baseButton-secondary"] {
+    div[class*="st-key-top_nav_station_"] button[kind="secondary"],
+    div[class*="st-key-top_nav_station_"] button[data-testid="stBaseButton-secondary"] {
         background: rgba(15, 23, 42, 0.75) !important;
         color: #94a3b8 !important;
         border: 1.5px solid #334155 !important;
     }
 
-    div[data-testid="stHorizontalBlock"] button[key^="top_nav_station_"][kind="secondary"]:hover,
-    div[data-testid="stHorizontalBlock"] button[key^="top_nav_station_"][data-testid="baseButton-secondary"]:hover {
+    div[class*="st-key-top_nav_station_"] button[kind="secondary"]:hover,
+    div[class*="st-key-top_nav_station_"] button[data-testid="stBaseButton-secondary"]:hover {
         color: #38bdf8 !important;
         border-color: #0284c7 !important;
         background: rgba(30, 41, 59, 0.9) !important;
@@ -8004,9 +8006,8 @@ for idx_st, (col_st, label_st) in enumerate(zip([nav_t1, nav_t2, nav_t3, nav_t4,
     with col_st:
         is_cur_active = (st.session_state.selected_station == label_st)
         btn_type = "primary" if is_cur_active else "secondary"
-        short = STATION_BUTTON_LABELS[idx_st]
-        btn_title = f"⭐ {short}" if is_cur_active else short
-        if st.button(btn_title, key=f"top_nav_station_{idx_st}", type=btn_type, width="stretch", help=label_st):
+        btn_title = f"⭐ {label_st}" if is_cur_active else label_st
+        if st.button(btn_title, key=f"top_nav_station_{idx_st}", type=btn_type, width="stretch"):
             _nav_clicked = label_st
 if _nav_clicked and not st.session_state.get("_ignore_top_nav_once"):
     navigate_to_station(st.session_state, _nav_clicked, station_labels)
