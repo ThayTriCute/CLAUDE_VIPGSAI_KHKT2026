@@ -15578,11 +15578,16 @@ if selected_station == station_labels[2]:
                                     len(blended.get("p2") or []),
                                     len(blended.get("p3") or []),
                                 )
-                                target = blended.get("target_counts") or (num_p1, num_p2, num_p3)
-                                if blended.get("counts_shortfall") or actual != tuple(target):
+                                # Chỉ lấy target từ payload engine — tránh NameError khi AST-exec regression
+                                # (test_rejected_bank_draft_does_not_crash_or_start_exam) không inject num_p*.
+                                target = blended.get("target_counts")
+                                if blended.get("counts_shortfall") or (
+                                    target is not None and actual != tuple(target)
+                                ):
+                                    shown = tuple(target) if target is not None else actual
                                     st.warning(
                                         f"Kho chưa đủ ma trận đúng chủ đề cho cấu hình "
-                                        f"{target[0]}/{target[1]}/{target[2]} "
+                                        f"{shown[0]}/{shown[1]}/{shown[2]} "
                                         f"(đang có {actual[0]}/{actual[1]}/{actual[2]}). "
                                         "Đề vẫn mở từ kho cùng môn–lớp; hãy kiểm tra hoặc dùng AI bổ sung."
                                     )
