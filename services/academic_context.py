@@ -52,15 +52,32 @@ def academic_context(subject, grade):
     return subject, grade
 
 
+def _strip_topic_ui_noise(value):
+    """Normalize UI labels like '[Lớp 12] Chuyên đề 1: …' before matching bank topics."""
+    text = str(value or "")
+    text = re.sub(r"\[\s*lớp\s*\d{1,2}\s*\]", " ", text, flags=re.I)
+    text = re.sub(r"chuyên\s*đề\s*\d+\s*:\s*", " ", text, flags=re.I)
+    return text
+
+
 def topic_matches(requested, candidate):
     """Do not treat a single generic word as a matching topic."""
-    requested, candidate = folded(requested), folded(candidate)
+    req_raw, cand_raw = str(requested or ""), str(candidate or "")
+    req_grades = {int(g) for g in re.findall(r"(?:lớp|khối)\s*(\d{1,2})", req_raw, flags=re.I)}
+    cand_grades = {int(g) for g in re.findall(r"(?:lớp|khối)\s*(\d{1,2})", cand_raw, flags=re.I)}
+    if req_grades and cand_grades and req_grades.isdisjoint(cand_grades):
+        return False
+    requested = folded(_strip_topic_ui_noise(req_raw))
+    candidate = folded(_strip_topic_ui_noise(cand_raw))
     if not requested or not candidate:
         return False
     if requested in candidate or candidate in requested:
         return True
     ignored = {"chuyen", "de", "chu", "bai", "tap", "lop", "va", "cua", "trong", "mot", "cac"}
     left, right = set(requested.split()) - ignored, set(candidate.split()) - ignored
+    # Drop bare grade numerals so "Lớp 12" vs "Lớp 9" cannot fake topical overlap.
+    left = {tok for tok in left if not tok.isdigit()}
+    right = {tok for tok in right if not tok.isdigit()}
     common = left & right
     return len(common) >= 2 and len(common) / max(1, min(len(left), len(right))) >= 0.75
 

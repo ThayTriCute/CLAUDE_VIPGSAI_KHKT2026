@@ -2217,6 +2217,8 @@ def get_shard_exams(subject: str, grade=None) -> list:
     shard_xz = os.path.join(REAL_EXAM_DIR, shard_base + ".xz")
     shard_gz = os.path.join(REAL_EXAM_DIR, shard_base + ".gz")
     shard_raw = os.path.join(REAL_EXAM_DIR, shard_base)
+    # Ghi chú: bản .zst song song là kho nén thứ hai trên đĩa; loader hiện đọc .xz/.gz/.json.
+    # Kho thứ hai được tận dụng qua get_raw_baseline_data() (baseline master) bên dưới.
     
     loaded_exams = []
     try:
@@ -2228,10 +2230,32 @@ def get_shard_exams(subject: str, grade=None) -> list:
         elif os.path.exists(shard_raw):
             loaded_exams = read_exam_shard(shard_raw, grade=grade)
         else:
-            logging.warning("Không có shard cho môn %s; không nạp kho master lớn hoặc mượn môn khác.", norm_subj)
+            logging.warning("Không có shard cho môn %s; sẽ thử kho master baseline nếu có.", norm_subj)
     except Exception as exc:
         logging.warning("Không thể nạp shard cho môn %s: %s", norm_subj, exc)
         loaded_exams = []
+
+    # Kho 2 — master baseline_exams_*.json.xz: bổ sung đề đúng môn/lớp chưa có trong shard.
+    try:
+        identity = lambda e: tuple(str(e.get(k, '')) for k in ('subject', 'grade', 'year', 'code', 'exam_type', 'title'))
+        known = {identity(e): e for e in loaded_exams}
+        want_subj = canonical_subject(subject)
+        grade_key = None if grade is None else str(grade)
+        raw = get_raw_baseline_data()
+        for exam in (raw.get("exams") or []) if isinstance(raw, dict) else []:
+            if not isinstance(exam, dict):
+                continue
+            if canonical_subject(exam.get("subject", "")) != want_subj:
+                continue
+            if grade_key is not None and str(exam.get("grade")) != grade_key:
+                continue
+            key = identity(exam)
+            if key in known:
+                continue
+            loaded_exams.append(exam)
+            known[key] = exam
+    except Exception as exc:
+        logging.warning("Không bổ sung được kho master baseline cho môn %s: %s", norm_subj, exc)
 
     # Released source batches are separate immutable XZ files; never rewrite
     # the large legacy shard or silently overwrite a conflicting exam identity.
@@ -2928,39 +2952,44 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
         num_p1, num_p2, num_p3 = counts
 
     # 1. HÓA CHẶT MA TRẬN CHUYÊN ĐỀ ĐƯỢC CHỌN & ÁP DỤNG PROMPT TÙY BIẾN
+    # Toán-only filters must NOT run on other subjects (UI labels often contain "Chuyên đề 1/2").
+    is_math = canonical_subject(subject) == "Toán học"
     chosen_str = " ".join(str(ct) for ct in (chosen_topics or [])).lower()
     custom_str = str(custom_prompt or "").lower()
     
     forbidden_topic_terms = []
-    # Nếu không chọn Tích phân hoặc prompt có yêu cầu bỏ tích phân
-    if ("tích phân" not in chosen_str and "nguyên hàm" not in chosen_str) or any(kw in custom_str for kw in ["không tích phân", "bỏ tích phân", "chưa học tích phân"]):
-        forbidden_topic_terms.extend(["nguyên hàm", "tích phân", "\\int", "f(x)dx", "tính chất tích phân", "ứng dụng tích phân"])
-    
-    # Nếu không chọn Vectơ/Tọa độ Oxyz HOẶC prompt yêu cầu không ra Oxyz (như "chỉ lấy bài 1", "không oxyz")
-    has_chosen_oxyz = any(kw in chosen_str for kw in ["vectơ", "vecto", "tọa độ trong không gian", "oxyz", "chuyên đề 2"])
-    has_explicit_deny_oxyz = any(kw in custom_str for kw in ["không oxyz", "ko oxyz", "bỏ oxyz", "chưa học oxyz", "không lấy oxyz", "chỉ lấy bài 1", "chỉ lấy kshs", "chỉ lấy hàm số"])
-    if has_chosen_oxyz and not has_explicit_deny_oxyz:
-        has_custom_deny_oxyz = False
-    else:
-        has_custom_deny_oxyz = (not has_chosen_oxyz) or has_explicit_deny_oxyz
+    has_chosen_oxyz = False
+    has_custom_deny_oxyz = False
+    if is_math:
+        # Nếu không chọn Tích phân hoặc prompt có yêu cầu bỏ tích phân
+        if ("tích phân" not in chosen_str and "nguyên hàm" not in chosen_str) or any(kw in custom_str for kw in ["không tích phân", "bỏ tích phân", "chưa học tích phân"]):
+            forbidden_topic_terms.extend(["nguyên hàm", "tích phân", "\\int", "f(x)dx", "tính chất tích phân", "ứng dụng tích phân"])
+        
+        # Nếu không chọn Vectơ/Tọa độ Oxyz HOẶC prompt yêu cầu không ra Oxyz (như "chỉ lấy bài 1", "không oxyz")
+        has_chosen_oxyz = any(kw in chosen_str for kw in ["vectơ", "vecto", "tọa độ trong không gian", "oxyz", "chuyên đề 2"])
+        has_explicit_deny_oxyz = any(kw in custom_str for kw in ["không oxyz", "ko oxyz", "bỏ oxyz", "chưa học oxyz", "không lấy oxyz", "chỉ lấy bài 1", "chỉ lấy kshs", "chỉ lấy hàm số"])
+        if has_chosen_oxyz and not has_explicit_deny_oxyz:
+            has_custom_deny_oxyz = False
+        else:
+            has_custom_deny_oxyz = (not has_chosen_oxyz) or has_explicit_deny_oxyz
 
-    if has_custom_deny_oxyz:
-        forbidden_topic_terms.extend([
-            "oxyz", "không gian oxyz", "tọa độ trong không gian", "trong không gian",
-            "phương trình mặt phẳng", "phương trình mặt cầu", "mặt cầu oxyz", "mặt cầu ngoại tiếp", 
-            "vectơ pháp tuyến", "véc-tơ pháp tuyến", "mặt phẳng (p)", "mặt phẳng (q)", "mặt phẳng (r)", 
-            "đường thẳng d:", "phương trình đường thẳng", "mặt cầu (s)", "tích vô hướng"
-        ])
-    
-    # Nếu không chọn Xác suất
-    if "xác suất" not in chosen_str and "bayes" not in chosen_str:
-        forbidden_topic_terms.extend(["xác suất có điều kiện", "công thức bayes", "p(a|b)", "p(b|a)"])
-    # Nếu không chọn Dãy số
-    if "cấp số" not in chosen_str and "dãy số" not in chosen_str and "csc" not in chosen_str:
-        forbidden_topic_terms.extend(["cấp số cộng", "cấp số nhân", "công sai", "công bội", "số hạng đầu u_1", "u_n", "u_{10}", "u_5", "s_{15}", "s_{20}"])
-    # Nếu không chọn Lượng giác
-    if "lượng giác" not in chosen_str:
-        forbidden_topic_terms.extend(["hàm số lượng giác", "phương trình lượng giác"])
+        if has_custom_deny_oxyz:
+            forbidden_topic_terms.extend([
+                "oxyz", "không gian oxyz", "tọa độ trong không gian", "trong không gian",
+                "phương trình mặt phẳng", "phương trình mặt cầu", "mặt cầu oxyz", "mặt cầu ngoại tiếp", 
+                "vectơ pháp tuyến", "véc-tơ pháp tuyến", "mặt phẳng (p)", "mặt phẳng (q)", "mặt phẳng (r)", 
+                "đường thẳng d:", "phương trình đường thẳng", "mặt cầu (s)", "tích vô hướng"
+            ])
+        
+        # Nếu không chọn Xác suất
+        if "xác suất" not in chosen_str and "bayes" not in chosen_str:
+            forbidden_topic_terms.extend(["xác suất có điều kiện", "công thức bayes", "p(a|b)", "p(b|a)"])
+        # Nếu không chọn Dãy số
+        if "cấp số" not in chosen_str and "dãy số" not in chosen_str and "csc" not in chosen_str:
+            forbidden_topic_terms.extend(["cấp số cộng", "cấp số nhân", "công sai", "công bội", "số hạng đầu u_1", "u_n", "u_{10}", "u_5", "s_{15}", "s_{20}"])
+        # Nếu không chọn Lượng giác
+        if "lượng giác" not in chosen_str:
+            forbidden_topic_terms.extend(["hàm số lượng giác", "phương trình lượng giác"])
 
     # Phân tích sâu các yêu cầu ma trận tùy biến từ người dùng (Deep Custom Intent Parsing)
     p1_only_nb_th = any(kw in custom_str for kw in [
@@ -2970,14 +2999,14 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
     p3_vd_vdc = any(kw in custom_str for kw in [
         "phần 3 mức độ vd", "phần 3 mức độ vd, vdc", "phần 3:", "vd, vdc", "vận dụng cao", "phần 3 mức độ vdc"
     ])
-    need_bbt = any(kw in custom_str for kw in ["bbt", "bảng biến thiên", "bảng xét dấu"])
-    need_graphs = any(kw in custom_str for kw in ["đồ thị", "hàm 1/1", "hàm 2/1", "hàm bậc 3", "bậc 3", "phân thức", "tiệm cận", "đọc đồ thị"])
-    need_rational_1_1 = any(kw in custom_str for kw in ["1/1", "hàm 1/1", "bậc nhất trên bậc nhất", "bậc 1/1"])
-    need_rational_2_1 = any(kw in custom_str for kw in ["2/1", "hàm 2/1", "bậc hai trên bậc nhất", "bậc 2/1", "tiệm cận xiên"])
-    need_cubic = any(kw in custom_str for kw in ["bậc ba", "bậc 3", "hàm bậc 3"])
-    need_mslgn = any(kw in custom_str for kw in ["mslgn", "ghép nhóm", "mẫu ghép nhóm", "hologram", "biểu đồ", "tứ phân vị", "khoảng tứ phân vị", "phân tán"])
-    need_f_prime = any(kw in custom_str for kw in ["f'", "đồ thị f'", "đạo hàm f'"])
-    need_quartiles = any(kw in custom_str for kw in ["tứ phân vị", "q1", "q2", "q3", "khoảng tứ phân vị"])
+    need_bbt = is_math and any(kw in custom_str for kw in ["bbt", "bảng biến thiên", "bảng xét dấu"])
+    need_graphs = is_math and any(kw in custom_str for kw in ["đồ thị", "hàm 1/1", "hàm 2/1", "hàm bậc 3", "bậc 3", "phân thức", "tiệm cận", "đọc đồ thị"])
+    need_rational_1_1 = is_math and any(kw in custom_str for kw in ["1/1", "hàm 1/1", "bậc nhất trên bậc nhất", "bậc 1/1"])
+    need_rational_2_1 = is_math and any(kw in custom_str for kw in ["2/1", "hàm 2/1", "bậc hai trên bậc nhất", "bậc 2/1", "tiệm cận xiên"])
+    need_cubic = is_math and any(kw in custom_str for kw in ["bậc ba", "bậc 3", "hàm bậc 3"])
+    need_mslgn = is_math and any(kw in custom_str for kw in ["mslgn", "ghép nhóm", "mẫu ghép nhóm", "hologram", "biểu đồ", "tứ phân vị", "khoảng tứ phân vị", "phân tán"])
+    need_f_prime = is_math and any(kw in custom_str for kw in ["f'", "đồ thị f'", "đạo hàm f'"])
+    need_quartiles = is_math and any(kw in custom_str for kw in ["tứ phân vị", "q1", "q2", "q3", "khoảng tứ phân vị"])
 
     # Phân tích từ khóa tùy biến tổng quát áp dụng cho TẤT CẢ các môn học và khối lớp (Đa môn, Đa lớp):
     generic_custom_tokens = []
@@ -2990,66 +3019,85 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
         }
         generic_custom_tokens = [tk for tk in raw_tokens if len(tk) >= 3 and tk not in stop_words]
 
-    # Xây dựng bộ từ khóa tích cực theo chuyên đề SGK KNTT
+    # Xây dựng bộ từ khóa tích cực theo chuyên đề — inject KSHS/Oxyz/MSLGN chỉ khi môn Toán.
     topic_keywords = []
-    if "khảo sát" in chosen_str or "đạo hàm" in chosen_str or "chuyên đề 1" in chosen_str:
-        topic_keywords.extend([
-            "khảo sát", "hàm số", "đơn điệu", "đồng biến", "nghịch biến", "cực trị", "cực đại", "cực tiểu", 
-            "giá trị lớn nhất", "giá trị nhỏ nhất", "gtln", "gtnn", "tiệm cận", "đồ thị", "tâm đối xứng", 
-            "tối ưu hóa", "hàm phân thức", "bậc ba", "đạo hàm", "bảng biến thiên", "bbt"
-        ])
-    if has_chosen_oxyz and not has_custom_deny_oxyz:
-        topic_keywords.extend([
-            "vectơ", "véc-tơ", "tọa độ", "tích vô hướng", "góc giữa hai", "độ dài", "không gian oxyz", 
-            "tọa độ điểm", "tứ diện", "hình hộp", "trọng tâm"
-        ])
-    if "mẫu ghép nhóm" in chosen_str or "phân tán" in chosen_str or "chuyên đề 3" in chosen_str or "mẫu số liệu" in chosen_str:
-        topic_keywords.extend([
-            "ghép nhóm", "mẫu số liệu", "trung vị", "tứ phân vị", "khoảng tứ phân vị", "khoảng biến thiên", 
-            "phương sai", "độ lệch chuẩn", "tần số", "số trung bình"
-        ])
+    if is_math:
+        if "khảo sát" in chosen_str or "đạo hàm" in chosen_str or "chuyên đề 1" in chosen_str:
+            topic_keywords.extend([
+                "khảo sát", "hàm số", "đơn điệu", "đồng biến", "nghịch biến", "cực trị", "cực đại", "cực tiểu", 
+                "giá trị lớn nhất", "giá trị nhỏ nhất", "gtln", "gtnn", "tiệm cận", "đồ thị", "tâm đối xứng", 
+                "tối ưu hóa", "hàm phân thức", "bậc ba", "đạo hàm", "bảng biến thiên", "bbt"
+            ])
+        if has_chosen_oxyz and not has_custom_deny_oxyz:
+            topic_keywords.extend([
+                "vectơ", "véc-tơ", "tọa độ", "tích vô hướng", "góc giữa hai", "độ dài", "không gian oxyz", 
+                "tọa độ điểm", "tứ diện", "hình hộp", "trọng tâm"
+            ])
+        if "mẫu ghép nhóm" in chosen_str or "phân tán" in chosen_str or "chuyên đề 3" in chosen_str or "mẫu số liệu" in chosen_str:
+            topic_keywords.extend([
+                "ghép nhóm", "mẫu số liệu", "trung vị", "tứ phân vị", "khoảng tứ phân vị", "khoảng biến thiên", 
+                "phương sai", "độ lệch chuẩn", "tần số", "số trung bình"
+            ])
     if chosen_topics:
         for ct in chosen_topics:
-            clean_ct = re.sub(r'\[Lớp \d+\]\s*', '', str(ct))
-            clean_ct = re.sub(r'Chuyên đề \d+:\s*', '', clean_ct).strip().lower()
+            clean_ct = re.sub(r'\[Lớp \d+\]\s*', '', str(ct), flags=re.I)
+            clean_ct = re.sub(r'Chuyên đề \d+:\s*', '', clean_ct, flags=re.I).strip().lower()
             if clean_ct and len(clean_ct) > 3:
                 topic_keywords.append(clean_ct)
+                # Tokenize cleaned UI label so bank topics can match without exact phrase.
+                for tok in re.findall(r'[\w\u00C0-\u1EF9]{3,}', clean_ct):
+                    if tok not in {"chuyên", "đề", "lớp", "môn", "học", "trọng", "tâm", "tổng", "hợp"}:
+                        topic_keywords.append(tok)
 
     def filter_by_topic(items):
         clean_items = [it for it in items if not is_placeholder_question(it)]
         random.shuffle(clean_items)
-        
-        valid_items = []
+
+        def _not_forbidden(it):
+            it_text = (str(it.get("topic", "")) + " " + str(it.get("q", "")) + " " + str(it.get("explain", "")) + " " + str(it.get("source", ""))).lower()
+            return not any(fb in it_text for fb in forbidden_topic_terms)
+
+        def _keyword_hit(it):
+            if not topic_keywords:
+                return True
+            blob = (str(it.get("topic", "")) + " " + str(it.get("q", "")) + " " + str(it.get("explain", ""))).lower()
+            return any(tk in blob for tk in topic_keywords)
+
+        # Pass 1: strict topic_matches (+ keyword when present)
+        strict = []
         for it in clean_items:
             if chosen_topics and not any(topic_matches(ct, it.get("topic", "")) for ct in chosen_topics):
                 continue
-            it_text = (str(it.get("topic", "")) + " " + str(it.get("q", "")) + " " + str(it.get("explain", "")) + " " + str(it.get("source", ""))).lower()
-            if any(fb in it_text for fb in forbidden_topic_terms):
+            if not _not_forbidden(it):
                 continue
-            valid_items.append(it)
-        
-        if not topic_keywords:
-            return valid_items
-            
-        matched = []
-        for it in valid_items:
-            it_top = str(it.get("topic", "")).lower()
-            it_q = str(it.get("q", "")).lower()
-            it_exp = str(it.get("explain", "")).lower()
-            if any(tk in it_top or tk in it_q or tk in it_exp for tk in topic_keywords):
-                matched.append(it)
-        return matched
+            if topic_keywords and not _keyword_hit(it):
+                continue
+            strict.append(it)
+        if strict:
+            return strict
 
-    # Phân tích xem người dùng có yêu cầu riêng cho Phần 1 hay không:
+        # Pass 2: keyword / cleaned-label hit when UI ontology ≠ bank topic strings
+        if chosen_topics and topic_keywords:
+            soft = [it for it in clean_items if _not_forbidden(it) and _keyword_hit(it)]
+            if soft:
+                return soft
+
+        # Pass 3: same subject/grade pool minus forbidden (still better than empty paper)
+        if chosen_topics:
+            return [it for it in clean_items if _not_forbidden(it)]
+        return [it for it in clean_items if _not_forbidden(it)]
+
+    # Phân tích xem người dùng có yêu cầu riêng cho Phần 1 hay không (chỉ Toán):
     # Nếu prompt quy định Phần 1 gồm các dạng cụ thể (hàm số, BBT, đồ thị 1/1, 2/1, bậc 3, MSLGN)
     # mà KHÔNG hề yêu cầu Véctơ/Oxyz trong Phần 1 -> CƯỠNG CHẾ LOẠI BỎ VÉCTƠ/OXYZ KHỎI PHẦN 1!
     has_p1_spec = any(kw in custom_str for kw in ["phần 1", "phấn 1", "p1"])
     has_p1_oxyz_request = any(kw in custom_str for kw in ["vectơ", "vecto", "oxyz", "không gian oxyz"])
     p1_excludes_oxyz = False
-    if has_p1_spec and not has_p1_oxyz_request:
-        p1_excludes_oxyz = True
-    elif (not has_p1_oxyz_request) and any(kw in custom_str for kw in ["đồ thị", "hàm số", "bbt", "bảng biến thiên", "mslgn", "ghép nhóm", "hologram"]):
-        p1_excludes_oxyz = True
+    if is_math:
+        if has_p1_spec and not has_p1_oxyz_request:
+            p1_excludes_oxyz = True
+        elif (not has_p1_oxyz_request) and any(kw in custom_str for kw in ["đồ thị", "hàm số", "bbt", "bảng biến thiên", "mslgn", "ghép nhóm", "hologram"]):
+            p1_excludes_oxyz = True
 
     p1_filtered = filter_by_topic(pool["p1"])
     if p1_excludes_oxyz:
@@ -3171,21 +3219,25 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
                 if len(selected) >= target_count:
                     break
 
-        # Nếu thiếu câu, bổ sung từ kho CÙNG KHỐI LỚP (có xáo trộn ngẫu nhiên)
-        if not chosen_topics and len(selected) < target_count and pool.get(part):
-            fallback_pool = list(pool[part])
-            random.shuffle(fallback_pool)
-            for it in fallback_pool:
+        # Nếu thiếu câu, bổ sung từ kho CÙNG MÔN / CÙNG KHỐI (kể cả khi đã chọn chủ đề).
+        # Ưu tiên câu đã lọc theo chủ đề; sau đó nới cùng lớp để đủ counts.
+        if len(selected) < target_count and pool.get(part):
+            prefer = list(p1_filtered if part == "p1" else p2_filtered if part == "p2" else p3_filtered)
+            random.shuffle(prefer)
+            rest = list(pool[part])
+            random.shuffle(rest)
+            for it in prefer + rest:
+                if is_placeholder_question(it):
+                    continue
                 it_text = (str(it.get("topic", "")) + " " + str(it.get("q", "")) + " " + str(it.get("explain", ""))).lower()
                 if any(fb in it_text for fb in forbidden_topic_terms):
                     continue
-                if not is_placeholder_question(it):
-                    fp = get_q_fingerprint(it)
-                    if fp and fp not in global_seen_fingerprints:
-                        selected.append(dict(it))
-                        global_seen_fingerprints.add(fp)
-                        if len(selected) >= target_count:
-                            break
+                fp = get_q_fingerprint(it)
+                if fp and fp not in global_seen_fingerprints:
+                    selected.append(dict(it))
+                    global_seen_fingerprints.add(fp)
+                    if len(selected) >= target_count:
+                        break
 
         return selected[:target_count]
 
@@ -3292,6 +3344,11 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
         "is_ai_generated": False,
         "exam_source_type": "real_bank",
         "target_counts": (num_p1, num_p2, num_p3),
+        "actual_counts": (len(selected_p1), len(selected_p2), len(selected_p3)),
+        "counts_shortfall": (
+            len(selected_p1) < num_p1 or len(selected_p2) < num_p2 or len(selected_p3) < num_p3
+        ),
+        "bank_sources_used": ["subject_shard", "baseline_master"],
         "audit_trail": audit_trail,
         "p1": selected_p1,
         "p2": selected_p2,

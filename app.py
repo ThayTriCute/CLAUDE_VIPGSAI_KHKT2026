@@ -15573,7 +15573,19 @@ if selected_station == station_labels[2]:
                                 )
 
                             if blended and (blended.get("p1") or blended.get("p2") or blended.get("p3")):
-
+                                actual = blended.get("actual_counts") or (
+                                    len(blended.get("p1") or []),
+                                    len(blended.get("p2") or []),
+                                    len(blended.get("p3") or []),
+                                )
+                                target = blended.get("target_counts") or (num_p1, num_p2, num_p3)
+                                if blended.get("counts_shortfall") or actual != tuple(target):
+                                    st.warning(
+                                        f"Kho chưa đủ ma trận đúng chủ đề cho cấu hình "
+                                        f"{target[0]}/{target[1]}/{target[2]} "
+                                        f"(đang có {actual[0]}/{actual[1]}/{actual[2]}). "
+                                        "Đề vẫn mở từ kho cùng môn–lớp; hãy kiểm tra hoặc dùng AI bổ sung."
+                                    )
                                 try:
                                     prepared_bank_exam = blended if original_paper_mode else enrich_exam_data(blended, custom_request=custom_matrix_prompt)
                                 except (ValueError, TypeError) as error:
