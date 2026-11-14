@@ -2035,6 +2035,22 @@ QUY TẮC BẮT BUỘC: Thoát kép tất cả các ký tự gạch chéo ngư�
 # ------------------------------------------------------------------------------
 _BASELINE_CACHE = None
 _BASELINE_CACHE_MTIME = 0
+_BASELINE_SKIPPED_CLOUD = False
+
+
+def _is_streamlit_cloud_host() -> bool:
+    """Streamlit Community Cloud chạy dưới /home/adminuser — RAM hẹp, dễ OOM khi nạp baseline ~1M câu."""
+    return os.path.isdir("/home/adminuser") or bool(os.environ.get("STREAMLIT_CLOUD"))
+
+
+def _should_load_baseline_master() -> bool:
+    """Mặc định BỎ baseline master trên Streamlit Cloud (tránh service kill). Bật bằng GSAI_LOAD_BASELINE_MASTER=1."""
+    flag = str(os.environ.get("GSAI_LOAD_BASELINE_MASTER", "")).strip().lower()
+    if flag in {"1", "true", "yes", "on"}:
+        return True
+    if flag in {"0", "false", "no", "off"}:
+        return False
+    return not _is_streamlit_cloud_host()
 
 # CẤU TRÚC CHỈ MỤC ĐA CHIỀU O(1) CHO PHÉP TRUY XUẤT ĐA CHUYÊN ĐỀ & ĐA KHỐI LỚP TỨC THÌ
 _MULTI_INDEX_BY_TOPIC_LEVEL = {}  # Key: (norm_subj, grade, topic_lower, part, level) -> list[q]
@@ -2115,8 +2131,17 @@ def get_raw_baseline_data():
       2. Tự động Fallback: Chuẩn nén Gzip (.json.gz).
       3. Dự phòng cuối cùng: File JSON thô (.json).
     Đảm bảo 100% tương thích đa nền tảng: Android, iOS, macOS, Windows, Linux.
+    Trên Streamlit Cloud: mặc định skip master (~OOM) — dùng subject shard; bật lại bằng env GSAI_LOAD_BASELINE_MASTER=1.
     """
-    global _BASELINE_CACHE, _BASELINE_CACHE_MTIME
+    global _BASELINE_CACHE, _BASELINE_CACHE_MTIME, _BASELINE_SKIPPED_CLOUD
+    if not _should_load_baseline_master():
+        if not _BASELINE_SKIPPED_CLOUD:
+            logging.warning(
+                "Bỏ nạp baseline_exams master trên host hẹp (Streamlit Cloud). "
+                "Đang dùng subject shard; đặt GSAI_LOAD_BASELINE_MASTER=1 nếu đủ RAM."
+            )
+            _BASELINE_SKIPPED_CLOUD = True
+        return {}
     try:
         xz_file = BASELINE_2025_FILE + ".xz"
         gz_file = BASELINE_2025_FILE + ".gz"
@@ -2161,6 +2186,9 @@ def get_raw_baseline_data():
                     _BASELINE_CACHE = fast_json_loads(bf.read())
             _BASELINE_CACHE_MTIME = mtime
             return _BASELINE_CACHE
+    except MemoryError as exc:
+        logging.warning("Baseline master OOM — fallback shard-only: %s", exc)
+        return {}
     except Exception as exc:
         logging.warning("Không thể đọc baseline 2025: %s", exc)
         # Không cache bản rỗng — lần sau (đủ RAM) vẫn thử lại.
