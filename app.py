@@ -408,7 +408,14 @@ st.set_page_config(
 
 
 
-APP_URL = get_secret("APP_URL", "https://claudevipdemogsaikhkt2026.streamlit.app")
+# QR / share link: ưu tiên Secrets APP_URL; mặc định = subdomain Streamlit Cloud hiện tại.
+APP_URL = str(
+    get_secret(
+        "APP_URL",
+        "https://claudevipgsaikhkt2026-bybgceinifcaqggqyyvatx.streamlit.app",
+    )
+    or "https://claudevipgsaikhkt2026-bybgceinifcaqggqyyvatx.streamlit.app"
+).rstrip("/")
 
 
 
