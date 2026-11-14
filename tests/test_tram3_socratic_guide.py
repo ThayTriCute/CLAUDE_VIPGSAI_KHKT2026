@@ -62,6 +62,20 @@ class Tram3SocraticGuideTests(unittest.TestCase):
         self.assertNotIn("y=-1", vertex)
         self.assertNotIn("Chọn A", vertex)
 
+    def test_compound_interest_uses_given_data_without_result(self):
+        guide = build_tram3_socratic_guide({
+            "q": "Một người tiết kiệm 100 triệu đồng với lãi suất 6%/năm, lãi kép. Sau 3 năm nhận được bao nhiêu triệu đồng?",
+            "ans": "119",
+            "explain": "100*(1.06)**3 ≈ 119. Chọn 119.",
+            "level": "VD",
+        }, subject="Toán học", grade_num=10)
+        self.assertIn("100", guide)
+        self.assertIn("6%", guide)
+        self.assertIn("3", guide)
+        self.assertIn("A=P(1+r)", guide.replace(" ", ""))
+        self.assertNotIn("119", guide)
+        self.assertGreaterEqual(guide.count("\n"), 3)
+
     def test_looks_like_explain(self):
         self.assertTrue(looks_like_explain_solution("Vậy chọn phương án B. Đáp án là B."))
         self.assertFalse(looks_like_explain_solution("Em sẽ xét dấu đạo hàm như thế nào?"))

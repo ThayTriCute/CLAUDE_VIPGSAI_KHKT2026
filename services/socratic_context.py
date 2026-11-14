@@ -536,6 +536,19 @@ def _guide_plan(question, subject) -> tuple:
         if hard:
             steps.append('Ý vận dụng: thay đúng số liệu đề vào công thức, chưa lấy kết quả in sẵn.')
         return formula, steps
+    if 'lai kep' in text or ('lai suat' in text and 'nam' in text):
+        money = re.search(r'(\d+(?:[.,]\d+)?)\s*triệu', stem, re.I)
+        pct = re.search(r'(\d+(?:[.,]\d+)?)\s*%', stem)
+        years = re.search(r'(\d+)\s*năm', stem, re.I)
+        p = money.group(1) if money else 'P'
+        r = pct.group(1) if pct else 'r'
+        n = years.group(1) if years else 'n'
+        formula = r'Lãi kép: $A=P(1+r)^{n}$. $r$ là lãi một năm viết dạng số thập phân.'
+        return formula, [
+            f'Đọc đúng câu này: vốn {p} triệu, lãi suất {r}%/năm, thời hạn {n} năm. Đổi {r}% sang số thập phân — chưa nhân.',
+            r'Thay ba số đó vào $A=P(1+r)^{n}$.',
+            'Tính và làm tròn đúng đơn vị câu hỏi. Tự ra số, chưa lấy đáp án in sẵn.',
+        ]
     if any(k in text for k in ('gia tri lon nhat', 'gia tri nho nhat', 'gtln', 'gtnn')):
         formula = f"Với {expr}: GTLN/GTNN trên đoạn là giá trị lớn nhất/nhỏ nhất của $f$ tại đầu mút và điểm $f'=0$."
         return formula, [
