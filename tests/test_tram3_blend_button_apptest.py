@@ -80,16 +80,18 @@ class Tram3BlendButtonAppTest(unittest.TestCase):
         return at
 
     def test_blend_button_starts_testing_for_matrix_cells(self):
-        cells = [
-            ("Lớp 6", "Toán học", 6, (3, 1, 0)),
-            ("Lớp 8", "Khoa học tự nhiên", 8, (3, 1, 0)),
-            ("Lớp 9", "Lịch sử & Địa lý", 9, (3, 1, 0)),
-            ("Lớp 10", "Tin học", 10, (3, 1, 0)),
-            ("Lớp 11", "Hóa học", 11, (3, 1, 0)),
-            ("Lớp 12", "Vật lý", 12, (3, 1, 0)),
-            ("Lớp 12", "Tiếng Anh", 12, (4, 0, 0)),
-            ("Lớp 12", "Lịch sử", 12, (4, 1, 0)),
-        ]
+        from services.academic_context import subjects_for_grade
+
+        cells = []
+        # Quét cứng: mọi môn hợp lệ ở các mốc 6/8/9/10/12 (mock bank — không OOM).
+        for grade in (6, 8, 9, 10, 12):
+            for subject in subjects_for_grade(grade):
+                if subject == "Ngữ văn":
+                    continue  # Văn: luồng tự luận riêng, không dùng nút trộn TN
+                counts = (4, 0, 0) if subject == "Tiếng Anh" else (3, 1, 0)
+                cells.append((f"Lớp {grade}", subject, grade, counts))
+        # Giữ mẫu cũ trong tập (không trùng)
+        self.assertGreaterEqual(len(cells), 20)
         for grade_label, subject, grade, counts in cells:
             with self.subTest(subject=subject, grade=grade):
                 at = self._open_tram3(grade_label, subject)
