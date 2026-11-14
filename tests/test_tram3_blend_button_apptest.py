@@ -83,14 +83,13 @@ class Tram3BlendButtonAppTest(unittest.TestCase):
         from services.academic_context import subjects_for_grade
 
         cells = []
-        # Quét cứng: mọi môn hợp lệ ở các mốc 6/8/9/10/12 (mock bank — không OOM).
+        # Quét cứng: mọi môn hợp lệ mốc 6/8/9/10/12 (mock). Văn → test_tram3_nguvan_apptest.
         for grade in (6, 8, 9, 10, 12):
             for subject in subjects_for_grade(grade):
                 if subject == "Ngữ văn":
-                    continue  # Văn: luồng tự luận riêng, không dùng nút trộn TN
+                    continue
                 counts = (4, 0, 0) if subject == "Tiếng Anh" else (3, 1, 0)
                 cells.append((f"Lớp {grade}", subject, grade, counts))
-        # Giữ mẫu cũ trong tập (không trùng)
         self.assertGreaterEqual(len(cells), 20)
         for grade_label, subject, grade, counts in cells:
             with self.subTest(subject=subject, grade=grade):
@@ -115,6 +114,38 @@ class Tram3BlendButtonAppTest(unittest.TestCase):
                 self.assertEqual(exam.get("subject"), subject)
                 radios = [r for r in at.radio if str(r.label).startswith("Lựa chọn câu")]
                 self.assertGreaterEqual(len(radios), 1)
+
+    def test_blend_button_grades_7_and_11(self):
+        """Bổ sung mốc 7/11 (các mốc khác đã cover ở test trên)."""
+        from services.academic_context import subjects_for_grade
+
+        cells = []
+        for grade in (7, 11):
+            for subject in subjects_for_grade(grade):
+                if subject == "Ngữ văn":
+                    continue
+                counts = (4, 0, 0) if subject == "Tiếng Anh" else (3, 1, 0)
+                cells.append((f"Lớp {grade}", subject, grade, counts))
+        for grade_label, subject, grade, counts in cells:
+            with self.subTest(subject=subject, grade=grade):
+                at = self._open_tram3(grade_label, subject)
+                fake = _fake_exam(subject, grade, counts)
+
+                def _gen(subj, g, topics, cnts, **kwargs):
+                    self.assertEqual(subj, subject)
+                    self.assertEqual(g, grade)
+                    return fake
+
+                with patch("real_exam_engine.generate_blended_real_exam", side_effect=_gen):
+                    btn = next(
+                        b
+                        for b in at.button
+                        if "Trộn Siêu Đề" in b.label or "Trích Xuất Đề" in b.label or "Mở đề gốc" in b.label
+                    )
+                    btn.click().run(timeout=90)
+                self.assertEqual([e.message for e in at.exception], [])
+                self.assertEqual(at.session_state.get("exam_state"), "testing")
+                self.assertEqual((at.session_state.get("exam_data") or {}).get("subject"), subject)
 
 
 if __name__ == "__main__":
