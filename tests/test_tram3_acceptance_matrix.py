@@ -75,6 +75,7 @@ class Tram3AcceptanceMatrixTests(unittest.TestCase):
             ("Tin học", 10, None, (6, 2, 0)),
             ("Giáo dục kinh tế và pháp luật", 11, None, (6, 2, 0)),
         ]
+        empty_cells = []
         for subject, grade, topics, counts in cells:
             with self.subTest(subject=subject, grade=grade):
                 ree._RECENT_QUESTION_COOLDOWN.clear()
@@ -89,14 +90,18 @@ class Tram3AcceptanceMatrixTests(unittest.TestCase):
                             from services.academic_context import canonical_subject
                             self.assertEqual(canonical_subject(declared), subject)
                 total_q = sum(len(exam.get(p) or []) for p in ("p1", "p2", "p3"))
+                # Không skipTest trong subTest (sẽ cắt cả vòng đa môn). Ô trống = ghi nhận, không fail cứng.
                 if total_q == 0:
-                    self.skipTest(f"empty bank cell {subject} L{grade}")
+                    empty_cells.append(f"{subject} L{grade}")
+                    continue
                 scored = grade_exam_by_profile(exam, _perfect_from_exam(exam), subject, grade)
                 self.assertGreaterEqual(scored["total"], 0.0)
                 self.assertLessEqual(scored["total"], 10.0)
                 # Làm đúng hết (trừ câu thiếu ans) → điểm phần hiện có phải > 0 nếu có ans
                 if scored["p1_total"] and scored["p1_correct"] == scored["p1_total"]:
                     self.assertGreater(scored["score_p1"], 0)
+        # Cho phép vài ô bank mỏng trên máy hẹp; không được trống quá nửa mẫu.
+        self.assertLessEqual(len(empty_cells), max(1, len(cells) // 2), msg=f"empty={empty_cells}")
 
 
 if __name__ == "__main__":
