@@ -3267,7 +3267,39 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
     def get_q_fingerprint(q):
         return q_fingerprint(q)
 
+    def _image_crop_fingerprint(q) -> str:
+        src = q.get("image_base64") or q.get("image") or ""
+        if not isinstance(src, str) or len(src) < 80:
+            return ""
+        # Hash nhẹ đoạn giữa — chống cùng ảnh cắt đề lặp trong một đề.
+        import hashlib
+        return hashlib.sha1(src[40:40 + 600].encode("utf-8", errors="ignore")).hexdigest()
+
+    def _reconstructed_visual_score(it) -> int:
+        """Ưu tiên câu có f/bbt/tikz/SVG phục dựng hơn câu chỉ còn ảnh scan cắt đề."""
+        score = 0
+        f = it.get("f")
+        if isinstance(f, dict) and f.get("type"):
+            score += 120
+        if it.get("bbt"):
+            score += 100
+        if it.get("tikz"):
+            score += 90
+        for key in ("composite_visual", "geom_3d", "thermal_pv_visual", "food_web_visual"):
+            vis = it.get(key)
+            if isinstance(vis, dict) and vis.get("svg"):
+                score += 90
+                break
+        if it.get("mslgn_data"):
+            score += 40
+        img = it.get("image_base64") or it.get("image") or ""
+        if isinstance(img, str) and img.startswith("data:image"):
+            # Có crop: chỉ cộng nhẹ khi không có hình cấu trúc.
+            score += 5 if score == 0 else -15
+        return score
+
     global_seen_fingerprints = set()
+    global_seen_image_crops = set()
 
     # Tích hợp danh sách Cooldown (loại trừ các câu hỏi vừa xuất hiện gần đây)
     active_cooldown = set(_RECENT_QUESTION_COOLDOWN)
@@ -3275,7 +3307,7 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
         active_cooldown.update(exclude_fingerprints)
 
     def compute_custom_relevance(it, part_name):
-        score = 0
+        score = _reconstructed_visual_score(it)
         q_txt_it = (str(it.get("q", "")) + " " + str(it.get("topic", "")) + " " + str(it.get("explain", ""))).lower()
         lvl = it.get("level", "")
 
@@ -3340,19 +3372,17 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
         if not unique_items:
             unique_items = list(shuffled_source)
 
-        # ƯU TIÊN SỐ 1: Sắp xếp theo độ khớp tuyệt đối với Yêu cầu tùy biến của người dùng
-        if custom_prompt.strip():
-            from collections import defaultdict
-            score_buckets = defaultdict(list)
-            for it in unique_items:
-                sc = compute_custom_relevance(it, part)
-                score_buckets[sc].append(it)
-            
-            unique_items = []
-            for sc in sorted(score_buckets.keys(), reverse=True):
-                sub_list = score_buckets[sc]
-                random.shuffle(sub_list)
-                unique_items.extend(sub_list)
+        # Luôn ưu tiên hình phục dựng (f/bbt/tikz/svg) hơn ảnh cắt; cộng điểm ma trận tùy biến nếu có.
+        from collections import defaultdict
+        score_buckets = defaultdict(list)
+        for it in unique_items:
+            sc = compute_custom_relevance(it, part) if custom_prompt.strip() else _reconstructed_visual_score(it)
+            score_buckets[sc].append(it)
+        unique_items = []
+        for sc in sorted(score_buckets.keys(), reverse=True):
+            sub_list = score_buckets[sc]
+            random.shuffle(sub_list)
+            unique_items.extend(sub_list)
 
         # P0: đủ câu fresh → hard-exclude cooldown; thiếu mới mềm fallback trong cùng pool đã lọc chủ đề.
         fresh_items = [it for it in unique_items if get_q_fingerprint(it) not in active_cooldown]
@@ -3365,9 +3395,14 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
         selected = []
         for it in ordered:
             fp = get_q_fingerprint(it)
+            img_fp = _image_crop_fingerprint(it)
+            if img_fp and img_fp in global_seen_image_crops:
+                continue
             if fp and fp not in global_seen_fingerprints:
                 selected.append(it)
                 global_seen_fingerprints.add(fp)
+                if img_fp:
+                    global_seen_image_crops.add(img_fp)
                 if len(selected) >= target_count:
                     break
 
@@ -3382,9 +3417,14 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
                 if any(fb in it_text for fb in forbidden_topic_terms):
                     continue
                 fp = get_q_fingerprint(it)
+                img_fp = _image_crop_fingerprint(it)
+                if img_fp and img_fp in global_seen_image_crops:
+                    continue
                 if fp and fp not in global_seen_fingerprints:
                     selected.append(dict(it))
                     global_seen_fingerprints.add(fp)
+                    if img_fp:
+                        global_seen_image_crops.add(img_fp)
                     if len(selected) >= target_count:
                         break
 

@@ -3730,8 +3730,8 @@ def render_question_source_badge(q, idx=None):
 def question_visual_html(question):
     """Render only supplied visual data; never guess a new graph from an answer.
 
-    Ưu tiên ảnh WebP đã render; chỉ xuất SVG khi render chính thất bại.
-    Đồ thị: một luồng duy nhất (WebP hệ số → hình nguồn nếu fail; không hiện kép).
+    Ưu tiên hình phục dựng (BBT WebP/SVG, SVG môn khác, đồ thị từ hệ số f/tikz);
+    ảnh cắt đề (image_base64 scan) chỉ khi không dựng được hình cấu trúc — một luồng, không chồng kép.
     """
     pieces = []
     raw_bbt = str(question.get("bbt") or "").strip()
@@ -3783,19 +3783,25 @@ def question_visual_html(question):
     coeff_ok = isinstance(function, dict) and function.get("type") in required and required[function["type"]] <= function.keys()
     source = question.get("image_base64") or question.get("image_url") or question.get("image")
     has_source = isinstance(source, str) and source.startswith(("data:image/png;base64,", "data:image/jpeg;base64,", "data:image/webp;base64,"))
-    # Một luồng đồ thị: ưu tiên hình nguồn (đã render); WebP hệ số chỉ khi thiếu hình nguồn
+    # Một luồng đồ thị: phục dựng từ hệ số/f trước; ảnh cắt đề chỉ khi render thất bại / không có f.
     graph_done = False
-    if has_source:
-        pieces.append("<img alt='Hình trong ngữ liệu nguồn' style='max-width:100%' src='" + html.escape(source, quote=True) + "'/>")
-        graph_done = True
-    elif coeff_ok:
+    if coeff_ok:
         try:
             image = render_math_graph_to_webp_base64(dict(function))
         except Exception:
             image = ""
         if image:
-            pieces.append("<img alt='Đồ thị theo hệ số đã cung cấp' style='max-width:100%' src='" + html.escape(image, quote=True) + "'/>")
+            pieces.append(
+                "<img alt='Đồ thị phục dựng từ hệ số (không dùng ảnh cắt đề)' "
+                "style='max-width:100%' src='" + html.escape(image, quote=True) + "'/>"
+            )
             graph_done = True
+    if not graph_done and has_source:
+        pieces.append(
+            "<img alt='Hình nguồn (chỉ khi chưa có đồ thị phục dựng)' "
+            "style='max-width:100%' src='" + html.escape(source, quote=True) + "'/>"
+        )
+        graph_done = True
     if not pieces and any(term in str(question.get("q", "")).lower() for term in ("hình vẽ bên", "hình bên", "đồ thị như hình", "bảng biến thiên như hình")):
         pieces.append("<p style='color:#b45309'>Thiếu dữ liệu hình gốc để đối chiếu; không tự dựng hình mẫu. Cần giáo viên kiểm tra câu này.</p>")
     return "\n".join(pieces)
