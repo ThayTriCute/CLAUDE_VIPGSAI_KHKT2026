@@ -139,6 +139,12 @@ def math_context_question(question):
                 if 'nguyen' in text else ' Em sẽ suy ra điều kiện của tham số như thế nào?')
         return ('Em sẽ tính đạo hàm chứa tham số và đặt điều kiện về dấu nào để tính đơn điệu '
                 'đúng với mọi giá trị của biến trên toàn bộ trục số?' + tail)
+    if any(term in text for term in ('tap xac dinh', 'txd')) or ('sqrt' in text and 'ham' in text):
+        return ('Biểu thức trong căn (và mẫu, logarit nếu có) cần điều kiện gì để có nghĩa? '
+                'Em sẽ giải điều kiện đó rồi viết tập nghiệm dưới dạng khoảng như thế nào?')
+    if ('toa do dinh' in text or 'dinh' in text) and 'parabol' in text:
+        return ('Hoành độ đỉnh parabol tính từ hệ số a và b như thế nào? '
+                'Khi đã có hoành độ, em thay vào hàm số để tìm tung độ ra sao?')
     for kind in ('tieu', 'dai'):
         if 'toa do diem cuc ' + kind in text:
             label = 'cực tiểu' if kind == 'tieu' else 'cực đại'
@@ -397,6 +403,18 @@ def _step_prompts(question, subject) -> list:
             'Viết lại giả thiết chung một lần; xét riêng từng mệnh đề a)–d).',
             'Với mỗi ý: nêu điều kiện cần/đủ hoặc thay số liệu đề vào — ghi Đúng/Sai độc lập.',
             'Không suy “vì a đúng nên b đúng”; mỗi ý một lập luận.',
+        ]
+    elif any(k in low for k in ('tập xác định', 'txđ')):
+        steps = [
+            'Xác định điều kiện có nghĩa: căn bậc hai thì biểu thức trong căn $\\ge 0$; mẫu thức $\\ne 0$.',
+            'Giải điều kiện đó thành một tập và viết dạng khoảng — chưa kết luận phương án.',
+            'Đối chiếu từng phương án với tập vừa tìm; tự loại phương án lệch.',
+        ]
+    elif 'parabol' in low and any(k in low for k in ('tọa độ đỉnh', 'đỉnh')):
+        steps = [
+            'Viết $y=ax^2+bx+c$ và đọc $a$, $b$ từ đúng hàm trong câu.',
+            'Hoành độ đỉnh $x=-\\dfrac{b}{2a}$; thay hoành độ đó vào hàm để lấy tung độ — tự tính.',
+            'Đối chiếu cặp $(x;y)$ với các phương án; không chọn hộ.',
         ]
     elif any(k in low for k in ('giá trị lớn nhất', 'giá trị nhỏ nhất', 'gtln', 'gtnn', 'max', 'min')):
         steps = [

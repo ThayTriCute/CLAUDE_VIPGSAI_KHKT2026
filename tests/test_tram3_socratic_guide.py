@@ -40,6 +40,27 @@ class Tram3SocraticGuideTests(unittest.TestCase):
         self.assertNotIn("Chọn A", guide)
         self.assertIn("không giải hộ", guide.lower())
 
+    def test_domain_and_parabola_vertex_guide_without_answer(self):
+        domain = build_tram3_socratic_guide({
+            "q": r"Tập xác định của hàm số $y=\sqrt{2x-4}$ là:",
+            "opt": [r"A. $[2;+\infty)$", r"B. $(-\infty;2]$", r"C. $\mathbb{R}$", r"D. $(2;+\infty)$"],
+            "ans": "A",
+            "explain": "Điều kiện 2x-4>=0 nên x>=2. Chọn A.",
+        }, subject="Toán học", grade_num=10)
+        self.assertIn("căn", domain.lower())
+        self.assertNotIn("[2;+", domain)
+        self.assertNotIn("Chọn A", domain)
+        vertex = build_tram3_socratic_guide({
+            "q": r"Tọa độ đỉnh $I$ của parabol $(P): y=x^2-4x+3$ là:",
+            "opt": [r"A. $I(2;-1)$", r"B. $I(2;1)$", r"C. $I(-2;15)$", r"D. $I(4;3)$"],
+            "ans": "A",
+            "explain": "x=-b/2a=2, y=-1. Chọn A.",
+        }, subject="Toán học", grade_num=10)
+        self.assertIn("đỉnh", vertex.lower())
+        self.assertIn("-\\dfrac{b}{2a}", vertex)
+        self.assertNotIn("I(2;-1)", vertex)
+        self.assertNotIn("Chọn A", vertex)
+
     def test_looks_like_explain(self):
         self.assertTrue(looks_like_explain_solution("Vậy chọn phương án B. Đáp án là B."))
         self.assertFalse(looks_like_explain_solution("Em sẽ xét dấu đạo hàm như thế nào?"))

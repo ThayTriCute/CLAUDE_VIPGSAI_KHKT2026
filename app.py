@@ -15619,12 +15619,16 @@ if selected_station == station_labels[2]:
                                     target is not None and actual != tuple(target)
                                 ):
                                     shown = tuple(target) if target is not None else actual
-                                    st.warning(
+                                    short_note = (
                                         f"Kho chưa đủ ma trận đúng chủ đề cho cấu hình "
                                         f"{shown[0]}/{shown[1]}/{shown[2]} "
                                         f"(đang có {actual[0]}/{actual[1]}/{actual[2]}). "
                                         "Đề vẫn mở từ kho cùng môn–lớp; hãy kiểm tra hoặc dùng AI bổ sung."
                                     )
+                                    st.session_state["tram3_counts_shortfall_note"] = short_note
+                                    st.warning(short_note)
+                                else:
+                                    st.session_state.pop("tram3_counts_shortfall_note", None)
                                 try:
                                     prepared_bank_exam = blended if original_paper_mode else enrich_exam_data(blended, custom_request=custom_matrix_prompt)
                                 except (ValueError, TypeError) as error:
@@ -16426,6 +16430,9 @@ if selected_station == station_labels[2]:
             "💡 Đang làm bài: mở **Gợi ý Socratic** từng câu khi bí (tư duy / bước / công thức — **không lộ đáp án**). "
             "Lời giải `explain` chỉ mở **sau khi nộp bài**. Mục tiêu: em làm được bài, không nản."
         )
+        _short_note = st.session_state.get("tram3_counts_shortfall_note")
+        if _short_note:
+            st.warning(_short_note)
 
 
 
