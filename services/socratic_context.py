@@ -439,73 +439,148 @@ def _step_prompts(question, subject) -> list:
     return steps
 
 
-def build_tram3_socratic_guide(question, subject='Toán học', grade_num=12) -> str:
-    """HD Socratic theo từng câu đề Trạm 3 — tách biệt tuyệt đối với field ``explain``.
+def _quoted_expr(stem: str) -> str:
+    """Khúc toán trong câu hỏi — đúng ngữ liệu, không phải phương án."""
+    spans = [s.strip() for s in re.findall(r'\$([^$]{1,160})\$', stem or '') if s.strip()]
+    if spans:
+        best = max(spans, key=lambda s: (('=' in s or '\\' in s), len(s)))
+        return '$' + best + '$'
+    m = re.search(r'((?:y|f)\s*(?:\([^)]*\))?\s*=\s*[^:;.\n]{1,80})', stem or '', re.I)
+    if m:
+        return '$' + m.group(1).strip() + '$'
+    return 'hàm trong câu'
 
-    - Không đọc/ghép ``explain`` / ``explanation``.
-    - Bám số liệu, hệ số, bảng của đúng câu hỏi.
-    - Chỉ công thức liên quan + bước tư duy + câu hỏi định hướng; không giải hộ, không lộ đáp án.
-    """
+
+def _is_hard_question(question, stem: str) -> bool:
     q = question if isinstance(question, dict) else {}
-    # Cấm dùng explain làm nguồn HD.
-    raw = str(q.get('socratic_hint') or q.get('hint') or '').strip()
-    if looks_like_explain_solution(raw) or folded(raw) in _GENERIC_HINTS:
-        raw = ''
+    level = folded(str(q.get('level') or ''))
+    if any(mark in level for mark in ('vd', 'vdc')):
+        return True
+    text = folded(stem)
+    hard = (
+        'tham so', 'chung minh', 'gia tri lon nhat', 'gia tri nho nhat',
+        'gtln', 'gtnn', 'bang bien thien', 'do thi cua ham so nao',
+        'toa do dinh', 'tich phan', 'the tich', 'xac suat', 'parabol',
+    )
+    if any(mark in text for mark in hard):
+        return True
+    stmts = q.get('stmts') or []
+    return isinstance(stmts, list) and len(stmts) >= 4
 
-    opts = q.get('opt') or []
-    ans = q.get('ans') or ''
+
+def _guide_plan(question, subject) -> tuple:
+    """(công thức, các bước). Bám ngữ liệu. Câu khó thì nhiều bước hơn. Không ra đáp số."""
+    q = question if isinstance(question, dict) else {}
     stem = str(q.get('q') or '')
-
-    kept = ''
-    if raw:
-        kept = guiding_question(raw, opts, ans, stem) or ''
-        if not kept and raw.endswith('?') and not looks_like_explain_solution(raw):
-            kept = raw
-        if kept and looks_like_explain_solution(kept):
-            kept = ''
-
-    facts = _question_given_facts(q)
-    concept, formula = _matched_anchor_formula(subject, stem)
-    steps = _step_prompts(q, subject)
-
-    blocks = [
-        '*(**HD Socratic** = gợi bước tư duy & công thức liên quan. '
-        'Khác hẳn phần **explain** / lời giải tham khảo. Hệ thống không giải hộ — em tự tính.)*'
-    ]
-    if facts:
-        blocks.append('**Dữ kiện bám sát câu này:**\n' + '\n'.join(f'- {f}' for f in facts))
-    if concept or formula:
-        piece = f'**Điểm tựa kiến thức:** {concept}' if concept else '**Điểm tựa kiến thức / công thức liên quan:**'
-        if formula:
-            piece += '\n' + formula
-        blocks.append(piece)
-    if steps:
-        # Scrub từng bước (tránh regex đụng nhãn khung HD).
-        scrubbed_steps = []
-        for s in steps:
-            scrubbed_steps.append(_SOLUTION_LEAK.sub('[…]', s))
-        blocks.append(
-            '**Các bước tư duy (em tự làm):**\n'
-            + '\n'.join(f'{i}. {s}' for i, s in enumerate(scrubbed_steps, 1))
-        )
-
-    closing = kept
-    if not closing:
-        if canonical_subject(subject) != 'Toán học':
-            closing = subject_socratic_hint('', subject, opts, ans, stem)
+    low = stem.lower()
+    text = folded(stem)
+    expr = _quoted_expr(stem)
+    hard = _is_hard_question(q, stem)
+    if any(k in low for k in ('tập xác định', 'txđ')) or 'tap xac dinh' in text:
+        inside = re.search(r'\\sqrt\{([^{}]{1,40})\}', stem)
+        if inside:
+            formula = f'Với {expr}: căn có nghĩa khi ${inside.group(1)}\\ge 0$.'
+        elif '\\frac' in stem or '/' in stem:
+            formula = f'Với {expr}: mẫu thức khác 0.'
         else:
-            closing = math_context_question(stem) or (
-                'Với đúng các dữ kiện trên, em sẽ bắt đầu từ đại lượng nào và kiểm tra điều kiện nào trước khi kết luận?'
-            )
-    closing = _SOLUTION_LEAK.sub('[…]', str(closing or '').strip())
-    if closing and not closing.endswith('?'):
-        closing = closing.rstrip('.') + '?'
-    blocks.append('**Câu hỏi định hướng:** ' + closing)
+            formula = f'Với {expr}: viết điều kiện để biểu thức có nghĩa.'
+        steps = [
+            f'Đặt điều kiện có nghĩa của đúng {expr} — chưa giải.',
+            'Giải điều kiện đó thành một tập, viết dạng khoảng.',
+            'Đối chiếu tập vừa tìm với từng phương án; tự chọn khoảng khớp.',
+        ]
+        if hard:
+            steps.insert(2, 'Nếu có tham số, giữ tham số trong điều kiện; chưa chốt giá trị.')
+        return formula, steps
+    if 'parabol' in low and any(k in low for k in ('tọa độ đỉnh', 'đỉnh')):
+        formula = f'Với {expr}: hoành độ đỉnh $x=-\\dfrac{{b}}{{2a}}$.'
+        return formula, [
+            f'Từ {expr}, ghi $a$ và $b$ — chưa tính $x$.',
+            'Tính hoành độ bằng công thức trên.',
+            'Thay hoành độ đó vào đúng hàm này để lấy tung độ.',
+            'Ghép cặp $(x;y)$ rồi mới đối chiếu phương án.',
+        ]
+    if any(k in low for k in ('đồ thị của hàm số nào', 'đường cong dưới đây', 'là của hàm số nào')):
+        formula = 'Tiệm cận đứng: mẫu $=0$. Giao trục tung: thay $x=0$.'
+        steps = [
+            'Trên đúng hình câu này, đọc hoành độ tiệm cận đứng.',
+            'Đọc tung độ giao trục tung.',
+            'Loại phương án lệch một trong hai điểm đó.',
+        ]
+        if hard:
+            steps.append('Nếu còn hai phương án, đối chiếu bậc tử/mẫu với tiệm cận xiên hoặc nhánh.')
+        return formula, steps
+    if any(k in low for k in ('bảng biến thiên', 'bbt')):
+        formula = "Đọc dòng $x$, dấu $y'$ và mũi tên $y$ trên đúng bảng của câu."
+        return formula, [
+            'Xác định câu hỏi dòng nào: khoảng biến thiên, cực trị, hay tiệm cận.',
+            "Khoảng có $y'>0$ thì $y$ tăng; $y'<0$ thì $y$ giảm.",
+            'Hoành độ cực trị là $x$ nơi $y\'$ đổi dấu; giá trị cực trị là $y$ tại đó.',
+            'Chưa kết luận trước khi đối chiếu đúng dòng bảng.',
+        ]
+    if q.get('mslgn_data') or any(k in low for k in ('ghép nhóm', 'tứ phân vị', 'trung vị', 'mốt')):
+        formula = r'Trung vị: $M_e=u_m+\dfrac{\frac{n}{2}-C}{n_m}\cdot(u_{m+1}-u_m)$.'
+        return formula, [
+            'Cộng đúng cột tần số của bảng này để ra $n$.',
+            'Tìm nhóm chứa vị trí $n/2$; đó là nhóm $m$.',
+            'Lấy $u_m$, $n_m$, $C$ của nhóm đó trên bảng — chưa thay số có sẵn ở phương án.',
+            'Thay vào công thức rồi tự tính.',
+        ]
+    if q.get('stmts'):
+        formula = 'Mỗi ý Đúng/Sai một điều kiện riêng, lấy từ giả thiết chung của câu.'
+        steps = [
+            'Viết lại giả thiết chung một lần.',
+            'Với ý đang xét: nêu điều kiện rồi đối chiếu dữ kiện câu — ghi Đúng hoặc Sai.',
+            'Không suy ý sau từ ý trước.',
+        ]
+        if hard:
+            steps.append('Ý vận dụng: thay đúng số liệu đề vào công thức, chưa lấy kết quả in sẵn.')
+        return formula, steps
+    if any(k in text for k in ('gia tri lon nhat', 'gia tri nho nhat', 'gtln', 'gtnn')):
+        formula = f"Với {expr}: GTLN/GTNN trên đoạn là giá trị lớn nhất/nhỏ nhất của $f$ tại đầu mút và điểm $f'=0$."
+        return formula, [
+            f'Đọc đúng đoạn đang xét trong câu, cùng {expr}.',
+            "Tính $f'$, tìm nghiệm nằm trong khoảng mở.",
+            'Tính $f$ tại các điểm đó và tại hai đầu mút — chưa chọn max/min.',
+            'So sánh các giá trị vừa tính để chốt GTLN hoặc GTNN.',
+        ]
+    if canonical_subject(subject) == 'Toán học':
+        asked = math_context_question(stem)
+        formula = f'Công thức áp vào đúng {expr}.' if expr != 'hàm trong câu' else 'Chọn đúng công thức của yêu cầu câu này.'
+        steps = [
+            f'Gạch điều kiện và hệ số trong {expr}.',
+            'Viết công thức tổng quát, rồi mới thay số của câu.',
+            'Tự tính; đối chiếu phương án sau khi có kết quả của em.',
+        ]
+        if asked:
+            steps.append(asked)
+        if hard:
+            steps.append('Tách từng ẩn hoặc tham số; làm xong một nhánh rồi mới sang nhánh kia.')
+        return formula, steps
+    formula = 'Bám đúng ngữ liệu câu này — chi tiết, số liệu hoặc điều kiện đề cho.'
+    steps = [
+        'Gạch yêu cầu câu hỏi tách khỏi dữ kiện đề cho.',
+        'Đối chiếu khái niệm đúng môn với đúng ngữ liệu này.',
+        'Lập luận từng ý; chưa chốt câu trả lời hộ.',
+    ]
+    if hard:
+        steps.append('Câu khó: mỗi luận điểm một dẫn chứng lấy trong ngữ liệu, rồi mới kết.')
+    return formula, steps
 
-    text = '\n\n'.join(blocks)
-    # Không để nguyên văn đáp án dài / phương án đúng lọt vào HD.
+
+def build_tram3_socratic_guide(question, subject='Toán học', grade_num=12) -> str:
+    """HD = hướng đi + công thức đúng ngữ cảnh. Câu khó thì các bước dài hơn. Không lộ đáp án, không lấy explain."""
+    q = question if isinstance(question, dict) else {}
+    opts = q.get('opt') or []
+    formula, steps = _guide_plan(q, subject)
+    shown = steps if _is_hard_question(q, str(q.get('q') or '')) else steps[:3]
+    body = '**Công thức / hướng:** ' + formula + '\n\n' + '\n'.join(
+        f'{i}. {step}' for i, step in enumerate(shown, 1)
+    )
+    body = _SOLUTION_LEAK.sub('', body)
+    stem = str(q.get('q') or '')
     for o in opts or []:
-        body = re.sub(r'^[A-D][.):]\s*', '', str(o), flags=re.I).strip()
-        if len(body) > 8 and body in text and body not in stem:
-            text = text.replace(body, 'phương án tương ứng')
-    return text
+        piece = re.sub(r'^[A-D][.):]\s*', '', str(o), flags=re.I).strip()
+        if len(piece) > 8 and piece in body and piece not in stem:
+            body = body.replace(piece, 'phương án tương ứng')
+    return body.strip()

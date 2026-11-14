@@ -18,13 +18,10 @@ class Tram3SocraticGuideTests(unittest.TestCase):
             "mslgn_data": {"groups": ["[0;2)", "[2;4)", "[4;6)"], "freq": [3, 5, 2]},
         }
         guide = build_tram3_socratic_guide(q, subject="Toán học", grade_num=12)
-        self.assertIn("HD Socratic", guide)
-        self.assertIn("explain", guide.lower())
-        self.assertIn("2;4", guide.replace("$", ""))
         self.assertIn("tần số", guide.lower())
         self.assertNotIn("đáp án là A", guide.lower())
         self.assertNotIn("Me = 3", guide)
-        self.assertIn("Câu hỏi định hướng", guide)
+        self.assertLess(len(guide), 500)
 
     def test_graph_question_mentions_asymptote_steps_not_option_body(self):
         q = {
@@ -36,9 +33,8 @@ class Tram3SocraticGuideTests(unittest.TestCase):
         }
         guide = build_tram3_socratic_guide(q, subject="Toán học", grade_num=12)
         self.assertIn("tiệm cận", guide.lower())
-        self.assertTrue("phân thức" in guide.lower() or "a=2" in guide)
         self.assertNotIn("Chọn A", guide)
-        self.assertIn("không giải hộ", guide.lower())
+        self.assertLess(len(guide), 500)
 
     def test_domain_and_parabola_vertex_guide_without_answer(self):
         domain = build_tram3_socratic_guide({
@@ -47,8 +43,11 @@ class Tram3SocraticGuideTests(unittest.TestCase):
             "ans": "A",
             "explain": "Điều kiện 2x-4>=0 nên x>=2. Chọn A.",
         }, subject="Toán học", grade_num=10)
-        self.assertIn("căn", domain.lower())
+        self.assertIn(r"\sqrt{2x-4}", domain)
+        self.assertIn("2x-4", domain)
         self.assertNotIn("[2;+", domain)
+        self.assertNotIn("x\\ge 2", domain)
+        self.assertNotIn("x>=2", domain)
         self.assertNotIn("Chọn A", domain)
         vertex = build_tram3_socratic_guide({
             "q": r"Tọa độ đỉnh $I$ của parabol $(P): y=x^2-4x+3$ là:",
@@ -56,9 +55,11 @@ class Tram3SocraticGuideTests(unittest.TestCase):
             "ans": "A",
             "explain": "x=-b/2a=2, y=-1. Chọn A.",
         }, subject="Toán học", grade_num=10)
-        self.assertIn("đỉnh", vertex.lower())
+        self.assertIn("x^2-4x+3", vertex)
         self.assertIn("-\\dfrac{b}{2a}", vertex)
+        self.assertGreaterEqual(vertex.count("\n"), 4)
         self.assertNotIn("I(2;-1)", vertex)
+        self.assertNotIn("y=-1", vertex)
         self.assertNotIn("Chọn A", vertex)
 
     def test_looks_like_explain(self):
