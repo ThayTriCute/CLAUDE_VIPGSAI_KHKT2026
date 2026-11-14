@@ -35,6 +35,7 @@ import time
 import random
 import logging
 import urllib.parse
+from collections import OrderedDict
 from datetime import datetime
 import requests
 from threading import RLock
@@ -2147,19 +2148,22 @@ def get_raw_baseline_data():
                 return _BASELINE_CACHE
             if file_kind == "xz":
                 import lzma
-                with lzma.open(target_file, "rt", encoding="utf-8") as f:
-                    _BASELINE_CACHE = json.load(f)
+                with open(target_file, "rb") as bf:
+                    raw = lzma.decompress(bf.read())
+                _BASELINE_CACHE = fast_json_loads(raw)
             elif file_kind == "gz":
                 import gzip
-                with gzip.open(target_file, "rt", encoding="utf-8") as f:
-                    _BASELINE_CACHE = json.load(f)
+                with open(target_file, "rb") as bf:
+                    raw = gzip.decompress(bf.read())
+                _BASELINE_CACHE = fast_json_loads(raw)
             else:
-                with open(target_file, "r", encoding="utf-8") as f:
-                    _BASELINE_CACHE = json.load(f)
+                with open(target_file, "rb") as bf:
+                    _BASELINE_CACHE = fast_json_loads(bf.read())
             _BASELINE_CACHE_MTIME = mtime
             return _BASELINE_CACHE
     except Exception as exc:
         logging.warning("Không thể đọc baseline 2025: %s", exc)
+        # Không cache bản rỗng — lần sau (đủ RAM) vẫn thử lại.
     return {}
 
 _SHARD_CACHE = BoundedCache(2)
@@ -2721,14 +2725,77 @@ def query_blended_real_exam_multi_dim(subject: str, grades, chosen_topics: list 
     }
     return exam_obj
 
-# BỘ NHỚ XOAY VÒNG CÂU HỎI & ĐỀ THI (COOLDOWN ROTATION): Lưu vết các câu hỏi và đề thi vừa xuất hiện để chống lặp lại
-_RECENT_QUESTION_COOLDOWN = set()
+# BỘ NHỚ XOAY VÒNG CÂU HỎI & ĐỀ THI (COOLDOWN ROTATION): LRU thật — không eviction ngẫu nhiên kiểu set(list)[-N]
+_RECENT_QUESTION_COOLDOWN = OrderedDict()
 _RECENT_EXAM_COOLDOWN = set()
 _MAX_COOLDOWN_CAPACITY = 200
 
 
+def remember_question_cooldown(token) -> None:
+    """Ghi nhận fingerprint/text vào cooldown LRU (public API cho app.py)."""
+    global _RECENT_QUESTION_COOLDOWN
+    if not token:
+        return
+    key = str(token)
+    if key in _RECENT_QUESTION_COOLDOWN:
+        _RECENT_QUESTION_COOLDOWN.move_to_end(key)
+    else:
+        _RECENT_QUESTION_COOLDOWN[key] = True
+    while len(_RECENT_QUESTION_COOLDOWN) > _MAX_COOLDOWN_CAPACITY:
+        _RECENT_QUESTION_COOLDOWN.popitem(last=False)
+
+
+def mark_synthetic_template(q: dict, archetype: str) -> dict:
+    """Gắn provenance synthetic — cấm nhãn trường/TOANMATH giả trên archetype."""
+    if not isinstance(q, dict):
+        return q
+    out = dict(q)
+    out.update({
+        "is_synthetic_template": True,
+        "provenance_kind": "synthetic_template",
+        "archetype_id": archetype,
+        "is_ai_generated": False,
+        "is_real_exam": False,
+        "source": (
+            f"Mẫu khung tùy biến (synthetic/{archetype}) — "
+            "không phải đề thi trường; cần giáo viên duyệt"
+        ),
+        "school": "Template nội bộ (không gắn trường)",
+        "portal": "synthetic",
+        "exam_code": f"SYN_{archetype}",
+    })
+    for key in ("source_url", "url", "pdf_url"):
+        out.pop(key, None)
+    return out
+
+
+def is_generic_topic_label(label) -> bool:
+    """Nhãn UI kiểu tổng hợp / trọng tâm môn — không khóa chuyên đề cụ thể."""
+    s = re.sub(r"\[Lớp\s*\d+\]\s*", "", str(label or ""), flags=re.I).strip().lower()
+    if not s:
+        return True
+    return bool(
+        re.search(
+            r"tổng\s*hợp|chuyên đề trọng tâm|toàn bộ chuyên đề|all\s*topics|mọi chuyên đề",
+            s,
+            flags=re.I,
+        )
+    )
+
+
+def specific_topic_filters(chosen_topics) -> list:
+    """Chỉ giữ chuyên đề cụ thể; bỏ nhãn tổng hợp để không kích hoạt Pass2 token yếu."""
+    return [t for t in (chosen_topics or []) if not is_generic_topic_label(t)]
+
+
 def build_specialized_custom_question(archetype: str, subject="Toán học", grade=12) -> dict:
-    """Tạo hoặc nạp câu hỏi đặc thù đáp ứng chính xác 100% yêu cầu ma trận tùy biến của người dùng."""
+    """Template nội bộ đáp ứng ma trận tùy biến — luôn gắn synthetic, không giả nguồn trường."""
+    raw = _build_specialized_custom_question_raw(archetype, subject=subject, grade=grade)
+    return mark_synthetic_template(raw, archetype) if raw else None
+
+
+def _build_specialized_custom_question_raw(archetype: str, subject="Toán học", grade=12) -> dict:
+    """Payload thô archetype (nhãn trường cũ bị mark_synthetic_template ghi đè)."""
     if archetype == "p2_f_prime_graph":
         return {
             "q": "Cho hàm số $y = f(x)$ xác định và liên tục trên $\\mathbb{R}$. Đồ thị của hàm số đạo hàm $y = f'(x)$ như hình vẽ bên (cắt trục hoành tại các điểm $x = -1, x = 1, x = 4$). Xét tính đúng sai của các mệnh đề sau:",
@@ -2862,13 +2929,15 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
     subject = canonical_subject(subject)
     grade = normalize_grade(grade)
     global _RECENT_QUESTION_COOLDOWN, _RECENT_EXAM_COOLDOWN
+    # Tối ưu toàn cục: nhãn "tổng hợp" ≠ khóa topic — chỉ lọc khi có chuyên đề cụ thể.
+    topic_filters = specific_topic_filters(chosen_topics)
     # Tự động gieo lại hạt giống ngẫu nhiên theo xung nhịp nano-giây phần cứng
     random.seed(time.time_ns())
     norm_subj = normalize_subject_name(subject)
     if norm_subj == "Ngữ văn":
         exams_list = get_baseline_full_exams(subject, grade)
-        if chosen_topics:
-            exams_list = [ex for ex in exams_list if any(topic_matches(t, ex.get("topic") or ex.get("title", "")) for t in chosen_topics)]
+        if topic_filters:
+            exams_list = [ex for ex in exams_list if any(topic_matches(t, ex.get("topic") or ex.get("title", "")) for t in topic_filters)]
         if exams_list:
             fresh_nv = [e for e in exams_list if exam_storage_identity(e) not in _RECENT_EXAM_COOLDOWN]
             if not fresh_nv:
@@ -2954,7 +3023,7 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
     # 1. HÓA CHẶT MA TRẬN CHUYÊN ĐỀ ĐƯỢC CHỌN & ÁP DỤNG PROMPT TÙY BIẾN
     # Toán-only filters must NOT run on other subjects (UI labels often contain "Chuyên đề 1/2").
     is_math = canonical_subject(subject) == "Toán học"
-    chosen_str = " ".join(str(ct) for ct in (chosen_topics or [])).lower()
+    chosen_str = " ".join(str(ct) for ct in topic_filters).lower()
     custom_str = str(custom_prompt or "").lower()
     
     forbidden_topic_terms = []
@@ -3038,15 +3107,22 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
                 "ghép nhóm", "mẫu số liệu", "trung vị", "tứ phân vị", "khoảng tứ phân vị", "khoảng biến thiên", 
                 "phương sai", "độ lệch chuẩn", "tần số", "số trung bình"
             ])
-    if chosen_topics:
-        for ct in chosen_topics:
+    _TOPIC_TOKEN_STOP = {
+        "chuyên", "đề", "lớp", "môn", "học", "trọng", "tâm", "tổng", "hợp",
+        "chuẩn", "kntt", "ứng", "dụng", "và", "các", "của", "với", "cho",
+        "không", "tồn", "tại", "chủ", "nào", "sau", "đây", "được", "như",
+        "một", "hay", "khi", "này", "đó", "trong", "ngoài", "theo", "về",
+        "bài", "câu", "phần", "mức", "độ", "kiến", "thức", "năng", "lực",
+    }
+    if topic_filters:
+        for ct in topic_filters:
             clean_ct = re.sub(r'\[Lớp \d+\]\s*', '', str(ct), flags=re.I)
             clean_ct = re.sub(r'Chuyên đề \d+:\s*', '', clean_ct, flags=re.I).strip().lower()
             if clean_ct and len(clean_ct) > 3:
                 topic_keywords.append(clean_ct)
-                # Tokenize cleaned UI label so bank topics can match without exact phrase.
-                for tok in re.findall(r'[\w\u00C0-\u1EF9]{3,}', clean_ct):
-                    if tok not in {"chuyên", "đề", "lớp", "môn", "học", "trọng", "tâm", "tổng", "hợp"}:
+                # Token ≥5 ký tự + không stop — tránh Pass2 khớp nhiễu ("không", "động"∈nhiệt động)
+                for tok in re.findall(r'[\w\u00C0-\u1EF9]{5,}', clean_ct):
+                    if tok not in _TOPIC_TOKEN_STOP:
                         topic_keywords.append(tok)
 
     def filter_by_topic(items):
@@ -3060,13 +3136,33 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
         def _keyword_hit(it):
             if not topic_keywords:
                 return True
-            blob = (str(it.get("topic", "")) + " " + str(it.get("q", "")) + " " + str(it.get("explain", ""))).lower()
-            return any(tk in blob for tk in topic_keywords)
+            topic_blob = str(it.get("topic", "")).lower()
+            full_blob = (
+                topic_blob
+                + " "
+                + str(it.get("q", "")).lower()
+                + " "
+                + str(it.get("explain", "")).lower()
+            )
+            phrases = [tk for tk in topic_keywords if (" " in tk) or len(tk) >= 10]
+            if phrases and any(p in full_blob for p in phrases):
+                return True
+            strong = [tk for tk in topic_keywords if len(tk) >= 5 and " " not in tk]
+            if not strong:
+                return False
+            # Ưu tiên khớp trên field topic; với stem chỉ chấp nhận ≥2 strong hits.
+            if any(tk in topic_blob for tk in strong):
+                return True
+            return sum(1 for tk in strong if tk in full_blob) >= 2
+
+        # Không có chuyên đề cụ thể → pool cùng môn–lớp (trừ forbidden).
+        if not topic_filters:
+            return [it for it in clean_items if _not_forbidden(it)]
 
         # Pass 1: strict topic_matches (+ keyword when present)
         strict = []
         for it in clean_items:
-            if chosen_topics and not any(topic_matches(ct, it.get("topic", "")) for ct in chosen_topics):
+            if not any(topic_matches(ct, it.get("topic", "")) for ct in topic_filters):
                 continue
             if not _not_forbidden(it):
                 continue
@@ -3077,15 +3173,13 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
             return strict
 
         # Pass 2: keyword / cleaned-label hit when UI ontology ≠ bank topic strings
-        if chosen_topics and topic_keywords:
+        if topic_keywords:
             soft = [it for it in clean_items if _not_forbidden(it) and _keyword_hit(it)]
             if soft:
                 return soft
 
-        # Pass 3: same subject/grade pool minus forbidden (still better than empty paper)
-        if chosen_topics:
-            return [it for it in clean_items if _not_forbidden(it)]
-        return [it for it in clean_items if _not_forbidden(it)]
+        # P0: cấm Pass 3 đổ cả môn–lớp khi không khớp chủ đề — thiếu thì shortfall trung thực.
+        return []
 
     # Phân tích xem người dùng có yêu cầu riêng cho Phần 1 hay không (chỉ Toán):
     # Nếu prompt quy định Phần 1 gồm các dạng cụ thể (hàm số, BBT, đồ thị 1/1, 2/1, bậc 3, MSLGN)
@@ -3203,12 +3297,13 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
                 random.shuffle(sub_list)
                 unique_items.extend(sub_list)
 
-        # PHÂN TẦNG COOLDOWN: Ưu tiên tuyệt đối các câu CHƯA xuất hiện gần đây (Fresh Questions)
+        # P0: đủ câu fresh → hard-exclude cooldown; thiếu mới mềm fallback trong cùng pool đã lọc chủ đề.
         fresh_items = [it for it in unique_items if get_q_fingerprint(it) not in active_cooldown]
         cooldown_fallback = [it for it in unique_items if get_q_fingerprint(it) in active_cooldown]
-
-        # A question format is not a cognitive level; retain relevance/cooldown order.
-        ordered = fresh_items + cooldown_fallback
+        if len(fresh_items) >= target_count:
+            ordered = fresh_items
+        else:
+            ordered = fresh_items + cooldown_fallback
 
         selected = []
         for it in ordered:
@@ -3219,14 +3314,11 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
                 if len(selected) >= target_count:
                     break
 
-        # Nếu thiếu câu, bổ sung từ kho CÙNG MÔN / CÙNG KHỐI (kể cả khi đã chọn chủ đề).
-        # Ưu tiên câu đã lọc theo chủ đề; sau đó nới cùng lớp để đủ counts.
-        if len(selected) < target_count and pool.get(part):
+        # P0: chỉ bù từ pool ĐÃ lọc chủ đề (prefer) — cấm rest = cả môn–lớp.
+        if len(selected) < target_count:
             prefer = list(p1_filtered if part == "p1" else p2_filtered if part == "p2" else p3_filtered)
             random.shuffle(prefer)
-            rest = list(pool[part])
-            random.shuffle(rest)
-            for it in prefer + rest:
+            for it in prefer:
                 if is_placeholder_question(it):
                     continue
                 it_text = (str(it.get("topic", "")) + " " + str(it.get("q", "")) + " " + str(it.get("explain", ""))).lower()
@@ -3246,13 +3338,11 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
     selected_p2 = [attach_question_visuals(dict(q), subject=subject, grade=grade) for q in sort_by_bloom_matrix(p2_filtered, num_p2, "p2")]
     selected_p3 = [attach_question_visuals(dict(q), subject=subject, grade=grade) for q in sort_by_bloom_matrix(p3_filtered, num_p3, "p3")]
 
-    # Tự động nạp vào bộ nhớ Cooldown toàn cục để các lần trộn tiếp theo không bao giờ bốc trùng
+    # Tự động nạp vào bộ nhớ Cooldown LRU
     for q_item in selected_p1 + selected_p2 + selected_p3:
         fp_item = get_q_fingerprint(q_item)
         if fp_item:
-            _RECENT_QUESTION_COOLDOWN.add(fp_item)
-    if len(_RECENT_QUESTION_COOLDOWN) > 800:
-        _RECENT_QUESTION_COOLDOWN = set(list(_RECENT_QUESTION_COOLDOWN)[-400:])
+            remember_question_cooldown(fp_item)
 
     # BẢO ĐẢM 100% CÁC DẠNG CÂU HỎI TÙY BIẾN ĐẶC THÙ (CUSTOM ARCHETYPES GUARANTEE)
     if custom_prompt.strip():
@@ -3293,15 +3383,12 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
 
         # Never relabel a question to make it appear to satisfy a requested matrix.
 
-    # Ghi nhận toàn bộ câu hỏi vừa chọn vào bộ nhớ Cooldown để lần sau không chọn lại
+    # Ghi nhận toàn bộ câu hỏi vừa chọn vào bộ nhớ Cooldown LRU
     for q in (selected_p1 + selected_p2 + selected_p3):
         fp = get_q_fingerprint(q)
         if fp:
-            _RECENT_QUESTION_COOLDOWN.add(fp)
-    if len(_RECENT_QUESTION_COOLDOWN) > _MAX_COOLDOWN_CAPACITY:
-        # Xoay vòng bộ nhớ khi vượt quá ngưỡng dung lượng
-        _RECENT_QUESTION_COOLDOWN = set(list(_RECENT_QUESTION_COOLDOWN)[-_MAX_COOLDOWN_CAPACITY:])
-    
+            remember_question_cooldown(fp)
+
     # Tạo mã đề ngẫu nhiên
     exam_code = str(random.randint(1011, 9999))
     
@@ -3310,7 +3397,11 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
     if len(schools_involved) > 2:
         school_tag += f" & {len(schools_involved)-2} trường khác"
         
-    topic_tag = f"Chuyên đề: {', '.join(chosen_topics[:2])}" if chosen_topics else "Đề tổng hợp Ma trận QĐ 764"
+    topic_tag = (
+        f"Chuyên đề: {', '.join(str(t) for t in topic_filters[:2])}"
+        if topic_filters
+        else "Đề tổng hợp Ma trận QĐ 764"
+    )
     # Xây dựng bảng kê đối soát chéo (Audit Trail) chi tiết cho Ban Giám Khảo (BGK)
     audit_trail = []
     q_counter = 1
@@ -3321,12 +3412,20 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
                 "part": p_name,
                 "level": q.get("level", ""),
                 "topic": q.get("topic", "Chuyên đề khảo thí"),
-                "school": q.get("school", "THPT Chuyên"),
-                "session": q.get("exam_session", "Kỳ thi Cuối Học Kỳ 1 (Chính thức)"),
-                "year": q.get("year", "2025 - 2026"),
+                "school": q.get("school") or (
+                    "Template nội bộ (không gắn trường)"
+                    if q.get("is_synthetic_template") else "Chưa gắn trường (cần đối chiếu)"
+                ),
+                "session": q.get("exam_session") or "Chưa gắn kỳ thi (cần đối chiếu)",
+                "year": q.get("year") or "",
                 "orig_pos": q.get("orig_pos", f"{p_name} - Câu {idx+1}"),
-                "orig_code": q.get("orig_exam_code", "2501"),
-                "portal": q.get("portal", portal_name),
+                "orig_code": q.get("orig_exam_code") or q.get("exam_code") or "",
+                "portal": q.get("portal") or (
+                    "synthetic" if q.get("is_synthetic_template") else portal_name
+                ),
+                "provenance_kind": q.get("provenance_kind") or (
+                    "synthetic_template" if q.get("is_synthetic_template") else "bank"
+                ),
                 "audit_id": q.get("audit_id", f"AUDIT_{exam_code}_{q_counter:02d}")
             })
             q_counter += 1
@@ -3581,9 +3680,7 @@ def create_mixed_scanned_exam(scanned_exam: dict, subject: str = "Toán học", 
     for q in mixed_p1 + mixed_p2 + mixed_p3:
         q_text = str(q.get("q", "")).strip()
         if q_text:
-            _RECENT_QUESTION_COOLDOWN.add(q_text)
-    if len(_RECENT_QUESTION_COOLDOWN) > _MAX_COOLDOWN_CAPACITY:
-        _RECENT_QUESTION_COOLDOWN = set(list(_RECENT_QUESTION_COOLDOWN)[-_MAX_COOLDOWN_CAPACITY:])
+            remember_question_cooldown(q_text)
 
     new_exam["p1"] = mixed_p1
     new_exam["p2"] = mixed_p2
