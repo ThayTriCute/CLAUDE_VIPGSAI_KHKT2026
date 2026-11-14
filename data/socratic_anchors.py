@@ -189,6 +189,10 @@ def sanitize_socratic_hint(hint_text, correct_answer="", q_text="", options=None
       3. Đưa ra CÂU HỎI ĐỊNH HƯỚNG TƯ DUY SOCRATIC để học sinh tự suy nghĩ và tự đặt bút tính toán.
     """
     from services.academic_context import canonical_subject
+    from services.socratic_context import looks_like_explain_solution
+    # Không bao giờ dùng chuỗi giống lời giải/explain làm HD Socratic.
+    if looks_like_explain_solution(hint_text):
+        hint_text = ""
     subj_key = canonical_subject(subject or "Toán học")
     if subj_key != "Toán học":
         from services.socratic_context import subject_socratic_hint

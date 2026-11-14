@@ -266,3 +266,228 @@ def subject_socratic_hint(hint, subject, options=None, correct_answer='', questi
         if contextual:
             return contextual
     return _QUESTIONS.get(subject, 'Em cần xác định dữ kiện và yêu cầu nào trước khi tự đối chiếu các phương án?')
+
+
+_SOLUTION_LEAK = re.compile(
+    r'(?i)(?:\bđáp\s*án\b|\bđáp\s*số\b|\bvậy\s*chọn\b|\bchọn\s*phương\s*án\b|'
+    r'\blời\s*giải\b|\bgiải\s*:|\bkết\s*luận\s*:|\bdo\s*đó\s*[A-D]\b|'
+    r'\bsuy\s*ra\s*[A-D]\b|\bphương\s*án\s*[A-D]\s*(?:đúng|là)|\b[A-D]\s*là\s*đáp)'
+)
+
+_GENERIC_HINTS = {
+    folded('Áp dụng trực tiếp định nghĩa và tính chất cốt lõi trong SGK Kết Nối Tri Thức. Phân tích loại trừ các phương án nhiễu theo suy luận logic.'),
+    folded('Bám sát thể loại, ngữ cảnh tác phẩm và các phương thức biểu đạt trong SGK Kết Nối Tri Thức để phân tích.'),
+    folded('Xác định rõ vấn đề nghị luận, các luận điểm chính, dẫn chứng xác thực và rút ra bài học sâu sắc.'),
+}
+
+
+def looks_like_explain_solution(text) -> bool:
+    """True khi chuỗi giống lời giải/explain — không được dùng làm HD Socratic."""
+    value = str(text or '').strip()
+    if not value:
+        return False
+    if _SOLUTION_LEAK.search(value):
+        return True
+    if len(value) > 700 and value.count('=') >= 3:
+        return True
+    if re.search(r'(?i)\b(?:vậy|do đó|suy ra)\b.{0,40}\b(?:đúng|sai|chọn)\b', value):
+        return True
+    return False
+
+
+def _question_given_facts(question) -> list:
+    """Trích dữ kiện đề cho (số liệu/hệ số/bảng) — không tính kết quả."""
+    facts = []
+    stem = str((question or {}).get('q') or '')
+    # Số và phân số xuất hiện trong đề (giữ tối đa 8 để gọn).
+    nums = re.findall(r'-?\d+(?:[.,]\d+)?(?:\s*/\s*\d+)?', stem)
+    uniq = []
+    for n in nums:
+        if n not in uniq:
+            uniq.append(n)
+        if len(uniq) >= 8:
+            break
+    if uniq:
+        facts.append('Các số liệu xuất hiện trong đề: ' + ', '.join(f'`{n}`' for n in uniq) + '.')
+
+    f = (question or {}).get('f')
+    if isinstance(f, dict) and f.get('type'):
+        coeffs = []
+        for key in ('a', 'b', 'c', 'd', 'e'):
+            if key in f and f[key] is not None:
+                coeffs.append(f'{key}={f[key]}')
+        kind = str(f.get('type'))
+        label = {
+            'func_1_1': 'phân thức bậc 1/1',
+            'func_2_1': 'phân thức bậc 2/1',
+            'func_3': 'hàm bậc ba',
+            'cubic': 'hàm bậc ba',
+            'parabola': 'parabol',
+            'func_2': 'bậc hai',
+        }.get(kind, kind)
+        if coeffs:
+            facts.append(f'Ngữ liệu gắn dạng **{label}** với hệ số ({", ".join(coeffs)}) — em dùng để đối chiếu tiệm cận/giao điểm, không phải đáp án.')
+        else:
+            facts.append(f'Ngữ liệu gắn dạng **{label}** — đối chiếu đặc trưng đồ thị với phương án.')
+
+    mslgn = (question or {}).get('mslgn_data')
+    if isinstance(mslgn, dict):
+        groups, freq = mslgn.get('groups') or [], mslgn.get('freq') or []
+        if groups and freq and len(groups) == len(freq):
+            pairs = [f'{g} (tần số {fr})' for g, fr in zip(groups[:6], freq[:6])]
+            facts.append('Bảng ghép nhóm đề cho: ' + '; '.join(pairs) + '.')
+
+    stmts = (question or {}).get('stmts') or []
+    if isinstance(stmts, list) and stmts:
+        facts.append(f'Phần Đúng/Sai có **{len(stmts)}** mệnh đề — xét độc lập từng ý, không suy từ ý này sang ý kia.')
+
+    bbt = str((question or {}).get('bbt') or '').strip()
+    if bbt and bbt.lower() not in {'null', 'none', '{}'}:
+        facts.append('Đề kèm bảng biến thiên — đọc dòng $x$, dấu $y\'$ và mũi tên $y$ trước khi kết luận.')
+
+    if any(k in stem.lower() for k in ('đồ thị', 'đường cong', 'hình vẽ', 'hình bên')):
+        facts.append('Đề có hình/đồ thị — ưu tiên đọc tiệm cận, giao trục, chiều nhánh; đối chiếu từng phương án.')
+
+    return facts
+
+
+def _matched_anchor_formula(subject, question_text) -> tuple:
+    try:
+        from data.socratic_anchors import SOCRATIC_KNOWLEDGE_ANCHORS
+    except Exception:
+        return '', ''
+    subj = canonical_subject(subject or 'Toán học')
+    text = folded(question_text)
+    best = None
+    best_hits = 0
+    for item in SOCRATIC_KNOWLEDGE_ANCHORS.get(subj, []) or []:
+        hits = sum(1 for kw in item.get('keywords') or [] if folded(kw) in text)
+        if hits > best_hits:
+            best_hits = hits
+            best = item
+    if not best or best_hits <= 0:
+        return '', ''
+    return str(best.get('concept') or ''), str(best.get('formula') or '')
+
+
+def _step_prompts(question, subject) -> list:
+    stem = str((question or {}).get('q') or '')
+    low = stem.lower()
+    steps = []
+    if any(k in low for k in ('đồ thị của hàm số nào', 'đường cong dưới đây', 'là của hàm số nào')):
+        steps = [
+            'Đọc từ hình: tiệm cận đứng (nếu có) và tiệm cận ngang/xiên.',
+            'Với từng phương án, thay $x=0$ (hoặc điểm nằm trên hình) để đối chiếu giao trục — loại phương án lệch hình.',
+            'Đối chiếu bậc tử/mẫu với dạng tiệm cận quan sát được; **không** chọn đáp án giúp — em tự loại trừ.',
+        ]
+    elif any(k in low for k in ('bảng biến thiên', 'bbt')):
+        steps = [
+            'Xác định dòng đang hỏi (khoảng đồng/nghịch biến, cực trị, hay tiệm cận).',
+            'Đối chiếu dấu $y\'$ / mũi tên $y$ với đúng khoảng hoặc điểm trên bảng.',
+            'Phân biệt hoành độ cực trị ($x$) và giá trị cực trị ($y$) trước khi kết luận.',
+        ]
+    elif (question or {}).get('mslgn_data') or any(k in low for k in ('ghép nhóm', 'tứ phân vị', 'trung vị', 'mốt')):
+        steps = [
+            'Tính cỡ mẫu $n=\\sum n_i$ từ đúng cột tần số đề cho.',
+            'Cộng dồn tần số để tìm nhóm chứa đại lượng cần (ví dụ vị trí $n/2$, $n/4$, $3n/4$).',
+            'Thay đúng $u_m$, $n_m$, $C$ vào công thức SGK — tự tính, không nhìn đáp án.',
+        ]
+    elif (question or {}).get('stmts'):
+        steps = [
+            'Viết lại giả thiết chung một lần; xét riêng từng mệnh đề a)–d).',
+            'Với mỗi ý: nêu điều kiện cần/đủ hoặc thay số liệu đề vào — ghi Đúng/Sai độc lập.',
+            'Không suy “vì a đúng nên b đúng”; mỗi ý một lập luận.',
+        ]
+    elif any(k in low for k in ('giá trị lớn nhất', 'giá trị nhỏ nhất', 'gtln', 'gtnn', 'max', 'min')):
+        steps = [
+            'Xác định đoạn/tập đang xét từ đề (hai đầu mút và điều kiện ẩn).',
+            'Tính $f\'$, tìm nghiệm trong khoảng mở; so sánh $f$ tại các điểm tới hạn và đầu mút.',
+            'Chọn GTLN/GTNN theo định nghĩa — không dừng ở cực trị nội nếu đầu mút lớn hơn.',
+        ]
+    else:
+        subj = canonical_subject(subject or 'Toán học')
+        if subj == 'Toán học':
+            steps = [
+                'Gạch chân dữ kiện số/điểm/điều kiện trong câu hỏi này (không dùng dữ kiện câu khác).',
+                'Chọn công thức/định lý khớp yêu cầu; viết dạng tổng quát rồi mới thay số liệu đề.',
+                'Tự tính và đối chiếu phương án; nếu trắc nghiệm thì loại trừ phương án mâu thuẫn dữ kiện.',
+            ]
+        else:
+            steps = [
+                'Tách dữ kiện đề cho khỏi yêu cầu cần tìm.',
+                'Đối chiếu khái niệm/định luật/công thức liên quan trong SGK với đúng ngữ liệu câu này.',
+                'Lập luận từng bước; không nhảy cóc sang đáp án.',
+            ]
+    return steps
+
+
+def build_tram3_socratic_guide(question, subject='Toán học', grade_num=12) -> str:
+    """HD Socratic theo từng câu đề Trạm 3 — tách biệt tuyệt đối với field ``explain``.
+
+    - Không đọc/ghép ``explain`` / ``explanation``.
+    - Bám số liệu, hệ số, bảng của đúng câu hỏi.
+    - Chỉ công thức liên quan + bước tư duy + câu hỏi định hướng; không giải hộ, không lộ đáp án.
+    """
+    q = question if isinstance(question, dict) else {}
+    # Cấm dùng explain làm nguồn HD.
+    raw = str(q.get('socratic_hint') or q.get('hint') or '').strip()
+    if looks_like_explain_solution(raw) or folded(raw) in _GENERIC_HINTS:
+        raw = ''
+
+    opts = q.get('opt') or []
+    ans = q.get('ans') or ''
+    stem = str(q.get('q') or '')
+
+    kept = ''
+    if raw:
+        kept = guiding_question(raw, opts, ans, stem) or ''
+        if not kept and raw.endswith('?') and not looks_like_explain_solution(raw):
+            kept = raw
+        if kept and looks_like_explain_solution(kept):
+            kept = ''
+
+    facts = _question_given_facts(q)
+    concept, formula = _matched_anchor_formula(subject, stem)
+    steps = _step_prompts(q, subject)
+
+    blocks = [
+        '*(**HD Socratic** = gợi bước tư duy & công thức liên quan. '
+        'Khác hẳn phần **explain** / lời giải tham khảo. Hệ thống không giải hộ — em tự tính.)*'
+    ]
+    if facts:
+        blocks.append('**Dữ kiện bám sát câu này:**\n' + '\n'.join(f'- {f}' for f in facts))
+    if concept or formula:
+        piece = f'**Điểm tựa kiến thức:** {concept}' if concept else '**Điểm tựa kiến thức / công thức liên quan:**'
+        if formula:
+            piece += '\n' + formula
+        blocks.append(piece)
+    if steps:
+        # Scrub từng bước (tránh regex đụng nhãn khung HD).
+        scrubbed_steps = []
+        for s in steps:
+            scrubbed_steps.append(_SOLUTION_LEAK.sub('[…]', s))
+        blocks.append(
+            '**Các bước tư duy (em tự làm):**\n'
+            + '\n'.join(f'{i}. {s}' for i, s in enumerate(scrubbed_steps, 1))
+        )
+
+    closing = kept
+    if not closing:
+        if canonical_subject(subject) != 'Toán học':
+            closing = subject_socratic_hint('', subject, opts, ans, stem)
+        else:
+            closing = math_context_question(stem) or (
+                'Với đúng các dữ kiện trên, em sẽ bắt đầu từ đại lượng nào và kiểm tra điều kiện nào trước khi kết luận?'
+            )
+    closing = _SOLUTION_LEAK.sub('[…]', str(closing or '').strip())
+    if closing and not closing.endswith('?'):
+        closing = closing.rstrip('.') + '?'
+    blocks.append('**Câu hỏi định hướng:** ' + closing)
+
+    text = '\n\n'.join(blocks)
+    # Không để nguyên văn đáp án dài / phương án đúng lọt vào HD.
+    for o in opts or []:
+        body = re.sub(r'^[A-D][.):]\s*', '', str(o), flags=re.I).strip()
+        if len(body) > 8 and body in text and body not in stem:
+            text = text.replace(body, 'phương án tương ứng')
+    return text
