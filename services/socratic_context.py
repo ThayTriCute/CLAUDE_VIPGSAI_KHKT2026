@@ -439,6 +439,30 @@ def _step_prompts(question, subject) -> list:
     return steps
 
 
+def _function_and_interval(stem: str) -> tuple:
+    """Hàm và đoạn đúng trong câu GTLN/GTNN. Không lấy đoạn mẫu [a;b]."""
+    spans = [s.strip() for s in re.findall(r'\$([^$]{1,160})\$', stem or '') if s.strip()]
+    fn = ''
+    interval = ''
+    for span in spans:
+        if re.search(r'(?:y|f)\s*(?:\([^)]*\))?\s*=', span, re.I) and not fn:
+            fn = '$' + span + '$'
+        if re.search(r'[\[\(]\s*-?\d', span) and ';' in span and not interval:
+            interval = '$' + re.sub(r'\s+', '', span) + '$'
+    if not fn:
+        match = re.search(
+            r'((?:y|f)\s*(?:\([^)]*\))?\s*=\s*.+?)(?:\s+trên\b|\s+trong\b|$)',
+            stem or '', re.I,
+        )
+        if match:
+            fn = '$' + re.sub(r'\s+', ' ', match.group(1).strip()) + '$'
+    if not interval:
+        match = re.search(r'(\[\s*-?\d[^[\]]{0,16};\s*-?\d[^[\]]{0,12}\])', stem or '')
+        if match:
+            interval = re.sub(r'\s+', '', match.group(1))
+    return fn or 'hàm trong câu', interval or 'đoạn trong câu'
+
+
 def _quoted_expr(stem: str) -> str:
     """Khúc toán trong câu hỏi — đúng ngữ liệu, không phải phương án."""
     spans = [s.strip() for s in re.findall(r'\$([^$]{1,160})\$', stem or '') if s.strip()]
@@ -536,13 +560,32 @@ def _guide_plan(question, subject) -> tuple:
         if hard:
             steps.append('Ý vận dụng: thay đúng số liệu đề vào công thức, chưa lấy kết quả in sẵn.')
         return formula, steps
-    if any(k in text for k in ('gia tri lon nhat', 'gia tri nho nhat', 'gtln', 'gtnn')):
-        formula = f"Với {expr}: GTLN/GTNN trên đoạn là giá trị lớn nhất/nhỏ nhất của $f$ tại đầu mút và điểm $f'=0$."
+    if 'lai kep' in text or ('lai suat' in text and 'nam' in text):
+        money = re.search(r'(\d+(?:[.,]\d+)?)\s*triệu', stem, re.I)
+        pct = re.search(r'(\d+(?:[.,]\d+)?)\s*%', stem)
+        years = re.search(r'(\d+)\s*năm', stem, re.I)
+        p = money.group(1) if money else 'P'
+        r = pct.group(1) if pct else 'r'
+        n = years.group(1) if years else 'n'
+        formula = r'Lãi kép: $A=P(1+r)^{n}$. $r$ là lãi một năm viết dạng số thập phân.'
         return formula, [
-            f'Đọc đúng đoạn đang xét trong câu, cùng {expr}.',
-            "Tính $f'$, tìm nghiệm nằm trong khoảng mở.",
-            'Tính $f$ tại các điểm đó và tại hai đầu mút — chưa chọn max/min.',
-            'So sánh các giá trị vừa tính để chốt GTLN hoặc GTNN.',
+            f'Đọc đúng câu này: vốn {p} triệu, lãi suất {r}%/năm, thời hạn {n} năm. Đổi {r}% sang số thập phân — chưa nhân.',
+            r'Thay ba số đó vào $A=P(1+r)^{n}$.',
+            'Tính và làm tròn đúng đơn vị câu hỏi. Tự ra số, chưa lấy đáp án in sẵn.',
+        ]
+    if any(k in text for k in ('gia tri lon nhat', 'gia tri nho nhat', 'gtln', 'gtnn')):
+        fn, interval = _function_and_interval(stem)
+        pick = 'số lớn nhất' if ('lon nhat' in text or 'gtln' in text) else 'số nhỏ nhất'
+        label = 'GTLN' if pick == 'số lớn nhất' else 'GTNN'
+        formula = (
+            f'Trên {interval}, {label} của {fn} là {pick} trong các giá trị '
+            f"tại hai đầu mút và tại nghiệm của $y'=0$ nằm trong khoảng mở."
+        )
+        return formula, [
+            f"Tính $y'$ của đúng {fn}. Chưa giải nghiệm.",
+            f"Giải $y'=0$. Chỉ giữ nghiệm nằm trong khoảng mở của {interval}. Chưa thay nghiệm vào $y$.",
+            f'Tính $y$ tại hai đầu mút của {interval} và tại nghiệm vừa giữ.',
+            f'So sánh các giá trị đó rồi tự chọn {pick}.',
         ]
     if canonical_subject(subject) == 'Toán học':
         asked = math_context_question(stem)
