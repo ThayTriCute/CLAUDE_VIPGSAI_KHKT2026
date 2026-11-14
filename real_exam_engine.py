@@ -58,7 +58,7 @@ import base64
 
 # --- Module mới (đặt cùng thư mục): lọc trùng + đọc file Word/PDF chuẩn ---
 try:
-    from dedupe_bank import q_fingerprint, q_family_fingerprint
+    from dedupe_bank import q_fingerprint, q_family_fingerprint, q_stem_fingerprint
 except Exception as _e_dd:  # dự phòng để app không sập
     logging.warning("Không nạp được dedupe_bank: %s", _e_dd)
     def q_fingerprint(q):
@@ -66,6 +66,7 @@ except Exception as _e_dd:  # dự phòng để app không sập
         t = str(q.get("q", "")) + "".join(map(str, q.get("opt", []))) + "".join(str(s.get("t", "")) for s in q.get("stmts", []) if isinstance(s, dict))
         return hashlib.sha1(re.sub(r"[\s\$\\{}()\[\].,:;]+", "", t.lower()).encode("utf-8")).hexdigest()
     q_family_fingerprint = q_fingerprint
+    q_stem_fingerprint = q_fingerprint
 LAST_EXTRACT_WARNINGS = []   # app có thể đọc để st.warning
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -3267,6 +3268,12 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
     def get_q_fingerprint(q):
         return q_fingerprint(q)
 
+    def get_stem_fp(q):
+        return q_stem_fingerprint(q) or get_q_fingerprint(q)
+
+    def get_family_fp(q):
+        return q_family_fingerprint(q)
+
     def _image_crop_fingerprint(q) -> str:
         src = q.get("image_base64") or q.get("image") or ""
         if not isinstance(src, str) or len(src) < 80:
@@ -3299,12 +3306,43 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
         return score
 
     global_seen_fingerprints = set()
+    global_seen_stems = set()
+    global_seen_families = set()
     global_seen_image_crops = set()
 
     # Tích hợp danh sách Cooldown (loại trừ các câu hỏi vừa xuất hiện gần đây)
     active_cooldown = set(_RECENT_QUESTION_COOLDOWN)
     if exclude_fingerprints:
         active_cooldown.update(exclude_fingerprints)
+
+    def _is_duplicate_in_exam(it, *, allow_family_fallback: bool = False) -> bool:
+        fp = get_q_fingerprint(it)
+        stem = get_stem_fp(it)
+        fam = get_family_fp(it)
+        img_fp = _image_crop_fingerprint(it)
+        if fp and fp in global_seen_fingerprints:
+            return True
+        if stem and stem in global_seen_stems:
+            return True
+        if img_fp and img_fp in global_seen_image_crops:
+            return True
+        if fam and fam in global_seen_families and not allow_family_fallback:
+            return True
+        return False
+
+    def _mark_selected(it) -> None:
+        fp = get_q_fingerprint(it)
+        stem = get_stem_fp(it)
+        fam = get_family_fp(it)
+        img_fp = _image_crop_fingerprint(it)
+        if fp:
+            global_seen_fingerprints.add(fp)
+        if stem:
+            global_seen_stems.add(stem)
+        if fam:
+            global_seen_families.add(fam)
+        if img_fp:
+            global_seen_image_crops.add(img_fp)
 
     def compute_custom_relevance(it, part_name):
         score = _reconstructed_visual_score(it)
@@ -3359,16 +3397,20 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
         shuffled_source = list(items)
         random.shuffle(shuffled_source)
 
-        unique_by_fp = {}
+        # Gộp theo stem (không theo exact JSON): giữ bản visual score cao hơn (phục dựng > scan).
+        unique_by_stem = {}
         for it in shuffled_source:
             it_text = (str(it.get("topic", "")) + " " + str(it.get("q", "")) + " " + str(it.get("explain", ""))).lower()
             if any(fb in it_text for fb in forbidden_topic_terms):
                 continue
-            fp = get_q_fingerprint(it)
-            if fp and fp not in unique_by_fp and fp not in global_seen_fingerprints:
-                unique_by_fp[fp] = it
+            stem = get_stem_fp(it)
+            if not stem or stem in global_seen_stems:
+                continue
+            prev = unique_by_stem.get(stem)
+            if prev is None or _reconstructed_visual_score(it) > _reconstructed_visual_score(prev):
+                unique_by_stem[stem] = it
 
-        unique_items = list(unique_by_fp.values())
+        unique_items = list(unique_by_stem.values())
         if not unique_items:
             unique_items = list(shuffled_source)
 
@@ -3385,8 +3427,13 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
             unique_items.extend(sub_list)
 
         # P0: đủ câu fresh → hard-exclude cooldown; thiếu mới mềm fallback trong cùng pool đã lọc chủ đề.
-        fresh_items = [it for it in unique_items if get_q_fingerprint(it) not in active_cooldown]
-        cooldown_fallback = [it for it in unique_items if get_q_fingerprint(it) in active_cooldown]
+        def _on_cooldown(it):
+            fp = get_q_fingerprint(it)
+            stem = get_stem_fp(it)
+            return (fp and fp in active_cooldown) or (stem and stem in active_cooldown)
+
+        fresh_items = [it for it in unique_items if not _on_cooldown(it)]
+        cooldown_fallback = [it for it in unique_items if _on_cooldown(it)]
         if len(fresh_items) >= target_count:
             ordered = fresh_items
         else:
@@ -3394,37 +3441,32 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
 
         selected = []
         for it in ordered:
-            fp = get_q_fingerprint(it)
-            img_fp = _image_crop_fingerprint(it)
-            if img_fp and img_fp in global_seen_image_crops:
+            if _is_duplicate_in_exam(it, allow_family_fallback=False):
                 continue
-            if fp and fp not in global_seen_fingerprints:
-                selected.append(it)
-                global_seen_fingerprints.add(fp)
-                if img_fp:
-                    global_seen_image_crops.add(img_fp)
-                if len(selected) >= target_count:
-                    break
+            selected.append(it)
+            _mark_selected(it)
+            if len(selected) >= target_count:
+                break
 
         # P0: chỉ bù từ pool ĐÃ lọc chủ đề (prefer) — cấm rest = cả môn–lớp.
+        # Shortfall: vẫn cứng stem/ảnh; họ mẫu (đổi số) chỉ nới khi thiếu câu.
         if len(selected) < target_count:
             prefer = list(p1_filtered if part == "p1" else p2_filtered if part == "p2" else p3_filtered)
-            random.shuffle(prefer)
-            for it in prefer:
-                if is_placeholder_question(it):
-                    continue
-                it_text = (str(it.get("topic", "")) + " " + str(it.get("q", "")) + " " + str(it.get("explain", ""))).lower()
-                if any(fb in it_text for fb in forbidden_topic_terms):
-                    continue
-                fp = get_q_fingerprint(it)
-                img_fp = _image_crop_fingerprint(it)
-                if img_fp and img_fp in global_seen_image_crops:
-                    continue
-                if fp and fp not in global_seen_fingerprints:
+            # Ưu tiên bản phục dựng khi bù.
+            prefer.sort(key=_reconstructed_visual_score, reverse=True)
+            for allow_family in (False, True):
+                if len(selected) >= target_count:
+                    break
+                for it in prefer:
+                    if is_placeholder_question(it):
+                        continue
+                    it_text = (str(it.get("topic", "")) + " " + str(it.get("q", "")) + " " + str(it.get("explain", ""))).lower()
+                    if any(fb in it_text for fb in forbidden_topic_terms):
+                        continue
+                    if _is_duplicate_in_exam(it, allow_family_fallback=allow_family):
+                        continue
                     selected.append(dict(it))
-                    global_seen_fingerprints.add(fp)
-                    if img_fp:
-                        global_seen_image_crops.add(img_fp)
+                    _mark_selected(it)
                     if len(selected) >= target_count:
                         break
 
@@ -3435,11 +3477,14 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
     selected_p2 = [attach_question_visuals(dict(q), subject=subject, grade=grade) for q in sort_by_bloom_matrix(p2_filtered, num_p2, "p2")]
     selected_p3 = [attach_question_visuals(dict(q), subject=subject, grade=grade) for q in sort_by_bloom_matrix(p3_filtered, num_p3, "p3")]
 
-    # Tự động nạp vào bộ nhớ Cooldown LRU
+    # Tự động nạp vào bộ nhớ Cooldown LRU (exact + stem — tránh lần tạo sau nhặt bản scan cùng đề)
     for q_item in selected_p1 + selected_p2 + selected_p3:
         fp_item = get_q_fingerprint(q_item)
+        stem_item = get_stem_fp(q_item)
         if fp_item:
             remember_question_cooldown(fp_item)
+        if stem_item and stem_item != fp_item:
+            remember_question_cooldown(stem_item)
 
     # BẢO ĐẢM 100% CÁC DẠNG CÂU HỎI TÙY BIẾN ĐẶC THÙ (CUSTOM ARCHETYPES GUARANTEE)
     if custom_prompt.strip():
@@ -3480,11 +3525,41 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
 
         # Never relabel a question to make it appear to satisfy a requested matrix.
 
+    # Chốt chống trùng liên phần / sau inject archetype: giữ bản visual cao hơn, bỏ stem/họ trùng.
+    def _finalize_unique(parts):
+        kept_stems, kept_fams, kept_fps, kept_imgs = set(), set(), set(), set()
+        out_parts = []
+        for part_qs in parts:
+            cleaned = []
+            for q in part_qs:
+                stem = get_stem_fp(q)
+                fam = get_family_fp(q)
+                fp = get_q_fingerprint(q)
+                img = _image_crop_fingerprint(q)
+                if (stem and stem in kept_stems) or (fp and fp in kept_fps) or (img and img in kept_imgs) or (fam and fam in kept_fams):
+                    continue
+                cleaned.append(q)
+                if stem:
+                    kept_stems.add(stem)
+                if fam:
+                    kept_fams.add(fam)
+                if fp:
+                    kept_fps.add(fp)
+                if img:
+                    kept_imgs.add(img)
+            out_parts.append(cleaned)
+        return out_parts
+
+    selected_p1, selected_p2, selected_p3 = _finalize_unique([selected_p1, selected_p2, selected_p3])
+
     # Ghi nhận toàn bộ câu hỏi vừa chọn vào bộ nhớ Cooldown LRU
     for q in (selected_p1 + selected_p2 + selected_p3):
         fp = get_q_fingerprint(q)
+        stem = get_stem_fp(q)
         if fp:
             remember_question_cooldown(fp)
+        if stem and stem != fp:
+            remember_question_cooldown(stem)
 
     # Tạo mã đề ngẫu nhiên
     exam_code = str(random.randint(1011, 9999))
