@@ -545,42 +545,38 @@ st.markdown("""
 
     }
 
-    /* THANH ĐIỀU HƯỚNG 5 TRẠM — tên đầy đủ, xuống dòng trong nút, không cắt cụt. */
+    /* Năm nút trạm: một hàng xanh, bo góc, đổ bóng. Tên dài cắt bằng dấu ba chấm. */
     div[class*="st-key-top_nav_station_"] button {
-        font-size: 13.5px !important;
-        font-weight: 700 !important;
-        padding: 0.65rem 0.55rem !important;
-        border-radius: 10px !important;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        white-space: normal !important;
-        height: auto !important;
-        min-height: 4.6rem !important;
-        line-height: 1.25 !important;
-    }
-
-    div[class*="st-key-top_nav_station_"] button[kind="primary"],
-    div[class*="st-key-top_nav_station_"] button[data-testid="stBaseButton-primary"] {
-        background: linear-gradient(135deg, #0284c7, #2563eb) !important;
+        background: linear-gradient(180deg, #3b9eff 0%, #1d6fe8 100%) !important;
         color: #ffffff !important;
-        border: 2px solid #38bdf8 !important;
-        box-shadow: 0 0 16px rgba(56, 189, 248, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
-        transform: translateY(-2px) !important;
+        border: none !important;
+        border-radius: 12px !important;
+        box-shadow: 0 8px 16px rgba(29, 111, 232, 0.48), 0 2px 4px rgba(15, 23, 42, 0.28) !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        padding: 0.55rem 0.75rem !important;
+        height: 48px !important;
+        min-height: 48px !important;
+        max-height: 48px !important;
+        line-height: 1.2 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
     }
 
-    div[class*="st-key-top_nav_station_"] button[kind="secondary"],
-    div[class*="st-key-top_nav_station_"] button[data-testid="stBaseButton-secondary"] {
-        background: rgba(15, 23, 42, 0.75) !important;
-        color: #94a3b8 !important;
-        border: 1.5px solid #334155 !important;
+    div[class*="st-key-top_nav_station_"] button p {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        margin: 0 !important;
     }
 
-    div[class*="st-key-top_nav_station_"] button[kind="secondary"]:hover,
-    div[class*="st-key-top_nav_station_"] button[data-testid="stBaseButton-secondary"]:hover {
-        color: #38bdf8 !important;
-        border-color: #0284c7 !important;
-        background: rgba(30, 41, 59, 0.9) !important;
-        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3) !important;
+    div[class*="st-key-top_nav_station_"] button:hover {
         transform: translateY(-2px) !important;
+        background: linear-gradient(180deg, #5aafff 0%, #2563eb 100%) !important;
+        box-shadow: 0 12px 22px rgba(37, 99, 235, 0.62), 0 2px 4px rgba(15, 23, 42, 0.28) !important;
+        color: #ffffff !important;
     }
 
 
@@ -8007,7 +8003,13 @@ for idx_st, (col_st, label_st) in enumerate(zip([nav_t1, nav_t2, nav_t3, nav_t4,
         is_cur_active = (st.session_state.selected_station == label_st)
         btn_type = "primary" if is_cur_active else "secondary"
         btn_title = f"⭐ {label_st}" if is_cur_active else label_st
-        if st.button(btn_title, key=f"top_nav_station_{idx_st}", type=btn_type, width="stretch"):
+        if st.button(
+            btn_title,
+            key=f"top_nav_station_{idx_st}",
+            type=btn_type,
+            width="stretch",
+            help=label_st,
+        ):
             _nav_clicked = label_st
 if _nav_clicked and not st.session_state.get("_ignore_top_nav_once"):
     navigate_to_station(st.session_state, _nav_clicked, station_labels)
