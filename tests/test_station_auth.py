@@ -2,7 +2,7 @@
 import unittest
 
 from services.station_auth import is_teacher_authenticated, set_teacher_authenticated
-from services.station_nav import STATION_BUTTON_LABELS, STATION_LABELS, ensure_station_selection, force_tram5
+from services.station_nav import STATION_LABELS, ensure_station_selection, force_tram5
 
 
 class StationAuthTests(unittest.TestCase):
@@ -30,12 +30,17 @@ class StationNavTests(unittest.TestCase):
         self.assertEqual(state["selected_station"], STATION_LABELS[4])
         self.assertEqual(state["sb_station_radio_selector"], STATION_LABELS[4])
 
-    def test_nav_buttons_are_short_and_aligned(self):
-        self.assertEqual(len(STATION_BUTTON_LABELS), len(STATION_LABELS))
-        self.assertEqual(len(set(STATION_BUTTON_LABELS)), 5)
-        for short, full in zip(STATION_BUTTON_LABELS, STATION_LABELS):
-            self.assertLess(len(short), len(full))
-            self.assertIn("Trạm", short)
+    def test_nav_labels_keep_full_names(self):
+        self.assertEqual(
+            STATION_LABELS,
+            [
+                "📖 Trạm 1: Học Tập & Phòng Lab",
+                "✍️ Trạm 2: Gia Sư Socratic & Nộp Bài",
+                "📝 Trạm 3: Luyện Tập & Khảo Thí",
+                "💚 Trạm 4: Tư Vấn Tâm Lý Học Đường",
+                "📊 Trạm 5: Dữ Liệu & Nghiên Cứu",
+            ],
+        )
 
 
 if __name__ == "__main__":
