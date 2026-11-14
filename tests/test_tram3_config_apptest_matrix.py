@@ -45,14 +45,23 @@ class Tram3ConfigAppTestMatrix(unittest.TestCase):
     def test_config_defaults_match_assessment_profile_matrix(self):
         cells = [
             ("Lớp 6", "Toán học", 6),
+            ("Lớp 6", "Ngữ văn", 6),
+            ("Lớp 7", "Toán học", 7),
+            ("Lớp 7", "Giáo dục công dân", 7),
             ("Lớp 8", "Khoa học tự nhiên", 8),
+            ("Lớp 8", "Tiếng Anh", 8),
             ("Lớp 9", "Lịch sử & Địa lý", 9),
+            ("Lớp 9", "Tin học", 9),
+            ("Lớp 10", "Sinh học", 10),
+            ("Lớp 10", "Tin học", 10),
             ("Lớp 11", "Hóa học", 11),
+            ("Lớp 11", "Giáo dục kinh tế và pháp luật", 11),
             ("Lớp 12", "Toán học", 12),
             ("Lớp 12", "Vật lý", 12),
             ("Lớp 12", "Lịch sử", 12),
             ("Lớp 12", "Tiếng Anh", 12),
             ("Lớp 12", "Địa lý", 12),
+            ("Lớp 12", "Ngữ văn", 12),
         ]
         at = self._app()
         for grade_label, subject, grade in cells:
