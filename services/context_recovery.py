@@ -280,7 +280,8 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                               and str(c.get("grade")) == str(grade)
                               and _content_digest(c) not in used
                               and any(topic_matches(t, c.get("topic", "")) for t in requested))
-                for candidate in islice(candidates, 250):
+                # Quét sâu hơn: kho Toán hay có cụm MSLGN gắn nhãn topic KSHS sai.
+                for candidate in islice(candidates, 800):
                     item = recover_visual(candidate, subject, grade)
                     if _candidate_ok(item, part, subject, grade, requested, needs_visual(original), required_level, request_scope):
                         replacement, origin = item, "bank_replacement"

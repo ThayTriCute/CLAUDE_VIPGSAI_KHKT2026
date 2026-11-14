@@ -3088,6 +3088,25 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
         if "lượng giác" not in chosen_str:
             forbidden_topic_terms.extend(["hàm số lượng giác", "phương trình lượng giác"])
 
+        # KSHS / đạo hàm / CD1 ≠ thống kê MSLGN. Câu bank hay gắn nhãn topic "Khảo sát…"
+        # nhưng stem là mẫu ghép nhóm → cấm khi chưa chọn CD thống kê.
+        _kshs_focus = any(
+            k in chosen_str
+            for k in ("khảo sát", "đạo hàm", "chuyên đề 1", "đồ thị hàm", "kshs", "hàm số")
+        )
+        _stats_focus = any(
+            k in chosen_str
+            for k in ("mẫu ghép nhóm", "phân tán", "chuyên đề 3", "mẫu số liệu", "thống kê", "tứ phân vị")
+        )
+        if _kshs_focus and not _stats_focus:
+            forbidden_topic_terms.extend([
+                "mẫu số liệu ghép nhóm",
+                "bảng mẫu số liệu",
+                "bảng số liệu ghép nhóm",
+                "mau so lieu ghep nhom",
+                "bảng tần số ghép nhóm",
+            ])
+
     # Phân tích sâu các yêu cầu ma trận tùy biến từ người dùng (Deep Custom Intent Parsing)
     p1_only_nb_th = any(kw in custom_str for kw in [
         "phần 1 chỉ câu thông hiểu", "phần 1 chỉ", "phần 1: chỉ", "p1 chỉ", "chỉ câu thông hiểu",
@@ -3120,10 +3139,13 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
     topic_keywords = []
     if is_math:
         if "khảo sát" in chosen_str or "đạo hàm" in chosen_str or "chuyên đề 1" in chosen_str:
+            # Không dùng token trần "khảo sát" — khớp nhầm câu MSLGN "Khảo sát thời gian…".
             topic_keywords.extend([
-                "khảo sát", "hàm số", "đơn điệu", "đồng biến", "nghịch biến", "cực trị", "cực đại", "cực tiểu", 
-                "giá trị lớn nhất", "giá trị nhỏ nhất", "gtln", "gtnn", "tiệm cận", "đồ thị", "tâm đối xứng", 
-                "tối ưu hóa", "hàm phân thức", "bậc ba", "đạo hàm", "bảng biến thiên", "bbt"
+                "khảo sát hàm", "khảo sát và vẽ", "vẽ đồ thị hàm", "hàm số", "đơn điệu",
+                "đồng biến", "nghịch biến", "cực trị", "cực đại", "cực tiểu",
+                "giá trị lớn nhất", "giá trị nhỏ nhất", "gtln", "gtnn", "tiệm cận", "đồ thị hàm",
+                "tâm đối xứng", "tối ưu hóa", "hàm phân thức", "bậc ba", "đạo hàm",
+                "bảng biến thiên", "bbt",
             ])
         if has_chosen_oxyz and not has_custom_deny_oxyz:
             topic_keywords.extend([
@@ -3154,12 +3176,19 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
                         topic_keywords.append(tok)
 
     def filter_by_topic(items):
+        from services.request_scope import question_topic_issue as _q_topic_issue
+
         clean_items = [it for it in items if not is_placeholder_question(it)]
         random.shuffle(clean_items)
 
         def _not_forbidden(it):
             it_text = (str(it.get("topic", "")) + " " + str(it.get("q", "")) + " " + str(it.get("explain", "")) + " " + str(it.get("source", ""))).lower()
-            return not any(fb in it_text for fb in forbidden_topic_terms)
+            if any(fb in it_text for fb in forbidden_topic_terms):
+                return False
+            # Đồng bộ với cổng phục hồi: không đưa MSLGN khi UI đang chọn KSHS/hàm số.
+            if is_math and topic_filters and _q_topic_issue(it, subject, topic_filters):
+                return False
+            return True
 
         def _keyword_hit(it):
             if not topic_keywords:
