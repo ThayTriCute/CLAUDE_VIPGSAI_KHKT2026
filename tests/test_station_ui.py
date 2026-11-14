@@ -293,6 +293,8 @@ class TestStationUI(unittest.TestCase):
         at.run()
         for label, value in (("Số câu TN P.I:", 1), ("Số câu Đ/S P.II:", 0), ("Số câu TLN P.III:", 0)):
             next(n for n in at.number_input if n.label == label).set_value(value)
+        # P0: AI thay thế mặc định TẮT — bật tay cho kịch bản phục hồi visual bằng AI.
+        at.session_state["enable_ai_context_recovery"] = True
         initial = {"subject": "Toán học", "grade": 12, "p1": [{"q": "Quan sát hình vẽ bên để chọn hàm số", "topic": "Hàm số", "opt": ["A. 1", "B. 2", "C. 3", "D. 4"], "ans": "B"}], "p2": [], "p3": []}
         replacement = {"subject": "Toán học", "grade": 12, "topic": "Hàm số", "q": "Đồ thị như hình bên của $y=x^3+2$. Tung độ giao Oy bằng bao nhiêu?", "opt": ["A. 1", "B. 2", "C. 3", "D. 4"], "ans": "B"}
         with patch("google.genai.Client") as client, patch.object(engine, "get_baseline_questions_pool", return_value={"p1": [], "p2": [], "p3": []}):

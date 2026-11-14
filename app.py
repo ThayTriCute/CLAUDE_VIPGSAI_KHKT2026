@@ -14367,7 +14367,7 @@ if selected_station == station_labels[2]:
 
     def enrich_exam_data(exam, custom_request=""):
         validate_exam_context(exam, subject, grade_num)
-        use_ai_recovery = st.session_state.get("enable_ai_context_recovery", True)
+        use_ai_recovery = st.session_state.get("enable_ai_context_recovery", False)
         generator = (lambda prompt: call_gemini_with_fallback(prompt, json_mode=True)) if use_ai_recovery else None
         draft = repair_exam_context(exam, subject, grade_num,
             topics=st.session_state.get("policy_selected_topics", []),
@@ -14839,8 +14839,15 @@ if selected_station == station_labels[2]:
 
                 st.caption(f"📌 **Đã chọn ({len(chosen_topics)} chuyên đề):** {', '.join(chosen_topics[:2])}{'...' if len(chosen_topics) > 2 else ''}")
                 st.session_state.policy_selected_topics = list(chosen_topics)
-                st.checkbox("Cho phép AI sinh nguyên câu thay thế khi thiếu dữ liệu", value=True, key="enable_ai_context_recovery")
-                st.caption("Tùy chọn này chỉ điều khiển AI sửa/thay câu chưa đạt; không tắt nút khởi tạo đề AI. Ưu tiên dữ kiện gốc rồi câu cùng ngữ cảnh trong kho; nếu vẫn thiếu và đã bật tùy chọn, tối đa 2 lượt AI bổ sung cho cả đề. Câu thay được ghi dấu vết và kiểm tra lại.")
+                st.checkbox(
+                    "Cho phép AI sinh nguyên câu thay thế khi thiếu dữ liệu",
+                    value=False,
+                    key="enable_ai_context_recovery",
+                )
+                st.caption(
+                    "Mặc định TẮT: chỉ phục hồi từ kho cùng chủ đề. Bật tay nếu chấp nhận tối đa 2 câu AI "
+                    "(có nhãn is_ai_generated, cần GV duyệt). Không tắt nút khởi tạo đề AI."
+                )
 
 
 
@@ -15699,8 +15706,11 @@ if selected_station == station_labels[2]:
                                     if q_txt:
                                         fp_c = ree.q_fingerprint(q_new) if ree else re.sub(r'[^a-zA-Z0-9\u00C0-\u1EF9]', '', q_txt)[:80]
                                         st.session_state.seen_question_fps.add(fp_c)
-                                        if ree and hasattr(ree, "_RECENT_QUESTION_COOLDOWN"):
-                                            ree._RECENT_QUESTION_COOLDOWN.add(q_new.get("q", "").strip())
+                                        if ree and hasattr(ree, "remember_question_cooldown"):
+                                            ree.remember_question_cooldown(
+                                                (ree.q_fingerprint(q_new) if hasattr(ree, "q_fingerprint") else None)
+                                                or q_new.get("q", "").strip()
+                                            )
 
                             save_exam_to_cache(st.session_state.exam_data, subject, grade_num, selected_topics_str)
                             if ree and hasattr(ree, "ingest_ai_generated_exam_to_bank"):
