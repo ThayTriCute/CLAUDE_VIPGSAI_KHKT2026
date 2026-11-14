@@ -1,0 +1,15 @@
+---
+description: Trạm 3 — HD Socratic lúc làm bài (không lộ đáp án); explain sau nộp
+globs: app.py,services/socratic_context.py,data/socratic_anchors.py,tests/test_tram3*.py
+alwaysApply: false
+---
+
+# Trạm 3 — Socratic vs explain (chốt anh MINH)
+
+Khi sửa UI/gợi ý Trạm 3, tuân thủ:
+
+1. **Đang làm bài (`exam_state == testing`):** phải có gợi ý Socratic theo từng câu (expander mở được). Mục tiêu: học sinh làm được bài, không nản — gợi tư duy, bước, công thức, bám số liệu câu đó.
+2. **Không lộ đáp án:** không chọn phương án giúp, không Đúng/Sai giúp, không đáp số cuối, không thay số ra kết quả. Không dùng field `explain` làm HD.
+3. **`explain` / lời giải tham khảo:** chỉ hiện sau khi nộp bài (graded), tách khỏi HD Socratic.
+4. **Không** khóa toàn bộ HD Socratic đến sau nộp bài (trừ chế độ làm bài kín / pre-post đo lường).
+5. Dùng `build_tram3_socratic_guide` (hoặc sanitize tương đương); test phải phản ánh chốt này.
