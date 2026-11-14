@@ -67,13 +67,20 @@ class Tram3AcceptanceMatrixTests(unittest.TestCase):
             ("Toán học", 12, ["[Lớp 12] Chuyên đề 1"], (6, 2, 2)),
             ("Vật lý", 12, ["[Lớp 12] Nội năng và nhiệt động lực học"], (6, 2, 2)),
             ("Hóa học", 12, None, (6, 2, 0)),
+            ("Sinh học", 12, None, (6, 2, 0)),
             ("Lịch sử", 12, None, (8, 2, 0)),
+            ("Địa lý", 12, None, (8, 2, 0)),
             ("Tiếng Anh", 12, None, (10, 0, 0)),
+            ("Tin học", 12, None, (8, 2, 0)),
             ("Toán học", 6, None, (6, 2, 2)),
+            ("Toán học", 7, None, (6, 2, 2)),
             ("Khoa học tự nhiên", 8, None, (6, 2, 2)),
+            ("Giáo dục công dân", 8, None, (6, 2, 0)),
             ("Lịch sử & Địa lý", 9, None, (6, 2, 2)),
             ("Tin học", 10, None, (6, 2, 0)),
+            ("Sinh học", 10, None, (6, 2, 0)),
             ("Giáo dục kinh tế và pháp luật", 11, None, (6, 2, 0)),
+            ("Hóa học", 11, None, (6, 2, 0)),
         ]
         empty_cells = []
         for subject, grade, topics, counts in cells:
