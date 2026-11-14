@@ -250,6 +250,41 @@ class PriorFidelityStillHoldsTests(unittest.TestCase):
         self.assertEqual(_total(exam), 0)
 
 
+class KshsNotStatisticsCollisionTests(unittest.TestCase):
+    """UI CD1 KSHS must not open as MSLGN; enrich must not block with outside_selected_topic."""
+
+    def setUp(self):
+        ree._RECENT_QUESTION_COOLDOWN.clear()
+
+    def test_kshs_blend_excludes_grouped_statistics_and_repairs_clean(self):
+        from services.context_recovery import repair_exam_context
+
+        topics = [
+            "[Lớp 12] Chuyên đề 1: Ứng dụng đạo hàm khảo sát & vẽ đồ thị hàm số (KSHS chuẩn KNTT)"
+        ]
+        exam = generate_blended_real_exam("Toán học", 12, topics, (8, 2, 2))
+        total = _total(exam)
+        self.assertGreater(total, 0)
+        for p in ("p1", "p2", "p3"):
+            for q in exam.get(p) or []:
+                blob = str(q.get("q", "")).lower()
+                self.assertNotIn(
+                    "mẫu số liệu ghép nhóm",
+                    blob,
+                    msg="KSHS blend must not pick mislabelled MSLGN stems",
+                )
+        fixed = repair_exam_context(
+            exam,
+            "Toán học",
+            12,
+            topics=topics,
+            bank_provider=ree.get_baseline_questions_pool,
+            ai_generator=None,
+            max_ai_questions=0,
+        )
+        self.assertEqual(fixed.get("context_recovery", {}).get("unresolved"), 0)
+
+
 class AiRecoveryDefaultOffContractTests(unittest.TestCase):
     def test_app_defaults_ai_recovery_false_in_source(self):
         from pathlib import Path
