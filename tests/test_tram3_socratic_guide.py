@@ -62,6 +62,30 @@ class Tram3SocraticGuideTests(unittest.TestCase):
         self.assertNotIn("y=-1", vertex)
         self.assertNotIn("Chọn A", vertex)
 
+    def test_quadratic_max_quotes_this_function_and_interval(self):
+        stem = r"Giá trị lớn nhất của hàm số bậc hai $y=-x^2+6x-5$ trên đoạn $[0;5]$ bằng bao nhiêu?"
+        guide = build_tram3_socratic_guide({
+            "q": stem, "ans": "4", "explain": "x=3, f(3)=4. GTLN = 4.", "level": "VD",
+        }, subject="Toán học", grade_num=10)
+        compact = guide.replace(" ", "")
+        self.assertIn("-x^2+6x-5", compact)
+        self.assertIn("[0;5]", compact)
+        self.assertNotIn("[a;b]", guide)
+        self.assertNotIn("Các số liệu", guide)
+        self.assertNotIn("không phải explain", guide.lower())
+        self.assertNotIn("x=3", compact)
+        self.assertNotIn("f(3)", guide)
+        self.assertNotIn("=4", compact)
+        self.assertGreaterEqual(guide.count("\n"), 4)
+        plain = build_tram3_socratic_guide({
+            "q": "Giá trị lớn nhất của hàm số bậc hai y = -x^2 + 6x - 5 trên đoạn [0; 5] bằng bao nhiêu?",
+            "ans": "4",
+        }, subject="Toán học", grade_num=10)
+        plain_compact = plain.replace(" ", "")
+        self.assertIn("-x^2+6x-5", plain_compact)
+        self.assertIn("[0;5]", plain_compact)
+        self.assertNotIn("=4", plain_compact)
+
     def test_compound_interest_uses_given_data_without_result(self):
         guide = build_tram3_socratic_guide({
             "q": "Một người tiết kiệm 100 triệu đồng với lãi suất 6%/năm, lãi kép. Sau 3 năm nhận được bao nhiêu triệu đồng?",
