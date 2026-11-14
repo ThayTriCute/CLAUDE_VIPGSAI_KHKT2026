@@ -86,12 +86,33 @@ def q_fingerprint(q):
     return hashlib.sha256(payload.encode('utf-8')).hexdigest()
 
 
+def q_stem_fingerprint(q):
+    """Định danh học sinh nhìn thấy: đề + phương án/mệnh đề + đáp án.
+
+    Bỏ explain / image / f / metadata nguồn — hai bản (scan cắt đề vs phục dựng)
+    cùng stem phải cùng fingerprint để Trạm 3 không nhét cả hai vào một đề.
+    """
+    if not isinstance(q, dict):
+        return ""
+    payload = "§".join([
+        _norm(q.get("q", "")),
+        "¦".join(_opts(q)),
+        "¦".join(_stmts(q)),
+        _norm(q.get("ans", "")),
+    ])
+    if not payload or payload == "§§§":
+        return ""
+    return hashlib.sha1(payload.encode("utf-8")).hexdigest()
+
+
 def q_family_fingerprint(q):
-    """Họ mẫu: như trên nhưng che hết chữ số (để đo độ đa dạng, KHÔNG dùng để xóa)."""
+    """Họ mẫu: như stem nhưng che hết chữ số (chống cùng dạng đổi số trong một đề)."""
     if not isinstance(q, dict):
         return ""
     payload = "§".join([_norm(q.get("q", "")), "¦".join(_opts(q)), "¦".join(_stmts(q))])
     payload = re.sub(r"\d+", "#", payload)
+    if not payload or payload == "§§":
+        return ""
     return hashlib.sha1(payload.encode("utf-8")).hexdigest()
 
 
