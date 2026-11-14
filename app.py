@@ -197,7 +197,7 @@ except Exception as _e_st:
     init_centralized_session_state = None
 
 from services.station_auth import is_teacher_authenticated, set_teacher_authenticated
-from services.station_nav import STATION_LABELS, ensure_station_selection, navigate_to_station, force_tram5
+from services.station_nav import STATION_LABELS, STATION_BUTTON_LABELS, ensure_station_selection, navigate_to_station, force_tram5
 
 try:
     from models.exam_models import QuestionModel, StatementModel
@@ -8004,8 +8004,9 @@ for idx_st, (col_st, label_st) in enumerate(zip([nav_t1, nav_t2, nav_t3, nav_t4,
     with col_st:
         is_cur_active = (st.session_state.selected_station == label_st)
         btn_type = "primary" if is_cur_active else "secondary"
-        btn_title = f"⭐ {label_st}" if is_cur_active else label_st
-        if st.button(btn_title, key=f"top_nav_station_{idx_st}", type=btn_type, width="stretch"):
+        short = STATION_BUTTON_LABELS[idx_st]
+        btn_title = f"⭐ {short}" if is_cur_active else short
+        if st.button(btn_title, key=f"top_nav_station_{idx_st}", type=btn_type, width="stretch", help=label_st):
             _nav_clicked = label_st
 if _nav_clicked and not st.session_state.get("_ignore_top_nav_once"):
     navigate_to_station(st.session_state, _nav_clicked, station_labels)

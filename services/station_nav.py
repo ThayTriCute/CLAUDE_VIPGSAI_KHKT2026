@@ -12,6 +12,15 @@ STATION_LABELS: list[str] = [
     "📊 Trạm 5: Dữ Liệu & Nghiên Cứu",
 ]
 
+# Nút trên một hàng: nhãn ngắn để không bị cắt. help vẫn là tên đầy đủ.
+STATION_BUTTON_LABELS: list[str] = [
+    "📖 Trạm 1 · Học",
+    "✍️ Trạm 2 · Socratic",
+    "📝 Trạm 3 · Khảo thí",
+    "💚 Trạm 4 · Tâm lý",
+    "📊 Trạm 5 · Dữ liệu",
+]
+
 TRAM5_INDEX = 4
 
 
