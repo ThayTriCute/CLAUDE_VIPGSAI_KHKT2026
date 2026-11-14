@@ -189,7 +189,16 @@ class ExpertRegressionTests(unittest.TestCase):
         node = next(n for n in ast.walk(TREE) if isinstance(n,ast.If)
                     and isinstance(n.test,ast.BoolOp) and any(isinstance(v,ast.Name) and v.id=='blended' for v in n.test.values))
         original = {'old':'keep'}
-        st = SimpleNamespace(session_state=SimpleNamespace(exam_data=original),error=Mock())
+
+        class _Session(SimpleNamespace):
+            def pop(self, key, default=None):
+                if hasattr(self, key):
+                    value = getattr(self, key)
+                    delattr(self, key)
+                    return value
+                return default
+
+        st = SimpleNamespace(session_state=_Session(exam_data=original), error=Mock())
         enrich = Mock(side_effect=ValueError('Draft cannot be used'))
         exec(compile(ast.Module(body=[node],type_ignores=[]),'bank-boundary-test','exec'),
              {'blended':{'p1':[{}]},'st':st,'enrich_exam_data':enrich,'custom_matrix_prompt':'',
