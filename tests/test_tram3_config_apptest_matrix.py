@@ -2,6 +2,7 @@
 """AppTest: cấu hình Trạm 3 (số câu / thời lượng / danh mục môn) đúng môn×lớp."""
 from __future__ import annotations
 
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -17,6 +18,9 @@ class Tram3ConfigAppTestMatrix(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         import database
+        # Máy hẹp: ma trận AppTest dài dễ OOM nếu nạp baseline master.
+        cls._prev_baseline = os.environ.get("GSAI_LOAD_BASELINE_MASTER")
+        os.environ["GSAI_LOAD_BASELINE_MASTER"] = "0"
         cls.temp = tempfile.TemporaryDirectory()
         cls.db = database.DatabaseManager(Path(cls.temp.name) / "tram3_cfg.db")
         cls.db_patch = patch.object(database, "db_manager", cls.db)
@@ -27,6 +31,10 @@ class Tram3ConfigAppTestMatrix(unittest.TestCase):
         cls.db_patch.stop()
         cls.temp._ignore_cleanup_errors = True
         cls.temp.cleanup()
+        if cls._prev_baseline is None:
+            os.environ.pop("GSAI_LOAD_BASELINE_MASTER", None)
+        else:
+            os.environ["GSAI_LOAD_BASELINE_MASTER"] = cls._prev_baseline
 
     def _app(self):
         at = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=60)
