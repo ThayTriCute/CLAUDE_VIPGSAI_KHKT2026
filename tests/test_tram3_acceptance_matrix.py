@@ -129,6 +129,29 @@ class Tram3AcceptanceMatrixTests(unittest.TestCase):
         self.assertIsInstance(exam.get("p2"), list)
         self.assertIsInstance(exam.get("p3"), list)
 
+    def test_absurd_custom_topic_does_not_cross_fill_other_subjects(self):
+        """Tùy biến/chủ đề vô lý không được đổ bank môn khác vào đề."""
+        cases = [
+            ("Vật lý", 12, ["Chủ đề không tồn tại XYZQQQNOMATCH999"], (6, 2, 2)),
+            ("Hóa học", 12, ["Chủ đề không tồn tại XYZQQQNOMATCH999"], (6, 2, 0)),
+            ("Khoa học tự nhiên", 8, ["Chủ đề không tồn tại XYZQQQNOMATCH999"], (6, 2, 2)),
+            ("Tiếng Anh", 12, ["Chủ đề không tồn tại XYZQQQNOMATCH999"], (8, 0, 0)),
+        ]
+        for subject, grade, topics, counts in cases:
+            with self.subTest(subject=subject, grade=grade):
+                ree._RECENT_QUESTION_COOLDOWN.clear()
+                exam = ree.generate_blended_real_exam(subject, grade, topics, counts)
+                self.assertEqual(exam.get("subject"), subject)
+                total = sum(len(exam.get(p) or []) for p in ("p1", "p2", "p3"))
+                # P0 harden: không Pass3-dump cả khối khi topic lệch.
+                self.assertTrue(exam.get("counts_shortfall") or total == 0 or total < sum(counts))
+                for part in ("p1", "p2", "p3"):
+                    for q in exam.get(part) or []:
+                        declared = q.get("subject")
+                        if declared:
+                            from services.academic_context import canonical_subject
+                            self.assertEqual(canonical_subject(declared), subject)
+
 
 if __name__ == "__main__":
     unittest.main()
