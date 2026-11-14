@@ -16422,6 +16422,7 @@ if selected_station == station_labels[2]:
 </div>
 <span style="background: #0284c7; color: #ffffff; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: bold;">ĐANG LÀM BÀI</span>
 </div>""", unsafe_allow_html=True)
+        st.caption("🔒 Đang làm bài: HD Socratic chi tiết và lời giải (`explain`) **chỉ mở sau khi nộp bài** — em tự tư duy trên ngữ liệu từng câu.")
 
 
 
@@ -16574,16 +16575,6 @@ if selected_station == station_labels[2]:
                     st.session_state[answer_key] = str(previous)
                 st.session_state.exam_answers[f"nv_dh_{idx}"] = st.text_area(f"Trả lời câu {idx+1}:", key=f"nv_dh_{idx}", height=70)
 
-
-
-                # HD Socratic ≠ explain: bám ngữ liệu câu này, không giải hộ / không lộ đáp án.
-
-                with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý — không phải lời giải)", expanded=False):
-
-                    clean_dh = build_tram3_socratic_guide(q, subject=subject, grade_num=grade_num)
-
-                    st.info(f"💡 **HD Socratic câu {idx+1}** (tư duy & công thức liên quan — không phải `explain`):\n\n{clean_dh}")
-
                 st.markdown("---")
 
 
@@ -16601,14 +16592,6 @@ if selected_station == station_labels[2]:
                 if answer_key not in st.session_state and previous is not None:
                     st.session_state[answer_key] = str(previous)
                 st.session_state.exam_answers[f"nv_v_{idx}"] = st.text_area(f"Bài làm viết câu {idx+1}:", key=f"nv_v_{idx}", height=140)
-
-
-
-                with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý — không phải lời giải)", expanded=False):
-
-                    clean_v = build_tram3_socratic_guide(v, subject=subject, grade_num=grade_num)
-
-                    st.info(f"💡 **HD Socratic câu {idx+1}** (tư duy & công thức liên quan — không phải `explain`):\n\n{clean_v}")
 
                 st.markdown("---")
 
@@ -16639,14 +16622,6 @@ if selected_station == station_labels[2]:
                     user_ans = st.radio(f"Lựa chọn câu {idx+1}:", q.get("opt", []), key=choice_key, label_visibility="collapsed", index=None, format_func=option_markdown_label)
 
                     st.session_state.exam_answers[f"p1_{idx}"] = user_ans
-
-
-
-                    with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý — không phải lời giải)", expanded=False):
-
-                        clean_hint = build_tram3_socratic_guide(q, subject=subject, grade_num=grade_num)
-
-                        st.info(f"💡 **HD Socratic** (bám số liệu câu này — không giải hộ, không phải `explain`):\n\n{clean_hint}")
 
                     st.markdown("---")
 
@@ -16684,14 +16659,6 @@ if selected_station == station_labels[2]:
 
                         st.session_state.exam_answers[f"p2_{idx}_{s_idx}"] = c_ans
 
-
-
-                    with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý — không phải lời giải)", expanded=False):
-
-                        clean_hint2 = build_tram3_socratic_guide(q, subject=subject, grade_num=grade_num)
-
-                        st.info(f"💡 **HD Socratic câu {idx+1}** (bám ngữ liệu — không phải `explain`):\n\n{clean_hint2}")
-
                     st.markdown("---")
 
 
@@ -16727,14 +16694,6 @@ if selected_station == station_labels[2]:
                     )
 
                     st.session_state.exam_answers[f"p3_{idx}"] = short_ans
-
-
-
-                    with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý — không phải lời giải)", expanded=False):
-
-                        clean_hint3 = build_tram3_socratic_guide(q, subject=subject, grade_num=grade_num)
-
-                        st.info(f"💡 **HD Socratic câu {idx+1}** (bám số liệu — không giải hộ, không phải `explain`):\n\n{clean_hint3}")
 
                     st.markdown("---")
 
@@ -17081,9 +17040,16 @@ if selected_station == station_labels[2]:
 
 
 
-                    # LỜI GIẢI CHI TIẾT & PHƯƠNG PHÁP LUẬN BỘ GD&ĐT
+                    # Sau nộp bài: HD Socratic (tư duy) tách khỏi explain (lời giải tham khảo).
+                    guide = build_tram3_socratic_guide(q, subject=subject, grade_num=grade_num)
+                    st.success(chemical_display_markdown(
+                        f"🧭 **HD Socratic câu {original_question_number(exam, q, idx+1)}** "
+                        f"(bám số liệu câu này — không thay `explain`):\n\n{guide}"
+                    ))
                     expl = question_solution_text(q)
-                    st.info(chemical_display_markdown(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl}"))
+                    st.info(chemical_display_markdown(
+                        f"📘 **Explain / giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl}"
+                    ))
                     st.markdown("---")
 
             if exam.get("p2"):
@@ -17100,8 +17066,14 @@ if selected_station == station_labels[2]:
                         mark_icon = "✅" if user_ans_s == expected_str else "❌"
                         st.markdown(f"- Ý {chr(97+s_idx)}): *{stmt.get('t')}* -> Em chọn: **{user_ans_s}** | **{answer_source_label(exam)}:** **{expected_str}** {mark_icon}")
 
+                    guide2 = build_tram3_socratic_guide(q, subject=subject, grade_num=grade_num)
+                    st.success(chemical_display_markdown(
+                        f"🧭 **HD Socratic câu {original_question_number(exam, q, idx+1)}:**\n\n{guide2}"
+                    ))
                     expl2 = question_solution_text(q)
-                    st.info(chemical_display_markdown(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl2}"))
+                    st.info(chemical_display_markdown(
+                        f"📘 **Explain / giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl2}"
+                    ))
                     st.markdown("---")
 
             if exam.get("p3"):
@@ -17115,8 +17087,14 @@ if selected_station == station_labels[2]:
                     render_fast_visual(q, f"sol_p3_{idx}")
                     st.markdown(f"- **Đáp số em điền:** `{user_val}` &nbsp;|&nbsp; **Đáp số chuẩn:** `{correct_val}`")
 
+                    guide3 = build_tram3_socratic_guide(q, subject=subject, grade_num=grade_num)
+                    st.success(chemical_display_markdown(
+                        f"🧭 **HD Socratic câu {original_question_number(exam, q, idx+1)}:**\n\n{guide3}"
+                    ))
                     expl3 = question_solution_text(q)
-                    st.info(chemical_display_markdown(f"💡 **Giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl3}"))
+                    st.info(chemical_display_markdown(
+                        f"📘 **Explain / giải thích tham khảo câu {original_question_number(exam, q, idx+1)}:**\n\n{expl3}"
+                    ))
                     st.markdown("---")
 
 
