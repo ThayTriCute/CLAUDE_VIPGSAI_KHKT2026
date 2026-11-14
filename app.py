@@ -159,15 +159,28 @@ try:
     import qa_runtime as _qa_runtime_for_scoring
     _reload_scoring(_qa_runtime_for_scoring)
     import services.scoring_service as _scoring_service_mod
-    if getattr(_scoring_service_mod, "T3_SCORING_REVISION", None) != 2026111219:
+    if getattr(_scoring_service_mod, "T3_SCORING_REVISION", None) != 2026111415:
         _reload_scoring(_scoring_service_mod)
-    from services.scoring_service import calculate_part2_statement_score, grade_part1, grade_part2, grade_part3, grade_exam_by_profile
+    from services.scoring_service import (
+        calculate_part2_statement_score,
+        grade_part1,
+        grade_part2,
+        grade_part3,
+        grade_exam_by_profile,
+        part2_ladder_caption,
+    )
     if not callable(grade_exam_by_profile):
         raise RuntimeError("grade_exam_by_profile không callable sau reload")
 except Exception as _e_sc:
     logging.warning("Không thể nạp services.scoring_service: %s", _e_sc)
     def calculate_part2_statement_score(c):
         return {1: 0.1, 2: 0.25, 3: 0.5, 4: 1.0}.get(c, 0.0)
+    def part2_ladder_caption(w_per_question):
+        if float(w_per_question or 0) <= 0:
+            return "không có Phần II"
+        if abs(float(w_per_question) - 1.0) < 1e-9:
+            return "0.1-0.25-0.5-1.0 (QĐ 764)"
+        return "thang luyện tập tỷ lệ theo bậc QĐ 764"
     def grade_exam_by_profile(exam, user_answers, subject, grade):
         # Stub an toàn: ép reload lần nữa rồi chấm — không raise làm gãy phòng thi
         from importlib import reload as _reload_fb
@@ -3607,6 +3620,7 @@ from data.socratic_anchors import (
     sanitize_socratic_hint,
     safe_json_loads,
 )
+from services.socratic_context import build_tram3_socratic_guide
 
 def render_question_source_badge(q, idx=None):
 
@@ -16562,17 +16576,13 @@ if selected_station == station_labels[2]:
 
 
 
-                # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
+                # HD Socratic ≠ explain: bám ngữ liệu câu này, không giải hộ / không lộ đáp án.
 
-                expl_dh = q.get('hint', '') or q.get('socratic_hint', '')
+                with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý — không phải lời giải)", expanded=False):
 
-                if not expl_dh: expl_dh = "Bám sát thể loại, ngữ cảnh tác phẩm và các phương thức biểu đạt trong SGK Kết Nối Tri Thức để phân tích."
+                    clean_dh = build_tram3_socratic_guide(q, subject=subject, grade_num=grade_num)
 
-                with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý)", expanded=False):
-
-                    clean_dh = sanitize_socratic_hint(expl_dh, q.get('ans', ''), q.get('q', ''), None, "TH", subject=subject, grade_num=grade_num)
-
-                    st.info(f"💡 **Định hướng tư duy Socratic câu {idx+1}:**\n\n{clean_dh}")
+                    st.info(f"💡 **HD Socratic câu {idx+1}** (tư duy & công thức liên quan — không phải `explain`):\n\n{clean_dh}")
 
                 st.markdown("---")
 
@@ -16594,17 +16604,11 @@ if selected_station == station_labels[2]:
 
 
 
-                # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
+                with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý — không phải lời giải)", expanded=False):
 
-                expl_v = v.get('hint', '') or v.get('socratic_hint', '')
+                    clean_v = build_tram3_socratic_guide(v, subject=subject, grade_num=grade_num)
 
-                if not expl_v: expl_v = "Xác định rõ vấn đề nghị luận, các luận điểm chính, dẫn chứng xác thực và rút ra bài học sâu sắc."
-
-                with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý)", expanded=False):
-
-                    clean_v = sanitize_socratic_hint(expl_v, v.get('ans', ''), v.get('q', ''), None, "VD", subject=subject, grade_num=grade_num)
-
-                    st.info(f"💡 **Định hướng tư duy Socratic câu {idx+1}:**\n\n{clean_v}")
+                    st.info(f"💡 **HD Socratic câu {idx+1}** (tư duy & công thức liên quan — không phải `explain`):\n\n{clean_v}")
 
                 st.markdown("---")
 
@@ -16638,19 +16642,11 @@ if selected_station == station_labels[2]:
 
 
 
-                    # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
+                    with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý — không phải lời giải)", expanded=False):
 
-                    expl = q.get('hint', '') or q.get('socratic_hint', '')
+                        clean_hint = build_tram3_socratic_guide(q, subject=subject, grade_num=grade_num)
 
-                    if not expl or len(expl) < 15:
-
-                        expl = "Áp dụng trực tiếp định nghĩa và tính chất cốt lõi trong SGK Kết Nối Tri Thức. Phân tích loại trừ các phương án nhiễu theo suy luận logic."
-
-                    with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý)", expanded=False):
-
-                        clean_hint = sanitize_socratic_hint(expl, q.get("ans", ""), q.get("q", ""), q.get("opt", []), q.get("level", "TH"), subject=subject, grade_num=grade_num)
-
-                        st.info(f"💡 **Định hướng tư duy Socratic:**\n\n{clean_hint}")
+                        st.info(f"💡 **HD Socratic** (bám số liệu câu này — không giải hộ, không phải `explain`):\n\n{clean_hint}")
 
                     st.markdown("---")
 
@@ -16658,7 +16654,10 @@ if selected_station == station_labels[2]:
 
             if exam.get("p2"):
 
-                st.markdown("### PHẦN II. Trắc nghiệm Đúng/Sai (Thang điểm luyện tập: 0.1 - 0.25 - 0.5 - 1.0)")
+                _p2_w = float((assessment_profile(subject, grade_num).get("weights") or (0, 0, 0))[1] or 0)
+                _p2_n = max(1, len(exam.get("p2") or []))
+                _p2_cap = part2_ladder_caption(_p2_w / _p2_n if exam.get("p2") else 0.0)
+                st.markdown(f"### PHẦN II. Trắc nghiệm Đúng/Sai ({_p2_cap})")
 
                 for idx, q in enumerate(exam["p2"]):
 
@@ -16687,15 +16686,11 @@ if selected_station == station_labels[2]:
 
 
 
-                    # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
+                    with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý — không phải lời giải)", expanded=False):
 
-                    expl2 = q.get('hint', '') or q.get('socratic_hint', '')
+                        clean_hint2 = build_tram3_socratic_guide(q, subject=subject, grade_num=grade_num)
 
-                    with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý)", expanded=False):
-
-                        clean_hint2 = sanitize_socratic_hint(expl2, "", q.get("q", ""), None, q.get("level", "VD"), subject=subject, grade_num=grade_num)
-
-                        st.info(f"💡 **Định hướng tư duy Socratic câu {idx+1}:**\n\n{clean_hint2}")
+                        st.info(f"💡 **HD Socratic câu {idx+1}** (bám ngữ liệu — không phải `explain`):\n\n{clean_hint2}")
 
                     st.markdown("---")
 
@@ -16735,15 +16730,11 @@ if selected_station == station_labels[2]:
 
 
 
-                    # HƯỚNG DẪN TƯ DUY SOCRATIC: 1 CHẠM BẬT / TẮT (EXPANDER)
+                    with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý — không phải lời giải)", expanded=False):
 
-                    expl3 = q.get('hint', '') or q.get('socratic_hint', '')
+                        clean_hint3 = build_tram3_socratic_guide(q, subject=subject, grade_num=grade_num)
 
-                    with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (Chỉ mở khi bí ý)", expanded=False):
-
-                        clean_hint3 = sanitize_socratic_hint(expl3, q.get("ans", ""), q.get("q", ""), None, q.get("level", "VDC"), subject=subject, grade_num=grade_num)
-
-                        st.info(f"💡 **Định hướng tư duy Socratic câu {idx+1}:**\n\n{clean_hint3}")
+                        st.info(f"💡 **HD Socratic câu {idx+1}** (bám số liệu — không giải hộ, không phải `explain`):\n\n{clean_hint3}")
 
                     st.markdown("---")
 
@@ -17096,7 +17087,7 @@ if selected_station == station_labels[2]:
                     st.markdown("---")
 
             if exam.get("p2"):
-                st.markdown("##### 🔹 Phần II: Trắc nghiệm Đúng/Sai (Thang điểm luyện tập: 0.1 - 0.25 - 0.5 - 1.0)")
+                st.markdown(f"##### 🔹 Phần II: Trắc nghiệm Đúng/Sai ({p2_caption})")
                 for idx, q in enumerate(exam["p2"]):
                     if q.get("source"):
                         st.markdown(f'<div style="font-size: 11.5px; color: #38bdf8; background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 2px 8px; margin-bottom: 6px; border-radius: 3px;">🏛️ <b>Nguồn tham khảo:</b> {html.escape(str(q["source"]))}</div>', unsafe_allow_html=True)

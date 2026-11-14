@@ -7,7 +7,7 @@ SERVICE CHẤM ĐIỂM KHẢO THÍ — GSAI THPT 2026
 """
 from __future__ import annotations
 
-T3_SCORING_REVISION = 2026111219  # reload contract cho worker Streamlit
+T3_SCORING_REVISION = 2026111415  # reload contract cho worker Streamlit
 
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -21,6 +21,8 @@ def calculate_part2_statement_score(correct_statements: int) -> float:
 
 def part2_ladder_caption(w_per_question: float) -> str:
     """Nhãn trung thực: tuyệt đối QĐ 764 khi mỗi câu = 1.0; ngược lại là thang luyện tập tỷ lệ."""
+    if float(w_per_question or 0) <= 0:
+        return "không có Phần II"
     if abs(float(w_per_question) - 1.0) < 1e-9:
         return "0.1-0.25-0.5-1.0 (QĐ 764)"
     return "thang luyện tập tỷ lệ theo bậc QĐ 764"
