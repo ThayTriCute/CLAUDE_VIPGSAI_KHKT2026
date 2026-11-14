@@ -103,6 +103,32 @@ class Tram3AcceptanceMatrixTests(unittest.TestCase):
         # Cho phép vài ô bank mỏng trên máy hẹp; không được trống quá nửa mẫu.
         self.assertLessEqual(len(empty_cells), max(1, len(cells) // 2), msg=f"empty={empty_cells}")
 
+    def test_blend_dedupes_stems_and_honors_custom_without_cross_subject(self):
+        from dedupe_bank import q_stem_fingerprint
+
+        ree._RECENT_QUESTION_COOLDOWN.clear()
+        exam = ree.generate_blended_real_exam(
+            "Toán học",
+            12,
+            ["[Lớp 12] Chuyên đề 1"],
+            (8, 2, 2),
+            custom_prompt="Ưu tiên đồ thị và bảng biến thiên, không lộ đáp án",
+        )
+        stems = []
+        for part in ("p1", "p2", "p3"):
+            for q in exam.get(part) or []:
+                declared = q.get("subject")
+                if declared:
+                    from services.academic_context import canonical_subject
+                    self.assertEqual(canonical_subject(declared), "Toán học")
+                stem = q_stem_fingerprint(q)
+                if stem:
+                    stems.append(stem)
+        self.assertEqual(len(stems), len(set(stems)), "Trong một đề không được trùng stem")
+        self.assertIsInstance(exam.get("p1"), list)
+        self.assertIsInstance(exam.get("p2"), list)
+        self.assertIsInstance(exam.get("p3"), list)
+
 
 if __name__ == "__main__":
     unittest.main()

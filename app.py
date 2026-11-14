@@ -16422,7 +16422,10 @@ if selected_station == station_labels[2]:
 </div>
 <span style="background: #0284c7; color: #ffffff; padding: 4px 10px; border-radius: 4px; font-size: 11.5px; font-weight: bold;">ĐANG LÀM BÀI</span>
 </div>""", unsafe_allow_html=True)
-        st.caption("🔒 Đang làm bài: HD Socratic chi tiết và lời giải (`explain`) **chỉ mở sau khi nộp bài** — em tự tư duy trên ngữ liệu từng câu.")
+        st.caption(
+            "💡 Đang làm bài: mở **Gợi ý Socratic** từng câu khi bí (tư duy / bước / công thức — **không lộ đáp án**). "
+            "Lời giải `explain` chỉ mở **sau khi nộp bài**. Mục tiêu: em làm được bài, không nản."
+        )
 
 
 
@@ -16575,6 +16578,13 @@ if selected_station == station_labels[2]:
                     st.session_state[answer_key] = str(previous)
                 st.session_state.exam_answers[f"nv_dh_{idx}"] = st.text_area(f"Trả lời câu {idx+1}:", key=f"nv_dh_{idx}", height=70)
 
+                if not st.session_state.get("tram3_sealed_mode"):
+                    with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (mở khi bí — không lộ đáp án)", expanded=False):
+                        st.info(
+                            "💡 **HD Socratic** (gợi tư duy, không phải `explain`):\n\n"
+                            + build_tram3_socratic_guide(q, subject=subject, grade_num=grade_num)
+                        )
+
                 st.markdown("---")
 
 
@@ -16592,6 +16602,13 @@ if selected_station == station_labels[2]:
                 if answer_key not in st.session_state and previous is not None:
                     st.session_state[answer_key] = str(previous)
                 st.session_state.exam_answers[f"nv_v_{idx}"] = st.text_area(f"Bài làm viết câu {idx+1}:", key=f"nv_v_{idx}", height=140)
+
+                if not st.session_state.get("tram3_sealed_mode"):
+                    with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (mở khi bí — không lộ đáp án)", expanded=False):
+                        st.info(
+                            "💡 **HD Socratic** (gợi tư duy, không phải `explain`):\n\n"
+                            + build_tram3_socratic_guide(v, subject=subject, grade_num=grade_num)
+                        )
 
                 st.markdown("---")
 
@@ -16622,6 +16639,13 @@ if selected_station == station_labels[2]:
                     user_ans = st.radio(f"Lựa chọn câu {idx+1}:", q.get("opt", []), key=choice_key, label_visibility="collapsed", index=None, format_func=option_markdown_label)
 
                     st.session_state.exam_answers[f"p1_{idx}"] = user_ans
+
+                    if not st.session_state.get("tram3_sealed_mode"):
+                        with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (mở khi bí — không lộ đáp án)", expanded=False):
+                            st.info(
+                                "💡 **HD Socratic** (bám số liệu câu này — giúp làm bài, không giải hộ, không phải `explain`):\n\n"
+                                + build_tram3_socratic_guide(q, subject=subject, grade_num=grade_num)
+                            )
 
                     st.markdown("---")
 
@@ -16659,6 +16683,13 @@ if selected_station == station_labels[2]:
 
                         st.session_state.exam_answers[f"p2_{idx}_{s_idx}"] = c_ans
 
+                    if not st.session_state.get("tram3_sealed_mode"):
+                        with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (mở khi bí — không lộ đáp án)", expanded=False):
+                            st.info(
+                                f"💡 **HD Socratic câu {idx+1}** (không lộ Đúng/Sai — không phải `explain`):\n\n"
+                                + build_tram3_socratic_guide(q, subject=subject, grade_num=grade_num)
+                            )
+
                     st.markdown("---")
 
 
@@ -16694,6 +16725,13 @@ if selected_station == station_labels[2]:
                     )
 
                     st.session_state.exam_answers[f"p3_{idx}"] = short_ans
+
+                    if not st.session_state.get("tram3_sealed_mode"):
+                        with st.expander(f"💡 Gợi mở tư duy Socratic câu {idx+1} (mở khi bí — không lộ đáp án)", expanded=False):
+                            st.info(
+                                f"💡 **HD Socratic câu {idx+1}** (gợi bước — không lộ đáp số, không phải `explain`):\n\n"
+                                + build_tram3_socratic_guide(q, subject=subject, grade_num=grade_num)
+                            )
 
                     st.markdown("---")
 
