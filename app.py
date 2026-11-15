@@ -3773,6 +3773,26 @@ from data.socratic_anchors import (
 )
 from services.socratic_context import build_tram3_socratic_guide, looks_like_explain_solution
 
+# AI exam JSON helpers — import an toàn để Cloud không sập nếu module lệch bản.
+try:
+    from services.ai_json import (
+        JSON_CLEAN_RETRY_SUFFIX,
+        is_duplicate_key_error,
+    )
+except ImportError:  # pragma: no cover - fallback khi deploy thiếu symbol
+    def is_duplicate_key_error(exc_or_msg) -> bool:
+        text = str(exc_or_msg or "").casefold()
+        return "khóa trùng" in text or "khoa trung" in text or "duplicate" in text
+
+    JSON_CLEAN_RETRY_SUFFIX = (
+        "\n[RETRY — JSON SẠCH]\n"
+        "Bản trước bị từ chối vì khóa JSON trùng. "
+        "Xuất LẠI đúng một JSON hợp lệ theo schema; "
+        "trong mỗi object mỗi khóa xuất hiện đúng một lần. "
+        "Không markdown, không giải thích ngoài JSON."
+    )
+
+
 def render_question_source_badge(q, idx=None):
 
     """
@@ -15937,11 +15957,6 @@ if selected_station == station_labels[2]:
                             st.session_state.get("curriculum_pathway", ""))
 
                         try:
-                            from services.ai_json import (
-                                JSON_CLEAN_RETRY_SUFFIX,
-                                is_duplicate_key_error,
-                            )
-
                             raw_json_ex = call_gemini_with_fallback(
                                 exam_prompt, system_instruction=exam_system, json_mode=True
                             )
@@ -16025,10 +16040,9 @@ if selected_station == station_labels[2]:
                             st.rerun()
 
                         except Exception as e:
-                            from services.ai_json import is_duplicate_key_error as _dup_key
                             err = str(e)
                             st.error(f"Lỗi khởi tạo đề thi: {err}")
-                            if _dup_key(err) or "json" in err.casefold():
+                            if is_duplicate_key_error(err) or "json" in err.casefold():
                                 st.info(
                                     "AI trả JSON chưa sạch (thường trùng khóa) sau khi thử lại một lần. "
                                     "Không phải lỗi merge/deploy. "

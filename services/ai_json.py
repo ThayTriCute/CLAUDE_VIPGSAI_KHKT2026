@@ -2,6 +2,14 @@
 import json
 import re
 
+__all__ = (
+    "DUP_KEY_MESSAGE",
+    "JSON_UNIQUE_KEYS_RULE",
+    "JSON_CLEAN_RETRY_SUFFIX",
+    "is_duplicate_key_error",
+    "parse_ai_json",
+)
+
 DUP_KEY_MESSAGE = "JSON có khóa trùng; chưa sử dụng vì có thể làm mất câu hỏi."
 
 # Prompt contract for exam JSON: forbid duplicate keys in every object.
