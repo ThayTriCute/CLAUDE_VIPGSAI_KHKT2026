@@ -15,13 +15,27 @@ from services.curriculum_policy import exam_generation_request, exam_prompt
 
 
 class AiExamJsonCleanTests(unittest.TestCase):
-    def test_unique_object_rejects_duplicate_keys(self):
-        with self.assertRaises(ValueError) as ctx:
-            parse_ai_json('{"p1":[],"p1":[]}')
-        self.assertIn("khóa trùng", str(ctx.exception))
-        self.assertTrue(is_duplicate_key_error(ctx.exception))
+    def test_identical_duplicate_keys_keep_one_value(self):
+        parsed = parse_ai_json('{"p1":[],"p1":[]}')
+        self.assertEqual(parsed, {"p1": []})
         self.assertTrue(is_duplicate_key_error(DUP_KEY_MESSAGE))
         self.assertFalse(is_duplicate_key_error("timeout"))
+
+    def test_duplicate_question_lists_are_concatenated_without_invention(self):
+        raw = (
+            '{"p1":[{"q":"Câu một","opt":["A. 1","B. 2"],"ans":"A"}],'
+            '"p1":[{"q":"Câu hai","opt":["A. 3","B. 4"],"ans":"B"},'
+            '{"q":"Câu một","opt":["A. 1","B. 2"],"ans":"A"}]}'
+        )
+        parsed = parse_ai_json(raw)
+        stems = [item["q"] for item in parsed["p1"]]
+        self.assertEqual(stems, ["Câu một", "Câu hai"])
+
+    def test_conflicting_scalar_duplicate_still_rejected(self):
+        with self.assertRaises(ValueError) as ctx:
+            parse_ai_json('{"ans":"A","ans":"B"}')
+        self.assertIn("khóa trùng", str(ctx.exception))
+        self.assertTrue(is_duplicate_key_error(ctx.exception))
 
     def test_exam_prompt_forbids_duplicate_keys(self):
         prompt = exam_prompt(
