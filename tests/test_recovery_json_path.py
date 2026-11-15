@@ -56,8 +56,7 @@ class TestRecoveryJSONPath(unittest.TestCase):
 
     def test_truncated_or_duplicate_replacement_is_not_invented(self):
         payload = json.dumps({"replacement_question": self.candidate()})
-        duplicate = payload[:-1] + ',"replacement_question":{}}'
-        for raw in (payload[:-2], '{"replacement_question":{"q":"unfinished', duplicate):
+        for raw in (payload[:-2], '{"replacement_question":{"q":"unfinished'):
             with self.subTest(raw=raw[:50]):
                 calls = []
                 def generate(prompt):
@@ -69,6 +68,14 @@ class TestRecoveryJSONPath(unittest.TestCase):
                 self.assertEqual(result["p1"][0]["q"], source["p1"][0]["q"])
                 self.assertEqual(result["p1"][0]["ans"], source["p1"][0]["ans"])
                 self.assertEqual(len(calls), 1)
+
+    def test_duplicate_replacement_key_keeps_the_written_question(self):
+        payload = json.dumps({"replacement_question": self.candidate()})
+        duplicate = payload[:-1] + ',"replacement_question":{}}'
+        result = repair_exam_context(self.source(), "Toán học", 12, ai_generator=lambda _: duplicate)
+        self.assertEqual(result["context_recovery"]["unresolved"], 0)
+        self.assertEqual(result["p1"][0]["q"], self.candidate()["q"])
+        self.assertEqual(result["p1"][0]["ans"], "B")
 
     def test_syntax_repair_does_not_accept_wrong_subject(self):
         candidate = self.candidate()
@@ -114,7 +121,7 @@ class TestRecoveryJSONPath(unittest.TestCase):
                 before = copy.deepcopy(source)
                 calls = []
                 result = repair_exam_context(source, "Ngữ văn", grade, ai_generator=lambda p: calls.append(p))
-                self.assertEqual(result.pop("context_recovery"), {"events": [], "ai_calls": 0, "unresolved": 0})
+                self.assertEqual(result.pop("context_recovery"), {"events": [], "ai_calls": 0, "unresolved": 0, "withheld": 0})
                 self.assertEqual(result, before)
                 self.assertEqual(source, before)
                 self.assertEqual(calls, [])

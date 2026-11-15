@@ -61,8 +61,8 @@ class TestAIJSON(unittest.TestCase):
                 safe_json_loads(raw)
 
     def test_duplicate_key_does_not_silently_drop_questions(self):
-        with self.assertRaises(ValueError):
-            safe_json_loads('{"p1":[{"q":"Câu 1"}],"p1":[{"q":"Câu 2"}]}')
+        data = safe_json_loads('{"p1":[{"q":"Câu 1"}],"p1":[{"q":"Câu 2"}]}')
+        self.assertEqual([item["q"] for item in data["p1"]], ["Câu 1", "Câu 2"])
 
     def test_arrays_and_utf8_text_are_preserved(self):
         data = [{'q': 'Địa lí Việt Nam', 'a': True}, {'q': 'English reading', 'a': False}]

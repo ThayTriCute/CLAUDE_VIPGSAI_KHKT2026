@@ -196,8 +196,11 @@ def is_bbt_markdown(lines):
 
 
 def supplied_bbt_rows(raw):
-    # Chỉ tách dòng giả lập JSON `\n`, KHÔNG phá lệnh LaTeX `\nearrow` / `\neq` / `\nu`.
-    text = re.sub(r'(?<![A-Za-z])\\n(?![A-Za-z])', '\n', str(raw or ''))
+    # Tách `\n` giả lập JSON kể cả khi dòng sau bắt đầu bằng y'/f'/x.
+    # Không nuốt chữ n của \nearrow, \neq, \nu, \nabla, \not.
+    text = re.sub(
+        r'\\n(?!earrow|warrow|eq(?![A-Za-z])|e(?![A-Za-z])|u(?![A-Za-z])|abla|ot(?![A-Za-z])|less|gtr|mid|parallel|exists)',
+        '\n', str(raw or ''))
     rows = []
     for line in text.splitlines():
         if '|' not in line or re.fullmatch(r'[\s|:\-]+', line):

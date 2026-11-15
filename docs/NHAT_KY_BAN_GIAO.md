@@ -37,6 +37,7 @@ Hàm duy nhất: `build_tram3_socratic_guide` (= `build_socratic_guide`) trong `
 - Câu hỏi **số cực trị** mà phương án là khoảng/lời văn không bị SymPy kết luận ảo giác. Phương án đếm (“2 điểm”, “có 2 cực trị”) vẫn đối chiếu.
 - Màn làm bài hiện cảnh báo số câu đã để riêng.
 - Test mới: `tests/test_ai_exam_incomplete.py`.
+- CI PR #126 đỏ vì ba việc cũ trên main cộng khóa `withheld`: gộp hai mảng `p1` trùng khóa (không bỏ câu); `\n` trước `y'` của bảng biến thiên được tách dòng nhưng `\nearrow` giữ nguyên; JSON cắt vẫn từ chối, khóa `replacement_question` lặp thì giữ câu đã viết; đề Ngữ văn ghi `withheld: 0`.
 
 ## 1a. Ca trước — giọng HD Socratic (đã vào main #125)
 
