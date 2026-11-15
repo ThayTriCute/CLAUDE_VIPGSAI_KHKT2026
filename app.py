@@ -15075,7 +15075,12 @@ if selected_station == station_labels[2]:
 
                 ]
 
-                selected_exam_mode = st.radio("Lựa chọn hình thức đề thi:", exam_mode_options, horizontal=True, key="radio_exam_mode_choice")
+                selected_exam_mode = st.radio(
+                    "Lựa chọn hình thức đề thi:",
+                    exam_mode_options,
+                    horizontal=True,
+                    key=f"radio_exam_mode_choice_{current_context_key}",
+                )
 
 
 
@@ -15524,6 +15529,10 @@ if selected_station == station_labels[2]:
                             else:
 
                                 st.error("Chưa bóc tách được đề từ link này. Nếu là link nhóm kín Facebook, Thầy/Cô vui lòng dán link Google Drive hoặc dán trực tiếp nội dung đề thi vào mục 'Nạp & Trộn Đề Word / PDF' bên cạnh!")
+
+                elif "Làm Nguyên Đề Thi Thật" in selected_exam_mode:
+
+                    st.info(f"Kho chưa có đề thi thật cho môn {subject}, lớp {grade_num}. Hình thức này không mở đề luyện tập.")
 
                 else:
 
