@@ -138,6 +138,53 @@ def has_visual(question):
     return False
 
 
+def _apply_reviewed_visual(result, question, subject, grade):
+    """Optional local registry — miss returns None (không kẹt hash VIP)."""
+    try:
+        from services.reviewed_question_visuals import (
+            reviewed_question_specification,
+            reviewed_question_visual,
+        )
+    except Exception:
+        return None
+    specification = reviewed_question_specification(question, subject, grade)
+    if specification:
+        model = None
+        method = ""
+        if specification.get("kind") == "reviewed_diagram":
+            try:
+                from services.reviewed_diagram import draw_reviewed_diagram
+                model = draw_reviewed_diagram(specification)
+                method = "reviewed_diagram"
+            except Exception:
+                model = None
+        else:
+            try:
+                from precision_visual_engine import build_rational_choice_diagrams
+                model = build_rational_choice_diagrams(specification)
+                method = "reviewed_rational_constraints"
+            except Exception:
+                model = None
+        if model:
+            for key in ("image_base64", "image_url", "image", "image_provenance", "f", "tikz", "geom_3d"):
+                result.pop(key, None)
+            result["composite_visual"] = model
+            result["visual_recovery"] = {"method": method, "input_sha256": _digest(question)}
+            return result
+    reviewed = reviewed_question_visual(question, subject, grade)
+    if reviewed:
+        for key in ("bbt", "f", "tikz", "composite_visual", "geom_3d", "image_url", "image"):
+            result.pop(key, None)
+        result.update(reviewed)
+        result["visual_recovery"] = {
+            "method": "reviewed_source_figure_restored",
+            "kind": "source_image",
+            "input_sha256": _digest(question),
+        }
+        return result
+    return None
+
+
 def recover_visual(question, subject, grade):
     """Leave complete supplied payloads alone; reconstruct explicit formulas only."""
     subject, grade = academic_context(subject, grade)
@@ -171,8 +218,11 @@ def recover_visual(question, subject, grade):
                 else:
                     result["tikz"] = engine.build_rational_2_1_tikz(*(model[k] for k in ("a", "b", "c", "d", "e")))
             result["visual_recovery"] = {"method": method, "input_sha256": _digest(question)}
+            return result
+    reviewed = _apply_reviewed_visual(result, question, subject, grade)
+    if reviewed is not None:
+        return reviewed
     return result
-
 
 def _question_issue(question, part, subject, grade):
     try:
