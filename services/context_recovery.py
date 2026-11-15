@@ -100,6 +100,37 @@ def model_from_rational_constraints(text):
     return dict(type="func_1_1", a=float(height), b=float(intercept), c=1.0, d=float(-pole))
 
 
+def _normalize_choice_key(question, part):
+    """Map a key the model already gave ('B.', or the option text) onto A–D.
+
+    Does not pick a letter when the text matches no option.
+    """
+    if part != "p1" or not isinstance(question, dict):
+        return
+    ans = str(question.get("ans") or "").strip()
+    letter = re.fullmatch(r"([A-Da-d])\s*[.):]?", ans)
+    if letter:
+        question["ans"] = letter.group(1).upper()
+        return
+    opts = question.get("opt")
+    if not isinstance(opts, list):
+        return
+    for index, opt in enumerate(opts[:4]):
+        body = re.sub(r"^[A-Da-d][.):]\s*", "", str(opt)).strip()
+        if ans and ans.casefold() in {str(opt).strip().casefold(), body.casefold()}:
+            question["ans"] = chr(65 + index)
+            return
+
+
+def _stem_has_numeric_table(question):
+    """True when the stem already carries the data table it refers to."""
+    text = str(question.get("q") or "")
+    if text.count("|") >= 4 and len(re.findall(r"\d", text)) >= 4:
+        return True
+    rows = re.findall(r"(?m)^[^\n]{0,48}?\d+(?:[.,]\d+)?\s*$", text)
+    return len(rows) >= 3
+
+
 def needs_visual(question):
     value = str(question.get("q", "")).lower()
     # Restored from e0dbab1: constructing a table is an output task,
@@ -244,7 +275,12 @@ def _question_issue(question, part, subject, grade):
                 and not any(t in stem for t in ("không phải", "đúng hay sai", "phát biểu nào sai", "nhận định sai"))):
             return "chemical_identity_mismatch"
     if needs_visual(question) and not has_visual(question):
-        return "missing_source_visual"
+        value = str(question.get("q", "")).lower()
+        figure = any(t in value for t in ("hình vẽ bên", "hình bên", "như hình", "hình dưới", "đồ thị sau", "bảng biến thiên", "bảng xét dấu"))
+        # A probability table written in the stem is the data, not a missing figure.
+        table_in_stem = (not figure) and "bảng số liệu sau" in value and _stem_has_numeric_table(question)
+        if not table_in_stem:
+            return "missing_source_visual"
     if subject == "Toán học":
         from services.bbt_display_contract import missing_asymptote_limits
         if missing_asymptote_limits(question.get('bbt')):
@@ -304,6 +340,7 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                 events.append({"part": part, "index": index, "action": "needs_review", "reason": "invalid_question_structure"})
                 continue
             recovered = recover_visual(original, subject, grade)
+            _normalize_choice_key(recovered, part)
             issue = (question_scope_issue(recovered, request_scope)
                      or question_topic_issue(recovered, subject, topics)
                      or _question_issue(recovered, part, subject, grade))
@@ -360,6 +397,7 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                     question_object = replacement_question_object(response)
                     stage = "recover"
                     item = recover_visual(question_object, subject, grade)
+                    _normalize_choice_key(item, part)
                     stage = "validate"
                     ai_candidate_issue = _candidate_issue(item, part, subject, grade, requested, needs_visual(original), required_level, request_scope)
                     if not ai_candidate_issue:
@@ -392,5 +430,22 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                     events[-1]["replacement_rejection"] = ai_candidate_issue
                 if failure_stage:
                     events[-1].update(replacement_stage=failure_stage, replacement_error_type=failure_type)
-    result["context_recovery"] = {"events": events, "ai_calls": ai_calls, "unresolved": sum(e["action"] == "needs_review" for e in events)}
+    # One unusable AI item must not cancel every other playable question.
+    # Real-bank papers stay intact and still fail closed.
+    if result.get("is_ai_generated"):
+        review = [event for event in events if event.get("action") == "needs_review"]
+        total = sum(len(questions) for part, questions in question_groups(result) if part in {"p1", "p2", "p3"})
+        if review and len(review) < total:
+            drop = {(event.get("part"), event.get("index")) for event in review}
+            for part, questions in question_groups(result):
+                if part not in {"p1", "p2", "p3"}:
+                    continue
+                for index in range(len(questions) - 1, -1, -1):
+                    if (part, index) in drop:
+                        del questions[index]
+            for event in review:
+                event["action"] = "withheld_ai_question"
+    unresolved = sum(event.get("action") == "needs_review" for event in events)
+    withheld = sum(event.get("action") == "withheld_ai_question" for event in events)
+    result["context_recovery"] = {"events": events, "ai_calls": ai_calls, "unresolved": unresolved, "withheld": withheld}
     return result

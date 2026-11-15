@@ -16664,6 +16664,10 @@ if selected_station == station_labels[2]:
     elif st.session_state.exam_state == "testing":
 
         exam = st.session_state.exam_data
+        recovery_meta = exam.get("context_recovery") if isinstance(exam, dict) else None
+        withheld = recovery_meta.get("withheld") if isinstance(recovery_meta, dict) else 0
+        if isinstance(withheld, int) and withheld > 0:
+            st.warning(f"Đã để riêng {withheld} câu AI chưa đủ dữ kiện hoặc lệch kiểm chứng. Các câu còn lại mở để làm. Không bịa đáp án cho câu đã để riêng.")
         with st.expander("📋 Đối soát nhãn mức độ câu hỏi (chưa thẩm định)"):
             cognitive_report = exam.get("cognitive_audit", {})
             st.caption("Chỉ thống kê nhãn khai báo; chưa xác nhận yêu cầu tư duy thực tế hoặc tỷ lệ điểm. Từng ý Đúng/Sai được liệt kê riêng. Không có dữ liệu là chưa xác định.")
