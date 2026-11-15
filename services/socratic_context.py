@@ -3,7 +3,7 @@ import re
 
 from services.academic_context import canonical_subject, folded
 
-T1_CONTEXT_REVISION = 2026111604
+T1_CONTEXT_REVISION = 2026111605
 
 
 def complete_verified_quote_reference(reply, references):
@@ -1136,10 +1136,191 @@ def _guide_plan(question, subject) -> tuple:
     return formula, steps
 
 
-def build_tram3_socratic_guide(question, subject='Toán học', grade_num=12) -> str:
-    """HD Socratic dùng chung Trạm 1 & 3: hướng đi + công thức bám ngữ liệu. Không lộ đáp án, không lấy explain."""
+def _three_lines(*parts) -> str:
+    """Tối đa 3 dòng, lời thầy hỏi — không tiêu đề, không đánh số."""
+    lines = []
+    for part in parts:
+        for line in str(part or '').splitlines():
+            line = re.sub(r'\s+', ' ', line).strip()
+            if line:
+                lines.append(line)
+            if len(lines) >= 3:
+                return '\n'.join(lines)
+    return '\n'.join(lines)
+
+
+def _plain_midwife(question, subject) -> str:
+    """1–2 câu hỏi đỡ đẻ, xưng thầy–em, bám dữ kiện câu. Không chốt đáp."""
     q = question if isinstance(question, dict) else {}
-    # Chuẩn hóa khóa Trạm 1 (question/options/correct) ↔ Trạm 3 (q/opt/ans).
+    stem = str(q.get('q') or '')
+    low = stem.lower()
+    text = folded(stem)
+    subj = canonical_subject(subject or 'Toán học')
+    topic = _topic_phrase(stem)
+    negation = _is_negation_stem(stem)
+    expr = _quoted_expr(stem)
+
+    if any(k in text for k in ('dong hoc phan tu', 'mo hinh dong hoc', 'phan tu khi', 'chat khi', 'khi ly tuong')):
+        ask = 'không đúng' if negation else 'đúng'
+        return _three_lines(
+            f'Em ơi, câu này tìm phát biểu {ask} về mô hình động học phân tử chất khí.',
+            'Thầy hỏi em: em còn nhớ giả thiết về chuyển động hỗn loạn, quan hệ nhiệt độ với tốc độ, khoảng cách so với kích thước, và lực tương tác không?',
+            'Ý nào trái giả thiết em vừa nhớ thì là ý lệch — em tự chỉ ra, thầy không chốt hộ.',
+        )
+
+    if 'nong chay' in text and 'hoa hoi' not in text and 'bay hoi' not in text:
+        return _three_lines(
+            'Em đang tính nhiệt lượng để nóng chảy hoàn toàn một khối lượng $m$, ngay tại nhiệt độ nóng chảy.',
+            'Lúc chuyển thể, nhiệt độ có đổi không — nên dạng $Q$ này khác đốt nóng có $\\Delta T$ và khác hóa hơi, khác nhiệt điện chỗ nào?',
+            'Em nhớ hệ số nóng chảy rồi tự chọn, thầy không chốt công thức hộ.',
+        )
+    if 'hoa hoi' in text or 'bay hoi' in text:
+        return _three_lines(
+            'Em đang tính nhiệt khi hóa hơi, nhiệt độ không đổi và $Q$ tỉ lệ với khối lượng.',
+            'Em phân biệt hệ số hóa hơi với nóng chảy và với $Q=mc\\Delta T$ thế nào?',
+            'Em tự chọn dạng khớp, thầy không chốt hộ.',
+        )
+
+    if any(k in low for k in ('tập xác định', 'txđ')) or 'tap xac dinh' in text:
+        inside = re.search(r'\\sqrt\{([^{}]{1,40})\}', stem)
+        if inside:
+            cond = f'${inside.group(1)}$'
+            return _three_lines(
+                f'Em tìm tập xác định của {expr}.',
+                f'Thầy hỏi em: căn có nghĩa khi {cond} thỏa điều kiện gì?',
+                'Em viết thành một khoảng rồi tự đối chiếu, thầy không giải khoảng hộ.',
+            )
+        return _three_lines(
+            f'Em tìm tập xác định của {expr}.',
+            'Mẫu thức hoặc biểu thức trong căn cần điều kiện gì thì hàm có nghĩa?',
+            'Em tự viết khoảng, thầy không chốt hộ.',
+        )
+
+    if 'parabol' in low and any(k in low for k in ('tọa độ đỉnh', 'đỉnh')):
+        return _three_lines(
+            f'Em tìm tọa độ đỉnh của parabol {expr}.',
+            r'Thầy hỏi em: hoành độ đỉnh là $x=-\dfrac{b}{2a}$; em đọc $a$, $b$ từ đúng hàm này rồi thay lại để lấy tung độ thế nào?',
+            'Em ghép cặp $(x;y)$ và tự đối chiếu, thầy không chốt hộ.',
+        )
+
+    if any(k in text for k in ('gia tri lon nhat', 'gia tri nho nhat', 'gtln', 'gtnn')):
+        fn, interval = _function_and_interval(stem)
+        left, right = _interval_ends(interval)
+        kind = 'lớn nhất' if ('lon nhat' in text or 'gtln' in text) else 'nhỏ nhất'
+        if left and right:
+            open_iv = f'({left};{right})'
+            return _three_lines(
+                f'Em tìm giá trị {kind} của hàm bậc hai {fn} trên đoạn {interval}.',
+                f'Thầy hỏi em: em so $f({left})$, $f({right})$ với giá trị tại đỉnh $x=-\\dfrac{{b}}{{2a}}$ nếu đỉnh nằm trong ${open_iv}$, rồi lấy số {kind} thế nào?',
+                'Em tự so sánh, thầy không ra số hộ.',
+            )
+        return _three_lines(
+            f'Em tìm giá trị {kind} của {fn} trên {interval}.',
+            r'Em tính ở hai đầu mút và tại nghiệm $y\'=0$ nằm trong khoảng mở, rồi chọn số nào?',
+            'Em tự so, thầy không ra số hộ.',
+        )
+
+    if 'lai kep' in text or ('lai suat' in text and 'nam' in text):
+        money = re.search(r'(\d+(?:[.,]\d+)?)\s*triệu', stem, re.I)
+        pct = re.search(r'(\d+(?:[.,]\d+)?)\s*%', stem)
+        years = re.search(r'(\d+)\s*năm', stem, re.I)
+        p = money.group(1) if money else 'P'
+        r = pct.group(1) if pct else 'r'
+        n = years.group(1) if years else 'n'
+        return _three_lines(
+            f'Em tính số tiền sau {n} năm khi gửi {p} triệu, lãi kép {r}%/năm.',
+            r'Thầy hỏi em: em đổi phần trăm sang số thập phân rồi thay vào $A=P(1+r)^{n}$ thế nào?',
+            'Em tự tính, thầy không ra số hộ.',
+        )
+
+    if 'xac suat' in text or 'xác suất' in low:
+        return _three_lines(
+            _short_stem_quote(stem, 110).rstrip('…') + '.',
+            r'Thầy hỏi em: em đếm $n(\Omega)$ và $n(A)$ từ đúng số trong câu, rồi $P(A)=\dfrac{n(A)}{n(\Omega)}$ ra sao?',
+            'Em tự tính, thầy không ra phân số hộ.',
+        )
+
+    if any(k in low for k in ('đồ thị của hàm số nào', 'đường cong dưới đây', 'là của hàm số nào')):
+        return _three_lines(
+            'Em đang xem đường cong này là đồ thị của hàm nào.',
+            'Thầy hỏi em: tiệm cận đứng đọc ở đâu trên hình, và thay $x=0$ thì giao trục tung ra sao?',
+            'Em loại ý lệch hình, thầy không chọn hộ.',
+        )
+
+    if any(k in low for k in ('bảng biến thiên', 'bbt')):
+        return _three_lines(
+            "Em đọc đúng bảng biến thiên của câu này: dòng $x$, dấu $y'$ và mũi tên $y$.",
+            "Khoảng $y'>0$ thì $y$ tăng; $y'<0$ thì $y$ giảm — em đang hỏi khoảng nào hay cực trị?",
+            'Em tự kết từ đúng dòng bảng, thầy không chốt hộ.',
+        )
+
+    if q.get('mslgn_data') or any(k in low for k in ('ghép nhóm', 'tứ phân vị', 'trung vị', 'mốt')):
+        return _three_lines(
+            'Em đang tìm số đặc trưng trên đúng bảng tần số ghép nhóm của câu này.',
+            r'Thầy hỏi em: em cộng cột tần số ra $n$, rồi nhóm chứa vị trí cần tìm là nhóm nào trước khi thay vào công thức trung vị?',
+            'Em tự tính, thầy không ra số hộ.',
+        )
+
+    if q.get('stmts'):
+        return _three_lines(
+            'Em xét từng ý đúng/sai, mỗi ý một điều kiện lấy từ giả thiết chung của câu.',
+            'Thầy hỏi em: ý em đang làm dựa vào dữ kiện nào, và em ghi Đúng hay Sai độc lập với ý bên cạnh thế nào?',
+            'Em tự ghi, thầy không chốt hộ.',
+        )
+
+    if 'benzene' in text or 'benzen' in text:
+        return _three_lines(
+            'Em đang xét phản ứng của benzene, vòng thơm.',
+            'Thầy hỏi em: benzene ưu tiên phản ứng thế hay cộng như anken, và điều kiện xúc tác em nhớ là gì?',
+            'Ý nào trái điều đó thì lệch — em tự chỉ ra, thầy không chốt hộ.' if negation else
+            'Em đối chiếu từng ý với điều vừa nhớ, thầy không chốt hộ.',
+        )
+
+    if subj == 'Địa lý' and any(k in text for k in ('dong bang song cuu long', 'dbscl', 'cuu long')):
+        return _three_lines(
+            'Em đang nhận định về Đồng bằng sông Cửu Long.',
+            'Thầy hỏi em: vùng này địa hình và sông ngòi, khí hậu ra sao so với trung du miền núi?',
+            'Em giữ ý khớp đặc trưng vùng, thầy không chọn hộ.',
+        )
+
+    if subj == 'Ngữ văn' or any(k in text for k in ('cam nhan', 'doan van sau')):
+        return _three_lines(
+            f'Em đọc đúng đoạn trong câu rồi nói cảm nhận về {topic}.',
+            'Thầy hỏi em: từ ngữ trong đoạn gợi không khí nào — rộng, gần, khô hay ồn — và ý nào lệch câu chữ?',
+            'Em tự chọn ý khớp đoạn, thầy không chốt hộ.',
+        )
+
+    if 'ester' in text or 'xa phong' in text:
+        return _three_lines(
+            "Em đang xét xà phòng hóa ester.",
+            r'Thầy hỏi em: $RCOOR\'$ tác dụng với $NaOH$ cho muối và ancol nào?',
+            'Em viết sản phẩm rồi tự đối chiếu, thầy không chốt hộ.',
+        )
+
+    if negation:
+        return _three_lines(
+            f'Em ơi, câu này tìm ý không đúng về {topic}.',
+            f'Thầy hỏi em: em còn nhớ quy luật cốt lõi của {topic} trong SGK {subj} không?',
+            'Ý nào trái quy luật đó thì em giữ lại, thầy không chốt hộ.',
+        )
+
+    if expr != 'hàm trong câu' and subj == 'Toán học':
+        return _three_lines(
+            f'Em làm trên đúng {expr} trong câu này.',
+            'Thầy hỏi em: công thức nào khớp yêu cầu, và em thay hệ số của hàm này vào trước khi tính thế nào?',
+            'Em tự tính rồi đối chiếu, thầy không ra kết quả hộ.',
+        )
+
+    return _three_lines(
+        f'Em xem câu đang hỏi về {topic}.',
+        f'Thầy hỏi em: quy luật hay công thức nào của môn {subj} áp vào đúng chỗ này?',
+        'Em nhớ ra rồi tự chốt, thầy không chọn hộ.',
+    )
+
+
+def build_tram3_socratic_guide(question, subject='Toán học', grade_num=12) -> str:
+    """HD Socratic Trạm 1 và 3: 1–2 câu thầy hỏi, tối đa 3 dòng. Không lộ đáp, không lấy explain."""
+    q = question if isinstance(question, dict) else {}
     if 'q' not in q and q.get('question'):
         q = dict(q)
         q['q'] = q.get('question')
@@ -1147,47 +1328,22 @@ def build_tram3_socratic_guide(question, subject='Toán học', grade_num=12) ->
         q = dict(q)
         q['opt'] = q.get('options')
     opts = q.get('opt') or []
-    # explain / ans chỉ để lọc rò rỉ — không đưa vào HD.
-    formula, steps = _guide_plan(q, subject)
-    # Loại bước giống lời giải / chọn đáp.
-    clean_steps = []
-    for step in steps:
-        if looks_like_explain_solution(step):
-            continue
-        clean_steps.append(step)
-    steps = clean_steps or steps[:4]
-    # Bình dân học vụ: giữ đủ đường đi (tối đa 4 bước); câu khó giữ nguyên.
-    shown = steps if _is_hard_question(q, str(q.get('q') or '')) else steps[:4]
-    body = (
-        '**Công thức / hướng (thầy chỉ lối, không giải hộ):** ' + formula
-        + '\n\n**Con đường tư duy:**\n'
-        + '\n'.join(f'{i}. {step}' for i, step in enumerate(shown, 1))
-    )
+    body = _plain_midwife(q, subject)
     body = _SOLUTION_LEAK.sub('', body)
     stem = str(q.get('q') or '')
-    # Không để nguyên văn phương án / đáp án lọt vào HD.
     ans = str(q.get('ans') or q.get('correct') or '').strip()
     if ans and len(ans) <= 3 and re.fullmatch(r'[A-Da-d]', ans):
-        body = re.sub(rf'(?i)\bđáp án\s*{ans}\b', 'đáp án tương ứng', body)
+        body = re.sub(rf'(?i)\bđáp án\s*{ans}\b', '', body)
     for o in opts or []:
         piece = re.sub(r'^[A-D][.):]\s*', '', str(o), flags=re.I).strip()
         if len(piece) > 8 and piece in body and piece not in stem:
-            body = body.replace(piece, 'phương án tương ứng')
-    # Cấm HD generic cũ / echo-stem còn sót (ảnh anh: “Hướng đi từ đúng ngữ liệu…”).
-    generic_marks = (
-        'Bám đúng ngữ liệu câu này — chi tiết, số liệu hoặc điều kiện đề cho',
-        'Hướng đi từ đúng ngữ liệu:',
-        'Đối chiếu khái niệm đúng môn với đúng ngữ liệu này',
-    )
-    if any(m in body for m in generic_marks):
-        formula2, steps2 = _subject_stem_guide(q, subject)
-        body = (
-            '**Công thức / hướng (thầy chỉ lối, không giải hộ):** ' + formula2
-            + '\n\n**Con đường tư duy:**\n'
-            + '\n'.join(f'{i}. {step}' for i, step in enumerate(steps2[:4], 1))
-        )
-        body = _strip_option_bodies(body, opts)
-    return body.strip()
+            body = body.replace(piece, '')
+    for banned in ('Ngữ liệu', 'ngữ liệu', 'Việc 1', 'Việc 2', 'Việc 3', 'Trích xuất dữ kiện', 'Đề cho', 'đề cho'):
+        body = body.replace(banned, '')
+    body = re.sub(r'[ \t]{2,}', ' ', body)
+    body = re.sub(r'\n{2,}', '\n', body).strip()
+    lines = [ln.strip() for ln in body.splitlines() if ln.strip()][:3]
+    return '\n'.join(lines)
 
 
 # Alias toàn hệ thống (Trạm 1 + Trạm 3).

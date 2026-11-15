@@ -118,10 +118,13 @@ class StemBoundSocraticTests(unittest.TestCase):
         self.assertIn("hỗn loạn", low)
         self.assertIn("tương tác", low)
         self.assertTrue("kích thước" in low or "khoảng cách" in low)
-        self.assertIn("1.", guide)
-        self.assertIn("2.", guide)
-        self.assertIn("3.", guide)
-        self.assertNotIn("nóng chảy", low)  # không lẫn trụ nhiệt chuyển thể
+        self.assertLessEqual(guide.count("\n"), 2)
+        self.assertIn("?", guide)
+        self.assertIn("em", low)
+        self.assertNotIn("việc 1", low)
+        self.assertNotIn("ngữ liệu", low)
+        self.assertNotIn("đề cho", low)
+        self.assertNotIn("nóng chảy", low)
         # Không lộ đáp / nguyên văn phương án sai / chọn hộ
         self.assertNotIn("đáp án c", low)
         self.assertNotIn("chọn c", low)
@@ -159,7 +162,9 @@ class StemBoundSocraticTests(unittest.TestCase):
         low = guide.lower()
         self.assertNotIn("hướng đi từ đúng ngữ liệu", low)
         self.assertIn("quang hợp", low)
-        self.assertIn("con đường tư duy", low)
+        self.assertLessEqual(guide.count("\n"), 2)
+        self.assertNotIn("việc 1", low)
+        self.assertNotIn("ngữ liệu", low)
 
     def test_teacher_path_no_pv_bleed_on_geography(self):
         guide = build_tram3_socratic_guide({
@@ -176,7 +181,9 @@ class StemBoundSocraticTests(unittest.TestCase):
         self.assertNotIn("pv=nrt", low.replace(" ", ""))
         self.assertNotIn("động năng phân tử", low)
         self.assertTrue("đồng bằng" in low or "sông" in low or "địa" in low)
-        self.assertIn("con đường tư duy", low)
+        self.assertLessEqual(guide.count("\n"), 2)
+        self.assertNotIn("việc 1", low)
+        self.assertNotIn("ngữ liệu", low)
         self.assertNotIn("đáp án b", low)
 
     def test_literature_reading_not_essay_template(self):
