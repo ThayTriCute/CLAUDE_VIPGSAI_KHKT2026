@@ -132,7 +132,7 @@ SOCRATIC_KNOWLEDGE_ANCHORS = {
         {
             "keywords": [
                 "nóng chảy", "làm nóng chảy", "nhiệt nóng chảy", "hóa hơi", "nhiệt hóa hơi",
-                "nhiệt lượng", "nhiệt dung", "làm nóng", "áp suất", "nhiệt độ",
+                "nhiệt lượng", "nhiệt dung", "làm nóng", "áp suất",
             ],
             "concept": "Vật lý nhiệt — nhiệt lượng & chuyển thể (SGK Vật lý - KNTT)",
             "formula": (
@@ -181,13 +181,23 @@ SOCRATIC_KNOWLEDGE_ANCHORS = {
     ],
     "Ngữ văn": [
         {
-            "keywords": ["thể loại", "phương thức biểu đạt", "biện pháp tu từ", "đọc hiểu", "hình ảnh", "tác dụng"],
-            "concept": "Đọc hiểu văn bản theo đặc trưng thể loại (SGK Ngữ văn 12 - KNTT)",
-            "formula": "- Nhận diện: Thể thơ (tự do, 7 chữ, lục bát...), PTBĐ (biểu cảm, tự sự, nghị luận, thuyết minh...).\n- Phân tích BPTT: Gọi tên BPTT ➔ Chỉ ra từ ngữ/hình ảnh thể hiện ➔ Nêu tác dụng gợi hình, gợi cảm và làm nổi bật tư tưởng của tác giả.",
-            "prompt": "Em hãy bám sát từ ngữ, hình ảnh trong ngữ liệu để chỉ rõ phương diện nghệ thuật và thông điệp mà tác giả gửi gắm nhé!"
+            "keywords": [
+                "đọc hiểu", "đoạn văn sau", "cảm nhận", "không gian", "hình ảnh", "từ ngữ",
+                "thể loại", "phương thức biểu đạt", "biện pháp tu từ", "tác dụng",
+            ],
+            "concept": "Đọc hiểu văn bản theo đặc trưng thể loại (SGK Ngữ văn - KNTT)",
+            "formula": (
+                "- Bám từ ngữ/hình ảnh trong đúng đoạn ngữ liệu.\n"
+                "- Nêu cảm nhận / đặc điểm (không gian, không khí, tâm trạng…) khớp sắc thái câu chữ.\n"
+                "- Phân tích BPTT khi đề hỏi: gọi tên ➔ chỉ từ ngữ ➔ tác dụng gợi hình/gợi cảm."
+            ),
+            "prompt": (
+                "Em hãy gạch từ ngữ then chốt trong đoạn, nêu cảm nhận khớp sắc thái câu chữ, "
+                "rồi đối chiếu từng phương án — loại ý suy diễn ngoài ngữ liệu."
+            ),
         },
         {
-            "keywords": ["nghị luận xã hội", "đoạn văn", "bài học", "thông điệp", "ý nghĩa"],
+            "keywords": ["nghị luận xã hội", "viết đoạn", "200 chữ", "bài học nhận thức", "thông điệp nhân văn"],
             "concept": "Viết đoạn văn nghị luận xã hội (200 chữ)",
             "formula": "- Mở đoạn: Dẫn dắt và nêu trực tiếp vấn đề nghị luận (1 câu).\n- Thân đoạn: Giải thích ngắn gọn ➔ Bàn luận, chứng minh (dẫn chứng thực tế xác thực) ➔ Mở rộng/phản đề.\n- Kết đoạn: Rút ra bài học nhận thức và hành động thiết thực cho bản thân.",
             "prompt": "Em hãy lựa chọn dẫn chứng thực tế tiêu biểu và liên hệ trách nhiệm của tuổi trẻ để bài viết giàu tính thuyết phục nhé!"
