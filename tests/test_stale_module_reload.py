@@ -26,7 +26,9 @@ class StaleContractModuleTests(unittest.TestCase):
         del bbt_display_contract.is_bbt_markdown
 
     def tearDown(self):
-        if not hasattr(bbt_display_contract, 'normalize_bbt_discontinuity'):
+        if (not hasattr(bbt_display_contract, 'normalize_bbt_discontinuity')
+                or not hasattr(bbt_display_contract, 'is_bbt_markdown')
+                or not hasattr(bbt_display_contract, 'prepare_bbt_markdown_block')):
             from importlib import reload
             reload(bbt_display_contract)
 
@@ -57,8 +59,8 @@ class StaleContractModuleTests(unittest.TestCase):
             with patch('importlib.reload', wraps=__import__('importlib').reload) as reload_call:
                 refresh()
                 self.assertEqual([c.args[0] for c in reload_call.call_args_list], [bbt_display_contract, lesson_export])
-        self.assertEqual(bbt_display_contract.T1_CONTEXT_REVISION, 2026110911)
-        self.assertEqual(lesson_export.T1_CONTEXT_REVISION, 2026110911)
+        self.assertEqual(bbt_display_contract.T1_CONTEXT_REVISION, 2026111523)
+        self.assertEqual(lesson_export.T1_CONTEXT_REVISION, 2026111523)
 
 
 if __name__ == '__main__':

@@ -3,8 +3,8 @@ def _refresh_t1_context_services():
     from importlib import reload
     from services import bbt_display_contract, inequality_region, plot_labels, lesson_sources, curriculum_policy, lab_scope, lesson_export, text_boundaries, socratic_context, philosophy_rotation, station1_scope
     from data import curriculum_data
-    for module, revision in ((bbt_display_contract, 2026110911), (inequality_region, 2026110914), (plot_labels, 2026110914), (lesson_sources, 2026110802), (curriculum_policy, 2026111222),
-                             (lab_scope, 2026110901), (lesson_export, 2026110911),
+    for module, revision in ((bbt_display_contract, 2026111523), (inequality_region, 2026110914), (plot_labels, 2026110914), (lesson_sources, 2026110802), (curriculum_policy, 2026111222),
+                             (lab_scope, 2026110901), (lesson_export, 2026111523),
                              (text_boundaries, 2026110801), (socratic_context, 2026110901),
                              (philosophy_rotation, 2026110801), (station1_scope, 2026110920),
                              (curriculum_data, 2026110920)):
@@ -11849,10 +11849,10 @@ def _normalize_moet_bbt_grid(x_cells: list, yp_cells: list, y_cells: list) -> di
 def _t1_with_function_visuals(body, topic, lesson=''):
     """Load this release's math renderer if a long-lived worker retained it."""
     from services import function_visuals
-    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026110910:
+    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026111523:
         from importlib import reload
         function_visuals = reload(function_visuals)
-    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026110910:
+    if getattr(function_visuals, 'RENDER_REVISION', None) != 2026111523:
         raise RuntimeError('Bộ dựng đồ thị chưa đồng bộ bản phát hành; cần nạp lại ứng dụng.')
     return function_visuals.with_function_visuals(body, topic, lesson)
 

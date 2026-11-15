@@ -11,7 +11,7 @@ from markdown_it import MarkdownIt
 from services.academic_context import academic_context
 
 ROOT = Path(__file__).resolve().parents[1]
-T1_CONTEXT_REVISION = 2026110911
+T1_CONTEXT_REVISION = 2026111523
 _TOKENS = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`|(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|\\\[[\s\S]*?\\\]|\\\([^\n]*?\\\)|(?<!\\)\$(?!\$)[^\n$]+?(?<!\\)\$)")
 
 
@@ -130,13 +130,20 @@ def lesson_body_html(lesson, trusted_svgs=()):
     def _bbt_table(block):
         # BBT only: escaped Markdown double bars (\\|\\|) are the vertical-asymptote marker.
         from services import bbt_display_contract as contract
-        if not hasattr(contract, 'is_bbt_markdown'):
+        if (not hasattr(contract, 'prepare_bbt_markdown_block')
+                or not hasattr(contract, 'is_bbt_markdown')
+                or getattr(contract, 'T1_CONTEXT_REVISION', 0) < 2026111523):
             from importlib import reload
             contract = reload(contract)
-        is_bbt_markdown, normalize_bbt_discontinuity = contract.is_bbt_markdown, contract.normalize_bbt_discontinuity
-        rows = block.splitlines()
-        return '\n'.join(normalize_bbt_discontinuity(r) for r in rows) if is_bbt_markdown(rows) else block
+        return contract.prepare_bbt_markdown_block(block.strip())
     def separate_tables(prose):
+        from services import bbt_display_contract as contract
+        if (not hasattr(contract, 'prepare_bbt_markdown_block')
+                or not hasattr(contract, 'is_bbt_markdown')
+                or getattr(contract, 'T1_CONTEXT_REVISION', 0) < 2026111523):
+            from importlib import reload
+            contract = reload(contract)
+        prose = contract.expand_collapsed_bbt_prose(prose)
         return re.sub(r"(?m)(?:^[ \t]{0,3}\|[^\n]+\|[ \t]*(?:\r?\n|$))+",
                       lambda match: "\n\n" + _bbt_table(match[0].strip()) + "\n\n", prose)
     blocks = re.split(r"(```[\s\S]*?```|~~~[\s\S]*?~~~)", lesson)
