@@ -439,6 +439,17 @@ def _step_prompts(question, subject) -> list:
     return steps
 
 
+def _interval_ends(interval: str) -> tuple:
+    """Hai đầu mút đúng như đề ghi. Không suy nghiệm đạo hàm."""
+    match = re.search(
+        r'(-?\d+(?:[.,]\d+)?)\s*;\s*(-?\d+(?:[.,]\d+)?)',
+        interval or '',
+    )
+    if not match:
+        return '', ''
+    return match.group(1), match.group(2)
+
+
 def _function_and_interval(stem: str) -> tuple:
     """Hàm và đoạn đúng trong câu GTLN/GTNN. Không lấy đoạn mẫu [a;b]."""
     spans = [s.strip() for s in re.findall(r'\$([^$]{1,160})\$', stem or '') if s.strip()]
@@ -577,15 +588,28 @@ def _guide_plan(question, subject) -> tuple:
         fn, interval = _function_and_interval(stem)
         pick = 'số lớn nhất' if ('lon nhat' in text or 'gtln' in text) else 'số nhỏ nhất'
         label = 'GTLN' if pick == 'số lớn nhất' else 'GTNN'
+        kind = 'giá trị lớn nhất' if pick == 'số lớn nhất' else 'giá trị nhỏ nhất'
+        left, right = _interval_ends(interval)
+        if left and right:
+            formula = (
+                f'Trên {interval}, {label} của {fn} là {kind} trong các $f({left})$, $f({right})$ '
+                f"và $f$ tại nghiệm của $y'=0$ nằm trong $({left};{right})$."
+            )
+            return formula, [
+                f"Tính đạo hàm $y'$ của đúng {fn}. Chưa giải nghiệm.",
+                f"Giải $y'=0$ nhưng chưa thay vào $y$. Chỉ giữ nghiệm nằm trong $({left};{right})$.",
+                f'Tính $y$ tại ${left}$, tại ${right}$ và tại nghiệm nằm trong khoảng mở.',
+                f'So sánh các giá trị đó để tự chọn {pick}.',
+            ]
         formula = (
-            f'Trên {interval}, {label} của {fn} là {pick} trong các giá trị '
+            f'Trên {interval}, {label} của {fn} là {kind} trong các giá trị '
             f"tại hai đầu mút và tại nghiệm của $y'=0$ nằm trong khoảng mở."
         )
         return formula, [
-            f"Tính $y'$ của đúng {fn}. Chưa giải nghiệm.",
-            f"Giải $y'=0$. Chỉ giữ nghiệm nằm trong khoảng mở của {interval}. Chưa thay nghiệm vào $y$.",
+            f"Tính đạo hàm $y'$ của đúng {fn}. Chưa giải nghiệm.",
+            f"Giải $y'=0$ nhưng chưa thay vào $y$. Chỉ giữ nghiệm nằm trong khoảng mở của {interval}.",
             f'Tính $y$ tại hai đầu mút của {interval} và tại nghiệm vừa giữ.',
-            f'So sánh các giá trị đó rồi tự chọn {pick}.',
+            f'So sánh các giá trị đó để tự chọn {pick}.',
         ]
     if canonical_subject(subject) == 'Toán học':
         asked = math_context_question(stem)
