@@ -5,7 +5,7 @@ def _refresh_t1_context_services():
     from data import curriculum_data
     for module, revision in ((bbt_display_contract, 2026111523), (inequality_region, 2026110914), (plot_labels, 2026110914), (lesson_sources, 2026110802), (curriculum_policy, 2026111222),
                              (lab_scope, 2026110901), (lesson_export, 2026111523),
-                             (text_boundaries, 2026110801), (socratic_context, 2026111603),
+                             (text_boundaries, 2026110801), (socratic_context, 2026111604),
                              (philosophy_rotation, 2026110801), (station1_scope, 2026110920),
                              (curriculum_data, 2026110920)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:

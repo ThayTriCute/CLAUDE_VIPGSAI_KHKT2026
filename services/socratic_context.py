@@ -3,7 +3,7 @@ import re
 
 from services.academic_context import canonical_subject, folded
 
-T1_CONTEXT_REVISION = 2026111603
+T1_CONTEXT_REVISION = 2026111604
 
 
 def complete_verified_quote_reference(reply, references):
@@ -294,8 +294,13 @@ def looks_like_explain_solution(text) -> bool:
         return False
     if _SOLUTION_LEAK.search(value):
         return True
-    if len(value) > 700 and value.count('=') >= 3:
-        return True
+    # HD bình dân có công thức $Q=\ldots$ nhiều dấu = — không coi là explain.
+    if 'Con đường tư duy' in value or 'thầy chỉ lối' in value:
+        pass
+    else:
+        plain = re.sub(r'\$[^$]*\$', '', value)
+        if len(value) > 700 and plain.count('=') >= 3:
+            return True
     if re.search(r'(?i)\b(?:vậy|do đó|suy ra)\b.{0,40}\b(?:đúng|sai|chọn)\b', value):
         return True
     return False
@@ -435,7 +440,7 @@ def _is_negation_stem(stem: str) -> bool:
 
 
 def _topic_phrase(stem: str) -> str:
-    """Lấy cụm chủ đề trong stem (sau 'về/khi nói về/của/trong') — không lấy cả câu hỏi."""
+    """Lấy cụm chủ đề trong stem — không lấy cả khung câu hỏi."""
     raw = re.sub(r'\s+', ' ', str(stem or '')).strip()
     patterns = (
         r'(?:khi nói về|khi nói tới|về mặt|thuộc về)\s+([^?？\.…]{6,90})',
@@ -446,19 +451,57 @@ def _topic_phrase(stem: str) -> str:
         m = re.search(pat, raw, re.I)
         if m:
             phrase = re.sub(r'\s+', ' ', m.group(1)).strip(' :;,.')
-            # Giữ tiền tố mô hình/định luật nếu stem có
             head = m.group(0)[: m.start(1) - m.start(0)].strip().lower()
             if any(h in head for h in ('mô hình', 'định luật', 'quy tắc', 'khái niệm', 'phản ứng', 'hiện tượng')):
                 phrase = re.sub(r'\s+', ' ', m.group(0)).strip(' :;,.')
             if len(phrase) >= 6:
                 return phrase[:100]
-    # Fallback: bỏ khung "Phát biểu nào/Ý nào"
     cleaned = re.sub(
-        r'^(?:phát biểu|ý|câu|đặc điểm|khẳng định)\s+nào\s+(?:sau đây\s+)?'
+        r'^(?:phát biểu|ý|câu|đặc điểm|khẳng định|nhận định)\s+nào\s+(?:sau đây\s+)?'
         r'(?:không\s+đúng|đúng|sai)?\s*(?:khi\s+nói\s+về\s+|về\s+)?',
         '', raw, flags=re.I,
     ).strip(' ?？')
     return (cleaned[:90] + ('…' if len(cleaned) > 90 else '')) or _short_stem_quote(stem, 60)
+
+
+def _stem_givens_line(stem: str) -> str:
+    """Số liệu / dữ kiện đề cho — để HD bình dân nói rõ 'đề cho gì'."""
+    raw = re.sub(r'\s+', ' ', str(stem or '')).strip()
+    bits = []
+    for m in re.finditer(
+        r'(\d+(?:[.,]\d+)?)\s*(viên|quả|học sinh|người|mol|g|kg|m|cm|s|phút|giờ|%|triệu|'
+        r'đỏ|xanh|vàng|đen|trắng)?',
+        raw, re.I,
+    ):
+        chunk = (m.group(0) or '').strip()
+        if chunk and chunk not in bits:
+            bits.append(chunk)
+        if len(bits) >= 6:
+            break
+    # Cụm "có … và …" ngắn
+    pair = re.search(
+        r'(?:có|gồm|cho)\s+([^.]{8,70}?(?:và|với)\s+[^.]{3,40})',
+        raw, re.I,
+    )
+    if pair:
+        bits.insert(0, re.sub(r'\s+', ' ', pair.group(0)).strip()[:80])
+    if not bits:
+        return ''
+    # Khử trùng lặp gần nhau
+    uniq = []
+    for b in bits:
+        if not any(b in u or u in b for u in uniq):
+            uniq.append(b)
+    return 'Đề cho: ' + '; '.join(uniq[:4]) + '.'
+
+
+def _folded_token_hit(fl: str, fk: str) -> bool:
+    """Khớp token folded — tránh 'nhiet do' dính 'nhiet doi'."""
+    if not fk or len(fk) < 2:
+        return False
+    if len(fk) <= 5:
+        return bool(re.search(r'(?:^|\s)' + re.escape(fk) + r'(?:\s|$)', fl))
+    return fk in fl
 
 
 def _option_theme_hit(plain: str, keys) -> bool:
@@ -466,42 +509,84 @@ def _option_theme_hit(plain: str, keys) -> bool:
     fl = folded(plain)
     for k in keys:
         raw = str(k)
-        if raw in plain:  # ký hiệu/Unicode còn nguyên (λ, Δt, …)
+        if raw in plain:
             return True
         fk = folded(raw)
-        if len(fk) < 2:
-            continue
-        if fk in fl:
+        if _folded_token_hit(fl, fk):
             return True
     return False
 
 
-def _option_theme_cues(opts) -> list:
-    """Trụ so sánh lấy từ nội dung phương án — không kèm chữ A–D, không chọn đáp."""
-    themes = []
-    rules = (
-        (('nhiệt độ', 'nhanh', 'tốc độ', 'động năng'), 'quan hệ nhiệt độ–tốc độ/động năng phân tử'),
-        (('hỗn loạn', 'mọi phía', 'không ngừng', 'brown'), 'chuyển động hỗn loạn liên tục'),
-        (('gần nhau', 'lực tương tác', 'hút', 'đẩy', 'tương tác rất mạnh'), 'khoảng cách và lực tương tác giữa phân tử'),
-        (('thể tích', 'khoảng cách', 'rất nhỏ so với'), 'kích thước phân tử so với khoảng cách'),
-        (('nóng chảy', 'nhiệt nóng chảy', r'\lambda', 'λ', 'lambda'), 'nhiệt nóng chảy / hệ số λ'),
-        (('hóa hơi', 'bay hơi', 'nhiệt hóa hơi'), 'nhiệt hóa hơi / hệ số L'),
-        ((r'\Delta T', r'\Delta t', 'ΔT', 'Δt', 'delta t', 'nhiệt dung', r'mc\Delta', 'q=mc'),
-         'đốt nóng có ΔT ($Q=mc\\Delta T$)'),
-        (('uit', 'q=uit', 'cường độ dòng', 'hiệu điện thế'), 'nhiệt điện $Q=UIt$'),
-        (('ester', 'xà phòng', 'rcoor'), 'phản ứng ester / xà phòng hóa'),
-        (('glucose', 'tollens', 'tráng bạc'), 'nhóm chức và phản ứng đặc trưng carbohydrate'),
-        (('cpu', 'bộ xử lý', 'ổ cứng', 'bộ nhớ'), 'vai trò CPU / bộ nhớ / thiết bị lưu trữ'),
-        (('quang hợp', 'glucose', 'o2', 'ánh sáng'), 'điều kiện và sản phẩm quang hợp'),
+def _option_axis_labels(opts, subject: str = '', stem: str = '') -> list:
+    """Trụ so sánh từ phương án — theo môn/ngữ liệu, không kèm chữ A–D."""
+    subj = canonical_subject(subject or '')
+    text = folded(stem)
+    physics_mol = subj in ('Vật lý', 'Khoa học tự nhiên') or any(
+        k in text for k in ('dong hoc', 'phan tu khi', 'chat khi', 'khi ly tuong')
     )
+    physics_heat = subj in ('Vật lý', 'Khoa học tự nhiên') or any(
+        k in text for k in ('nong chay', 'hoa hoi', 'nhiet luong', 'nhiet dung')
+    )
+    rules = []
+    if physics_mol:
+        rules.extend((
+            (('nhiệt độ', 'nhanh', 'tốc độ', 'động năng'), 'quan hệ nhiệt độ–tốc độ/động năng phân tử'),
+            (('hỗn loạn', 'mọi phía', 'không ngừng'), 'chuyển động hỗn loạn liên tục'),
+            (('gần nhau', 'lực tương tác', 'tương tác rất mạnh', 'tương tác rất yếu'),
+             'khoảng cách và lực tương tác giữa phân tử'),
+            (('thể tích', 'khoảng cách', 'rất nhỏ so với'), 'kích thước phân tử so với khoảng cách'),
+        ))
+    if physics_heat:
+        rules.extend((
+            (('nóng chảy', 'nhiệt nóng chảy', r'\lambda', 'λ', 'lambda'), 'nhiệt nóng chảy / hệ số λ'),
+            (('hóa hơi', 'bay hơi', 'nhiệt hóa hơi'), 'nhiệt hóa hơi / hệ số L'),
+            ((r'\Delta T', r'\Delta t', 'ΔT', 'Δt', 'delta t', 'nhiệt dung', r'mc\Delta'),
+             'đốt nóng có ΔT ($Q=mc\\Delta T$)'),
+            (('uit', 'q=uit', 'cường độ dòng', 'hiệu điện thế'), 'nhiệt điện $Q=UIt$'),
+        ))
+    if subj in ('Hóa học', 'Khoa học tự nhiên') or any(k in text for k in ('benzene', 'ester', 'glucose')):
+        rules.extend((
+            (('ester', 'xà phòng', 'rcoor'), 'phản ứng ester / xà phòng hóa'),
+            (('glucose', 'tollens', 'tráng bạc'), 'nhóm chức carbohydrate / Tollens'),
+            (('benzene', 'thế', 'cộng', 'thơm', 'br2', 'hno3'), 'phản ứng thế / cộng của benzene'),
+        ))
+    if subj == 'Tin học' or 'cpu' in text:
+        rules.append((('cpu', 'bộ xử lý', 'ổ cứng', 'bộ nhớ', 'lưu trữ'), 'vai trò CPU / bộ nhớ / lưu trữ'))
+    if subj == 'Sinh học' or 'quang hop' in text:
+        rules.append((('quang hợp', 'glucose', 'o2', 'ánh sáng', 'lục lạp'), 'điều kiện / sản phẩm quang hợp'))
+    if subj == 'Địa lý' or any(k in text for k in ('dong bang', 'vung', 'khi hau', 'dia hinh')):
+        rules.extend((
+            (('địa hình', 'đồi', 'núi', 'đồng bằng'), 'đặc điểm địa hình'),
+            (('sông', 'kênh', 'rạch', 'mạng lưới'), 'mạng lưới sông / kênh rạch'),
+            (('khí hậu', 'gió mùa', 'nhiệt đới', 'cận nhiệt'), 'đặc điểm khí hậu'),
+            (('khoáng sản', 'dầu', 'khí', 'than'), 'tài nguyên khoáng sản'),
+        ))
+    if subj == 'Ngữ văn' or any(k in text for k in ('doan van', 'cam nhan', 'hinh anh', 'tu ngu')):
+        rules.extend((
+            (('không gian', 'cảm nhận', 'không khí', 'bức tranh'), 'cảm nhận không gian / không khí'),
+            (('rộng', 'hùng vĩ', 'bao la'), 'không gian rộng / hùng vĩ'),
+            (('ẩm', 'gần gũi', 'thơ', 'lất phất'), 'không gian gần gũi / chất thơ'),
+            (('khô', 'ồn', 'đô thị'), 'không gian khô / ồn ào'),
+        ))
+    themes = []
     for opt in opts or []:
         plain = re.sub(r'^[A-Da-d][.):]\s*', '', str(opt)).strip()
         if len(plain) < 4:
             continue
+        hit_label = None
         for keys, label in rules:
-            if _option_theme_hit(plain, keys) and label not in themes:
-                themes.append(label)
-    return themes[:5]
+            if _option_theme_hit(plain, keys):
+                hit_label = label
+                break
+        if hit_label and hit_label not in themes:
+            themes.append(hit_label)
+        elif not hit_label:
+            # Trụ rút gọn từ phương án (không chữ A–D) — bình dân, sát ngữ liệu.
+            short = re.sub(r'\s+', ' ', plain)
+            short = short[:42] + ('…' if len(short) > 42 else '')
+            if short and short not in themes:
+                themes.append(f'ý về “{short}”')
+    return themes[:4]
 
 
 def _strip_option_bodies(text: str, opts) -> str:
@@ -514,91 +599,122 @@ def _strip_option_bodies(text: str, opts) -> str:
     return body
 
 
-def _conceptual_mc_guide(stem: str, opts, subject: str, pack_formula: str = '', pack_prompt: str = '') -> tuple:
-    """Câu khái niệm / phát biểu: Maieutics kiểu F VIP — hỏi đỡ đẻ, neo SGK, không lộ đáp."""
+def _teacher_path_guide(stem: str, opts, subject: str, pack_formula: str = '',
+                        pack_prompt: str = '', checklist=None) -> tuple:
+    """HD bình dân học vụ: phải làm gì → áp dụng gì → tư duy thế nào. Không lộ đáp."""
     topic = _topic_phrase(stem)
-    themes = _option_theme_cues(opts)
+    themes = _option_axis_labels(opts, subject, stem)
     negation = _is_negation_stem(stem)
     subj = canonical_subject(subject or 'Toán học')
+    givens = _stem_givens_line(stem)
+    checklist = [c for c in (checklist or []) if c][:4]
+
     if pack_formula:
         formula = pack_formula
+    elif checklist:
+        formula = (
+            f'**{topic}** (SGK {subj}). Checklist cốt lõi: '
+            + '; '.join(f'({i}) {c}' for i, c in enumerate(checklist, 1))
+            + '.'
+        )
     else:
         formula = (
-            f'**{topic}** (SGK {subj}): nhắc 3–4 giả thiết/định nghĩa cốt lõi và công thức liên quan '
-            r'(nếu có, ví dụ $pV=nRT$ với khí). Chưa gắn chữ A–D.'
+            f'**{topic}** (SGK {subj}). '
+            'Em nhắc lại định nghĩa / giả thiết / công thức cốt lõi đúng chủ đề này trong SGK, '
+            'rồi dùng làm thước đo để đối chiếu từng ý — chưa gắn chữ A–D.'
         )
+
+    # 1) Hiểu ngữ liệu: đề hỏi gì / cho gì
     if negation:
         step1 = (
-            f'Đề hỏi phát biểu **không đúng** về “{topic}”. '
-            'Em tách yêu cầu: đang tìm ý **lệch** giả thiết mô hình — không phải tìm ý đúng nhất.'
+            f'Đọc kỹ ngữ liệu: đề đang tìm phát biểu **không đúng** về “{topic}”. '
+            'Việc của em là tìm ý **lệch** giả thiết/định nghĩa — không phải tìm ý “hay nhất”.'
         )
     else:
         step1 = (
-            f'Với “{topic}”, em xác định đề đang hỏi đặc trưng nào? '
-            'Ghi rõ tiêu chí đúng/sai trước khi mở từng phương án.'
+            f'Đọc kỹ ngữ liệu: đề hỏi gì về “{topic}”? '
+            'Gạch yêu cầu (đúng/sai, đặc trưng, nguyên nhân…) trước khi mở phương án.'
         )
-    if themes:
-        # F VIP computing_context style: hỏi tiêu chí phân biệt theo từng trụ phương án.
+    if givens:
+        step1 = givens + ' ' + step1
+
+    # 2) Chọn thước đo / công thức
+    if checklist:
         step2 = (
-            'Các phương án đang xoay quanh: ' + '; '.join(themes) + '. '
-            'Em sẽ nhắc giả thiết/công thức SGK cho **từng trụ** theo tiêu chí nào '
-            'trước khi đối chiếu từng phát biểu?'
+            'Lập thước đo từ SGK: ' + '; '.join(checklist)
+            + '. Đây là con đường đối chiếu — chưa kết luận hộ.'
         )
-    elif pack_prompt:
+    elif pack_prompt and not looks_like_explain_solution(pack_prompt):
         step2 = pack_prompt
     else:
         step2 = (
-            f'Em gọi tên 3–4 giả thiết cốt lõi của “{topic}” môn {subj} '
-            'theo tiêu chí nào, rồi mới đối chiếu từng phát biểu?'
+            f'Nhắc 3–4 ý cốt lõi / công thức SGK của “{topic}” môn {subj}. '
+            'Đó là thước đo để đi tiếp — chưa thay số ra kết quả cuối.'
         )
-    if negation:
+
+    # 3) Đối chiếu theo trụ phương án
+    if themes:
         step3 = (
-            'Với mỗi phát biểu: hỏi “khớp hay lệch giả thiết vừa nhắc?”. '
-            'Giữ lại ứng viên lệch — em tự kết luận, chưa gắn chữ A–D giúp.'
+            'Các phương án đang xoay quanh: ' + '; '.join(themes) + '. '
+            'Với từng ý: hỏi “khớp thước đo vừa lập chưa?” rồi ghi khớp/lệch.'
         )
     else:
         step3 = (
-            'Với mỗi phát biểu: hỏi “khớp giả thiết/công thức vừa nhắc chưa?”. '
-            'Em tự chọn phương án khớp ngữ liệu — chưa gắn chữ A–D giúp.'
+            'Lần lượt từng phương án: đối chiếu với thước đo SGK vừa nêu; '
+            'ghi rõ ý nào khớp, ý nào lệch — chưa gắn chữ A–D.'
         )
-    return formula, [step1, step2, step3]
+
+    # 4) Kết — tự chọn, không lộ đáp
+    if negation:
+        step4 = (
+            'Giữ lại ý lệch thước đo (ứng viên “không đúng”). '
+            'Em tự chọn — thầy không giải hộ, không chỉ chữ A–D.'
+        )
+    else:
+        step4 = (
+            'Giữ lại ý khớp thước đo / đúng yêu cầu ngữ liệu. '
+            'Em tự chọn — thầy không giải hộ, không chỉ chữ A–D.'
+        )
+    return formula, [step1, step2, step3, step4]
 
 
 def _subject_stem_guide(question, subject) -> tuple:
-    """HD Socratic đa môn: bám stem + trụ phương án + neo SGK. Đỡ đẻ ý tưởng, không lộ đáp."""
+    """HD Socratic đa môn×lớp: bình dân, sát ngữ liệu, con đường tư duy, không lộ đáp."""
     q = question if isinstance(question, dict) else {}
     stem = str(q.get('q') or '')
-    low = stem.lower()
     text = folded(stem)
     quote = _short_stem_quote(stem)
     opts = q.get('opt') or q.get('options') or []
     hit = _matched_anchor(subject, stem)
     subj = canonical_subject(subject or 'Toán học')
     conceptual = bool(opts) and any(k in text for k in (
-        'phat bieu', 'y nao', 'dac diem nao', 'khang dinh', 'cho rang',
-        'khong dung', 'dung khi', 'sai khi', 'which of the following',
+        'phat bieu', 'y nao', 'dac diem nao', 'khang dinh', 'nhan dinh', 'cho rang',
+        'khong dung', 'dung khi', 'sai khi', 'cam nhan', 'which of the following',
     ))
 
-    # --- Mô hình động học phân tử chất khí (F VIP: đỡ đẻ misconception, không lộ đáp) ---
+    # --- ĐHPT chất khí ---
     if any(k in text for k in (
         'dong hoc phan tu', 'mo hinh dong hoc', 'phan tu khi', 'chat khi',
         'khi ly tuong', 'chuyen dong hon loan',
     )):
         formula = (
-            '**Mô hình động học phân tử chất khí** (SGK Vật lý): '
+            '**Mô hình động học phân tử chất khí** (SGK Vật lý) — thước đo 4 giả thiết: '
             '(1) phân tử chuyển động hỗn loạn, liên tục mọi hướng; '
             '(2) khoảng cách trung bình $\\gg$ kích thước phân tử; '
-            '(3) lực tương tác giữa các phân tử khí rất yếu '
-            '(khí lý tưởng: xem như không đáng kể); '
+            '(3) lực tương tác giữa phân tử khí rất yếu (khí lý tưởng ≈ bỏ qua); '
             '(4) nhiệt độ liên hệ động năng trung bình / tốc độ chuyển động nhiệt. '
-            'Công thức trạng thái khi cần: $pV=nRT$.'
+            'Khi cần phương trình trạng thái: $pV=nRT$.'
         )
-        prompt = (
-            'Em sẽ phân biệt bốn trụ của mô hình — chuyển động hỗn loạn; nhiệt độ–tốc độ; '
-            'khoảng cách & lực tương tác; kích thước so với khoảng cách — '
-            'theo tiêu chí nào trước khi đối chiếu từng phát biểu?'
+        return _teacher_path_guide(
+            stem, opts, subj,
+            pack_formula=formula,
+            checklist=[
+                'chuyển động hỗn loạn',
+                'khoảng cách $\\gg$ kích thước',
+                'lực tương tác rất yếu',
+                'nhiệt độ ↔ động năng/tốc độ',
+            ],
         )
-        return _conceptual_mc_guide(stem, opts, subj, pack_formula=formula, pack_prompt=prompt)
 
     # --- Vật lý nhiệt / chuyển thể ---
     if any(k in text for k in (
@@ -609,67 +725,120 @@ def _subject_stem_guide(question, subject) -> tuple:
         vapor = 'hoa hoi' in text or 'bay hoi' in text
         if melting and not vapor:
             formula = (
-                'Câu hỏi về **nóng chảy hoàn toàn** khối lượng $m$ ở nhiệt độ nóng chảy '
-                '(nhiệt độ không đổi khi chuyển thể). '
-                'Phân biệt với $Q=mc\\Delta T$ (có $\\Delta T$) và $Q=UIt$ (dòng điện); '
-                'nóng chảy / hóa hơi dùng hệ số chuyển thể khác nhau trong SGK.'
+                'Ngữ liệu hỏi **nóng chảy hoàn toàn** khối lượng $m$ ở nhiệt độ nóng chảy '
+                '(chuyển thể: nhiệt độ không đổi). '
+                'Công thức hướng đi: nóng chảy $Q=\\lambda m$. '
+                'Đừng nhầm với đốt nóng $Q=mc\\Delta T$ (có $\\Delta T$), hóa hơi $Q=Lm$, nhiệt điện $Q=UIt$.'
             )
             return formula, [
-                f'Gạch yêu cầu đúng câu này: “{_short_stem_quote(stem, 88)}”.',
-                'Hỏi: đây là đốt nóng có $\\Delta T$, chuyển thể ở nhiệt độ không đổi, hay nhiệt điện?',
-                'Với chuyển thể nóng chảy, $Q$ tỉ lệ với $m$; đối chiếu ký hiệu hệ số nóng chảy vs hóa hơi — em tự chọn công thức khớp, chưa chốt phương án hộ.',
+                f'Việc 1 — hiểu đề: “{_short_stem_quote(stem, 88)}”. Đề đang hỏi nhiệt lượng kiểu gì?',
+                'Việc 2 — phân loại: có $\\Delta T$ không? Có dòng điện không? Hay chuyển thể nóng chảy ở nhiệt độ không đổi?',
+                'Việc 3 — chọn dạng $Q$ tỉ lệ $m$ với hệ số nóng chảy (phân biệt ký hiệu với hóa hơi) — tự đối chiếu phương án, chưa chọn hộ.',
             ]
         if vapor and not melting:
             formula = (
-                'Câu hỏi về **hóa hơi** / bay hơi: nhiệt chuyển thể ở nhiệt độ không đổi, tỉ lệ với $m$. '
-                'Phân biệt với nóng chảy và với $Q=mc\\Delta T$, $Q=UIt$.'
+                'Ngữ liệu hỏi **hóa hơi / bay hơi**: chuyển thể, nhiệt độ không đổi, $Q$ tỉ lệ $m$. '
+                'Hướng đi: $Q=Lm$. Phân biệt nóng chảy $Q=\\lambda m$, đốt nóng $Q=mc\\Delta T$, điện $Q=UIt$.'
             )
             return formula, [
-                f'Bám đúng ngữ liệu: {quote}.',
-                'Xác định đang hóa hơi (không phải nóng chảy hay đốt nóng có $\\Delta T$).',
-                'Chọn dạng $Q$ tỉ lệ $m$ với hệ số hóa hơi trong SGK — tự đối chiếu phương án.',
+                f'Việc 1 — bám ngữ liệu: {quote}.',
+                'Việc 2 — xác nhận đang hóa hơi (không phải nóng chảy hay đốt nóng có $\\Delta T$).',
+                'Việc 3 — áp $Q$ tỉ lệ $m$ với hệ số hóa hơi SGK; tự tính/đối chiếu phương án.',
             ]
         formula = (
-            'Nhiệt lượng: đốt nóng $Q=mc\\Delta T$; chuyển thể (nóng chảy / hóa hơi) tỉ lệ $m$ ở nhiệt độ không đổi; '
-            'nhiệt điện $Q=UIt$. Chọn đúng loại hiện tượng câu hỏi.'
+            'Ba nhánh nhiệt lượng SGK: đốt nóng $Q=mc\\Delta T$; '
+            'chuyển thể (nóng chảy $Q=\\lambda m$ / hóa hơi $Q=Lm$); nhiệt điện $Q=UIt$.'
         )
         return formula, [
-            f'Đọc lại yêu cầu: {quote}.',
-            'Phân loại hiện tượng trước khi nhìn phương án.',
-            'Đối chiếu từng công thức với đúng loại hiện tượng — chưa chọn hộ.',
+            f'Việc 1 — đọc yêu cầu: {quote}.',
+            'Việc 2 — phân loại hiện tượng đúng câu hỏi trước khi nhìn phương án.',
+            'Việc 3 — khớp công thức với đúng loại hiện tượng — em tự chọn, chưa gắn A–D.',
         ]
+
+    # --- Hóa: benzene / phản ứng thế ---
+    if 'benzene' in text or 'benzen' in text or (
+        'phan ung the' in text and subj in ('Hóa học', 'Khoa học tự nhiên')
+    ):
+        formula = (
+            '**Benzene** (SGK Hóa): vòng thơm ưu tiên phản ứng **thế** '
+            '(giữ khung thơm; thường cần xúc tác). '
+            'Phản ứng cộng vào vòng khó hơn anken bão hòa thường — đó là thước đo khi đề hỏi đúng/sai.'
+        )
+        return _teacher_path_guide(
+            stem, opts, 'Hóa học',
+            pack_formula=formula,
+            checklist=['ưu tiên thế (giữ thơm)', 'cộng khó hơn anken', 'điều kiện xúc tác đặc trưng'],
+        )
+
+    # --- Địa: ĐBSCL / vùng ---
+    if subj == 'Địa lý' and any(k in text for k in ('dong bang song cuu long', 'dbscl', 'cuu long')):
+        formula = (
+            '**Đồng bằng sông Cửu Long** (SGK Địa): thước đo đặc trưng vùng — '
+            'địa hình thấp phẳng; mạng lưới sông/kênh rạch dày; khí hậu nhiệt đới gió mùa '
+            '(mưa nhiều); tài nguyên gắn phù sa / thủy sản / dầu khí ven biển — '
+            'không lấy đặc điểm đồi núi chiếm ưu thế như trung du miền núi.'
+        )
+        return _teacher_path_guide(
+            stem, opts, subj,
+            pack_formula=formula,
+            checklist=['địa hình thấp/phẳng', 'sông–kênh rạch dày', 'khí hậu nhiệt đới gió mùa', 'tài nguyên phù vùng'],
+        )
 
     # --- Neo SGK khớp stem ---
     if hit.get('concept'):
-        line = _formula_lines_for_stem(hit.get('formula', ''), stem)
-        formula = f"{hit['concept']}. " + (line if line else '')
-        formula = formula.strip() or hit['concept']
-        if conceptual or opts:
-            return _conceptual_mc_guide(
-                stem, opts, subj,
-                pack_formula=formula,
-                pack_prompt=hit.get('prompt') or '',
-            )
-        prompt = hit.get('prompt') or ''
-        return formula, [
-            f'Bám đúng câu hỏi: {quote}.',
-            prompt if prompt and not looks_like_explain_solution(prompt) else
-            'Chọn định nghĩa/công thức khớp hiện tượng hoặc đại lượng câu hỏi — chưa thay số hộ.',
-            'Đối chiếu từng phương án với điều kiện trong ngữ liệu; loại công thức lệch hiện tượng.',
-        ]
+        # Tránh neo "nghị luận" khi stem là đọc hiểu cảm nhận đoạn văn
+        bad_nghi_luan = (
+            'nghị luận' in folded(hit.get('concept', ''))
+            and any(k in text for k in ('cam nhan', 'doan van sau', 'hinh anh', 'tu ngu', 'khong gian'))
+            and 'nghi luan' not in text
+        )
+        if not bad_nghi_luan:
+            line = _formula_lines_for_stem(hit.get('formula', ''), stem)
+            formula = f"{hit['concept']}. " + (line if line else '')
+            formula = formula.strip() or hit['concept']
+            if conceptual or opts:
+                return _teacher_path_guide(
+                    stem, opts, subj,
+                    pack_formula=formula,
+                    pack_prompt=hit.get('prompt') or '',
+                )
+            prompt = hit.get('prompt') or ''
+            givens = _stem_givens_line(stem)
+            return formula, [
+                (givens + ' ' if givens else '') + f'Việc 1 — hiểu yêu cầu: {quote}.',
+                prompt if prompt and not looks_like_explain_solution(prompt) else
+                'Việc 2 — chọn định nghĩa/công thức khớp đúng hiện tượng hoặc đại lượng câu hỏi — chưa thay số ra kết quả cuối.',
+                'Việc 3 — đối chiếu từng phương án với điều kiện ngữ liệu; loại ý lệch — em tự chọn.',
+            ]
 
-    # --- Câu khái niệm có phương án: luôn dùng trụ so sánh, không nhắc lại nguyên câu hỏi ---
+    # --- Ngữ văn đọc hiểu cảm nhận ---
+    if subj == 'Ngữ văn' or any(k in text for k in ('cam nhan', 'doan van sau', 'mua phun', 'hinh anh')):
+        lit_topic = _topic_phrase(stem)
+        formula = (
+            f'**Đọc hiểu ngữ liệu** về “{lit_topic}”: '
+            'bám từ ngữ / hình ảnh trong đoạn → nêu cảm nhận / đặc điểm không gian–không khí '
+            'mà câu chữ gợi ra (không suy diễn ngoài đoạn).'
+        )
+        return _teacher_path_guide(
+            stem, opts, 'Ngữ văn',
+            pack_formula=formula,
+            checklist=['bám từ ngữ/hình ảnh trong đoạn', 'nêu cảm nhận khớp sắc thái câu chữ', 'loại ý lệch ngữ liệu'],
+        )
+
+    # --- Câu khái niệm có phương án ---
     if conceptual or (opts and len(opts) >= 2):
-        return _conceptual_mc_guide(stem, opts, subj)
+        return _teacher_path_guide(stem, opts, subj)
 
-    # --- Fallback cuối: vẫn phải có chủ đề stem, không generic trống ---
+    # --- Fallback: vẫn phải có đường đi sát chủ đề ---
     topic = _topic_phrase(stem)
+    givens = _stem_givens_line(stem)
     return (
-        f'Chủ đề ngữ liệu: **{topic}**. Nhắc định nghĩa/công thức SGK môn {subj} khớp đúng chủ đề đó.',
+        f'Chủ đề ngữ liệu: **{topic}** (SGK {subj}). '
+        'Nhắc định nghĩa/công thức khớp đúng chủ đề đó rồi dùng làm thước đo.',
         [
-            f'Gạch yêu cầu cần tìm gắn với “{topic}”.',
-            f'Viết 2–3 đặc trưng/công thức cốt lõi của “{topic}” — chưa kết luận hộ.',
-            'Đối chiếu lập luận với ngữ liệu; em tự chọn, chưa gắn chữ A–D giúp.',
+            ((givens + ' ') if givens else '') + f'Việc 1 — gạch yêu cầu gắn với “{topic}”.',
+            f'Việc 2 — viết 2–3 đặc trưng/công thức cốt lõi của “{topic}” — chưa ra kết quả cuối.',
+            'Việc 3 — đối chiếu lập luận với ngữ liệu; em tự chọn, thầy không gắn chữ A–D giúp.',
         ],
     )
 
@@ -928,25 +1097,37 @@ def _guide_plan(question, subject) -> tuple:
         if quadratic:
             steps.insert(1, vertex_hint)
         return formula, steps
+    if 'xac suat' in text or 'xác suất' in low:
+        formula = r'Xác suất cổ điển: $P(A)=\dfrac{n(A)}{n(\Omega)}$. (Có điều kiện thì $P(A|B)=\dfrac{P(AB)}{P(B)}$.)'
+        givens = _stem_givens_line(stem)
+        return formula, [
+            (givens + ' ' if givens else '') + 'Việc 1 — xác định không gian mẫu $\\Omega$ và biến cố $A$ đúng như đề hỏi (chưa chia).',
+            r'Việc 2 — đếm $n(\Omega)$ và $n(A)$ từ số liệu đề; viết rõ trước khi thay vào công thức.',
+            r'Việc 3 — thay vào $P(A)=n(A)/n(\Omega)$, tự tính rồi đối chiếu phương án — không lấy sẵn phân số ở đáp.',
+        ]
     if canonical_subject(subject) == 'Toán học':
         asked = math_context_question(stem)
-        # Neo Toán nếu có; vẫn ưu tiên biểu thức trong câu.
         hit = _matched_anchor(subject, stem)
+        givens = _stem_givens_line(stem)
         if expr != 'hàm trong câu':
-            formula = f'Công thức áp vào đúng {expr}.'
+            formula = f'Công thức áp vào đúng {expr} trong ngữ liệu câu hỏi.'
         elif hit.get('formula'):
             formula = _formula_lines_for_stem(hit['formula'], stem) or hit.get('concept') or 'Chọn đúng công thức của yêu cầu câu này.'
         else:
-            formula = 'Chọn đúng công thức của yêu cầu câu này.'
+            formula = 'Chọn đúng công thức của yêu cầu câu này theo SGK.'
         steps = [
-            f'Gạch điều kiện và hệ số trong {expr}.' if expr != 'hàm trong câu' else f'Gạch yêu cầu trong câu: {_short_stem_quote(stem)}.',
-            'Viết công thức tổng quát, rồi mới thay số của câu.',
-            'Tự tính; đối chiếu phương án sau khi có kết quả của em.',
+            ((givens + ' ') if givens else '') + (
+                f'Việc 1 — gạch điều kiện và hệ số trong {expr}.'
+                if expr != 'hàm trong câu'
+                else f'Việc 1 — gạch yêu cầu trong câu: {_short_stem_quote(stem)}.'
+            ),
+            'Việc 2 — viết công thức tổng quát khớp yêu cầu, rồi mới thay đúng số liệu đề (chưa ra kết quả cuối nếu chưa tính).',
+            'Việc 3 — tự tính; đối chiếu phương án sau khi có kết quả của em — thầy không giải hộ.',
         ]
         if asked:
             steps.append(asked)
         if hard:
-            steps.append('Tách từng ẩn hoặc tham số; làm xong một nhánh rồi mới sang nhánh kia.')
+            steps.append('Câu khó: tách từng ẩn/tham số; xong một nhánh rồi mới sang nhánh kia.')
         return formula, steps
     # Đa môn / đa lớp: không còn HD chung chung — bám stem + neo SGK.
     formula, steps = _subject_stem_guide(q, subject)
@@ -974,10 +1155,13 @@ def build_tram3_socratic_guide(question, subject='Toán học', grade_num=12) ->
         if looks_like_explain_solution(step):
             continue
         clean_steps.append(step)
-    steps = clean_steps or steps[:3]
-    shown = steps if _is_hard_question(q, str(q.get('q') or '')) else steps[:3]
-    body = '**Công thức / hướng:** ' + formula + '\n\n' + '\n'.join(
-        f'{i}. {step}' for i, step in enumerate(shown, 1)
+    steps = clean_steps or steps[:4]
+    # Bình dân học vụ: giữ đủ đường đi (tối đa 4 bước); câu khó giữ nguyên.
+    shown = steps if _is_hard_question(q, str(q.get('q') or '')) else steps[:4]
+    body = (
+        '**Công thức / hướng (thầy chỉ lối, không giải hộ):** ' + formula
+        + '\n\n**Con đường tư duy:**\n'
+        + '\n'.join(f'{i}. {step}' for i, step in enumerate(shown, 1))
     )
     body = _SOLUTION_LEAK.sub('', body)
     stem = str(q.get('q') or '')
@@ -997,8 +1181,10 @@ def build_tram3_socratic_guide(question, subject='Toán học', grade_num=12) ->
     )
     if any(m in body for m in generic_marks):
         formula2, steps2 = _subject_stem_guide(q, subject)
-        body = '**Công thức / hướng:** ' + formula2 + '\n\n' + '\n'.join(
-            f'{i}. {step}' for i, step in enumerate(steps2[:3], 1)
+        body = (
+            '**Công thức / hướng (thầy chỉ lối, không giải hộ):** ' + formula2
+            + '\n\n**Con đường tư duy:**\n'
+            + '\n'.join(f'{i}. {step}' for i, step in enumerate(steps2[:4], 1))
         )
         body = _strip_option_bodies(body, opts)
     return body.strip()

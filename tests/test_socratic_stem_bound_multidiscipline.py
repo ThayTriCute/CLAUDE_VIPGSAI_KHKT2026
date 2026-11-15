@@ -159,6 +159,55 @@ class StemBoundSocraticTests(unittest.TestCase):
         low = guide.lower()
         self.assertNotIn("hướng đi từ đúng ngữ liệu", low)
         self.assertIn("quang hợp", low)
+        self.assertIn("con đường tư duy", low)
+
+    def test_teacher_path_no_pv_bleed_on_geography(self):
+        guide = build_tram3_socratic_guide({
+            "q": "Nhận định nào sau đây đúng về vùng Đồng bằng sông Cửu Long?",
+            "opt": [
+                "A. Có địa hình đồi núi chiếm ưu thế.",
+                "B. Hệ thống sông ngòi, kênh rạch chằng chịt.",
+                "C. Khí hậu cận nhiệt đới gió mùa.",
+                "D. Tài nguyên khoáng sản kim loại rất phong phú.",
+            ],
+            "ans": "B",
+        }, subject="Địa lý", grade_num=12)
+        low = guide.lower()
+        self.assertNotIn("pv=nrt", low.replace(" ", ""))
+        self.assertNotIn("động năng phân tử", low)
+        self.assertTrue("đồng bằng" in low or "sông" in low or "địa" in low)
+        self.assertIn("con đường tư duy", low)
+        self.assertNotIn("đáp án b", low)
+
+    def test_literature_reading_not_essay_template(self):
+        guide = build_tram3_socratic_guide({
+            "q": 'Dựa vào đoạn văn sau: "Mưa phùn lất phất." Câu nào nêu đúng cảm nhận về không gian?',
+            "opt": [
+                "A. Không gian rộng lớn, hùng vĩ.",
+                "B. Không gian ẩm ướt, gần gũi, giàu chất thơ.",
+                "C. Không gian khô hạn.",
+                "D. Không gian đô thị ồn ào.",
+            ],
+            "ans": "B",
+        }, subject="Ngữ văn", grade_num=8)
+        low = guide.lower()
+        self.assertNotIn("200 chữ", low)
+        self.assertNotIn("nghị luận xã hội", low)
+        self.assertTrue("cảm nhận" in low or "đọc hiểu" in low or "không gian" in low)
+        self.assertNotIn("đáp án b", low)
+
+    def test_probability_uses_stem_numbers_without_final_ratio(self):
+        guide = build_tram3_socratic_guide({
+            "q": "Trong một hộp có 5 viên bi đỏ và 3 viên bi xanh. Lấy ngẫu nhiên 1 viên. Xác suất lấy được bi đỏ bằng?",
+            "opt": ["A. 3/8", "B. 5/8", "C. 5/3", "D. 3/5"],
+            "ans": "B",
+        }, subject="Toán học", grade_num=9)
+        low = guide.lower()
+        self.assertIn("xác suất", low)
+        self.assertTrue("5" in guide and "3" in guide)
+        self.assertIn("n(\\omega)", low.replace(" ", "") or "n(\\Omega)".lower())
+        self.assertNotIn("p=5/8", low.replace(" ", ""))
+        self.assertNotIn("đáp án b", low)
 
 
 if __name__ == "__main__":
