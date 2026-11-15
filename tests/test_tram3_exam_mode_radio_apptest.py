@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""AppTest: radio hình thức đề Trạm 3 đổi đúng panel, không văng, mỗi khối 6–12."""
+"""AppTest: mỗi môn lớp 6–12 đổi đúng panel hình thức đề, và nút AI gửi đúng môn."""
 from __future__ import annotations
 
 import os
@@ -44,44 +44,76 @@ class Tram3ExamModeRadioAppTest(unittest.TestCase):
         self.assertEqual([e.message for e in at.exception], [])
         return at
 
-    def test_exam_mode_radio_switches_panel_every_grade(self):
-        cells = [
-            ("Lớp 6", "Toán học"),
-            ("Lớp 7", "Tiếng Anh"),
-            ("Lớp 8", "Khoa học tự nhiên"),
-            ("Lớp 9", "Lịch sử & Địa lý"),
-            ("Lớp 10", "Lịch sử"),
-            ("Lớp 11", "Giáo dục kinh tế và pháp luật"),
-            ("Lớp 12", "Công nghệ"),
-        ]
-        for grade_label, subject in cells:
-            with self.subTest(subject=subject, grade=grade_label):
-                at = self._open(grade_label, subject)
-                mode = next(r for r in at.radio if r.label == "Lựa chọn hình thức đề thi:")
-                options = [str(o) for o in mode.options]
-                self.assertEqual(len(options), 4)
-                self.assertTrue(any("Đề Luyện Tập Chuyên Đề" in o for o in options))
-                self.assertTrue(any("Làm Nguyên Đề Thi Thật" in o for o in options))
-                self.assertTrue(any("Nạp & Trộn Đề Word" in o for o in options))
-                self.assertTrue(any("Quét Đề Link" in o for o in options))
-                self.assertTrue(any("Trộn Siêu Đề" in b.label or "Trích Xuất Đề" in b.label or "Mở đề gốc" in b.label for b in at.button))
+    def _mode(self, at):
+        return next(r for r in at.radio if r.label == "Lựa chọn hình thức đề thi:")
 
-                mode.set_value(next(o for o in options if "Nạp & Trộn Đề Word" in o)).run(timeout=90)
-                self.assertEqual([e.message for e in at.exception], [])
-                blob = " ".join(str(m.value) for m in at.markdown)
-                self.assertIn("Nạp Đề Thi Từ File Word", blob)
+    def _practice_buttons(self, at):
+        needles = ("Trộn Siêu Đề", "Trích Xuất Đề", "Mở đề gốc", "Khởi Tạo Đề", "AI Tạo Đề")
+        return [b.label for b in at.button if any(n in b.label for n in needles)]
 
-                mode = next(r for r in at.radio if r.label == "Lựa chọn hình thức đề thi:")
-                mode.set_value(next(o for o in mode.options if "Quét Đề Link" in str(o))).run(timeout=90)
-                self.assertEqual([e.message for e in at.exception], [])
-                blob = " ".join(str(m.value) for m in at.markdown)
-                self.assertIn("Quét Đề Từ Link", blob)
-                self.assertTrue(any("Chọn chuyên trang" in s.label for s in at.selectbox))
+    def _set_mode(self, at, needle: str):
+        mode = self._mode(at)
+        mode.set_value(next(o for o in mode.options if needle in str(o))).run(timeout=90)
+        self.assertEqual([e.message for e in at.exception], [])
+        return at
 
-                mode = next(r for r in at.radio if r.label == "Lựa chọn hình thức đề thi:")
-                mode.set_value(next(o for o in mode.options if "Làm Nguyên Đề Thi Thật" in str(o))).run(timeout=90)
-                self.assertEqual([e.message for e in at.exception], [])
-                self.assertEqual(at.session_state.get("exam_state"), "config")
+    def test_every_subject_switches_panel_and_ai_stays_on_subject(self):
+        from services.academic_context import subjects_for_grade
+
+        for grade in range(6, 13):
+            subjects = subjects_for_grade(grade)
+            at = self._open(f"Lớp {grade}", subjects[0])
+            for subject in subjects:
+                with self.subTest(subject=subject, grade=grade):
+                    if subject != subjects[0]:
+                        next(s for s in at.selectbox if s.label == "📚 Môn học cần hỗ trợ:").select(subject).run(timeout=90)
+                        self.assertEqual([e.message for e in at.exception], [])
+                    options = [str(o) for o in self._mode(at).options]
+                    self.assertEqual(len(options), 4, msg=f"{subject} L{grade}")
+                    self.assertTrue(self._practice_buttons(at), msg=f"{subject} L{grade} thiếu nút luyện tập")
+
+                    marker = f"ONLY {subject} L{grade}"
+                    area = next(t for t in at.text_area if "Yêu cầu ma trận" in t.label)
+                    area.set_value(marker).run(timeout=90)
+                    self.assertEqual([e.message for e in at.exception], [])
+                    seen = []
+
+                    def _capture(subj, g, topics, counts, code, custom, pathway=""):
+                        seen.append((subj, int(g), tuple(topics), str(custom or "")))
+                        return ("qa-system", "qa-prompt")
+
+                    with patch("services.curriculum_policy.exam_generation_request", side_effect=_capture):
+                        btn = next(b for b in at.button if "Khởi Tạo Đề" in b.label or "AI Tạo Đề" in b.label)
+                        btn.click().run(timeout=90)
+                    self.assertEqual([e.message for e in at.exception], [])
+                    self.assertEqual(at.session_state.get("exam_state"), "config")
+                    self.assertTrue(seen, msg=f"{subject} L{grade} không gọi yêu cầu AI")
+                    self.assertEqual(seen[-1][0], subject)
+                    self.assertEqual(seen[-1][1], grade)
+                    self.assertTrue(any(f"Lớp {grade}" in t for t in seen[-1][2]), msg=seen[-1][2])
+                    self.assertIn(marker, seen[-1][3])
+                    self.assertIn("GEMINI_API_KEY", " ".join(str(e.value) for e in at.error))
+
+                    self._set_mode(at, "Nạp & Trộn Đề Word")
+                    blob = " ".join(str(m.value) for m in at.markdown)
+                    self.assertIn("Nạp Đề Thi Từ File Word", blob)
+                    self.assertEqual(self._practice_buttons(at), [])
+
+                    self._set_mode(at, "Quét Đề Link")
+                    blob = " ".join(str(m.value) for m in at.markdown)
+                    self.assertIn("Quét Đề Từ Link", blob)
+                    self.assertTrue(any("Chọn chuyên trang" in s.label for s in at.selectbox))
+                    self.assertEqual(self._practice_buttons(at), [])
+
+                    self._set_mode(at, "Làm Nguyên Đề Thi Thật")
+                    self.assertEqual(at.session_state.get("exam_state"), "config")
+                    has_picker = any(str(s.label).startswith("Chọn đề") for s in at.selectbox)
+                    infos = " ".join(str(i.value) for i in at.info)
+                    self.assertTrue(
+                        has_picker or (subject in infos and f"lớp {grade}" in infos),
+                        msg=f"{subject} L{grade} không mở kho đề thật",
+                    )
+                    self.assertEqual(self._practice_buttons(at), [])
 
 
 if __name__ == "__main__":
