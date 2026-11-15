@@ -1,1 +1,1 @@
-# services package init
+# Services package (Streamlit Cloud / namespace-safe).
