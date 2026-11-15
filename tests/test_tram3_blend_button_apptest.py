@@ -31,6 +31,26 @@ def _assert_subject_topics(test, at, subject: str, grade: int):
     test.assertIn(first, selected, msg=f"{subject} L{grade} không chọn sẵn {first}")
 
 
+def _assert_exam_controls(test, at, subject: str, grade: int):
+    mode = next(r for r in at.radio if r.label == "Lựa chọn hình thức đề thi:")
+    options = [str(o) for o in mode.options]
+    test.assertEqual(len(options), 4, msg=f"{subject} L{grade}")
+    for needle in (
+        "Đề Luyện Tập Chuyên Đề",
+        "Làm Nguyên Đề Thi Thật",
+        "Nạp & Trộn Đề Word",
+        "Quét Đề Link",
+    ):
+        test.assertTrue(any(needle in o for o in options), msg=f"{subject} L{grade} thiếu {needle}")
+    labels = [b.label for b in at.button]
+    test.assertTrue(
+        any("Khởi Tạo Đề Mới" in lab or "AI Tạo Đề" in lab for lab in labels),
+        msg=f"{subject} L{grade} thiếu nút AI",
+    )
+    if subject == "Tin học" and grade == 12:
+        test.assertTrue(any("Cách dùng kho đề Tin học" in r.label for r in at.radio))
+
+
 def _fake_exam(subject: str, grade: int, counts=(3, 1, 0)):
     n1, n2, n3 = counts
     exam = {
@@ -115,6 +135,7 @@ class Tram3BlendButtonAppTest(unittest.TestCase):
             with self.subTest(subject=subject, grade=grade):
                 at = self._open_tram3(grade_label, subject)
                 _assert_subject_topics(self, at, subject, grade)
+                _assert_exam_controls(self, at, subject, grade)
                 fake = _fake_exam(subject, grade, counts)
 
                 def _gen(subj, g, topics, cnts, **kwargs):
@@ -151,6 +172,7 @@ class Tram3BlendButtonAppTest(unittest.TestCase):
             with self.subTest(subject=subject, grade=grade):
                 at = self._open_tram3(grade_label, subject)
                 _assert_subject_topics(self, at, subject, grade)
+                _assert_exam_controls(self, at, subject, grade)
                 fake = _fake_exam(subject, grade, counts)
 
                 def _gen(subj, g, topics, cnts, **kwargs):
