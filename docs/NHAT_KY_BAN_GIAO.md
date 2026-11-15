@@ -1,7 +1,7 @@
 # Nhật ký bàn giao — GSAI KHKT 2026
 
 > Ca sau **đọc file này trước** khi sửa Trạm 1 / Trạm 3 / Socratic / JSON đề AI.  
-> Cập nhật: **2026-11-16 ~02:05 giờ VN**. Người ghi: ca trợ lý (theo lệnh anh MINH).  
+> Cập nhật: **2026-11-16 ~02:20 giờ VN**. Người ghi: ca trợ lý (theo lệnh anh MINH).  
 > Repo nguồn: `ThayTriCute/CLAUDE_VIPGSAI_KHKT2026`. `main` trước PR giọng nói này = **`68ae144`** (PR **#124**).  
 > App Cloud: `https://claudevipgsaikhkt2026-bybgceinifcaqggqyyvatx.streamlit.app/`  
 > Worktree máy anh: `D:\CLAUDE_FINAL KHKT 2026\_gh_compare`.
@@ -22,11 +22,23 @@ Anh MINH chốt (16/11/2026), áp **mọi môn × mọi khối 6–12**, Trạm 
 6. Tham chiếu kiểu đỡ đẻ: F VIP `computing_context_question` / Maieutics trong `F:\FINAL KHKT 2026\tmp\voice_https_worker\services\socratic_context.py` — học cách hỏi, **không** copy cả app VIP, **không** port wellbeing Trạm 4/5.
 
 Hàm duy nhất: `build_tram3_socratic_guide` (= `build_socratic_guide`) trong `services/socratic_context.py`.  
-`T1_CONTEXT_REVISION` của module đó **phải khớp** số trong `_refresh_t1_context_services()` của `app.py`. Hiện tại: **`2026111604`**.
+`T1_CONTEXT_REVISION` của module đó **phải khớp** số trong `_refresh_t1_context_services()` của `app.py`. Hiện tại: **`2026111605`**.
 
 ---
 
-## 1. Ca gần nhất — giọng HD Socratic (đang mở PR)
+## 1. Ca gần nhất — đề AI không chết cả bài vì một câu lệch
+
+Ảnh Cloud 16/11 ~02:06: hai lần “Đã nhận phản hồi từ AI” rồi `Lỗi khởi tạo đề thi: Còn câu chưa đủ dữ liệu/đáp án hoặc chưa khớp yêu cầu… chưa mở lượt làm bài này.` Checkbox “Cho phép AI sinh nguyên câu thay thế” đang bật. `validate_exam_data` đã qua (nếu không, câu lỗi sẽ khác). `enrich_exam_data` gọi `repair_exam_context`; **một** câu `needs_review` làm `unresolved > 0` và hủy cả đề.
+
+- Đề `is_ai_generated`: câu không thay được thì **để riêng** (`withheld_ai_question`), các câu còn lại vẫn mở. Nếu **mọi** câu đều hỏng thì vẫn chặn, không giao đề rỗng và không bịa đáp.
+- Đề kho / không gắn `is_ai_generated`: giữ chặn cả bài như cũ. Test `test_app_failed_delivery_logs_without_opening_exam` không đổi.
+- Bảng số liệu viết ngay trong stem (cột `|` hoặc ít nhất 3 dòng có số) không bị coi là thiếu hình. “Hình bên / đồ thị sau / bảng biến thiên” không có dữ liệu hình vẫn là lỗi.
+- Khóa `B.` hoặc đúng nguyên văn phương án được đưa về A–D. Không khớp phương án nào thì không gán chữ.
+- Câu hỏi **số cực trị** mà phương án là khoảng/lời văn không bị SymPy kết luận ảo giác. Phương án đếm (“2 điểm”, “có 2 cực trị”) vẫn đối chiếu.
+- Màn làm bài hiện cảnh báo số câu đã để riêng.
+- Test mới: `tests/test_ai_exam_incomplete.py`.
+
+## 1a. Ca trước — giọng HD Socratic (đã vào main #125)
 
 Anh chốt lại lời thầy: chỉ hỏi để em tự nhớ công thức, không liệt kê.
 

@@ -244,12 +244,23 @@ def audit_ai_generated_question_sympy(q_dict: Dict[str, Any]) -> Dict[str, Any]:
         # Kiểm tra xem đáp án có khớp với real_crit_count không
         ans_str = str(ans).strip().upper()
         # Tìm xem phương án tương ứng có chứa số real_crit_count không
+        def choice_body(option):
+            return re.sub(r"^[A-D][.)]\s*", "", str(option).strip(), flags=re.I).replace("$", "").strip()
+
+        def states_count(option, count):
+            return re.fullmatch(rf"(?:có\s+)?{count}(?:\s+điểm)?(?:\s+cực trị)?[.]?", choice_body(option), flags=re.I) is not None
+
+        # Interval or worded choices are not a count key. Do not call them a hallucination.
+        if not opt or len(opt) < 4 or not any(
+            re.fullmatch(r"(?:có\s+)?\d{1,2}(?:\s+điểm)?(?:\s+cực trị)?[.]?", choice_body(option), flags=re.I)
+            for option in opt
+        ):
+            return audit_report
         is_consistent = False
         if opt and len(opt) >= 4:
             for idx, o in enumerate(opt):
                 letter = chr(65 + idx)
-                option = re.sub(r"^[A-D][.)]\s*", "", str(o).strip(), flags=re.I).replace("$", "").strip()
-                if letter == ans_str and re.fullmatch(rf"{real_crit_count}(?:\s+(?:điểm\s+)?cực trị)?[.]?", option):
+                if letter == ans_str and states_count(o, real_crit_count):
                     is_consistent = True
                     break
         if not is_consistent:
