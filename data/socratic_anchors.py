@@ -132,17 +132,36 @@ SOCRATIC_KNOWLEDGE_ANCHORS = {
         {
             "keywords": [
                 "nóng chảy", "làm nóng chảy", "nhiệt nóng chảy", "hóa hơi", "nhiệt hóa hơi",
-                "nhiệt lượng", "nhiệt dung", "làm nóng", "khí lý tưởng", "áp suất", "thể tích", "nhiệt độ",
+                "nhiệt lượng", "nhiệt dung", "làm nóng", "áp suất", "nhiệt độ",
             ],
             "concept": "Vật lý nhiệt — nhiệt lượng & chuyển thể (SGK Vật lý - KNTT)",
             "formula": (
                 "- Đốt nóng / làm lạnh (có $\\Delta T$): $Q = mc\\Delta T$.\n"
                 "- Chuyển thể ở nhiệt độ không đổi: nóng chảy $Q = \\lambda m$; hóa hơi $Q = Lm$.\n"
-                "- Nhiệt do dòng điện: $Q = UIt$. Khí lý tưởng: $pV = nRT$."
+                "- Nhiệt do dòng điện: $Q = UIt$."
             ),
             "prompt": (
                 "Em hãy xác định câu hỏi đang nói đốt nóng (có $\\Delta T$), chuyển thể "
                 "(nóng chảy / hóa hơi ở nhiệt độ không đổi), hay nhiệt điện — rồi mới chọn dạng $Q$ khớp."
+            ),
+        },
+        {
+            "keywords": [
+                "động học phân tử", "mô hình động học", "chất khí", "khí lý tưởng",
+                "phân tử khí", "chuyển động hỗn loạn", "động năng phân tử",
+            ],
+            "concept": "Mô hình động học phân tử chất khí (SGK Vật lý - KNTT)",
+            "formula": (
+                "- Phân tử khí chuyển động hỗn loạn, liên tục theo mọi hướng.\n"
+                "- Khoảng cách trung bình $\\gg$ kích thước phân tử; lực tương tác giữa các phân tử khí rất yếu "
+                "(trong mô hình lý tưởng xem như không đáng kể).\n"
+                "- Nhiệt độ liên hệ động năng trung bình / tốc độ chuyển động nhiệt của phân tử; $pV=nRT$."
+            ),
+            "prompt": (
+                "Em sẽ phân biệt các giả thiết cốt lõi của mô hình (chuyển động hỗn loạn, "
+                "khoảng cách–lực tương tác, nhiệt độ–tốc độ, kích thước so với khoảng cách) "
+                "theo tiêu chí nào trước khi đối chiếu từng phát biểu? "
+                "Nếu đề hỏi “không đúng”, tìm phát biểu lệch giả thiết — chưa gắn chữ A–D giúp."
             ),
         }
     ],

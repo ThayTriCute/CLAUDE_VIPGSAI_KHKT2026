@@ -82,6 +82,84 @@ class StemBoundSocraticTests(unittest.TestCase):
             build_tram3_socratic_guide(q, subject="Toán học", grade_num=12),
         )
 
+    def test_physics_kinetic_theory_negation_mc_midwifery(self):
+        """Ảnh anh: phát biểu không đúng về mô hình ĐHPT — đỡ đẻ sát ngữ liệu, không lộ đáp."""
+        q = {
+            "q": (
+                "Phát biểu nào sau đây không đúng khi nói về mô hình động học phân tử của chất khí?"
+            ),
+            "opt": [
+                "A. Nhiệt độ càng cao thì các phân tử khí chuyển động càng nhanh.",
+                "B. Các phân tử khí chuyển động hỗn loạn không ngừng về mọi phía.",
+                "C. Các phân tử khí ở rất gần nhau và có lực tương tác rất mạnh.",
+                "D. Thể tích của các phân tử khí rất nhỏ so với khoảng cách giữa chúng.",
+            ],
+            "ans": "C",
+            "explain": "Đáp án C vì lực tương tác khí rất yếu.",
+            "level": "NB",
+        }
+        guide = build_tram3_socratic_guide(q, subject="Vật lý", grade_num=10)
+        low = guide.lower()
+        self.assertNotIn("hướng đi từ đúng ngữ liệu", low)
+        self.assertNotIn("bám đúng ngữ liệu câu này — chi tiết", low)
+        self.assertTrue(
+            "động học" in low or "phân tử" in low or "chất khí" in low or "khí" in low
+        )
+        self.assertTrue(
+            "hỗn loạn" in low
+            or "lực tương tác" in low
+            or "khoảng cách" in low
+            or "pV" in guide
+            or "nrt" in low
+        )
+        # Negation midwifery + theme pillars from options (F VIP style)
+        self.assertTrue("không đúng" in low or "lệch" in low)
+        self.assertIn("nhiệt độ", low)
+        self.assertIn("hỗn loạn", low)
+        self.assertIn("tương tác", low)
+        self.assertTrue("kích thước" in low or "khoảng cách" in low)
+        self.assertIn("1.", guide)
+        self.assertIn("2.", guide)
+        self.assertIn("3.", guide)
+        self.assertNotIn("nóng chảy", low)  # không lẫn trụ nhiệt chuyển thể
+        # Không lộ đáp / nguyên văn phương án sai / chọn hộ
+        self.assertNotIn("đáp án c", low)
+        self.assertNotIn("chọn c", low)
+        self.assertNotIn("vậy chọn", low)
+        self.assertNotIn("lực tương tác rất mạnh", low)
+        self.assertNotIn("ở rất gần nhau", low)
+        self.assertFalse(looks_like_explain_solution(guide))
+
+    def test_informatics_cpu_style_not_generic(self):
+        guide = build_tram3_socratic_guide({
+            "q": "Phát biểu nào sau đây không đúng khi nói về CPU của máy tính?",
+            "opt": [
+                "A. CPU thực hiện xử lý lệnh.",
+                "B. CPU lưu trữ lâu dài mọi tệp như ổ cứng.",
+                "C. CPU làm việc với bộ nhớ trong khi chạy chương trình.",
+                "D. Tốc độ CPU ảnh hưởng thời gian xử lý.",
+            ],
+            "ans": "B",
+        }, subject="Tin học", grade_num=6)
+        low = guide.lower()
+        self.assertNotIn("hướng đi từ đúng ngữ liệu", low)
+        self.assertTrue("cpu" in low or "không đúng" in low or "lệch" in low)
+
+    def test_biology_conceptual_uses_topic_not_echo(self):
+        guide = build_tram3_socratic_guide({
+            "q": "Phát biểu nào sau đây đúng khi nói về quang hợp ở thực vật?",
+            "opt": [
+                "A. Quang hợp chỉ xảy ra ban đêm.",
+                "B. Quang hợp tạo glucose và giải phóng O2.",
+                "C. Quang hợp không cần ánh sáng.",
+                "D. Quang hợp chỉ xảy ra ở rễ.",
+            ],
+            "ans": "B",
+        }, subject="Sinh học", grade_num=11)
+        low = guide.lower()
+        self.assertNotIn("hướng đi từ đúng ngữ liệu", low)
+        self.assertIn("quang hợp", low)
+
 
 if __name__ == "__main__":
     unittest.main()
