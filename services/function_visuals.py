@@ -9,7 +9,7 @@ from functools import lru_cache
 import sympy as sp
 
 X = sp.Symbol('x', real=True)
-RENDER_REVISION = 2026110910
+RENDER_REVISION = 2026111523
 
 
 class NonStandardFunction(ValueError):
@@ -484,6 +484,13 @@ _FENCE = re.compile(r'(?:```|~~~)[ \t]*[A-Za-z]*[ \t]*\n[\s\S]*?\n[ \t]*(?:```|~
 _PRE = re.compile(r'<pre\b[^>]*>\s*<code\b[^>]*>[\s\S]*?</code>\s*</pre>')
 _WRAPPED_TABLE = (r'<div\b[^>]*>\s*<div\b[^>]*>\s*📐[^<]*</div>\s*<table\b[^>]*>[\s\S]*?</table>\s*</div>'
                   r'|<table\b[^>]*>[\s\S]*?</table>')
+# BBT markdown dồn thành <p>|...|</p> (không thành <table>) — vẫn phải thay bằng verified.
+_PIPE_BBT_P = (
+    r'<p>\|(?:(?!</p>).)*?'
+    r'(?:y\s*[′\']|y\\prime|\\nearrow|\\searrow|↗|↘)'
+    r'(?:(?!</p>).)*?</p>'
+)
+_BBT_SLOT = _WRAPPED_TABLE + '|' + _PIPE_BBT_P + '|' + _PRE.pattern + '|' + _FENCE.pattern
 
 
 def is_ascii_plot(block):
@@ -523,6 +530,15 @@ def _nearest_function_figure(prefix, allowed=None):
     return None
 
 
+def _is_bbt_slot(fragment: str) -> bool:
+    """True for HTML <table>/pipe-<p> that look like a variation table."""
+    drawing = _drawing(fragment)
+    if drawing is not None:
+        return bool(drawing)
+    plain = html.unescape(re.sub(r'<[^>]+>', '', fragment))
+    return bool(re.search(r"x[\s\S]*y[′'][\s\S]*y", plain))
+
+
 def with_function_visuals(body, topic, lesson=''):
     """Use the same figure on the lesson page and in all export styles."""
     visuals = explicit_function_visuals(str(topic or ''))
@@ -545,19 +561,7 @@ def with_function_visuals(body, topic, lesson=''):
             used = set()
             def scoped_table(match):
                 prefix = body[:match.start()]
-                drawing = _drawing(match[0])
-                if drawing is not None:
-                    if not drawing:
-                        return match[0]
-                    figure = _nearest_function_figure(prefix, figures)
-                    if figure is None:
-                        return match[0]
-                    if figure in used:
-                        return ''
-                    used.add(figure)
-                    return figure
-                plain = html.unescape(re.sub(r'<[^>]+>', '', match[0]))
-                if not re.search(r"x[\s\S]*y[′'][\s\S]*y", plain):
+                if not _is_bbt_slot(match[0]):
                     return match[0]
                 figure = _nearest_function_figure(prefix, figures)
                 if figure is None:
@@ -566,7 +570,8 @@ def with_function_visuals(body, topic, lesson=''):
                     return ''
                 used.add(figure)
                 return figure
-            result = re.sub(_WRAPPED_TABLE + '|' + _PRE.pattern + '|' + _FENCE.pattern, scoped_table, body)
+            result = re.sub(_BBT_SLOT, scoped_table, body)
+            # Chỉ append phần chưa gắn vào slot BBT (pipe/<table>). Không để BBT AI sai song song.
             return result + "".join(sorted(figures - used))
         if len(figures) == 1:
             visuals = figures.pop()
@@ -575,10 +580,10 @@ def with_function_visuals(body, topic, lesson=''):
     replaced = [False]
 
     def replace_table(match):
+        if not _is_bbt_slot(match[0]):
+            return match[0]
         drawing = _drawing(match[0])
         if drawing is not None:
-            if not drawing:
-                return match[0]
             nearest = _nearest_function_figure(body[:match.start()])
             if nearest not in (None, visuals):
                 return match[0]
@@ -586,11 +591,10 @@ def with_function_visuals(body, topic, lesson=''):
                 return ''
             replaced[0] = True
             return visuals
-        plain = html.unescape(re.sub(r'<[^>]+>', '', match[0]))
-        if not replaced[0] and re.search(r'x[\s\S]*y[′\'][\s\S]*y', plain):
+        if not replaced[0]:
             replaced[0] = True
             return visuals
-        return match[0]
+        return ''
 
-    result = re.sub(_WRAPPED_TABLE + '|' + _PRE.pattern + '|' + _FENCE.pattern, replace_table, body)
+    result = re.sub(_BBT_SLOT, replace_table, body)
     return result if replaced[0] else result + visuals

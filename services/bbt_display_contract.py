@@ -4,7 +4,171 @@ import re
 # Đổi giá trị khi đổi API module này: worker Cloud giữ module cũ sẽ được nạp lại
 # (app._refresh_t1_context_services) trước khi app.py gọi hàm mới. Sự cố 09/11/2026:
 # ImportError normalize_bbt_discontinuity vì worker còn giữ bản cũ.
-T1_CONTEXT_REVISION = 2026110911
+# 15/11/2026: expand BBT dồn 1 dòng; không phá \nearrow bằng replace \n; sửa mũi tên theo dấu y'.
+T1_CONTEXT_REVISION = 2026111523
+
+_ARROW_RE = re.compile(r"\$\\(?:nearrow|searrow)\$|\\(?:nearrow|searrow)|[↗↘]")
+
+
+def expand_collapsed_bbt_line(line: str) -> str:
+    """Tách BBT bị dồn một dòng (header|sep|y'|y) thành 4 hàng Markdown.
+
+    Model hay xuất cả bảng trên một dòng; CommonMark không tạo <table> →
+    bài giữ ống '|' (mũi tên đúng/sai lẫn) trong khi SVG verified bị đẩy xuống cuối.
+    """
+    line = str(line or "").strip()
+    if "\n" in line or line.count("|") < 12:
+        return line
+    if not re.match(r"^\|\s*\$?x\$?\s*\|", line, re.I):
+        return line
+    if not (
+        re.search(r"\$y\s*'\$|\$y'\$|y\\prime|\\nearrow|\\searrow|↗|↘", line, re.I)
+        or "$y$" in line
+        or "y'" in line
+        or "y′" in line
+    ):
+        return line
+    sep = re.search(r"\|\s*:?-{3,}:?\s*\|", line)
+    if not sep:
+        return line
+    yp = re.search(r"\|\s*\$?y\s*(?:\\prime|[′'])\$?\s*\|", line[sep.end() - 1 :], re.I)
+    if not yp:
+        yp = re.search(r"\|\s*\$y'\s*\$\s*\|", line[sep.end() - 1 :])
+    if not yp:
+        return line
+    yp_abs = sep.end() - 1 + yp.start()
+    yr = re.search(r"\|\s*\$y\$\s*\|", line[yp_abs + 1 :])
+    if not yr:
+        yr = re.search(r"\|\s*y\s*\|(?!\s*\$?[′'])", line[yp_abs + 1 :])
+    if not yr:
+        return line
+    yr_abs = yp_abs + 1 + yr.start()
+    rows = [
+        line[: sep.start()].strip(),
+        line[sep.start() : yp_abs].strip(),
+        line[yp_abs:yr_abs].strip(),
+        line[yr_abs:].strip(),
+    ]
+    if not all(r.startswith("|") for r in rows):
+        return line
+    return "\n".join(rows)
+
+
+def expand_collapsed_bbt_prose(prose: str) -> str:
+    """Mở rộng mọi dòng BBT dồn trong khối văn."""
+    return re.sub(
+        r"(?m)^[ \t]{0,3}\|([^\n]{40,})\|[ \t]*$",
+        lambda m: expand_collapsed_bbt_line(m[0]),
+        str(prose or ""),
+    )
+
+
+def _is_separator_line(line: str) -> bool:
+    stripped = str(line or "").strip()
+    if not stripped.startswith("|"):
+        return False
+    # :||: của AI cũng là separator — bỏ || trước khi kiểm tra ký tự cho phép.
+    core = stripped.replace("||", "").replace("|", "").replace(":", "").replace("-", "").strip()
+    return not core and ("-" in stripped or ":" in stripped)
+
+
+def sanitize_bbt_separator_row(line: str, columns=None) -> str:
+    """Hàng separator Markdown chỉ được | :- ; AI hay viết :||: → CommonMark bỏ bảng."""
+    if not _is_separator_line(line):
+        return line
+    if columns is None or columns < 2:
+        # Đếm ô trước khi || bị split thành ô rỗng.
+        probe = re.sub(r"\|\|+", "§", str(line).strip().strip("|"))
+        columns = len(probe.split("|"))
+    return "| " + " | ".join(":---:" for _ in range(columns)) + " |"
+
+
+def prepare_bbt_markdown_block(block: str) -> str:
+    """Tách dòng dồn → chuẩn hóa || → sửa separator (đúng số cột) → khóa mũi tên theo y'."""
+    block = expand_collapsed_bbt_line(str(block or "").strip())
+    rows = block.splitlines()
+    if not is_bbt_markdown(rows):
+        return block
+    header = next((r for r in rows if r.strip().startswith("|") and not _is_separator_line(r)), None)
+    columns = None
+    if header is not None:
+        columns = len(header.strip().strip("|").split("|"))
+    normalized = []
+    for row in rows:
+        if _is_separator_line(row):
+            normalized.append(sanitize_bbt_separator_row(row, columns=columns))
+        else:
+            normalized.append(normalize_bbt_discontinuity(row))
+    return repair_bbt_arrows_from_signs("\n".join(normalized))
+
+
+def _row_head(line: str) -> str:
+    if not line.strip().startswith("|") or re.fullmatch(r"[\s|:\-]+", line.strip()):
+        return ""
+    return re.sub(r"[$\s*`{}^]", "", line.strip().strip("|").split("|")[0]).replace("\\prime", "'")
+
+
+def _yprime_signs(yprime_line: str) -> list:
+    body = yprime_line.strip().strip("|")
+    body = re.sub(r"(?<!\|)\|\|(?!\|)", "§BAR§", normalize_bbt_discontinuity(body))
+    cells = [c.strip().replace("§BAR§", "||") for c in body.split("|")]
+    signs = []
+    for cell in cells[1:]:
+        token = re.sub(r"[$\s]", "", cell).replace("−", "-")
+        if token in ("+", "-"):
+            signs.append(token)
+    return signs
+
+
+def repair_bbt_arrows_from_signs(block: str) -> str:
+    """Khóa mũi tên hàng y theo dấu y' (+→↗/\\nearrow, −→↘/\\searrow). Không bịa giới hạn."""
+    lines = [ln for ln in str(block or "").splitlines()]
+    useful = [ln for ln in lines if ln.strip()]
+    if not is_bbt_markdown(useful):
+        return block
+    content = [
+        ln
+        for ln in useful
+        if ln.strip().startswith("|") and not re.fullmatch(r"[\s|:\-]+", ln.strip())
+    ]
+    if len(content) < 3:
+        return block
+    yprime = next((ln for ln in content if "'" in _row_head(ln) or "′" in _row_head(ln)), None)
+    yrow = next(
+        (
+            ln
+            for ln in content
+            if _row_head(ln) in ("y", "f(x)", "g(x)")
+            or (
+                _row_head(ln)
+                and "'" not in _row_head(ln)
+                and "′" not in _row_head(ln)
+                and _row_head(ln) not in ("x", "t")
+            )
+        ),
+        None,
+    )
+    if yprime is None or yrow is None:
+        return block
+    signs = _yprime_signs(yprime)
+    arrows = list(_ARROW_RE.finditer(yrow))
+    if not signs or len(arrows) != len(signs):
+        return block
+    out = []
+    pos = 0
+    for match, sign in zip(arrows, signs):
+        out.append(yrow[pos : match.start()])
+        token = match.group(0)
+        if token.startswith("$"):
+            out.append(r"$\nearrow$" if sign == "+" else r"$\searrow$")
+        elif token.startswith("\\"):
+            out.append(r"\nearrow" if sign == "+" else r"\searrow")
+        else:
+            out.append("↗" if sign == "+" else "↘")
+        pos = match.end()
+    out.append(yrow[pos:])
+    repaired = "".join(out)
+    return "\n".join(repaired if ln == yrow else ln for ln in lines)
 
 
 def normalize_bbt_discontinuity(text):
@@ -32,7 +196,8 @@ def is_bbt_markdown(lines):
 
 
 def supplied_bbt_rows(raw):
-    text = str(raw or '').replace(r'\n', '\n')
+    # Chỉ tách dòng giả lập JSON `\n`, KHÔNG phá lệnh LaTeX `\nearrow` / `\neq` / `\nu`.
+    text = re.sub(r'(?<![A-Za-z])\\n(?![A-Za-z])', '\n', str(raw or ''))
     rows = []
     for line in text.splitlines():
         if '|' not in line or re.fullmatch(r'[\s|:\-]+', line):
