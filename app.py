@@ -14725,9 +14725,9 @@ if selected_station == station_labels[2]:
 
     if st.session_state.exam_state == "config":
 
-        portal_info = ree.EXAM_SOURCE_PORTALS.get(subject, ree.EXAM_SOURCE_PORTALS.get("Toán học", {})) if ree else {}
+        portal_info = ree.portal_for_subject(subject) if ree else {}
 
-        portal_name_ui = portal_info.get("portal_name", "TOANMATH.com")
+        portal_name_ui = portal_info.get("portal_name") or "kho đề môn này"
 
         portal_short = portal_name_ui.split("&")[0].strip() if "&" in portal_name_ui else portal_name_ui
 
@@ -15432,7 +15432,7 @@ if selected_station == station_labels[2]:
 
                             ["🏛️ TOANMATH.com", "📐 MATHVN.com", "👥 Facebook (Bài viết / Link Drive)", "🔗 Link tùy chỉnh"],
 
-                            key="sel_portal_type_t3"
+                            key=f"sel_portal_type_t3_{current_context_key}"
 
                         )
 
@@ -15448,13 +15448,13 @@ if selected_station == station_labels[2]:
 
                         elif "TOANMATH" in target_source_type:
 
-                            default_link = f"https://toanmath.com/de-thi-giua-hk1-toan-{grade_num}" if subject == "Toán học" else portal_info.get("url", "https://toanmath.com")
+                            default_link = ree.default_subject_scan_url(subject, grade_num) if ree else ""
 
                         else:
 
                             default_link = "https://..."
 
-                        user_target_url = st.text_input("Nhập Link bài viết / chuyên mục / Google Drive:", value=default_link, key="inp_target_url_t3")
+                        user_target_url = st.text_input("Nhập Link bài viết / chuyên mục / Google Drive:", value=default_link, key=f"inp_target_url_t3_{current_context_key}")
 
 
 
@@ -16138,13 +16138,9 @@ if selected_station == station_labels[2]:
 
             with st.expander(f"🔍 Quét & Trích Xuất Ngữ Liệu Trực Tiếp Từ Link Đề Thi ({portal_name_ui})", expanded=False):
 
-                def_cat_url = "https://toanmath.com/de-thi-giua-hk1-toan-12" if (subject == "Toán học" and grade_num == 12) else (
+                def_cat_url = ree.default_subject_scan_url(subject, grade_num) if ree else ""
 
-                    f"https://toanmath.com/de-thi-giua-hk1-toan-{grade_num}" if subject == "Toán học" else portal_info.get("url", "https://toanmath.com")
-
-                )
-
-                custom_scan_url = st.text_input("Nhập Link Chuyên Mục hoặc Link Bài Viết:", value=st.session_state.get("last_crawled_url", def_cat_url), key="inp_crawl_url")
+                custom_scan_url = st.text_input("Nhập Link Chuyên Mục hoặc Link Bài Viết:", value=def_cat_url, key=f"inp_crawl_url_{current_context_key}")
 
 
 
@@ -17256,8 +17252,8 @@ if selected_station == station_labels[2]:
             else:
                 st.info("📋 **Minh bạch xuất xứ & Pháp chế khảo thí:** Bảng kê định danh toàn bộ câu hỏi đối chiếu với ngân hàng đề thi thật từ các trường Chuyên & Sở GD&ĐT toàn quốc (Niên khóa 2025 - 2026).")
                 audit_trail_data = exam.get("audit_trail", [])
-                portal_info = ree.EXAM_SOURCE_PORTALS.get(subject, ree.EXAM_SOURCE_PORTALS.get("Toán học", {})) if ree else {}
-                portal_name_val = exam.get("portal") or portal_info.get("portal_name", "Kho Khảo Thí Quốc Gia")
+                portal_info = ree.portal_for_subject(subject) if ree else {}
+                portal_name_val = exam.get("portal") or portal_info.get("portal_name") or "Kho Khảo Thí Quốc Gia"
 
                 if not audit_trail_data:
                     audit_trail_data = []

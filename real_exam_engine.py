@@ -183,6 +183,24 @@ EXAM_SOURCE_PORTALS = {
     }
 }
 
+
+def portal_for_subject(subject):
+    """Catalog entry for this subject only. A missing subject does not inherit Toán."""
+    info = EXAM_SOURCE_PORTALS.get(canonical_subject(subject))
+    return dict(info) if isinstance(info, dict) else {}
+
+
+def portal_display_name(subject, fallback="kho đề môn này"):
+    return portal_for_subject(subject).get("portal_name") or fallback
+
+
+def default_subject_scan_url(subject, grade_num):
+    """Prefill for the link scanner. Toán keeps its grade path; other subjects use their own portal or stay blank."""
+    subject = canonical_subject(subject)
+    if subject == "Toán học":
+        return f"https://toanmath.com/de-thi-giua-hk1-toan-{int(grade_num)}"
+    return str(portal_for_subject(subject).get("url") or "")
+
 # ------------------------------------------------------------------------------
 # 2. KHỞI TẠO KHO NGỮ LIỆU CÓ SẴN (BASELINE 2025 - 2026) CHUẨN MA TRẬN QĐ 764
 # ------------------------------------------------------------------------------
@@ -3041,8 +3059,7 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
 
     # Nạp kho câu hỏi thật từ Shard môn học
     pool = get_baseline_questions_pool(subject, grade)
-    portal_info = EXAM_SOURCE_PORTALS.get(subject, {})
-    portal_name = portal_info.get("portal_name", "TOANMATH.com")
+    portal_name = portal_display_name(subject)
 
     if not counts or len(counts) != 3:
         num_p1, num_p2, num_p3 = assessment_profile(subject, grade)["counts"]
@@ -3656,9 +3673,7 @@ def blend_real_exam_with_ai(parsed_exam: dict, subject: str, grade, chosen_topic
         return parsed_exam
         
     pool = get_baseline_questions_pool(subject, grade)
-    portal_info = EXAM_SOURCE_PORTALS.get(subject, {})
-    sample_schools = portal_info.get("sample_schools", ["THPT Phan Bội Châu - Hà Nội", "THPT Chuyên KHTN", "THPT Chuyên Sư Phạm", "THPT Tạ Quang Bửu - Hà Nội", "THPT Lê Hồng Phong - TPHCM"])
-    portal_name = portal_info.get("portal_name", "TOANMATH.com")
+    portal_name = portal_display_name(subject)
     
     # 0. Trích xuất từ khóa chuyên đề nếu người dùng có chọn
     topic_keywords = []
