@@ -57,7 +57,7 @@ class Tram3SocraticGuideTests(unittest.TestCase):
         }, subject="Toán học", grade_num=10)
         self.assertIn("x^2-4x+3", vertex)
         self.assertIn("-\\dfrac{b}{2a}", vertex)
-        self.assertGreaterEqual(vertex.count("\n"), 4)
+        self.assertLessEqual(vertex.count("\n"), 2)
         self.assertNotIn("I(2;-1)", vertex)
         self.assertNotIn("y=-1", vertex)
         self.assertNotIn("Chọn A", vertex)
@@ -82,7 +82,7 @@ class Tram3SocraticGuideTests(unittest.TestCase):
         self.assertNotIn("f(3)", guide)
         self.assertNotIn("=4", compact)
         self.assertNotIn("GTLN =", guide)
-        self.assertGreaterEqual(guide.count("\n"), 5)
+        self.assertLessEqual(guide.count("\n"), 2)
         plain = build_tram3_socratic_guide({
             "q": "Giá trị lớn nhất của hàm số bậc hai y = -x^2 + 6x - 5 trên đoạn [0; 5] bằng bao nhiêu?",
             "ans": "4",
@@ -108,7 +108,7 @@ class Tram3SocraticGuideTests(unittest.TestCase):
         self.assertIn("3", guide)
         self.assertIn("A=P(1+r)", guide.replace(" ", ""))
         self.assertNotIn("119", guide)
-        self.assertGreaterEqual(guide.count("\n"), 3)
+        self.assertLessEqual(guide.count("\n"), 2)
 
     def test_looks_like_explain(self):
         self.assertTrue(looks_like_explain_solution("Vậy chọn phương án B. Đáp án là B."))

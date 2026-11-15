@@ -1,8 +1,8 @@
 # Nhật ký bàn giao — GSAI KHKT 2026
 
 > Ca sau **đọc file này trước** khi sửa Trạm 1 / Trạm 3 / Socratic / JSON đề AI.  
-> Cập nhật: **2026-11-16 ~01:45 giờ VN**. Người ghi: ca trợ lý (theo lệnh anh MINH).  
-> Repo nguồn: `ThayTriCute/CLAUDE_VIPGSAI_KHKT2026`. `main` = **`b0e4f07`** (PR **#123**).  
+> Cập nhật: **2026-11-16 ~02:05 giờ VN**. Người ghi: ca trợ lý (theo lệnh anh MINH).  
+> Repo nguồn: `ThayTriCute/CLAUDE_VIPGSAI_KHKT2026`. `main` trước PR giọng nói này = **`68ae144`** (PR **#124**).  
 > App Cloud: `https://claudevipgsaikhkt2026-bybgceinifcaqggqyyvatx.streamlit.app/`  
 > Worktree máy anh: `D:\CLAUDE_FINAL KHKT 2026\_gh_compare`.
 
@@ -17,7 +17,7 @@ Anh MINH chốt (16/11/2026), áp **mọi môn × mọi khối 6–12**, Trạm 
 1. HD Socratic là **lời thầy bình dân học vụ**: học sinh phải hiểu ngữ liệu câu hỏi **đang bắt làm gì**, **áp dụng công thức / thước đo nào**, **tư duy theo con đường nào** để tự đi tới đáp án.
 2. HD **sát đúng câu AI vừa sinh** (stem + dữ kiện + trụ phương án). Cấm echo chung kiểu “Hướng đi từ đúng ngữ liệu: …” rồi nhắc lại nguyên câu.
 3. **Tuyệt đối không giải hộ, không lộ đáp án:** không gắn chữ A–D, không Đúng/Sai hộ, không đáp số cuối, không thay số ra kết quả, không lấy field `explain` làm HD.
-4. Khung chữ trên UI: **Công thức / hướng (thầy chỉ lối, không giải hộ)** rồi **Con đường tư duy** (tối đa 4 bước; câu khó giữ đủ bước).
+4. Lời HD là **1–2 câu hỏi**, **tối đa 3 dòng**, xưng thầy–em. Cấm tiêu đề máy móc và các chữ: "Ngữ liệu", "Việc 1", "Trích xuất dữ kiện", "Đề cho". Không đánh số bước.
 5. Expander HD **mở được lúc đang làm bài**. `explain` chỉ sau khi nộp.
 6. Tham chiếu kiểu đỡ đẻ: F VIP `computing_context_question` / Maieutics trong `F:\FINAL KHKT 2026\tmp\voice_https_worker\services\socratic_context.py` — học cách hỏi, **không** copy cả app VIP, **không** port wellbeing Trạm 4/5.
 
@@ -26,7 +26,17 @@ Hàm duy nhất: `build_tram3_socratic_guide` (= `build_socratic_guide`) trong `
 
 ---
 
-## 1. Ca gần nhất — đêm 16/11/2026 (đã vào main)
+## 1. Ca gần nhất — giọng HD Socratic (đang mở PR)
+
+Anh chốt lại lời thầy: chỉ hỏi để em tự nhớ công thức, không liệt kê.
+
+- Hàm hiện: `_plain_midwife` trong `services/socratic_context.py`. `build_tram3_socratic_guide` chỉ in tối đa 3 dòng.
+- `T1_CONTEXT_REVISION` = **`2026111605`** (khớp `app.py`).
+- Câu ĐHPT mẫu: hỏi giả thiết chuyển động hỗn loạn, nhiệt độ–tốc độ, khoảng cách–kích thước, lực tương tác; em tự chỉ ý lệch. Không viết “rất mạnh”, không gắn A–D.
+- Test: `test_socratic_stem_bound_multidiscipline` + `test_tram3_socratic_guide` và hồi quy hint = 34 OK.
+- Việc còn: merge PR này, reload Cloud, mở expander câu ĐHPT xem đủ 3 dòng hỏi.
+
+## 1b. Đêm 16/11/2026 đã vào main trước đó
 
 | PR | Merge trên main | Việc |
 |----|-----------------|------|
