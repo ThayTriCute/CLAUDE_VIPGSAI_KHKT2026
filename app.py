@@ -283,6 +283,17 @@ except Exception as _e_ree:
     logging.warning("Không thể nạp real_exam_engine: %s", _e_ree)
     ree = None
 
+
+def _ree_call(name, default, *args, **kwargs):
+    """Call a real_exam_engine helper. A stale Cloud module must not take down Trạm 3."""
+    fn = getattr(ree, name, None) if ree is not None else None
+    if not callable(fn):
+        return default
+    try:
+        return fn(*args, **kwargs)
+    except Exception:
+        return default
+
 try:
     import precision_visual_engine as pve
 except Exception as _e_pve:
@@ -14725,7 +14736,9 @@ if selected_station == station_labels[2]:
 
     if st.session_state.exam_state == "config":
 
-        portal_info = ree.portal_for_subject(subject) if ree else {}
+        portal_info = _ree_call("portal_for_subject", {}, subject)
+        if not isinstance(portal_info, dict):
+            portal_info = {}
 
         portal_name_ui = portal_info.get("portal_name") or "kho đề môn này"
 
@@ -15071,7 +15084,7 @@ if selected_station == station_labels[2]:
 
                     "📤 Nạp & Trộn Đề Word (.docx) / PDF",
 
-                    f"🌐 Quét Đề Link ({ree.portal_display_name(subject, 'link tùy chỉnh') if ree else 'link tùy chỉnh'})"
+                    f"🌐 Quét Đề Link ({_ree_call('portal_display_name', 'link tùy chỉnh', subject, 'link tùy chỉnh')})"
 
                 ]
 
@@ -15420,7 +15433,7 @@ if selected_station == station_labels[2]:
 
                 elif "Quét Đề Link" in selected_exam_mode:
 
-                    _scan_portal = ree.portal_display_name(subject, "") if ree else ""
+                    _scan_portal = _ree_call("portal_display_name", "", subject, "")
                     st.markdown(f"##### 🌐 Quét Đề Từ Link{(' — ' + _scan_portal) if _scan_portal else ''}:")
 
                     c_src1, c_src2 = st.columns([1.1, 2.3])
@@ -15431,7 +15444,7 @@ if selected_station == station_labels[2]:
 
                             "Chọn chuyên trang / Nguồn link:",
 
-                            ree.link_scan_sources(subject) if ree else ["🔗 Link tùy chỉnh"],
+                            _ree_call("link_scan_sources", ["🔗 Link tùy chỉnh"], subject) or ["🔗 Link tùy chỉnh"],
 
                             key=f"sel_portal_type_t3_{current_context_key}"
 
@@ -15439,7 +15452,7 @@ if selected_station == station_labels[2]:
 
                     with c_src2:
 
-                        default_link = ree.link_scan_default_url(subject, grade_num, target_source_type) if ree else ""
+                        default_link = _ree_call("link_scan_default_url", "", subject, grade_num, target_source_type)
 
                         user_target_url = st.text_input("Nhập Link bài viết / chuyên mục / Google Drive:", value=default_link, key=f"inp_target_url_t3_{current_context_key}")
 
@@ -16125,7 +16138,7 @@ if selected_station == station_labels[2]:
 
             with st.expander(f"🔍 Quét & Trích Xuất Ngữ Liệu Trực Tiếp Từ Link Đề Thi ({portal_name_ui})", expanded=False):
 
-                def_cat_url = ree.default_subject_scan_url(subject, grade_num) if ree else ""
+                def_cat_url = _ree_call("default_subject_scan_url", "", subject, grade_num)
 
                 custom_scan_url = st.text_input("Nhập Link Chuyên Mục hoặc Link Bài Viết:", value=def_cat_url, key=f"inp_crawl_url_{current_context_key}")
 
@@ -17239,7 +17252,9 @@ if selected_station == station_labels[2]:
             else:
                 st.info("📋 **Minh bạch xuất xứ & Pháp chế khảo thí:** Bảng kê định danh toàn bộ câu hỏi đối chiếu với ngân hàng đề thi thật từ các trường Chuyên & Sở GD&ĐT toàn quốc (Niên khóa 2025 - 2026).")
                 audit_trail_data = exam.get("audit_trail", [])
-                portal_info = ree.portal_for_subject(subject) if ree else {}
+                portal_info = _ree_call("portal_for_subject", {}, subject)
+                if not isinstance(portal_info, dict):
+                    portal_info = {}
                 portal_name_val = exam.get("portal") or portal_info.get("portal_name") or "Kho Khảo Thí Quốc Gia"
 
                 if not audit_trail_data:
