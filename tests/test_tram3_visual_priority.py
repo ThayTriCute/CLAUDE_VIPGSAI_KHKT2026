@@ -9,9 +9,12 @@ from pathlib import Path
 class VisualPrioritySourceTests(unittest.TestCase):
     def test_question_visual_html_prefers_coeff_graph_over_crop(self):
         text = Path(__file__).resolve().parents[1].joinpath("app.py").read_text(encoding="utf-8")
-        start = text.index("def question_visual_html(question):")
+        # Signature may include optional exam_print=… (print profile); keep prefix match.
+        marker = "def question_visual_html(question"
+        start = text.index(marker)
         end = text.index("\ndef latex_text(value):", start)
         fn = text[start:end]
+        self.assertIn("exam_print", text[start:text.index("):", start) + 2])
         coeff_pos = fn.find("render_math_graph_to_webp_base64")
         crop_pos = fn.find("Hình nguồn (chỉ khi chưa có đồ thị phục dựng)")
         self.assertGreater(coeff_pos, 0)
