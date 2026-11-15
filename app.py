@@ -284,6 +284,24 @@ except Exception as _e_ree:
     ree = None
 
 
+# Portal/link helpers ship with real_exam_engine (#107+). Cloud may briefly run a
+# newer app.py against a stale engine; keep Trạm 3 up and surface the mismatch.
+_REE_PORTAL_HELPERS = (
+    "portal_for_subject",
+    "portal_display_name",
+    "link_scan_sources",
+    "link_scan_default_url",
+    "default_subject_scan_url",
+)
+_REE_PORTAL_HELPERS_OK = bool(ree) and all(
+    callable(getattr(ree, name, None)) for name in _REE_PORTAL_HELPERS
+)
+_LINK_SCAN_SOURCES_FALLBACK = [
+    "🔗 Link tùy chỉnh",
+    "👥 Facebook (Bài viết / Link Drive)",
+]
+
+
 def _ree_call(name, default, *args, **kwargs):
     """Call a real_exam_engine helper. A stale Cloud module must not take down Trạm 3."""
     fn = getattr(ree, name, None) if ree is not None else None
@@ -291,8 +309,32 @@ def _ree_call(name, default, *args, **kwargs):
         return default
     try:
         return fn(*args, **kwargs)
-    except Exception:
+    except Exception as exc:
+        logging.warning("real_exam_engine.%s failed: %s", name, exc)
         return default
+
+
+def _tram3_link_scan_sources(subject):
+    """Subject-scoped Quét Link sources; never inherit a Toán-only picker."""
+    sources = _ree_call("link_scan_sources", list(_LINK_SCAN_SOURCES_FALLBACK), subject)
+    if not sources:
+        sources = list(_LINK_SCAN_SOURCES_FALLBACK)
+    return list(sources)
+
+
+def _tram3_link_helpers_mismatch(subject, sources):
+    """True when Cloud/app is missing portal helpers that this subject needs."""
+    if not _REE_PORTAL_HELPERS_OK:
+        return True
+    subject_name = str(subject or "")
+    joined = " ".join(str(s) for s in (sources or []))
+    if subject_name == "Toán học":
+        return "TOANMATH" not in joined
+    # Subjects with a catalog portal should not collapse to custom-only.
+    portal_name = str(_ree_call("portal_display_name", "", subject_name, "") or "")
+    if portal_name and portal_name not in joined and len(sources or []) <= 2:
+        return True
+    return False
 
 try:
     import precision_visual_engine as pve
@@ -15434,7 +15476,14 @@ if selected_station == station_labels[2]:
                 elif "Quét Đề Link" in selected_exam_mode:
 
                     _scan_portal = _ree_call("portal_display_name", "", subject, "")
+                    _link_sources = _tram3_link_scan_sources(subject)
                     st.markdown(f"##### 🌐 Quét Đề Từ Link{(' — ' + _scan_portal) if _scan_portal else ''}:")
+                    if _tram3_link_helpers_mismatch(subject, _link_sources):
+                        st.warning(
+                            "Cloud đang thiếu helper chuyên trang Quét Link "
+                            f"(engine `{getattr(ree, 'PORTAL_LINK_HELPERS_VERSION', 'missing')}`). "
+                            "Reboot/redeploy từ `main` để Toán hiện TOANMATH và các môn khác hiện đúng portal."
+                        )
 
                     c_src1, c_src2 = st.columns([1.1, 2.3])
 
@@ -15444,7 +15493,7 @@ if selected_station == station_labels[2]:
 
                             "Chọn chuyên trang / Nguồn link:",
 
-                            _ree_call("link_scan_sources", ["🔗 Link tùy chỉnh"], subject) or ["🔗 Link tùy chỉnh"],
+                            _link_sources,
 
                             key=f"sel_portal_type_t3_{current_context_key}"
 
