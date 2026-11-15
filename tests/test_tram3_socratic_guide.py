@@ -73,6 +73,8 @@ class Tram3SocraticGuideTests(unittest.TestCase):
         self.assertIn("f(0)", compact)
         self.assertIn("f(5)", compact)
         self.assertIn("(0;5)", compact)
+        self.assertIn("-\\dfrac{b}{2a}", guide)
+        self.assertIn("hàm bậc hai", guide.lower())
         self.assertNotIn("[a;b]", guide)
         self.assertNotIn("Các số liệu", guide)
         self.assertNotIn("không phải explain", guide.lower())
@@ -80,7 +82,7 @@ class Tram3SocraticGuideTests(unittest.TestCase):
         self.assertNotIn("f(3)", guide)
         self.assertNotIn("=4", compact)
         self.assertNotIn("GTLN =", guide)
-        self.assertGreaterEqual(guide.count("\n"), 4)
+        self.assertGreaterEqual(guide.count("\n"), 5)
         plain = build_tram3_socratic_guide({
             "q": "Giá trị lớn nhất của hàm số bậc hai y = -x^2 + 6x - 5 trên đoạn [0; 5] bằng bao nhiêu?",
             "ans": "4",

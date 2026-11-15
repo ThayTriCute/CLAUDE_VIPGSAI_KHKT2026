@@ -2,12 +2,34 @@
 import json
 import re
 
+DUP_KEY_MESSAGE = "JSON có khóa trùng; chưa sử dụng vì có thể làm mất câu hỏi."
+
+# Prompt contract for exam JSON: forbid duplicate keys in every object.
+JSON_UNIQUE_KEYS_RULE = (
+    "Mỗi object JSON chỉ dùng mỗi khóa một lần "
+    "(không lặp p1, p2, p3, q, opt, ans, stmts, code, hay khóa lồng nhau). "
+    "Chỉ một root object; không markdown, không văn bản ngoài JSON."
+)
+
+JSON_CLEAN_RETRY_SUFFIX = (
+    "\n[RETRY — JSON SẠCH]\n"
+    "Bản trước bị từ chối vì khóa JSON trùng. "
+    "Xuất LẠI đúng một JSON hợp lệ theo schema; "
+    "trong mỗi object mỗi khóa xuất hiện đúng một lần. "
+    "Không markdown, không giải thích ngoài JSON."
+)
+
+
+def is_duplicate_key_error(exc_or_msg) -> bool:
+    text = str(exc_or_msg or "").casefold()
+    return "khóa trùng" in text or "khoa trung" in text
+
 
 def _unique_object(pairs):
     result = {}
     for key, value in pairs:
         if key in result:
-            raise ValueError("JSON có khóa trùng; chưa sử dụng vì có thể làm mất câu hỏi.")
+            raise ValueError(DUP_KEY_MESSAGE)
         result[key] = value
     return result
 
