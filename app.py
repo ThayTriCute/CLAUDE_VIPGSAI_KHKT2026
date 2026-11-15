@@ -15938,10 +15938,14 @@ if selected_station == station_labels[2]:
                             st.rerun()
 
                         except Exception as e:
-
-                            st.error(f"Lỗi khởi tạo đề thi: {e}")
-
-
+                            err = str(e)
+                            st.error(f"Lỗi khởi tạo đề thi: {err}")
+                            if "khóa trùng" in err.casefold() or "json" in err.casefold():
+                                st.info(
+                                    "AI trả JSON chưa sạch (thường trùng khóa). "
+                                    "Không phải lỗi merge/deploy. "
+                                    "Bấm **Trộn Siêu Đề Mới (Kho Ngân…)** để lấy đề trong kho, hoặc thử lại AI."
+                                )
 
         with tab_giao_vien:
 
