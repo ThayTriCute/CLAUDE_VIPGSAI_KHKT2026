@@ -42,6 +42,23 @@ def supplied_bbt_rows(raw):
     return rows
 
 
+def export_bbt_rows(raw):
+    """Return existing alignment and a supplied excluded right endpoint flag."""
+    aligned = aligned_bbt_rows(raw)
+    if aligned is not None:
+        return aligned, False
+    rows = supplied_bbt_rows(raw)
+    if len(rows) != 3 or not rows[-1]:
+        return None, False
+    end = rows[-1][-1].strip()
+    if (not end.endswith("||") or not end[:-2].strip()
+            or re.search(r'inf|∞', end, re.I)):
+        return None, False
+    rows[-1][-1] = end[:-2].strip()
+    aligned = aligned_bbt_rows("\n".join(" | ".join(row) for row in rows))
+    return aligned, aligned is not None
+
+
 def missing_asymptote_limits(raw):
     rows = supplied_bbt_rows(raw)
     return bool(len(rows) == 3 and any(cell.replace('$', '').strip() == '||' for cell in rows[2][1:]))

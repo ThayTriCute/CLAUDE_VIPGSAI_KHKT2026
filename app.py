@@ -3892,20 +3892,22 @@ def render_question_source_badge(q, idx=None):
 
 
 
-def question_visual_html(question):
+def question_visual_html(question, exam_print=False):
     """Render only supplied visual data; never guess a new graph from an answer.
 
     Ưu tiên hình phục dựng (BBT WebP/SVG, SVG môn khác, đồ thị từ hệ số f/tikz);
     ảnh cắt đề (image_base64 scan) chỉ khi không dựng được hình cấu trúc — một luồng, không chồng kép.
+    exam_print=True: profile xuất in (đen–trắng), không đổi dữ kiện hình.
     """
     pieces = []
     raw_bbt = str(question.get("bbt") or "").strip()
     if raw_bbt and raw_bbt.lower() not in {"null", "none", "{}"}:
         b64_bbt = ""
-        try:
-            b64_bbt = render_bbt_to_webp_base64(raw_bbt) or ""
-        except Exception:
-            b64_bbt = ""
+        if not exam_print:
+            try:
+                b64_bbt = render_bbt_to_webp_base64(raw_bbt) or ""
+            except Exception:
+                b64_bbt = ""
         if b64_bbt:
             pieces.append(
                 "<div style='display:flex;justify-content:center;margin:8px auto'>"
@@ -3922,10 +3924,16 @@ def question_visual_html(question):
                 svg_or_html = _build_svg_bbt_from_rows(*safe_rows) or ""
             if not svg_or_html:
                 try:
-                    svg_or_html = format_pedagogical_bbt_html(raw_bbt, is_dark_mode=True) or ""
+                    svg_or_html = format_pedagogical_bbt_html(raw_bbt, is_dark_mode=not exam_print) or ""
                 except Exception:
                     svg_or_html = ""
             if svg_or_html:
+                if exam_print:
+                    try:
+                        from services.exam_print_style import exam_bbt_html
+                        svg_or_html = exam_bbt_html(svg_or_html)
+                    except Exception:
+                        pass
                 pieces.append(svg_or_html)
             else:
                 safe_txt = re.sub(r'\\+nearrow\b|\\nearrow', '↗', raw_bbt)
@@ -3942,7 +3950,16 @@ def question_visual_html(question):
     for visual_key in ("composite_visual", "geom_3d", "thermal_pv_visual", "food_web_visual"):
         visual = question.get(visual_key)
         if isinstance(visual, dict) and visual.get("svg"):
-            pieces.append(sanitize_svg_for_markdown(str(visual["svg"])))
+            svg_text = str(visual["svg"])
+            if exam_print:
+                try:
+                    from services.exam_print_style import DRAWING_METHODS, exam_svg
+                    method = (question.get("visual_recovery") or {}).get("method")
+                    if method in DRAWING_METHODS:
+                        svg_text = exam_svg(svg_text)
+                except Exception:
+                    pass
+            pieces.append(sanitize_svg_for_markdown(svg_text))
     function = question.get("f")
     required = {"func_3": {"a", "b", "c", "d"}, "cubic": {"a", "b", "c", "d"}, "func_1_1": {"a", "b", "c", "d"}, "func_2_1": {"a", "b", "c", "d", "e"}, "parabola": {"a", "b", "c"}, "func_2": {"a", "b", "c"}}
     coeff_ok = isinstance(function, dict) and function.get("type") in required and required[function["type"]] <= function.keys()
@@ -4344,8 +4361,8 @@ def build_exam_exports(exam, subject_name, grade_name, duration, include_answers
             else:
                 p_text_html = f"{src_html}<p style='margin: 0 0 4px 0; line-height: 1.42;'><b>Câu {index}.</b> {source_text_html(raw_q_text)}</p>"
 
-            # 2. Trực quan hóa hình ảnh
-            vis_html = question_visual_html(q)
+            # 2. Trực quan hóa hình ảnh (profile xuất in tách khỏi UI luyện tập)
+            vis_html = question_visual_html(q, exam_print=True)
 
             # 3. THUẬT TOÁN TỰ ĐỘNG ĐO ĐỘ DÀI 4 PHƯƠNG ÁN CHUẨN BỘ GD&ĐT
             opts_html = ""
@@ -14847,11 +14864,28 @@ if selected_station == station_labels[2]:
                             width="stretch"
                         )
                     st.caption("✅ **Tương thích 100% Azota, Shub Classroom, K12Online:** Tự động bọc `$$...$$` cho toàn bộ công thức toán học và tạo khối BẢNG ĐÁP ÁN nhận diện quang học cuối trang.")
+                    st.caption("Bản Word nhúng bảng biến thiên đủ dữ kiện và ảnh đã xác nhận chỉ chứa hình. Kiểm các câu dẫn hình trước khi phát hành.")
+                    try:
+                        from services.azota_visual_sources import export_azota_visual_sources
+                        _azota_payload = dict(exam_obj) if isinstance(exam_obj, dict) else {}
+                        _azota_payload.setdefault("subject", subject_nm)
+                        _azota_payload.setdefault("grade", grade_nm)
+                        visual_sources = export_azota_visual_sources(_azota_payload)
+                    except Exception:
+                        visual_sources = ""
+                    if visual_sources:
+                        st.download_button(
+                            "Tải mã TikZ của hình và bảng biến thiên (.tex)",
+                            visual_sources.encode("utf-8"),
+                            f"Hinh_TikZ_{ex_c}_{subject_nm}.tex",
+                            "text/plain",
+                            key=f"{key_prefix}_dl_azota_tikz",
+                        )
+                        st.caption("Mã được ghi theo phần và số câu để biên tập từng hình. Kiểm lại hình trong bản xem trước Azota trước khi phát hành.")
                     with st.expander("👁️ Xem trước nội dung file Azota (.txt)", expanded=False):
                         st.code(azota_txt[:3000] + ("\n... [Còn tiếp]" if len(azota_txt) > 3000 else ""), language="markdown")
                 else:
                     st.info("Chức năng xuất Azota đang được nạp...")
-
             with tab_json:
 
                 st.download_button(
