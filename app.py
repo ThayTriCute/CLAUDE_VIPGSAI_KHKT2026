@@ -284,8 +284,9 @@ except Exception as _e_ree:
     ree = None
 
 
-# Portal/link helpers ship with real_exam_engine (#107+). Cloud may briefly run a
-# newer app.py against a stale engine; keep Trạm 3 up and surface the mismatch.
+# Portal/link helpers ship with real_exam_engine (#107+). Cloud may run a newer
+# app.py against a stale engine: keep Trạm 3 up and answer Quét Link from a
+# local fallback so Toán/Tin never collapse to custom-only.
 _REE_PORTAL_HELPERS = (
     "portal_for_subject",
     "portal_display_name",
@@ -300,6 +301,23 @@ _LINK_SCAN_SOURCES_FALLBACK = [
     "🔗 Link tùy chỉnh",
     "👥 Facebook (Bài viết / Link Drive)",
 ]
+# Minimal catalog used only when engine helpers are missing (same hosts as ree).
+_APP_PORTAL_CATALOG = {
+    "Toán học": {"portal_name": "TOANMATH.com", "url": "https://toanmath.com"},
+    "Vật lý": {"portal_name": "Thư Viện Vật Lý & KHTN Chuyên", "url": "https://thuvienvatly.com"},
+    "Hóa học": {"portal_name": "Hóa Học Ngày Nay (IUPAC 2018)", "url": "https://hoahoc.org"},
+    "Sinh học": {"portal_name": "Sinh Học THPT KNTT", "url": "https://sinhhocvietnam.com"},
+    "Tiếng Anh": {"portal_name": "Chuyên Đề Tiếng Anh Khảo Thí 40 Câu (CEFR)", "url": "https://tailieudieuky.me"},
+    "Ngữ văn": {"portal_name": "Kho Khảo Thí Ngữ Văn Đổi Mới (CV 3175)", "url": "https://nguvan2018.edu.vn"},
+    "Lịch sử": {"portal_name": "Kho Khảo Thí Lịch Sử & Xã Hội CT 2018", "url": "https://thuvienlichsu.vn"},
+    "Địa lí": {"portal_name": "Chuyên Trang Khảo Thí Địa Lí Việt Nam", "url": "https://diali2018.edu.vn"},
+    "Địa lý": {"portal_name": "Chuyên Trang Khảo Thí Địa Lí Việt Nam", "url": "https://diali2018.edu.vn"},
+    "Tin học": {"portal_name": "Khảo Thí Tin Học & Python THPT 2018", "url": "https://tinhoc2018.edu.vn"},
+    "Công nghệ": {"portal_name": "Khảo Thí Công Nghệ Kỹ Thuật GDPT", "url": "https://congnghe2018.edu.vn"},
+    "GDKT&PL": {"portal_name": "Khảo Thí Giáo Dục Kinh Tế & Pháp Luật", "url": "https://gdktpl2018.edu.vn"},
+    "Giáo dục kinh tế và pháp luật": {"portal_name": "Khảo Thí Giáo Dục Kinh Tế & Pháp Luật", "url": "https://gdktpl2018.edu.vn"},
+    "Giáo dục công dân": {"portal_name": "Khảo Thí Giáo Dục Kinh Tế & Pháp Luật", "url": "https://gdktpl2018.edu.vn"},
+}
 
 
 def _ree_call(name, default, *args, **kwargs):
@@ -314,24 +332,106 @@ def _ree_call(name, default, *args, **kwargs):
         return default
 
 
+def _portal_entry(subject):
+    """Catalog row for this subject. Prefer engine helpers, then engine dict, then app copy."""
+    info = _ree_call("portal_for_subject", None, subject)
+    if isinstance(info, dict) and info:
+        return dict(info)
+    try:
+        key = canonical_subject(subject)
+    except Exception:
+        key = str(subject or "").strip()
+    engine_map = getattr(ree, "EXAM_SOURCE_PORTALS", None) if ree is not None else None
+    if isinstance(engine_map, dict):
+        row = engine_map.get(key)
+        if isinstance(row, dict) and row:
+            return dict(row)
+    row = _APP_PORTAL_CATALOG.get(key)
+    return dict(row) if isinstance(row, dict) else {}
+
+
+def _portal_display_name_safe(subject, fallback="link tùy chỉnh"):
+    name = _ree_call("portal_display_name", None, subject, fallback)
+    if name:
+        return str(name)
+    return str(_portal_entry(subject).get("portal_name") or fallback)
+
+
+def _default_subject_scan_url_safe(subject, grade_num):
+    url = _ree_call("default_subject_scan_url", None, subject, grade_num)
+    if url is not None and str(url) != "":
+        return str(url)
+    if url == "":
+        # Helper exists and correctly returned blank (e.g. KHTN).
+        if _REE_PORTAL_HELPERS_OK:
+            return ""
+    try:
+        key = canonical_subject(subject)
+        grade = int(grade_num)
+    except Exception:
+        key = str(subject or "").strip()
+        grade = grade_num
+    if key == "Toán học":
+        return f"https://toanmath.com/de-thi-giua-hk1-toan-{grade}"
+    return str(_portal_entry(subject).get("url") or "")
+
+
 def _tram3_link_scan_sources(subject):
     """Subject-scoped Quét Link sources; never inherit a Toán-only picker."""
-    sources = _ree_call("link_scan_sources", list(_LINK_SCAN_SOURCES_FALLBACK), subject)
-    if not sources:
-        sources = list(_LINK_SCAN_SOURCES_FALLBACK)
-    return list(sources)
+    sources = _ree_call("link_scan_sources", None, subject)
+    if sources:
+        return list(sources)
+    try:
+        key = canonical_subject(subject)
+    except Exception:
+        key = str(subject or "").strip()
+    options = []
+    if key == "Toán học":
+        options.extend(["🏛️ TOANMATH.com", "📐 MATHVN.com"])
+    else:
+        own = _portal_entry(subject)
+        if own.get("url"):
+            options.append(str(own.get("portal_name") or "Chuyên trang môn này"))
+    options.extend(list(_LINK_SCAN_SOURCES_FALLBACK))
+    return options
+
+
+def _tram3_link_scan_default_url(subject, grade_num, source_label):
+    url = _ree_call("link_scan_default_url", None, subject, grade_num, source_label)
+    if url is not None:
+        # Distinguish missing-helper (None) from intentional blank custom URL ("").
+        if _REE_PORTAL_HELPERS_OK or url != "":
+            return str(url)
+        label_probe = str(source_label or "")
+        if "tùy chỉnh" in label_probe.casefold() or "Facebook" in label_probe:
+            return str(url)
+    label = str(source_label or "")
+    try:
+        key = canonical_subject(subject)
+        grade = int(grade_num)
+    except Exception:
+        key = str(subject or "").strip()
+        grade = grade_num
+    if "MATHVN" in label:
+        if key == "Toán học" and int(grade) == 12:
+            return "https://www.mathvn.com/2024/10/de-thi-giua-hoc-ki-1-toan-12-nam-hoc-2024-2025.html"
+        return ""
+    if "Facebook" in label:
+        return "https://drive.google.com/file/d/... (hoặc link bài viết Facebook)"
+    if "tùy chỉnh" in label.casefold():
+        return ""
+    return _default_subject_scan_url_safe(subject, grade_num)
 
 
 def _tram3_link_helpers_mismatch(subject, sources):
-    """True when Cloud/app is missing portal helpers that this subject needs."""
+    """True when engine helpers are missing (fallback path is active)."""
     if not _REE_PORTAL_HELPERS_OK:
         return True
     subject_name = str(subject or "")
     joined = " ".join(str(s) for s in (sources or []))
     if subject_name == "Toán học":
         return "TOANMATH" not in joined
-    # Subjects with a catalog portal should not collapse to custom-only.
-    portal_name = str(_ree_call("portal_display_name", "", subject_name, "") or "")
+    portal_name = _portal_display_name_safe(subject_name, "")
     if portal_name and portal_name not in joined and len(sources or []) <= 2:
         return True
     return False
@@ -15126,7 +15226,7 @@ if selected_station == station_labels[2]:
 
                     "📤 Nạp & Trộn Đề Word (.docx) / PDF",
 
-                    f"🌐 Quét Đề Link ({_ree_call('portal_display_name', 'link tùy chỉnh', subject, 'link tùy chỉnh')})"
+                    f"🌐 Quét Đề Link ({_portal_display_name_safe(subject, 'link tùy chỉnh')})"
 
                 ]
 
@@ -15475,14 +15575,13 @@ if selected_station == station_labels[2]:
 
                 elif "Quét Đề Link" in selected_exam_mode:
 
-                    _scan_portal = _ree_call("portal_display_name", "", subject, "")
+                    _scan_portal = _portal_display_name_safe(subject, "")
                     _link_sources = _tram3_link_scan_sources(subject)
                     st.markdown(f"##### 🌐 Quét Đề Từ Link{(' — ' + _scan_portal) if _scan_portal else ''}:")
-                    if _tram3_link_helpers_mismatch(subject, _link_sources):
-                        st.warning(
-                            "Cloud đang thiếu helper chuyên trang Quét Link "
-                            f"(engine `{getattr(ree, 'PORTAL_LINK_HELPERS_VERSION', 'missing')}`). "
-                            "Reboot/redeploy từ `main` để Toán hiện TOANMATH và các môn khác hiện đúng portal."
+                    if not _REE_PORTAL_HELPERS_OK:
+                        st.caption(
+                            "Đang dùng bản dự phòng Quét Link trong app "
+                            f"(engine `{getattr(ree, 'PORTAL_LINK_HELPERS_VERSION', 'cũ/thiếu helper')}`)."
                         )
 
                     c_src1, c_src2 = st.columns([1.1, 2.3])
@@ -15501,7 +15600,7 @@ if selected_station == station_labels[2]:
 
                     with c_src2:
 
-                        default_link = _ree_call("link_scan_default_url", "", subject, grade_num, target_source_type)
+                        default_link = _tram3_link_scan_default_url(subject, grade_num, target_source_type)
 
                         user_target_url = st.text_input("Nhập Link bài viết / chuyên mục / Google Drive:", value=default_link, key=f"inp_target_url_t3_{current_context_key}")
 
@@ -16187,7 +16286,7 @@ if selected_station == station_labels[2]:
 
             with st.expander(f"🔍 Quét & Trích Xuất Ngữ Liệu Trực Tiếp Từ Link Đề Thi ({portal_name_ui})", expanded=False):
 
-                def_cat_url = _ree_call("default_subject_scan_url", "", subject, grade_num)
+                def_cat_url = _default_subject_scan_url_safe(subject, grade_num)
 
                 custom_scan_url = st.text_input("Nhập Link Chuyên Mục hoặc Link Bài Viết:", value=def_cat_url, key=f"inp_crawl_url_{current_context_key}")
 
