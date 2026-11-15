@@ -46,9 +46,13 @@ class Tram3NguVanAppTest(unittest.TestCase):
         return at
 
     def test_config_essay_mode_hides_mcq_counts(self):
-        for grade_label in ("Lớp 6", "Lớp 9", "Lớp 12"):
+        from tests.test_tram3_blend_button_apptest import _assert_subject_topics
+
+        for grade in range(6, 13):
+            grade_label = f"Lớp {grade}"
             with self.subTest(grade=grade_label):
                 at = self._open(grade_label)
+                _assert_subject_topics(self, at, "Ngữ văn", grade)
                 infos = " ".join(str(i.value) for i in at.info)
                 self.assertIn("Tự luận", infos)
                 mcq_labels = [n.label for n in at.number_input if "TN P.I" in n.label or "Đ/S P.II" in n.label]
