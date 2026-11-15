@@ -70,12 +70,16 @@ class Tram3SocraticGuideTests(unittest.TestCase):
         compact = guide.replace(" ", "")
         self.assertIn("-x^2+6x-5", compact)
         self.assertIn("[0;5]", compact)
+        self.assertIn("f(0)", compact)
+        self.assertIn("f(5)", compact)
+        self.assertIn("(0;5)", compact)
         self.assertNotIn("[a;b]", guide)
         self.assertNotIn("Các số liệu", guide)
         self.assertNotIn("không phải explain", guide.lower())
         self.assertNotIn("x=3", compact)
         self.assertNotIn("f(3)", guide)
         self.assertNotIn("=4", compact)
+        self.assertNotIn("GTLN =", guide)
         self.assertGreaterEqual(guide.count("\n"), 4)
         plain = build_tram3_socratic_guide({
             "q": "Giá trị lớn nhất của hàm số bậc hai y = -x^2 + 6x - 5 trên đoạn [0; 5] bằng bao nhiêu?",
@@ -84,7 +88,11 @@ class Tram3SocraticGuideTests(unittest.TestCase):
         plain_compact = plain.replace(" ", "")
         self.assertIn("-x^2+6x-5", plain_compact)
         self.assertIn("[0;5]", plain_compact)
+        self.assertIn("f(0)", plain_compact)
+        self.assertIn("f(5)", plain_compact)
+        self.assertIn("(0;5)", plain_compact)
         self.assertNotIn("=4", plain_compact)
+        self.assertNotIn("f(3)", plain)
 
     def test_compound_interest_uses_given_data_without_result(self):
         guide = build_tram3_socratic_guide({
