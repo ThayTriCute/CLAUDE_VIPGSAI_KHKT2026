@@ -60,6 +60,8 @@ class Tram3LinkPortalAppTest(unittest.TestCase):
         khtn = self._link_url(at, "Khoa học tự nhiên")
         self.assertNotIn("toanmath", khtn.lower())
         self.assertEqual(khtn, "")
+        src = next(s for s in at.selectbox if "Chọn chuyên trang" in s.label)
+        self.assertNotIn("TOANMATH", str(src.options[0]))
 
         next(s for s in at.selectbox if s.label == "📚 Môn học cần hỗ trợ:").select("Lịch sử & Địa lý").run(timeout=90)
         lsdl = self._link_url(at, "Lịch sử & Địa lý")
@@ -69,6 +71,9 @@ class Tram3LinkPortalAppTest(unittest.TestCase):
         next(s for s in at.selectbox if s.label == "📚 Môn học cần hỗ trợ:").select("Ngữ văn").run(timeout=90)
         van = self._link_url(at, "Ngữ văn")
         self.assertEqual(van, "https://nguvan2018.edu.vn")
+        src = next(s for s in at.selectbox if "Chọn chuyên trang" in s.label)
+        self.assertNotIn("TOANMATH", str(src.options[0]))
+        self.assertIn("Ngữ Văn", str(src.options[0]))
 
 
 if __name__ == "__main__":

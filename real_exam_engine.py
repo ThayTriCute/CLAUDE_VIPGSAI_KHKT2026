@@ -201,6 +201,35 @@ def default_subject_scan_url(subject, grade_num):
         return f"https://toanmath.com/de-thi-giua-hk1-toan-{int(grade_num)}"
     return str(portal_for_subject(subject).get("url") or "")
 
+
+def link_scan_sources(subject):
+    """Source picker for this subject. Toán sites are not the default for another subject."""
+    subject = canonical_subject(subject)
+    own = portal_for_subject(subject)
+    options = []
+    if subject == "Toán học":
+        options.extend(["🏛️ TOANMATH.com", "📐 MATHVN.com"])
+    elif own.get("url"):
+        options.append(str(own.get("portal_name") or "Chuyên trang môn này"))
+    options.append("🔗 Link tùy chỉnh")
+    options.append("👥 Facebook (Bài viết / Link Drive)")
+    return options
+
+
+def link_scan_default_url(subject, grade_num, source_label):
+    """URL that belongs to the selected source and this subject/grade."""
+    subject = canonical_subject(subject)
+    label = str(source_label or "")
+    if "MATHVN" in label:
+        if subject == "Toán học" and int(grade_num) == 12:
+            return "https://www.mathvn.com/2024/10/de-thi-giua-hoc-ki-1-toan-12-nam-hoc-2024-2025.html"
+        return ""
+    if "Facebook" in label:
+        return "https://drive.google.com/file/d/... (hoặc link bài viết Facebook)"
+    if "tùy chỉnh" in label.casefold():
+        return ""
+    return default_subject_scan_url(subject, grade_num)
+
 # ------------------------------------------------------------------------------
 # 2. KHỞI TẠO KHO NGỮ LIỆU CÓ SẴN (BASELINE 2025 - 2026) CHUẨN MA TRẬN QĐ 764
 # ------------------------------------------------------------------------------
