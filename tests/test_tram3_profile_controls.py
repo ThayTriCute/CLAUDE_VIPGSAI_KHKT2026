@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import unittest
 
+from data.curriculum_data import BIGDATA_CURRICULUM
 from services.academic_context import subjects_for_grade
-from services.curriculum_policy import assessment_profile
+from services.curriculum_policy import assessment_profile, exam_generation_request
 from services.scoring_service import grade_exam_by_profile, part2_ladder_caption
 
 
@@ -40,6 +41,32 @@ class Tram3ProfileControlsTests(unittest.TestCase):
                 scored = grade_exam_by_profile(empty, {}, subject, grade)
                 self.assertEqual(scored["total"], 0.0)
         self.assertEqual(issues, [], msg="; ".join(issues))
+
+    def test_ai_exam_request_names_this_subject_grade_and_topic(self):
+        seen = {}
+        for grade in range(6, 13):
+            for subject in subjects_for_grade(grade):
+                topics = BIGDATA_CURRICULUM[subject][grade]
+                self.assertTrue(topics, msg=f"thiếu chủ đề {subject} L{grade}")
+                self.assertTrue(all(str(t).strip() for t in topics))
+                signature = tuple(topics)
+                self.assertNotEqual(
+                    seen.get((grade, signature)),
+                    subject,
+                )
+                previous = seen.setdefault((grade, signature), subject)
+                self.assertEqual(previous, subject, msg=f"{subject} L{grade} trùng chủ đề với {previous}")
+                chosen = [f"[Lớp {grade}] {topics[0]}"]
+                counts = assessment_profile(subject, grade)["counts"]
+                system, prompt = exam_generation_request(subject, grade, chosen, counts, "1001", "không lộ đáp án")
+                blob = system + "\n" + prompt
+                self.assertIn(subject, blob)
+                self.assertIn(str(grade), blob)
+                self.assertIn(topics[0], blob)
+                self.assertIn("không lộ đáp án", blob)
+        for subject, grade in (("Vật lý", 8), ("Khoa học tự nhiên", 12), ("Lịch sử & Địa lý", 10)):
+            with self.assertRaises(ValueError):
+                exam_generation_request(subject, grade, ["lạc môn"], (1, 0, 0), "1")
 
     def test_thcs_integrated_vs_thpt_split(self):
         self.assertIn("Khoa học tự nhiên", subjects_for_grade(7))
