@@ -3,7 +3,7 @@ import re
 
 from services.academic_context import canonical_subject, folded
 
-T1_CONTEXT_REVISION = 2026110901
+T1_CONTEXT_REVISION = 2026111601
 
 
 def complete_verified_quote_reference(reply, references):
@@ -357,23 +357,150 @@ def _question_given_facts(question) -> list:
     return facts
 
 
-def _matched_anchor_formula(subject, question_text) -> tuple:
+def _matched_anchor(subject, question_text) -> dict:
+    """Neo SGK khớp stem: ưu tiên cụm từ dài hơn (vd 'nóng chảy' > 'nhiệt độ')."""
     try:
         from data.socratic_anchors import SOCRATIC_KNOWLEDGE_ANCHORS
     except Exception:
-        return '', ''
+        return {}
     subj = canonical_subject(subject or 'Toán học')
     text = folded(question_text)
-    best = None
-    best_hits = 0
+    best, best_score = None, 0
     for item in SOCRATIC_KNOWLEDGE_ANCHORS.get(subj, []) or []:
-        hits = sum(1 for kw in item.get('keywords') or [] if folded(kw) in text)
-        if hits > best_hits:
-            best_hits = hits
-            best = item
-    if not best or best_hits <= 0:
-        return '', ''
-    return str(best.get('concept') or ''), str(best.get('formula') or '')
+        score = 0
+        for kw in item.get('keywords') or []:
+            fk = folded(kw)
+            if fk and fk in text:
+                score += max(1, len(fk.split()))
+        if score > best_score:
+            best_score, best = score, item
+    if not best or best_score <= 0:
+        return {}
+    return {
+        'concept': str(best.get('concept') or ''),
+        'formula': str(best.get('formula') or ''),
+        'prompt': str(best.get('prompt') or ''),
+        'score': best_score,
+    }
+
+
+def _matched_anchor_formula(subject, question_text) -> tuple:
+    hit = _matched_anchor(subject, question_text)
+    return hit.get('concept', ''), hit.get('formula', '')
+
+
+def _short_stem_quote(stem: str, max_len: int = 72) -> str:
+    """Trích khúc ngữ liệu ngắn để HD bám câu hỏi — không lấy phương án."""
+    raw = re.sub(r'\s+', ' ', str(stem or '')).strip()
+    raw = re.sub(r'\$[^$]{0,80}\$', lambda m: m.group(0), raw)
+    if len(raw) <= max_len:
+        return raw or 'ngữ liệu câu hỏi'
+    cut = raw[:max_len]
+    if ' ' in cut:
+        cut = cut.rsplit(' ', 1)[0]
+    return cut.rstrip(' ,;:') + '…'
+
+
+def _formula_lines_for_stem(formula: str, stem: str) -> str:
+    """Chọn dòng công thức neo khớp hiện tượng trong stem; không chọn hộ phương án."""
+    lines = [ln.strip(' -•\t') for ln in str(formula or '').splitlines() if ln.strip()]
+    if not lines:
+        return ''
+    text = folded(stem)
+    scored = []
+    for ln in lines:
+        fl = folded(ln)
+        score = sum(1 for mark in (
+            'nong chay', 'hoa hoi', 'delta', 'dong dien', 'clapeyron', 'dao dong',
+            'song', 'ester', 'glucose', 'doc hieu', 'nghi luan',
+        ) if mark in fl and (mark in text or mark in ('delta', 'clapeyron', 'dong dien')))
+        # Boost if stem phenomenon words appear in this line
+        for mark in ('nong chay', 'hoa hoi', 'lam nong', 'nhiet luong', 'delta t', 'uit'):
+            if mark in text and mark.replace(' ', '') in fl.replace(' ', ''):
+                score += 2
+        scored.append((score, ln))
+    scored.sort(key=lambda p: (-p[0], -len(p[1])))
+    top = [ln for sc, ln in scored if sc > 0][:2]
+    if not top:
+        top = lines[:2]
+    return ' '.join(top)
+
+
+def _subject_stem_guide(question, subject) -> tuple:
+    """HD Socratic đa môn: bám stem + neo SGK. Đỡ đẻ ý tưởng, không lộ đáp án/phương án."""
+    q = question if isinstance(question, dict) else {}
+    stem = str(q.get('q') or '')
+    low = stem.lower()
+    text = folded(stem)
+    quote = _short_stem_quote(stem)
+    hit = _matched_anchor(subject, stem)
+    subj = canonical_subject(subject or 'Toán học')
+
+    # --- Vật lý nhiệt / chuyển thể (case nóng chảy trong ảnh anh) ---
+    if any(k in text for k in (
+        'nong chay', 'lam nong chay', 'hoa hoi', 'bay hoi', 'nhiet luong',
+        'nhiet dung', 'lam nong', 'uit', 'mc',
+    )) or (subj == 'Vật lý' and 'nhiet' in text):
+        melting = 'nong chay' in text
+        vapor = 'hoa hoi' in text or 'bay hoi' in text
+        has_dt = 'delta' in text or 'Δ' in stem or 'hiệt độ' in low and 'thay đổi' in low
+        if melting and not vapor:
+            formula = (
+                'Câu hỏi về **nóng chảy hoàn toàn** khối lượng $m$ ở nhiệt độ nóng chảy '
+                '(nhiệt độ không đổi khi chuyển thể). '
+                'Phân biệt với $Q=mc\\Delta T$ (có $\\Delta T$) và $Q=UIt$ (dòng điện); '
+                'nóng chảy / hóa hơi dùng hệ số chuyển thể khác nhau trong SGK.'
+            )
+            steps = [
+                f'Gạch yêu cầu đúng câu này: “{_short_stem_quote(stem, 88)}”.',
+                'Hỏi: đây là đốt nóng có $\\Delta T$, chuyển thể ở nhiệt độ không đổi, hay nhiệt điện?',
+                'Với chuyển thể nóng chảy, $Q$ tỉ lệ với $m$; đối chiếu ký hiệu hệ số nóng chảy vs hóa hơi — em tự chọn công thức khớp, chưa chốt phương án hộ.',
+            ]
+            return formula, steps
+        if vapor and not melting:
+            formula = (
+                'Câu hỏi về **hóa hơi** / bay hơi: nhiệt chuyển thể ở nhiệt độ không đổi, tỉ lệ với $m$. '
+                'Phân biệt với nóng chảy và với $Q=mc\\Delta T$, $Q=UIt$.'
+            )
+            return formula, [
+                f'Bám đúng ngữ liệu: {quote}.',
+                'Xác định đang hóa hơi (không phải nóng chảy hay đốt nóng có $\\Delta T$).',
+                'Chọn dạng $Q$ tỉ lệ $m$ với hệ số hóa hơi trong SGK — tự đối chiếu phương án.',
+            ]
+        formula = (
+            'Nhiệt lượng: đốt nóng $Q=mc\\Delta T$; chuyển thể (nóng chảy / hóa hơi) tỉ lệ $m$ ở nhiệt độ không đổi; '
+            'nhiệt điện $Q=UIt$. Chọn đúng loại hiện tượng câu hỏi.'
+        )
+        return formula, [
+            f'Đọc lại yêu cầu: {quote}.',
+            'Phân loại hiện tượng trước khi nhìn phương án.',
+            'Đối chiếu từng công thức với đúng loại hiện tượng — chưa chọn hộ.',
+        ]
+
+    # --- Neo SGK khớp stem (mọi môn) ---
+    if hit.get('concept'):
+        line = _formula_lines_for_stem(hit.get('formula', ''), stem)
+        formula = (
+            f"{hit['concept']}. "
+            + (line if line else 'Áp đúng công thức/định nghĩa khớp ngữ liệu câu hỏi.')
+        )
+        prompt = hit.get('prompt') or ''
+        steps = [
+            f'Bám đúng câu hỏi: {quote}.',
+            prompt if prompt and not looks_like_explain_solution(prompt) else
+            'Chọn định nghĩa/công thức khớp hiện tượng hoặc đại lượng câu hỏi — chưa thay số hộ.',
+            'Đối chiếu từng phương án với điều kiện trong ngữ liệu; loại công thức lệch hiện tượng.',
+        ]
+        return formula, steps
+
+    # --- Fallback có trích stem (không còn HD chung chung) ---
+    formula = f'Hướng đi từ đúng ngữ liệu: {quote}'
+    steps = [
+        f'Gạch yêu cầu cần tìm trong câu: {quote}.',
+        f'Gọi tên khái niệm/định luật môn {subj} khớp đúng khúc đó — chưa kết luận phương án.',
+        'Đối chiếu từng phương án với điều kiện đề; loại phương án lệch ngữ liệu.',
+    ]
+    return formula, steps
 
 
 def _step_prompts(question, subject) -> list:
@@ -632,9 +759,16 @@ def _guide_plan(question, subject) -> tuple:
         return formula, steps
     if canonical_subject(subject) == 'Toán học':
         asked = math_context_question(stem)
-        formula = f'Công thức áp vào đúng {expr}.' if expr != 'hàm trong câu' else 'Chọn đúng công thức của yêu cầu câu này.'
+        # Neo Toán nếu có; vẫn ưu tiên biểu thức trong câu.
+        hit = _matched_anchor(subject, stem)
+        if expr != 'hàm trong câu':
+            formula = f'Công thức áp vào đúng {expr}.'
+        elif hit.get('formula'):
+            formula = _formula_lines_for_stem(hit['formula'], stem) or hit.get('concept') or 'Chọn đúng công thức của yêu cầu câu này.'
+        else:
+            formula = 'Chọn đúng công thức của yêu cầu câu này.'
         steps = [
-            f'Gạch điều kiện và hệ số trong {expr}.',
+            f'Gạch điều kiện và hệ số trong {expr}.' if expr != 'hàm trong câu' else f'Gạch yêu cầu trong câu: {_short_stem_quote(stem)}.',
             'Viết công thức tổng quát, rồi mới thay số của câu.',
             'Tự tính; đối chiếu phương án sau khi có kết quả của em.',
         ]
@@ -643,30 +777,55 @@ def _guide_plan(question, subject) -> tuple:
         if hard:
             steps.append('Tách từng ẩn hoặc tham số; làm xong một nhánh rồi mới sang nhánh kia.')
         return formula, steps
-    formula = 'Bám đúng ngữ liệu câu này — chi tiết, số liệu hoặc điều kiện đề cho.'
-    steps = [
-        'Gạch yêu cầu câu hỏi tách khỏi dữ kiện đề cho.',
-        'Đối chiếu khái niệm đúng môn với đúng ngữ liệu này.',
-        'Lập luận từng ý; chưa chốt câu trả lời hộ.',
-    ]
-    if hard:
-        steps.append('Câu khó: mỗi luận điểm một dẫn chứng lấy trong ngữ liệu, rồi mới kết.')
+    # Đa môn / đa lớp: không còn HD chung chung — bám stem + neo SGK.
+    formula, steps = _subject_stem_guide(q, subject)
+    if hard and len(steps) < 4:
+        steps.append(f'Câu khó: mỗi luận điểm một dẫn chứng lấy từ “{_short_stem_quote(stem, 48)}”, rồi mới kết.')
     return formula, steps
 
 
 def build_tram3_socratic_guide(question, subject='Toán học', grade_num=12) -> str:
-    """HD = hướng đi + công thức đúng ngữ cảnh. Câu khó thì các bước dài hơn. Không lộ đáp án, không lấy explain."""
+    """HD Socratic dùng chung Trạm 1 & 3: hướng đi + công thức bám ngữ liệu. Không lộ đáp án, không lấy explain."""
     q = question if isinstance(question, dict) else {}
+    # Chuẩn hóa khóa Trạm 1 (question/options/correct) ↔ Trạm 3 (q/opt/ans).
+    if 'q' not in q and q.get('question'):
+        q = dict(q)
+        q['q'] = q.get('question')
+    if 'opt' not in q and q.get('options') is not None:
+        q = dict(q)
+        q['opt'] = q.get('options')
     opts = q.get('opt') or []
+    # explain / ans chỉ để lọc rò rỉ — không đưa vào HD.
     formula, steps = _guide_plan(q, subject)
+    # Loại bước giống lời giải / chọn đáp.
+    clean_steps = []
+    for step in steps:
+        if looks_like_explain_solution(step):
+            continue
+        clean_steps.append(step)
+    steps = clean_steps or steps[:3]
     shown = steps if _is_hard_question(q, str(q.get('q') or '')) else steps[:3]
     body = '**Công thức / hướng:** ' + formula + '\n\n' + '\n'.join(
         f'{i}. {step}' for i, step in enumerate(shown, 1)
     )
     body = _SOLUTION_LEAK.sub('', body)
     stem = str(q.get('q') or '')
+    # Không để nguyên văn phương án / đáp án lọt vào HD.
+    ans = str(q.get('ans') or q.get('correct') or '').strip()
+    if ans and len(ans) <= 3 and re.fullmatch(r'[A-Da-d]', ans):
+        body = re.sub(rf'(?i)\bđáp án\s*{ans}\b', 'đáp án tương ứng', body)
     for o in opts or []:
         piece = re.sub(r'^[A-D][.):]\s*', '', str(o), flags=re.I).strip()
         if len(piece) > 8 and piece in body and piece not in stem:
             body = body.replace(piece, 'phương án tương ứng')
+    # Cấm HD generic cũ còn sót.
+    if 'Bám đúng ngữ liệu câu này — chi tiết, số liệu hoặc điều kiện đề cho' in body:
+        formula2, steps2 = _subject_stem_guide(q, subject)
+        body = '**Công thức / hướng:** ' + formula2 + '\n\n' + '\n'.join(
+            f'{i}. {step}' for i, step in enumerate(steps2[:3], 1)
+        )
     return body.strip()
+
+
+# Alias toàn hệ thống (Trạm 1 + Trạm 3).
+build_socratic_guide = build_tram3_socratic_guide

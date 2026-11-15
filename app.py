@@ -5,7 +5,7 @@ def _refresh_t1_context_services():
     from data import curriculum_data
     for module, revision in ((bbt_display_contract, 2026111523), (inequality_region, 2026110914), (plot_labels, 2026110914), (lesson_sources, 2026110802), (curriculum_policy, 2026111222),
                              (lab_scope, 2026110901), (lesson_export, 2026111523),
-                             (text_boundaries, 2026110801), (socratic_context, 2026110901),
+                             (text_boundaries, 2026110801), (socratic_context, 2026111601),
                              (philosophy_rotation, 2026110801), (station1_scope, 2026110920),
                              (curriculum_data, 2026110920)):
         if getattr(module, 'T1_CONTEXT_REVISION', None) != revision:
@@ -20,7 +20,7 @@ from services.context_recovery import repair_exam_context, recover_visual
 from services.cognitive_levels import annotate_question, level_caption
 from services.curriculum_policy import (T1_CONTEXT_REVISION as CURRICULUM_POLICY_REVISION, assessment_profile, item_display_language_issue, legal_references, upcoming_legal_references, policy_evaluation_date, matrix_html, prepare_exam_for_delivery, validate_exam_structure, validate_lesson_policy, correct_khtn8_lime_soil_confusion, lesson_generation_request as build_curriculum_lesson_request, exam_generation_request as build_curriculum_exam_request)
 from copy import deepcopy
-from services.academic_context import canonical_subject, academic_context, validate_exam_context
+from services.academic_context import canonical_subject, academic_context, validate_exam_context, folded
 from services.lesson_export import build_lesson_html, handwritten_prompt
 from services.lesson_sources import books_for, lesson_references, PUBLISHER_PORTAL, PUBLISHER_DIGITAL_LIBRARY, NATIONAL_SCHOOL_TEXTBOOK_LIBRARY, textbook_update_notice, grounded_lesson_topics
 from services.lab_scope import lesson_context_examples, function_formula_latex, oscillator_equation_latex
@@ -3771,7 +3771,7 @@ from data.socratic_anchors import (
     sanitize_socratic_hint,
     safe_json_loads,
 )
-from services.socratic_context import build_tram3_socratic_guide
+from services.socratic_context import build_tram3_socratic_guide, looks_like_explain_solution
 
 def render_question_source_badge(q, idx=None):
 
@@ -12894,6 +12894,24 @@ if selected_station == station_labels[0]:
                 if user_choice is not None:
                     st.session_state.quiz_selections[idx] = user_choice
 
+                # HD Socratic cùng luồng Trạm 3: bám ngữ liệu, đỡ đẻ ý tưởng, không lộ đáp án.
+                _t1_guide_q = {
+                    "q": q.get("question", ""),
+                    "opt": q.get("options") or [],
+                    "ans": q.get("correct", ""),
+                    "hint": q.get("hint", ""),
+                    "explain": q.get("explain", ""),
+                    "level": q.get("level", ""),
+                    "bbt": q.get("bbt"),
+                }
+                _t1_guide = build_tram3_socratic_guide(_t1_guide_q, subject=subject, grade_num=grade_num)
+                if _t1_guide:
+                    with st.expander(
+                        f"💡 Gợi mở tư duy Socratic câu {idx+1} (mở khi bí — không lộ đáp án)",
+                        expanded=False,
+                    ):
+                        st.markdown(chemical_display_markdown(_t1_guide))
+
                 if st.button(f"🔍 Kiểm tra câu {idx+1}", key=f"btn_{idx}"):
 
                     if q.get('correct') not in ('A', 'B', 'C', 'D'):
@@ -12908,11 +12926,21 @@ if selected_station == station_labels[0]:
                             st.session_state.quiz_states[idx] = ("correct", "🎉 Xuất sắc! Em tư duy rất chuẩn.")
 
                         else:
-
+                            # Ưu tiên HD cấu trúc bám stem; sanitize hint AI chỉ khi còn Socratic sạch.
                             hint = sanitize_socratic_hint(q.get("hint", ""), q.get("correct", ""),
                                 q.get("question", ""), q.get("options", []), q.get("level", ""),
                                 subject=subject, grade_num=grade_num)
-                            st.session_state.quiz_states[idx] = ("incorrect", f"💡 **Gợi ý Socratic:** {hint}")
+                            guide_fb = _t1_guide or build_tram3_socratic_guide(
+                                _t1_guide_q, subject=subject, grade_num=grade_num)
+                            generic_marks = (
+                                "bám đúng ngữ liệu câu này — chi tiết",
+                                "đối chiếu khái niệm đúng môn với đúng ngữ liệu này",
+                            )
+                            hint_l = folded(str(hint or ""))
+                            if (not hint or looks_like_explain_solution(hint)
+                                    or any(m in hint_l for m in generic_marks)):
+                                hint = guide_fb
+                            st.session_state.quiz_states[idx] = ("incorrect", f"💡 **Gợi ý Socratic:**\n\n{hint}")
 
                     else:
 

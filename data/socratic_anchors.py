@@ -130,10 +130,20 @@ SOCRATIC_KNOWLEDGE_ANCHORS = {
             "prompt": "Em hãy xác định vận tốc truyền sóng $v$ và tần số $f$ để tính bước sóng $\\lambda$, sau đó đối chiếu với điều kiện giao thoa/sóng dừng nhé!"
         },
         {
-            "keywords": ["nhiệt độ", "nhiệt dung", "nhiệt hóa hơi", "nhiệt nóng chảy", "khí lý tưởng", "áp suất", "thể tích"],
-            "concept": "Vật lý nhiệt & Thuyết động học phân tử chất khí (SGK Vật lý 12 - KNTT)",
-            "formula": "- Phương trình Clapeyron-Mendeleev: $pV = nRT = \\frac{m}{\\mu}RT$.\n- Nhiệt lượng: $Q = mc\\Delta T$; Nhiệt chuyển thể: $Q = \\lambda m$ (nóng chảy), $Q = L m$ (hóa hơi).\n- Định luật I Nhiệt động lực học: $\\Delta U = A + Q$.",
-            "prompt": "Em hãy tóm tắt các trạng thái $(p_1, V_1, T_1)$ và $(p_2, V_2, T_2)$, chú ý đổi nhiệt độ sang thang Kelvin ($T = t + 273$) để thế vào phương trình nhé!"
+            "keywords": [
+                "nóng chảy", "làm nóng chảy", "nhiệt nóng chảy", "hóa hơi", "nhiệt hóa hơi",
+                "nhiệt lượng", "nhiệt dung", "làm nóng", "khí lý tưởng", "áp suất", "thể tích", "nhiệt độ",
+            ],
+            "concept": "Vật lý nhiệt — nhiệt lượng & chuyển thể (SGK Vật lý - KNTT)",
+            "formula": (
+                "- Đốt nóng / làm lạnh (có $\\Delta T$): $Q = mc\\Delta T$.\n"
+                "- Chuyển thể ở nhiệt độ không đổi: nóng chảy $Q = \\lambda m$; hóa hơi $Q = Lm$.\n"
+                "- Nhiệt do dòng điện: $Q = UIt$. Khí lý tưởng: $pV = nRT$."
+            ),
+            "prompt": (
+                "Em hãy xác định câu hỏi đang nói đốt nóng (có $\\Delta T$), chuyển thể "
+                "(nóng chảy / hóa hơi ở nhiệt độ không đổi), hay nhiệt điện — rồi mới chọn dạng $Q$ khớp."
+            ),
         }
     ],
     "Hóa học": [
