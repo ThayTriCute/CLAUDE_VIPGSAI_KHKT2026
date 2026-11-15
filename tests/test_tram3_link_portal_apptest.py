@@ -55,6 +55,9 @@ class Tram3LinkPortalAppTest(unittest.TestCase):
         at = self._open("Lớp 8", "Toán học")
         toan = self._link_url(at, "Toán học")
         self.assertIn("de-thi-giua-hk1-toan-8", toan)
+        toan_src = next(s for s in at.selectbox if "Chọn chuyên trang" in s.label)
+        self.assertTrue(any("TOANMATH" in str(o) for o in toan_src.options))
+        self.assertTrue(any("MATHVN" in str(o) for o in toan_src.options))
 
         next(s for s in at.selectbox if s.label == "📚 Môn học cần hỗ trợ:").select("Khoa học tự nhiên").run(timeout=90)
         khtn = self._link_url(at, "Khoa học tự nhiên")
@@ -67,6 +70,13 @@ class Tram3LinkPortalAppTest(unittest.TestCase):
         lsdl = self._link_url(at, "Lịch sử & Địa lý")
         self.assertNotIn("toanmath", lsdl.lower())
         self.assertEqual(lsdl, "")
+
+        next(s for s in at.selectbox if s.label == "📚 Môn học cần hỗ trợ:").select("Tin học").run(timeout=90)
+        tin = self._link_url(at, "Tin học")
+        self.assertEqual(tin, "https://tinhoc2018.edu.vn")
+        src = next(s for s in at.selectbox if "Chọn chuyên trang" in s.label)
+        self.assertNotIn("TOANMATH", str(src.options[0]))
+        self.assertTrue(any("Tin" in str(o) for o in src.options))
 
         next(s for s in at.selectbox if s.label == "📚 Môn học cần hỗ trợ:").select("Ngữ văn").run(timeout=90)
         van = self._link_url(at, "Ngữ văn")
