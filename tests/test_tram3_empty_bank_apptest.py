@@ -45,31 +45,27 @@ class Tram3EmptyBankAppTest(unittest.TestCase):
         return at
 
     def test_empty_bank_names_subject_and_hides_practice(self):
-        cells = [
-            ("Lớp 6", "Toán học", 6),
-            ("Lớp 8", "Khoa học tự nhiên", 8),
-            ("Lớp 11", "Giáo dục kinh tế và pháp luật", 11),
-        ]
+        from services.academic_context import subjects_for_grade
+
         needles = ("Trộn Siêu Đề", "Trích Xuất Đề", "Mở đề gốc", "Khởi Tạo Đề", "AI Tạo Đề")
         with patch("real_exam_engine.get_baseline_full_exams", return_value=[]):
-            at = None
-            for grade_label, subject, grade in cells:
-                with self.subTest(subject=subject, grade=grade):
-                    if at is None:
-                        at = self._open(grade_label, subject)
-                    else:
-                        next(s for s in at.selectbox if s.label == "🎯 Chọn khối lớp:").select(grade_label).run(timeout=90)
-                        next(s for s in at.selectbox if s.label == "📚 Môn học cần hỗ trợ:").select(subject).run(timeout=90)
-                    mode = next(r for r in at.radio if r.label == "Lựa chọn hình thức đề thi:")
-                    mode.set_value(next(o for o in mode.options if "Làm Nguyên Đề Thi Thật" in str(o))).run(timeout=90)
-                    self.assertEqual([e.message for e in at.exception], [])
-                    self.assertEqual(at.session_state.get("exam_state"), "config")
-                    infos = " ".join(str(i.value) for i in at.info)
-                    self.assertIn(subject, infos)
-                    self.assertIn(f"lớp {grade}", infos)
-                    self.assertIn("không mở đề luyện tập", infos)
-                    practice = [b.label for b in at.button if any(n in b.label for n in needles)]
-                    self.assertEqual(practice, [])
+            for grade in range(6, 13):
+                subjects = subjects_for_grade(grade)
+                at = self._open(f"Lớp {grade}", subjects[0])
+                for subject in subjects:
+                    with self.subTest(subject=subject, grade=grade):
+                        if subject != subjects[0]:
+                            next(s for s in at.selectbox if s.label == "📚 Môn học cần hỗ trợ:").select(subject).run(timeout=90)
+                        mode = next(r for r in at.radio if r.label == "Lựa chọn hình thức đề thi:")
+                        mode.set_value(next(o for o in mode.options if "Làm Nguyên Đề Thi Thật" in str(o))).run(timeout=90)
+                        self.assertEqual([e.message for e in at.exception], [])
+                        self.assertEqual(at.session_state.get("exam_state"), "config")
+                        infos = " ".join(str(i.value) for i in at.info)
+                        self.assertIn(subject, infos)
+                        self.assertIn(f"lớp {grade}", infos)
+                        self.assertIn("không mở đề luyện tập", infos)
+                        practice = [b.label for b in at.button if any(n in b.label for n in needles)]
+                        self.assertEqual(practice, [], msg=f"{subject} L{grade}")
 
 
 if __name__ == "__main__":
