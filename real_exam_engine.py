@@ -184,6 +184,10 @@ EXAM_SOURCE_PORTALS = {
 }
 
 
+# Bumped when Cloud must re-pull this module (link/portal helpers for Quét Link).
+PORTAL_LINK_HELPERS_VERSION = "2026-11-15-v2"
+
+
 def portal_for_subject(subject):
     """Catalog entry for this subject only. A missing subject does not inherit Toán."""
     info = EXAM_SOURCE_PORTALS.get(canonical_subject(subject))
