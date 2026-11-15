@@ -3792,6 +3792,7 @@ except ImportError:  # pragma: no cover - fallback khi deploy thiếu symbol
         "Không markdown, không giải thích ngoài JSON."
     )
 
+
 def render_question_source_badge(q, idx=None):
 
     """
