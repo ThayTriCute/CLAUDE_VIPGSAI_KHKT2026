@@ -1,0 +1,13 @@
+---
+description: Sau mỗi lần vá code phải ghi nhật ký bàn giao để ca sau làm tiếp đúng mạch
+alwaysApply: true
+---
+
+# Nhật ký bàn giao (bắt buộc)
+
+Anh MINH chốt: mọi việc sửa, code, vá phải ghi nhật ký và nhật ký bàn giao đầy đủ cho ca sau.
+
+1. Trước khi sửa Trạm 1, Trạm 3, Socratic, hoặc JSON đề AI: đọc `docs/NHAT_KY_BAN_GIAO.md`.
+2. Giữ chốt sư phạm trong file đó: HD bình dân sát ngữ liệu câu AI sinh, có công thức và con đường tư duy, tuyệt đối không giải hộ và không lộ đáp án. `explain` chỉ sau khi nộp.
+3. Cuối mỗi PR có sửa code: cập nhật mục **Ca gần nhất** trong `docs/NHAT_KY_BAN_GIAO.md` (ngày, PR, SHA, file, test, việc còn mở) và commit cùng PR. Không để nhật ký chỉ trong chat.
+4. Không ghi khóa API, mật khẩu, tên hoặc điểm học sinh vào nhật ký hay Git.
