@@ -11,6 +11,26 @@ from unittest.mock import patch
 from streamlit.testing.v1 import AppTest
 
 
+def _assert_subject_topics(test, at, subject: str, grade: int):
+    from data.curriculum_data import BIGDATA_CURRICULUM
+
+    curr = BIGDATA_CURRICULUM[subject]
+    if grade >= 12:
+        expected = list(curr[12]) + list(curr[11]) + list(curr[10])
+        first = f"[Lớp 12] {curr[12][0]}"
+    elif grade == 11:
+        expected = list(curr[11]) + list(curr[10])
+        first = f"[Lớp 11] {curr[11][0]}"
+    else:
+        expected = list(curr[grade])
+        first = f"[Lớp {grade}] {curr[grade][0]}"
+    labels = [str(c.label) for c in at.checkbox if "AI sinh nguyên câu" not in str(c.label)]
+    missing = [name for name in expected if name not in labels]
+    test.assertEqual(missing, [], msg=f"{subject} L{grade} thiếu checkbox: {missing[:3]}")
+    selected = at.session_state.get("policy_selected_topics") or []
+    test.assertIn(first, selected, msg=f"{subject} L{grade} không chọn sẵn {first}")
+
+
 def _fake_exam(subject: str, grade: int, counts=(3, 1, 0)):
     n1, n2, n3 = counts
     exam = {
@@ -94,6 +114,7 @@ class Tram3BlendButtonAppTest(unittest.TestCase):
         for grade_label, subject, grade, counts in cells:
             with self.subTest(subject=subject, grade=grade):
                 at = self._open_tram3(grade_label, subject)
+                _assert_subject_topics(self, at, subject, grade)
                 fake = _fake_exam(subject, grade, counts)
 
                 def _gen(subj, g, topics, cnts, **kwargs):
@@ -129,6 +150,7 @@ class Tram3BlendButtonAppTest(unittest.TestCase):
         for grade_label, subject, grade, counts in cells:
             with self.subTest(subject=subject, grade=grade):
                 at = self._open_tram3(grade_label, subject)
+                _assert_subject_topics(self, at, subject, grade)
                 fake = _fake_exam(subject, grade, counts)
 
                 def _gen(subj, g, topics, cnts, **kwargs):
