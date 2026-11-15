@@ -3,7 +3,7 @@ import re
 
 from services.academic_context import canonical_subject, folded
 
-T1_CONTEXT_REVISION = 2026111601
+T1_CONTEXT_REVISION = 2026111603
 
 
 def complete_verified_quote_reference(reply, references):
@@ -426,24 +426,187 @@ def _formula_lines_for_stem(formula: str, stem: str) -> str:
     return ' '.join(top)
 
 
+def _is_negation_stem(stem: str) -> bool:
+    text = folded(stem)
+    return any(k in text for k in (
+        'khong dung', 'khong phai', 'sai khi', 'sai ve', 'ngoai tru',
+        'except', 'which is not', 'not true', 'not correct', 'incorrect',
+    ))
+
+
+def _topic_phrase(stem: str) -> str:
+    """Lấy cụm chủ đề trong stem (sau 'về/khi nói về/của/trong') — không lấy cả câu hỏi."""
+    raw = re.sub(r'\s+', ' ', str(stem or '')).strip()
+    patterns = (
+        r'(?:khi nói về|khi nói tới|về mặt|thuộc về)\s+([^?？\.…]{6,90})',
+        r'(?:mô hình|định luật|quy tắc|khái niệm|phản ứng|hiện tượng)\s+([^?？\.…]{6,80})',
+        r'(?:^|[.?!]\s*)(?:về)\s+([^?？\.…]{6,90})',
+    )
+    for pat in patterns:
+        m = re.search(pat, raw, re.I)
+        if m:
+            phrase = re.sub(r'\s+', ' ', m.group(1)).strip(' :;,.')
+            # Giữ tiền tố mô hình/định luật nếu stem có
+            head = m.group(0)[: m.start(1) - m.start(0)].strip().lower()
+            if any(h in head for h in ('mô hình', 'định luật', 'quy tắc', 'khái niệm', 'phản ứng', 'hiện tượng')):
+                phrase = re.sub(r'\s+', ' ', m.group(0)).strip(' :;,.')
+            if len(phrase) >= 6:
+                return phrase[:100]
+    # Fallback: bỏ khung "Phát biểu nào/Ý nào"
+    cleaned = re.sub(
+        r'^(?:phát biểu|ý|câu|đặc điểm|khẳng định)\s+nào\s+(?:sau đây\s+)?'
+        r'(?:không\s+đúng|đúng|sai)?\s*(?:khi\s+nói\s+về\s+|về\s+)?',
+        '', raw, flags=re.I,
+    ).strip(' ?？')
+    return (cleaned[:90] + ('…' if len(cleaned) > 90 else '')) or _short_stem_quote(stem, 60)
+
+
+def _option_theme_hit(plain: str, keys) -> bool:
+    """Khớp trụ phương án; bỏ khóa folded rỗng/1 ký tự (λ→'', Δt→'t')."""
+    fl = folded(plain)
+    for k in keys:
+        raw = str(k)
+        if raw in plain:  # ký hiệu/Unicode còn nguyên (λ, Δt, …)
+            return True
+        fk = folded(raw)
+        if len(fk) < 2:
+            continue
+        if fk in fl:
+            return True
+    return False
+
+
+def _option_theme_cues(opts) -> list:
+    """Trụ so sánh lấy từ nội dung phương án — không kèm chữ A–D, không chọn đáp."""
+    themes = []
+    rules = (
+        (('nhiệt độ', 'nhanh', 'tốc độ', 'động năng'), 'quan hệ nhiệt độ–tốc độ/động năng phân tử'),
+        (('hỗn loạn', 'mọi phía', 'không ngừng', 'brown'), 'chuyển động hỗn loạn liên tục'),
+        (('gần nhau', 'lực tương tác', 'hút', 'đẩy', 'tương tác rất mạnh'), 'khoảng cách và lực tương tác giữa phân tử'),
+        (('thể tích', 'khoảng cách', 'rất nhỏ so với'), 'kích thước phân tử so với khoảng cách'),
+        (('nóng chảy', 'nhiệt nóng chảy', r'\lambda', 'λ', 'lambda'), 'nhiệt nóng chảy / hệ số λ'),
+        (('hóa hơi', 'bay hơi', 'nhiệt hóa hơi'), 'nhiệt hóa hơi / hệ số L'),
+        ((r'\Delta T', r'\Delta t', 'ΔT', 'Δt', 'delta t', 'nhiệt dung', r'mc\Delta', 'q=mc'),
+         'đốt nóng có ΔT ($Q=mc\\Delta T$)'),
+        (('uit', 'q=uit', 'cường độ dòng', 'hiệu điện thế'), 'nhiệt điện $Q=UIt$'),
+        (('ester', 'xà phòng', 'rcoor'), 'phản ứng ester / xà phòng hóa'),
+        (('glucose', 'tollens', 'tráng bạc'), 'nhóm chức và phản ứng đặc trưng carbohydrate'),
+        (('cpu', 'bộ xử lý', 'ổ cứng', 'bộ nhớ'), 'vai trò CPU / bộ nhớ / thiết bị lưu trữ'),
+        (('quang hợp', 'glucose', 'o2', 'ánh sáng'), 'điều kiện và sản phẩm quang hợp'),
+    )
+    for opt in opts or []:
+        plain = re.sub(r'^[A-Da-d][.):]\s*', '', str(opt)).strip()
+        if len(plain) < 4:
+            continue
+        for keys, label in rules:
+            if _option_theme_hit(plain, keys) and label not in themes:
+                themes.append(label)
+    return themes[:5]
+
+
+def _strip_option_bodies(text: str, opts) -> str:
+    """Không để nguyên văn phương án / đáp án lọt vào HD."""
+    body = str(text or '')
+    for o in opts or []:
+        piece = re.sub(r'^[A-D][.):]\s*', '', str(o), flags=re.I).strip()
+        if len(piece) > 12 and piece in body:
+            body = body.replace(piece, 'phương án tương ứng')
+    return body
+
+
+def _conceptual_mc_guide(stem: str, opts, subject: str, pack_formula: str = '', pack_prompt: str = '') -> tuple:
+    """Câu khái niệm / phát biểu: Maieutics kiểu F VIP — hỏi đỡ đẻ, neo SGK, không lộ đáp."""
+    topic = _topic_phrase(stem)
+    themes = _option_theme_cues(opts)
+    negation = _is_negation_stem(stem)
+    subj = canonical_subject(subject or 'Toán học')
+    if pack_formula:
+        formula = pack_formula
+    else:
+        formula = (
+            f'**{topic}** (SGK {subj}): nhắc 3–4 giả thiết/định nghĩa cốt lõi và công thức liên quan '
+            r'(nếu có, ví dụ $pV=nRT$ với khí). Chưa gắn chữ A–D.'
+        )
+    if negation:
+        step1 = (
+            f'Đề hỏi phát biểu **không đúng** về “{topic}”. '
+            'Em tách yêu cầu: đang tìm ý **lệch** giả thiết mô hình — không phải tìm ý đúng nhất.'
+        )
+    else:
+        step1 = (
+            f'Với “{topic}”, em xác định đề đang hỏi đặc trưng nào? '
+            'Ghi rõ tiêu chí đúng/sai trước khi mở từng phương án.'
+        )
+    if themes:
+        # F VIP computing_context style: hỏi tiêu chí phân biệt theo từng trụ phương án.
+        step2 = (
+            'Các phương án đang xoay quanh: ' + '; '.join(themes) + '. '
+            'Em sẽ nhắc giả thiết/công thức SGK cho **từng trụ** theo tiêu chí nào '
+            'trước khi đối chiếu từng phát biểu?'
+        )
+    elif pack_prompt:
+        step2 = pack_prompt
+    else:
+        step2 = (
+            f'Em gọi tên 3–4 giả thiết cốt lõi của “{topic}” môn {subj} '
+            'theo tiêu chí nào, rồi mới đối chiếu từng phát biểu?'
+        )
+    if negation:
+        step3 = (
+            'Với mỗi phát biểu: hỏi “khớp hay lệch giả thiết vừa nhắc?”. '
+            'Giữ lại ứng viên lệch — em tự kết luận, chưa gắn chữ A–D giúp.'
+        )
+    else:
+        step3 = (
+            'Với mỗi phát biểu: hỏi “khớp giả thiết/công thức vừa nhắc chưa?”. '
+            'Em tự chọn phương án khớp ngữ liệu — chưa gắn chữ A–D giúp.'
+        )
+    return formula, [step1, step2, step3]
+
+
 def _subject_stem_guide(question, subject) -> tuple:
-    """HD Socratic đa môn: bám stem + neo SGK. Đỡ đẻ ý tưởng, không lộ đáp án/phương án."""
+    """HD Socratic đa môn: bám stem + trụ phương án + neo SGK. Đỡ đẻ ý tưởng, không lộ đáp."""
     q = question if isinstance(question, dict) else {}
     stem = str(q.get('q') or '')
     low = stem.lower()
     text = folded(stem)
     quote = _short_stem_quote(stem)
+    opts = q.get('opt') or q.get('options') or []
     hit = _matched_anchor(subject, stem)
     subj = canonical_subject(subject or 'Toán học')
+    conceptual = bool(opts) and any(k in text for k in (
+        'phat bieu', 'y nao', 'dac diem nao', 'khang dinh', 'cho rang',
+        'khong dung', 'dung khi', 'sai khi', 'which of the following',
+    ))
 
-    # --- Vật lý nhiệt / chuyển thể (case nóng chảy trong ảnh anh) ---
+    # --- Mô hình động học phân tử chất khí (F VIP: đỡ đẻ misconception, không lộ đáp) ---
+    if any(k in text for k in (
+        'dong hoc phan tu', 'mo hinh dong hoc', 'phan tu khi', 'chat khi',
+        'khi ly tuong', 'chuyen dong hon loan',
+    )):
+        formula = (
+            '**Mô hình động học phân tử chất khí** (SGK Vật lý): '
+            '(1) phân tử chuyển động hỗn loạn, liên tục mọi hướng; '
+            '(2) khoảng cách trung bình $\\gg$ kích thước phân tử; '
+            '(3) lực tương tác giữa các phân tử khí rất yếu '
+            '(khí lý tưởng: xem như không đáng kể); '
+            '(4) nhiệt độ liên hệ động năng trung bình / tốc độ chuyển động nhiệt. '
+            'Công thức trạng thái khi cần: $pV=nRT$.'
+        )
+        prompt = (
+            'Em sẽ phân biệt bốn trụ của mô hình — chuyển động hỗn loạn; nhiệt độ–tốc độ; '
+            'khoảng cách & lực tương tác; kích thước so với khoảng cách — '
+            'theo tiêu chí nào trước khi đối chiếu từng phát biểu?'
+        )
+        return _conceptual_mc_guide(stem, opts, subj, pack_formula=formula, pack_prompt=prompt)
+
+    # --- Vật lý nhiệt / chuyển thể ---
     if any(k in text for k in (
         'nong chay', 'lam nong chay', 'hoa hoi', 'bay hoi', 'nhiet luong',
-        'nhiet dung', 'lam nong', 'uit', 'mc',
-    )) or (subj == 'Vật lý' and 'nhiet' in text):
+        'nhiet dung', 'lam nong',
+    )) or (subj == 'Vật lý' and 'nhiet' in text and 'dong hoc' not in text):
         melting = 'nong chay' in text
         vapor = 'hoa hoi' in text or 'bay hoi' in text
-        has_dt = 'delta' in text or 'Δ' in stem or 'hiệt độ' in low and 'thay đổi' in low
         if melting and not vapor:
             formula = (
                 'Câu hỏi về **nóng chảy hoàn toàn** khối lượng $m$ ở nhiệt độ nóng chảy '
@@ -451,12 +614,11 @@ def _subject_stem_guide(question, subject) -> tuple:
                 'Phân biệt với $Q=mc\\Delta T$ (có $\\Delta T$) và $Q=UIt$ (dòng điện); '
                 'nóng chảy / hóa hơi dùng hệ số chuyển thể khác nhau trong SGK.'
             )
-            steps = [
+            return formula, [
                 f'Gạch yêu cầu đúng câu này: “{_short_stem_quote(stem, 88)}”.',
                 'Hỏi: đây là đốt nóng có $\\Delta T$, chuyển thể ở nhiệt độ không đổi, hay nhiệt điện?',
                 'Với chuyển thể nóng chảy, $Q$ tỉ lệ với $m$; đối chiếu ký hiệu hệ số nóng chảy vs hóa hơi — em tự chọn công thức khớp, chưa chốt phương án hộ.',
             ]
-            return formula, steps
         if vapor and not melting:
             formula = (
                 'Câu hỏi về **hóa hơi** / bay hơi: nhiệt chuyển thể ở nhiệt độ không đổi, tỉ lệ với $m$. '
@@ -477,30 +639,39 @@ def _subject_stem_guide(question, subject) -> tuple:
             'Đối chiếu từng công thức với đúng loại hiện tượng — chưa chọn hộ.',
         ]
 
-    # --- Neo SGK khớp stem (mọi môn) ---
+    # --- Neo SGK khớp stem ---
     if hit.get('concept'):
         line = _formula_lines_for_stem(hit.get('formula', ''), stem)
-        formula = (
-            f"{hit['concept']}. "
-            + (line if line else 'Áp đúng công thức/định nghĩa khớp ngữ liệu câu hỏi.')
-        )
+        formula = f"{hit['concept']}. " + (line if line else '')
+        formula = formula.strip() or hit['concept']
+        if conceptual or opts:
+            return _conceptual_mc_guide(
+                stem, opts, subj,
+                pack_formula=formula,
+                pack_prompt=hit.get('prompt') or '',
+            )
         prompt = hit.get('prompt') or ''
-        steps = [
+        return formula, [
             f'Bám đúng câu hỏi: {quote}.',
             prompt if prompt and not looks_like_explain_solution(prompt) else
             'Chọn định nghĩa/công thức khớp hiện tượng hoặc đại lượng câu hỏi — chưa thay số hộ.',
             'Đối chiếu từng phương án với điều kiện trong ngữ liệu; loại công thức lệch hiện tượng.',
         ]
-        return formula, steps
 
-    # --- Fallback có trích stem (không còn HD chung chung) ---
-    formula = f'Hướng đi từ đúng ngữ liệu: {quote}'
-    steps = [
-        f'Gạch yêu cầu cần tìm trong câu: {quote}.',
-        f'Gọi tên khái niệm/định luật môn {subj} khớp đúng khúc đó — chưa kết luận phương án.',
-        'Đối chiếu từng phương án với điều kiện đề; loại phương án lệch ngữ liệu.',
-    ]
-    return formula, steps
+    # --- Câu khái niệm có phương án: luôn dùng trụ so sánh, không nhắc lại nguyên câu hỏi ---
+    if conceptual or (opts and len(opts) >= 2):
+        return _conceptual_mc_guide(stem, opts, subj)
+
+    # --- Fallback cuối: vẫn phải có chủ đề stem, không generic trống ---
+    topic = _topic_phrase(stem)
+    return (
+        f'Chủ đề ngữ liệu: **{topic}**. Nhắc định nghĩa/công thức SGK môn {subj} khớp đúng chủ đề đó.',
+        [
+            f'Gạch yêu cầu cần tìm gắn với “{topic}”.',
+            f'Viết 2–3 đặc trưng/công thức cốt lõi của “{topic}” — chưa kết luận hộ.',
+            'Đối chiếu lập luận với ngữ liệu; em tự chọn, chưa gắn chữ A–D giúp.',
+        ],
+    )
 
 
 def _step_prompts(question, subject) -> list:
@@ -818,12 +989,18 @@ def build_tram3_socratic_guide(question, subject='Toán học', grade_num=12) ->
         piece = re.sub(r'^[A-D][.):]\s*', '', str(o), flags=re.I).strip()
         if len(piece) > 8 and piece in body and piece not in stem:
             body = body.replace(piece, 'phương án tương ứng')
-    # Cấm HD generic cũ còn sót.
-    if 'Bám đúng ngữ liệu câu này — chi tiết, số liệu hoặc điều kiện đề cho' in body:
+    # Cấm HD generic cũ / echo-stem còn sót (ảnh anh: “Hướng đi từ đúng ngữ liệu…”).
+    generic_marks = (
+        'Bám đúng ngữ liệu câu này — chi tiết, số liệu hoặc điều kiện đề cho',
+        'Hướng đi từ đúng ngữ liệu:',
+        'Đối chiếu khái niệm đúng môn với đúng ngữ liệu này',
+    )
+    if any(m in body for m in generic_marks):
         formula2, steps2 = _subject_stem_guide(q, subject)
         body = '**Công thức / hướng:** ' + formula2 + '\n\n' + '\n'.join(
             f'{i}. {step}' for i, step in enumerate(steps2[:3], 1)
         )
+        body = _strip_option_bodies(body, opts)
     return body.strip()
 
 
