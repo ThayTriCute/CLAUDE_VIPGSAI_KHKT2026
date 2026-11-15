@@ -33,12 +33,41 @@ def is_duplicate_key_error(exc_or_msg) -> bool:
     return "khóa trùng" in text or "khoa trung" in text
 
 
+def _item_key(item):
+    return json.dumps(item, ensure_ascii=False, sort_keys=True, default=str)
+
+
+def _merge_duplicate_values(old, new):
+    """Giữ nội dung AI đã sinh khi lặp khóa. Không bịa câu, không chọn scalar mâu thuẫn."""
+    if old == new:
+        return old
+    if isinstance(old, list) and isinstance(new, list):
+        merged = list(old)
+        seen = {_item_key(item) for item in merged}
+        for item in new:
+            key = _item_key(item)
+            if key not in seen:
+                merged.append(item)
+                seen.add(key)
+        return merged
+    if isinstance(old, dict) and isinstance(new, dict):
+        out = dict(old)
+        for key, value in new.items():
+            if key in out:
+                out[key] = _merge_duplicate_values(out[key], value)
+            else:
+                out[key] = value
+        return out
+    raise ValueError(DUP_KEY_MESSAGE)
+
+
 def _unique_object(pairs):
     result = {}
     for key, value in pairs:
         if key in result:
-            raise ValueError(DUP_KEY_MESSAGE)
-        result[key] = value
+            result[key] = _merge_duplicate_values(result[key], value)
+        else:
+            result[key] = value
     return result
 
 
