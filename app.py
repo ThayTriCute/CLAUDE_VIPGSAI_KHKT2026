@@ -15071,7 +15071,7 @@ if selected_station == station_labels[2]:
 
                     "📤 Nạp & Trộn Đề Word (.docx) / PDF",
 
-                    "🌐 Quét Đề Link (TOANMATH, MATHVN, FB...)"
+                    f"🌐 Quét Đề Link ({ree.portal_display_name(subject, 'link tùy chỉnh') if ree else 'link tùy chỉnh'})"
 
                 ]
 
@@ -15420,7 +15420,8 @@ if selected_station == station_labels[2]:
 
                 elif "Quét Đề Link" in selected_exam_mode:
 
-                    st.markdown("##### 🌐 Quét Đề Từ Link (TOANMATH.COM, MATHVN.COM, Facebook, Link tùy chỉnh):")
+                    _scan_portal = ree.portal_display_name(subject, "") if ree else ""
+                    st.markdown(f"##### 🌐 Quét Đề Từ Link{(' — ' + _scan_portal) if _scan_portal else ''}:")
 
                     c_src1, c_src2 = st.columns([1.1, 2.3])
 
@@ -15430,7 +15431,7 @@ if selected_station == station_labels[2]:
 
                             "Chọn chuyên trang / Nguồn link:",
 
-                            ["🏛️ TOANMATH.com", "📐 MATHVN.com", "👥 Facebook (Bài viết / Link Drive)", "🔗 Link tùy chỉnh"],
+                            ree.link_scan_sources(subject) if ree else ["🔗 Link tùy chỉnh"],
 
                             key=f"sel_portal_type_t3_{current_context_key}"
 
@@ -15438,21 +15439,7 @@ if selected_station == station_labels[2]:
 
                     with c_src2:
 
-                        if "MATHVN" in target_source_type:
-
-                            default_link = "https://www.mathvn.com/2024/10/de-thi-giua-hoc-ki-1-toan-12-nam-hoc-2024-2025.html"
-
-                        elif "Facebook" in target_source_type:
-
-                            default_link = "https://drive.google.com/file/d/... (hoặc link bài viết Facebook)"
-
-                        elif "TOANMATH" in target_source_type:
-
-                            default_link = ree.default_subject_scan_url(subject, grade_num) if ree else ""
-
-                        else:
-
-                            default_link = "https://..."
+                        default_link = ree.link_scan_default_url(subject, grade_num, target_source_type) if ree else ""
 
                         user_target_url = st.text_input("Nhập Link bài viết / chuyên mục / Google Drive:", value=default_link, key=f"inp_target_url_t3_{current_context_key}")
 
