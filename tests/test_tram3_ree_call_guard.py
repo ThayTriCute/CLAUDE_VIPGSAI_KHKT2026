@@ -65,6 +65,39 @@ class Tram3ReeCallGuardTests(unittest.TestCase):
                     "",
                 )
 
+    def test_app_fallback_toan_url_matches_grade_6_to_12(self):
+        import app
+
+        with patch.object(app, "ree", types.SimpleNamespace()):
+            with patch.object(app, "_REE_PORTAL_HELPERS_OK", False):
+                sources = app._tram3_link_scan_sources("Toán học")
+                for grade in range(6, 13):
+                    with self.subTest(grade=grade):
+                        url = app._tram3_link_scan_default_url("Toán học", grade, sources[0])
+                        self.assertEqual(
+                            url,
+                            f"https://toanmath.com/de-thi-giua-hk1-toan-{grade}",
+                        )
+
+    def test_app_fallback_thpt_portals_for_live_grades_10_11(self):
+        """THPT live sample: Vật lý / Ngữ văn keep own portal when engine helpers missing."""
+        import app
+
+        with patch.object(app, "ree", types.SimpleNamespace()):
+            with patch.object(app, "_REE_PORTAL_HELPERS_OK", False):
+                for subject, host in (
+                    ("Vật lý", "thuvienvatly.com"),
+                    ("Ngữ văn", "nguvan2018.edu.vn"),
+                    ("Hóa học", "hoahoc.org"),
+                ):
+                    with self.subTest(subject=subject):
+                        sources = app._tram3_link_scan_sources(subject)
+                        self.assertTrue(sources)
+                        self.assertNotIn("TOANMATH", sources[0])
+                        url = app._tram3_link_scan_default_url(subject, 10, sources[0])
+                        self.assertIn(host, url)
+                        self.assertNotIn("toanmath", url.lower())
+
 
 if __name__ == "__main__":
     unittest.main()
