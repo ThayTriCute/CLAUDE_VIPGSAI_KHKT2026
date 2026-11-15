@@ -590,27 +590,46 @@ def _guide_plan(question, subject) -> tuple:
         label = 'GTLN' if pick == 'số lớn nhất' else 'GTNN'
         kind = 'giá trị lớn nhất' if pick == 'số lớn nhất' else 'giá trị nhỏ nhất'
         left, right = _interval_ends(interval)
+        stem_compact = re.sub(r'\s+', '', stem)
+        quadratic = (
+            'ham so bac hai' in text
+            or 'bac hai' in text
+            or (
+                bool(re.search(r'x\^\{?2\}?|x²', stem_compact, re.I))
+                and bool(re.search(r'(?:y|f)\s*(?:\([^)]*\))?\s*=', stem, re.I))
+            )
+        )
+        vertex_hint = (
+            f"Với hàm bậc hai {fn}, hoành độ đỉnh $x=-\\dfrac{{b}}{{2a}}$ cũng là ứng viên "
+            f"(cùng vai trò nghiệm $y'=0$) — chưa thay số, chưa lấy {label}."
+        )
         if left and right:
             formula = (
                 f'Trên {interval}, {label} của {fn} là {kind} trong các $f({left})$, $f({right})$ '
                 f"và $f$ tại nghiệm của $y'=0$ nằm trong $({left};{right})$."
             )
-            return formula, [
+            steps = [
                 f"Tính đạo hàm $y'$ của đúng {fn}. Chưa giải nghiệm.",
                 f"Giải $y'=0$ nhưng chưa thay vào $y$. Chỉ giữ nghiệm nằm trong $({left};{right})$.",
                 f'Tính $y$ tại ${left}$, tại ${right}$ và tại nghiệm nằm trong khoảng mở.',
                 f'So sánh các giá trị đó để tự chọn {pick}.',
             ]
+            if quadratic:
+                steps.insert(1, vertex_hint)
+            return formula, steps
         formula = (
             f'Trên {interval}, {label} của {fn} là {kind} trong các giá trị '
             f"tại hai đầu mút và tại nghiệm của $y'=0$ nằm trong khoảng mở."
         )
-        return formula, [
+        steps = [
             f"Tính đạo hàm $y'$ của đúng {fn}. Chưa giải nghiệm.",
             f"Giải $y'=0$ nhưng chưa thay vào $y$. Chỉ giữ nghiệm nằm trong khoảng mở của {interval}.",
             f'Tính $y$ tại hai đầu mút của {interval} và tại nghiệm vừa giữ.',
             f'So sánh các giá trị đó để tự chọn {pick}.',
         ]
+        if quadratic:
+            steps.insert(1, vertex_hint)
+        return formula, steps
     if canonical_subject(subject) == 'Toán học':
         asked = math_context_question(stem)
         formula = f'Công thức áp vào đúng {expr}.' if expr != 'hàm trong câu' else 'Chọn đúng công thức của yêu cầu câu này.'

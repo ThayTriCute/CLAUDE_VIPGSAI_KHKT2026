@@ -8,6 +8,7 @@ import re
 from pathlib import Path
 
 from services.academic_context import academic_context, canonical_subject, folded, normalize_grade, validate_exam_context
+from services.ai_json import JSON_UNIQUE_KEYS_RULE
 from qa_runtime import normalize_bool
 
 POLICY_DATE = "2026-10-24"
@@ -1102,6 +1103,7 @@ def exam_prompt(subject, grade, topics, counts, code, custom="", pathway=""):
             + "\nTrường hint là gợi mở Socratic độc lập; explain và ans dành cho giải thích/chấm bài, không dùng thay hint. Không tiết lộ đáp án hoặc giải hộ trong hint."
             + structure + WEB_QUESTION_INSTRUCTION + "\nYêu cầu tùy biến trong phạm vi môn/lớp đã chọn: " + str(custom)
             + "\nTự giải và đối chiếu đáp án với giả thiết; thiếu hình thì không đặt câu yêu cầu đọc hình đó. Không sao chép nguồn thiếu bằng chứng hoặc tự nhận là đề thật."
+            + "\n" + JSON_UNIQUE_KEYS_RULE
             + "\nChỉ xuất JSON hợp lệ theo schema sau (mở rộng số câu theo cấu hình):\n" + json.dumps(schema, ensure_ascii=False))
 
 

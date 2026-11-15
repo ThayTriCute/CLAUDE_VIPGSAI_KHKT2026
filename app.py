@@ -15909,13 +15909,38 @@ if selected_station == station_labels[2]:
                             st.session_state.get("curriculum_pathway", ""))
 
                         try:
+                            from services.ai_json import (
+                                JSON_CLEAN_RETRY_SUFFIX,
+                                is_duplicate_key_error,
+                            )
 
-                            raw_json_ex = call_gemini_with_fallback(exam_prompt, system_instruction=exam_system, json_mode=True)
-
+                            raw_json_ex = call_gemini_with_fallback(
+                                exam_prompt, system_instruction=exam_system, json_mode=True
+                            )
                             raw_json_ex = raw_json_ex.strip()
+                            try:
+                                parsed_exam = validate_exam_data(
+                                    safe_json_loads(raw_json_ex),
+                                    subject,
+                                    None if subject == "Ngữ văn" else (num_p1, num_p2, num_p3),
+                                )
+                            except Exception as parse_err:
+                                # One bounded retry when AI emits duplicate JSON keys.
+                                if not is_duplicate_key_error(parse_err):
+                                    raise
+                                raw_json_ex = call_gemini_with_fallback(
+                                    exam_prompt + JSON_CLEAN_RETRY_SUFFIX,
+                                    system_instruction=exam_system,
+                                    json_mode=True,
+                                )
+                                raw_json_ex = raw_json_ex.strip()
+                                parsed_exam = validate_exam_data(
+                                    safe_json_loads(raw_json_ex),
+                                    subject,
+                                    None if subject == "Ngữ văn" else (num_p1, num_p2, num_p3),
+                                )
+                                st.session_state["ai_exam_json_retried"] = True
 
-
-                            parsed_exam = validate_exam_data(safe_json_loads(raw_json_ex), subject, None if subject == "Ngữ văn" else (num_p1, num_p2, num_p3))
                             parsed_exam["is_ai_generated"] = True
                             parsed_exam["is_real_exam"] = False
                             parsed_exam["exam_source_type"] = "ai_generated"
@@ -15972,11 +15997,12 @@ if selected_station == station_labels[2]:
                             st.rerun()
 
                         except Exception as e:
+                            from services.ai_json import is_duplicate_key_error as _dup_key
                             err = str(e)
                             st.error(f"Lỗi khởi tạo đề thi: {err}")
-                            if "khóa trùng" in err.casefold() or "json" in err.casefold():
+                            if _dup_key(err) or "json" in err.casefold():
                                 st.info(
-                                    "AI trả JSON chưa sạch (thường trùng khóa). "
+                                    "AI trả JSON chưa sạch (thường trùng khóa) sau khi thử lại một lần. "
                                     "Không phải lỗi merge/deploy. "
                                     "Bấm **Trộn Siêu Đề Mới (Kho Ngân…)** để lấy đề trong kho, hoặc thử lại AI."
                                 )
