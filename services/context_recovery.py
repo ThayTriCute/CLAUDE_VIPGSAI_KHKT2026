@@ -430,22 +430,21 @@ def repair_exam_context(exam, subject, grade, topics=(), bank_provider=None, ai_
                     events[-1]["replacement_rejection"] = ai_candidate_issue
                 if failure_stage:
                     events[-1].update(replacement_stage=failure_stage, replacement_error_type=failure_type)
-    # One unusable AI item must not cancel every other playable question.
-    # Real-bank papers stay intact and still fail closed.
-    if result.get("is_ai_generated"):
-        review = [event for event in events if event.get("action") == "needs_review"]
-        total = sum(len(questions) for part, questions in question_groups(result) if part in {"p1", "p2", "p3"})
-        if review and len(review) < total:
-            drop = {(event.get("part"), event.get("index")) for event in review}
-            for part, questions in question_groups(result):
-                if part not in {"p1", "p2", "p3"}:
-                    continue
-                for index in range(len(questions) - 1, -1, -1):
-                    if (part, index) in drop:
-                        del questions[index]
-            for event in review:
-                event["action"] = "withheld_ai_question"
+    # Một câu không chơi được không hủy các câu còn lại, ở cả đề kho và đề AI.
+    # Hết câu chơi được thì vẫn chặn, không giao đề rỗng và không bịa đáp án.
+    review = [event for event in events if event.get("action") == "needs_review"]
+    total = sum(len(questions) for part, questions in question_groups(result) if part in {"p1", "p2", "p3"})
+    if review and total and len(review) < total:
+        drop = {(event.get("part"), event.get("index")) for event in review}
+        for part, questions in question_groups(result):
+            if part not in {"p1", "p2", "p3"}:
+                continue
+            for index in range(len(questions) - 1, -1, -1):
+                if (part, index) in drop:
+                    del questions[index]
+        for event in review:
+            event["action"] = "withheld_unplayable"
     unresolved = sum(event.get("action") == "needs_review" for event in events)
-    withheld = sum(event.get("action") == "withheld_ai_question" for event in events)
+    withheld = sum(event.get("action") in {"withheld_unplayable", "withheld_ai_question"} for event in events)
     result["context_recovery"] = {"events": events, "ai_calls": ai_calls, "unresolved": unresolved, "withheld": withheld}
     return result

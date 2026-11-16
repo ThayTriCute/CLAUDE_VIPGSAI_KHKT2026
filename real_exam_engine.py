@@ -3000,6 +3000,20 @@ def _build_specialized_custom_question_raw(archetype: str, subject="Toán học"
         }
     return None
 
+_EXAMPLE_MATRIX_PROMPTS = {
+    "ví dụ: chỉ lấy bài 1, 2, 3 không lấy oxyz; cho 5 câu đồ thị phân thức 2/1; không ra câu trùng phương...",
+    "chỉ lấy bài 1, 2, 3 không lấy oxyz; cho 5 câu đồ thị phân thức 2/1; không ra câu trùng phương...",
+}
+
+
+def effective_custom_prompt(custom_prompt: str) -> str:
+    """Câu mẫu trong ô ma trận không phải lệnh. Lệnh thật là chữ thầy đã gõ khác câu mẫu."""
+    text = " ".join(str(custom_prompt or "").split())
+    if text.lower() in _EXAMPLE_MATRIX_PROMPTS:
+        return ""
+    return text
+
+
 def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, counts = None, custom_prompt: str = "", exclude_fingerprints: set = None):
     """
     TRỘN ĐỀ THỰC CHIẾN ĐA TRƯỜNG (MƯỢN LỰC ĐẢ LỰC 100% CÂU HỎI THẬT TỪ TOANMATH & CÁC CỔNG KHẢO THÍ).
@@ -3103,7 +3117,8 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
     # Toán-only filters must NOT run on other subjects (UI labels often contain "Chuyên đề 1/2").
     is_math = canonical_subject(subject) == "Toán học"
     chosen_str = " ".join(str(ct) for ct in topic_filters).lower()
-    custom_str = str(custom_prompt or "").lower()
+    custom_prompt = effective_custom_prompt(custom_prompt)
+    custom_str = custom_prompt.lower()
     
     forbidden_topic_terms = []
     has_chosen_oxyz = False
@@ -3233,7 +3248,7 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
         random.shuffle(clean_items)
 
         def _not_forbidden(it):
-            it_text = (str(it.get("topic", "")) + " " + str(it.get("q", "")) + " " + str(it.get("explain", "")) + " " + str(it.get("source", ""))).lower()
+            it_text = (str(it.get("topic", "")) + " " + str(it.get("q", ""))).lower()
             if any(fb in it_text for fb in forbidden_topic_terms):
                 return False
             # Đồng bộ với cổng phục hồi: không đưa MSLGN khi UI đang chọn KSHS/hàm số.
@@ -3245,13 +3260,7 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
             if not topic_keywords:
                 return True
             topic_blob = str(it.get("topic", "")).lower()
-            full_blob = (
-                topic_blob
-                + " "
-                + str(it.get("q", "")).lower()
-                + " "
-                + str(it.get("explain", "")).lower()
-            )
+            full_blob = topic_blob + " " + str(it.get("q", "")).lower()
             phrases = [tk for tk in topic_keywords if (" " in tk) or len(tk) >= 10]
             if phrases and any(p in full_blob for p in phrases):
                 return True
@@ -3274,13 +3283,11 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
                 continue
             if not _not_forbidden(it):
                 continue
-            if topic_keywords and not _keyword_hit(it):
-                continue
             strict.append(it)
         if strict:
             return strict
 
-        # Pass 2: keyword / cleaned-label hit when UI ontology ≠ bank topic strings
+        # Pass 2: chip không khớp field topic thì chỉ xét đề bài học sinh đọc, không xét lời giải.
         if topic_keywords:
             soft = [it for it in clean_items if _not_forbidden(it) and _keyword_hit(it)]
             if soft:
@@ -3305,7 +3312,7 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
     if p1_excludes_oxyz:
         p1_clean = []
         for it in p1_filtered:
-            it_txt = (str(it.get("topic", "")) + " " + str(it.get("q", "")) + " " + str(it.get("explain", ""))).lower()
+            it_txt = (str(it.get("topic", "")) + " " + str(it.get("q", ""))).lower()
             if any(k in it_txt for k in ["vectơ", "vecto", "oxyz", "không gian oxyz", "tọa độ trong không gian", "tích vô hướng", "góc giữa hai"]):
                 continue
             p1_clean.append(it)
@@ -3450,7 +3457,7 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
         # Gộp theo stem (không theo exact JSON): giữ bản visual score cao hơn (phục dựng > scan).
         unique_by_stem = {}
         for it in shuffled_source:
-            it_text = (str(it.get("topic", "")) + " " + str(it.get("q", "")) + " " + str(it.get("explain", ""))).lower()
+            it_text = (str(it.get("topic", "")) + " " + str(it.get("q", ""))).lower()
             if any(fb in it_text for fb in forbidden_topic_terms):
                 continue
             stem = get_stem_fp(it)
@@ -3462,7 +3469,7 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
 
         unique_items = list(unique_by_stem.values())
         if not unique_items:
-            unique_items = list(shuffled_source)
+            return []
 
         # Luôn ưu tiên hình phục dựng (f/bbt/tikz/svg) hơn ảnh cắt; cộng điểm ma trận tùy biến nếu có.
         from collections import defaultdict
@@ -3498,27 +3505,22 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
             if len(selected) >= target_count:
                 break
 
-        # P0: chỉ bù từ pool ĐÃ lọc chủ đề (prefer) — cấm rest = cả môn–lớp.
-        # Shortfall: vẫn cứng stem/ảnh; họ mẫu (đổi số) chỉ nới khi thiếu câu.
+        # Chỉ bù trong pool đã lọc chủ đề. Thiếu câu thì để thiếu, không nới họ mẫu rồi xóa sau.
         if len(selected) < target_count:
             prefer = list(p1_filtered if part == "p1" else p2_filtered if part == "p2" else p3_filtered)
-            # Ưu tiên bản phục dựng khi bù.
             prefer.sort(key=_reconstructed_visual_score, reverse=True)
-            for allow_family in (False, True):
+            for it in prefer:
+                if is_placeholder_question(it):
+                    continue
+                it_text = (str(it.get("topic", "")) + " " + str(it.get("q", ""))).lower()
+                if any(fb in it_text for fb in forbidden_topic_terms):
+                    continue
+                if _is_duplicate_in_exam(it, allow_family_fallback=False):
+                    continue
+                selected.append(dict(it))
+                _mark_selected(it)
                 if len(selected) >= target_count:
                     break
-                for it in prefer:
-                    if is_placeholder_question(it):
-                        continue
-                    it_text = (str(it.get("topic", "")) + " " + str(it.get("q", "")) + " " + str(it.get("explain", ""))).lower()
-                    if any(fb in it_text for fb in forbidden_topic_terms):
-                        continue
-                    if _is_duplicate_in_exam(it, allow_family_fallback=allow_family):
-                        continue
-                    selected.append(dict(it))
-                    _mark_selected(it)
-                    if len(selected) >= target_count:
-                        break
 
         return selected[:target_count]
 
@@ -3536,63 +3538,22 @@ def generate_blended_real_exam(subject: str, grade, chosen_topics: list = None, 
         if stem_item and stem_item != fp_item:
             remember_question_cooldown(stem_item)
 
-    # BẢO ĐẢM 100% CÁC DẠNG CÂU HỎI TÙY BIẾN ĐẶC THÙ (CUSTOM ARCHETYPES GUARANTEE)
-    if custom_prompt.strip():
-        # 1. Bảo đảm Part 2 đáp ứng chính xác 100% tùy biến (Toán học: đọc đồ thị f', tứ phân vị/ghép nhóm)
-        if subject in ["Toán học", "Toán"]:
-            if need_f_prime and not any("f'" in str(q.get("q", "")).lower() for q in selected_p2):
-                q_spec = build_specialized_custom_question("p2_f_prime_graph", subject=subject, grade=grade)
-                if q_spec and len(selected_p2) > 0:
-                    selected_p2[0] = attach_question_visuals(q_spec, subject=subject, grade=grade)
-            if (need_quartiles or need_mslgn) and not any("tứ phân vị" in str(q.get("q", "")).lower() or "ghép nhóm" in str(q.get("q", "")).lower() for q in selected_p2):
-                q_spec = build_specialized_custom_question("p2_mslgn_quartiles", subject=subject, grade=grade)
-                if q_spec and len(selected_p2) > 1:
-                    selected_p2[1] = attach_question_visuals(q_spec, subject=subject, grade=grade)
-                elif q_spec and len(selected_p2) > 0:
-                    selected_p2[0] = attach_question_visuals(q_spec, subject=subject, grade=grade)
-
-            # 2. Bảo đảm Part 1 đáp ứng chính xác 100% tùy biến (hàm 2/1 tiệm cận xiên, hologram MSLGN, 1/1, bậc 3, BBT)
-            if need_rational_2_1 and not any(isinstance(q.get("f"), dict) and q.get("f", {}).get("type") == "func_2_1" for q in selected_p1):
-                q_spec = build_specialized_custom_question("p1_rational_2_1", subject=subject, grade=grade)
-                if q_spec and len(selected_p1) > 0:
-                    selected_p1[0] = shuffle_question_options(attach_question_visuals(q_spec, subject=subject, grade=grade))
-            if need_mslgn and not any(q.get("mslgn_data") for q in selected_p1):
-                q_spec = build_specialized_custom_question("p1_mslgn_hologram", subject=subject, grade=grade)
-                if q_spec and len(selected_p1) > 1:
-                    selected_p1[1] = shuffle_question_options(attach_question_visuals(q_spec, subject=subject, grade=grade))
-            if need_rational_1_1 and not any(isinstance(q.get("f"), dict) and q.get("f", {}).get("type") == "func_1_1" for q in selected_p1):
-                q_spec = build_specialized_custom_question("p1_rational_1_1", subject=subject, grade=grade)
-                if q_spec and len(selected_p1) > 2:
-                    selected_p1[2] = shuffle_question_options(attach_question_visuals(q_spec, subject=subject, grade=grade))
-            if need_cubic and not any(isinstance(q.get("f"), dict) and q.get("f", {}).get("type") == "func_3" for q in selected_p1):
-                q_spec = build_specialized_custom_question("p1_cubic", subject=subject, grade=grade)
-                if q_spec and len(selected_p1) > 3:
-                    selected_p1[3] = shuffle_question_options(attach_question_visuals(q_spec, subject=subject, grade=grade))
-            if need_bbt and not any(q.get("bbt") for q in selected_p1):
-                q_spec = build_specialized_custom_question("p1_bbt_rational", subject=subject, grade=grade)
-                if q_spec and len(selected_p1) > 4:
-                    selected_p1[4] = shuffle_question_options(attach_question_visuals(q_spec, subject=subject, grade=grade))
-
-        # Never relabel a question to make it appear to satisfy a requested matrix.
-
-    # Chốt chống trùng liên phần / sau inject archetype: giữ bản visual cao hơn, bỏ stem/họ trùng.
+    # Ma trận tùy biến chỉ xếp hạng trong tập đã lọc. Không đè câu kho bằng mẫu khung.
+    # Chốt chống trùng liên phần theo đề bài học sinh đọc. Không xóa thêm theo họ mẫu.
     def _finalize_unique(parts):
-        kept_stems, kept_fams, kept_fps, kept_imgs = set(), set(), set(), set()
+        kept_stems, kept_fps, kept_imgs = set(), set(), set()
         out_parts = []
         for part_qs in parts:
             cleaned = []
             for q in part_qs:
                 stem = get_stem_fp(q)
-                fam = get_family_fp(q)
                 fp = get_q_fingerprint(q)
                 img = _image_crop_fingerprint(q)
-                if (stem and stem in kept_stems) or (fp and fp in kept_fps) or (img and img in kept_imgs) or (fam and fam in kept_fams):
+                if (stem and stem in kept_stems) or (fp and fp in kept_fps) or (img and img in kept_imgs):
                     continue
                 cleaned.append(q)
                 if stem:
                     kept_stems.add(stem)
-                if fam:
-                    kept_fams.add(fam)
                 if fp:
                     kept_fps.add(fp)
                 if img:
@@ -3747,7 +3708,7 @@ def blend_real_exam_with_ai(parsed_exam: dict, subject: str, grade, chosen_topic
     def is_valid_real_q(q):
         if is_placeholder_question(q):
             return False
-        target = (str(q.get("topic", "")) + " " + str(q.get("q", "")) + " " + str(q.get("explain", ""))).lower()
+        target = (str(q.get("topic", "")) + " " + str(q.get("q", ""))).lower()
         if any(fb in target for fb in forbidden_topic_terms):
             return False
         if not topic_keywords:

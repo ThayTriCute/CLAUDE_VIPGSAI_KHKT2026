@@ -145,6 +145,39 @@ def is_teacher_uploaded_exam(exam: Dict[str, Any]) -> bool:
     return "teacher" in source or "giáo viên" in source or "giao vien" in source
 
 
+def stored_exam_has_questions(exam: Dict[str, Any]) -> bool:
+    if not isinstance(exam, dict):
+        return False
+    if any(isinstance(exam.get(part), list) and exam.get(part) for part in ("p1", "p2", "p3")):
+        return True
+    reading = exam.get("part_doc_hieu") if isinstance(exam.get("part_doc_hieu"), dict) else {}
+    if reading.get("questions"):
+        return True
+    return bool(exam.get("part_viet"))
+
+
+def stored_exam_size_label(exam: Dict[str, Any]) -> str:
+    if not isinstance(exam, dict):
+        return "0 câu"
+    reading = exam.get("part_doc_hieu") if isinstance(exam.get("part_doc_hieu"), dict) else {}
+    if reading.get("questions") or exam.get("part_viet"):
+        return f"đọc hiểu {len(reading.get('questions') or [])} + viết {len(exam.get('part_viet') or [])}"
+    return f"{len(exam.get('p1') or [])}+{len(exam.get('p2') or [])}+{len(exam.get('p3') or [])} câu"
+
+
+def copy_stored_exam(exam: Dict[str, Any]) -> Dict[str, Any]:
+    """Bản làm bài đúng đề đã lưu: cùng câu, cùng thứ tự, không trộn và không bỏ câu."""
+    from copy import deepcopy
+
+    if not stored_exam_has_questions(exam):
+        raise ValueError("Đề đã chọn không có câu hỏi.")
+    paper = deepcopy(exam)
+    paper["exact_stored_exam"] = True
+    paper["is_blended_real"] = False
+    paper["is_ai_generated"] = False
+    return paper
+
+
 def filter_exams_for_listing(exams: Iterable[Dict[str, Any]], *, teacher_only: bool = False, exclude_held_fn=None) -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = []
     for exam in exams or []:

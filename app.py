@@ -15144,7 +15144,7 @@ if selected_station == station_labels[2]:
                     btn_confirm_cp = st.button("🔒 Khóa & Xác Nhận Ma Trận Tùy Biến", key="btn_confirm_cp_explicit",
                                                on_click=handle_custom_prompt_commit)
 
-                if custom_matrix_prompt.strip():
+                if ree and ree.effective_custom_prompt(custom_matrix_prompt):
                     st.markdown(textwrap.dedent(f"""
                     <div style="background: rgba(16, 185, 129, 0.12); border: 1.5px solid #10b981; border-radius: 8px; padding: 10px 14px; margin-top: 6px; font-size: 13px; color: #ecfdf5;">
                         <div style="color: #34d399; font-weight: bold; font-size: 13.5px; margin-bottom: 3px;">
@@ -15216,7 +15216,7 @@ if selected_station == station_labels[2]:
                 # --- KHU VỰC KHỞI ĐỘNG BÀI THI CHO THÍ SINH (ACTION CENTER - BUỒNG LÁI COCKPIT) ---
 
                 real_exams_list = ree.get_baseline_full_exams(subject, grade_num) if ree else []
-                from services.tram3_exam_ux import find_exam_by_access_code, filter_exams_for_listing, is_teacher_uploaded_exam
+                from services.tram3_exam_ux import find_exam_by_access_code, filter_exams_for_listing, is_teacher_uploaded_exam, copy_stored_exam, stored_exam_size_label
                 from services.exam_delivery import exam_delivery_held
                 real_exams_list = filter_exams_for_listing(real_exams_list, exclude_held_fn=exam_delivery_held)
                 _qp = {}
@@ -15339,6 +15339,8 @@ if selected_station == station_labels[2]:
 
 
 
+                    st.caption("Chọn một đề có sẵn của đúng môn và lớp này. Nạp ra toàn bộ câu của đề đó, không trộn và không bỏ câu.")
+
                     col_f1, col_f2 = st.columns([1.2, 2.8])
 
                     with col_f1:
@@ -15364,7 +15366,7 @@ if selected_station == station_labels[2]:
 
                         r_opts = [
 
-                            f"[{detect_exam_type(item)}] {item.get('title', 'Đề')} - {item.get('school', '')}"
+                            f"[{detect_exam_type(item)}] {item.get('code', '')} — {item.get('title', 'Đề')} — {item.get('school', '')} — {stored_exam_size_label(item)}"
 
                             for item in filtered_exams
 
@@ -15414,7 +15416,11 @@ if selected_station == station_labels[2]:
                                 st.session_state.seen_whole_exam_codes = set()
                             st.session_state.seen_whole_exam_codes.add(exam_storage_identity(sel_real_item))
 
-                        st.session_state.exam_data = enrich_exam_data(sel_real_item)
+                        try:
+                            st.session_state.exam_data = copy_stored_exam(sel_real_item)
+                        except ValueError as error:
+                            st.error(str(error))
+                            st.stop()
 
                         st.session_state.exam_code = str(sel_real_item.get("code", random.randint(1011, 9999)))
 
@@ -15776,7 +15782,8 @@ if selected_station == station_labels[2]:
                             st.caption("Đề gốc: 24 câu trắc nghiệm + 2 câu đúng/sai chung + 2 câu theo định hướng đã chọn; 50 phút. Giữ khóa Bộ và thứ tự gốc; không trộn, thay câu hoặc gọi AI. Nhãn mức độ do ứng dụng thẩm định riêng.")
                     c_btn1, c_btn2 = st.columns([1.1, 1.1])
 
-                    has_custom_prompt = bool(custom_matrix_prompt and custom_matrix_prompt.strip())
+                    matrix_order = ree.effective_custom_prompt(custom_matrix_prompt) if ree else ""
+                    has_custom_prompt = bool(matrix_order)
                     btn1_label = f"📚 Trích Xuất Đề Tùy Biến (Kho 600+ Đề Thật & Vân Tay)" if has_custom_prompt else f"🎲 Trộn Siêu Đề Mới (Kho Ngân Hàng)"
                     btn2_label = f"🤖 AI Tạo Đề Theo Tùy Biến (Ưu Tiên Số 1 - Mới Tinh 100%)" if has_custom_prompt else "🚀 Khởi Tạo Đề Mới (AI Sáng Tạo 2026)"
                     if original_paper_mode:
@@ -15845,7 +15852,7 @@ if selected_station == station_labels[2]:
                             else:
                                 blended = ree.generate_blended_real_exam(
                                     subject, grade_num, chosen_topics, (num_p1, num_p2, num_p3),
-                                    custom_prompt=custom_matrix_prompt,
+                                    custom_prompt=matrix_order,
                                     exclude_fingerprints=st.session_state.seen_question_fps
                                 )
 
@@ -15866,14 +15873,14 @@ if selected_station == station_labels[2]:
                                         f"Kho chưa đủ ma trận đúng chủ đề cho cấu hình "
                                         f"{shown[0]}/{shown[1]}/{shown[2]} "
                                         f"(đang có {actual[0]}/{actual[1]}/{actual[2]}). "
-                                        "Đề vẫn mở từ kho cùng môn–lớp; hãy kiểm tra hoặc dùng AI bổ sung."
+                                        "Đề mở đúng số câu còn lại. Không bù câu lệch chủ đề và không bịa câu."
                                     )
                                     st.session_state["tram3_counts_shortfall_note"] = short_note
                                     st.warning(short_note)
                                 else:
                                     st.session_state.pop("tram3_counts_shortfall_note", None)
                                 try:
-                                    prepared_bank_exam = blended if original_paper_mode else enrich_exam_data(blended, custom_request=custom_matrix_prompt)
+                                    prepared_bank_exam = blended if original_paper_mode else enrich_exam_data(blended, custom_request=matrix_order)
                                 except (ValueError, TypeError) as error:
                                     st.error(str(error))
                                 else:
@@ -15895,7 +15902,7 @@ if selected_station == station_labels[2]:
 
                                     st.session_state.exam_context = {"name": student_name, "grade": grade, "subject": subject, "phase": measure_phase, "student_id": measure_student_id}
 
-                                    st.session_state.custom_request_text = "" if original_paper_mode else (custom_matrix_prompt.strip() if custom_matrix_prompt else "")
+                                    st.session_state.custom_request_text = "" if original_paper_mode else matrix_order
 
                                     st.session_state.pop("literature_grade", None)
 
@@ -15943,7 +15950,7 @@ if selected_station == station_labels[2]:
 
                         st.session_state.violation_count = 0
 
-                        st.session_state.custom_request_text = custom_matrix_prompt.strip()
+                        st.session_state.custom_request_text = matrix_order
 
                         st.session_state.exam_start_timestamp = time.time()
 
@@ -15953,7 +15960,7 @@ if selected_station == station_labels[2]:
 
                         enable_blend_cfg = False
                         exam_system, exam_prompt = build_curriculum_exam_request(subject, grade_num, chosen_topics,
-                            (num_p1, num_p2, num_p3), st.session_state.exam_code, custom_matrix_prompt,
+                            (num_p1, num_p2, num_p3), st.session_state.exam_code, matrix_order,
                             st.session_state.get("curriculum_pathway", ""))
 
                         try:
@@ -16573,6 +16580,7 @@ if selected_station == station_labels[2]:
                 with st.expander(f"⚡ Mở Đề Thi Có Sẵn Từ Ngân Hàng Offline ({len(cached_list)} đề đã lưu - Nạp tức thì 0.1s)", expanded=False):
 
                     from services.cache_metadata import cached_exam_label, distinct_exam_labels
+                    from services.tram3_exam_ux import copy_stored_exam
                     c_opts = distinct_exam_labels([cached_exam_label(item) for item in cached_list], cached_list)
 
                     from services.widget_state import valid_option_index
@@ -16613,7 +16621,11 @@ if selected_station == station_labels[2]:
                         else:
                             sel_cached_item = cached_list[chosen_cache_idx]
 
-                        st.session_state.exam_data = enrich_exam_data(sel_cached_item["data"])
+                        try:
+                            st.session_state.exam_data = copy_stored_exam(sel_cached_item["data"])
+                        except ValueError as error:
+                            st.error(str(error))
+                            st.stop()
 
                         st.session_state.exam_code = str(sel_cached_item["code"])
 
@@ -16667,7 +16679,7 @@ if selected_station == station_labels[2]:
         recovery_meta = exam.get("context_recovery") if isinstance(exam, dict) else None
         withheld = recovery_meta.get("withheld") if isinstance(recovery_meta, dict) else 0
         if isinstance(withheld, int) and withheld > 0:
-            st.warning(f"Đã để riêng {withheld} câu AI chưa đủ dữ kiện hoặc lệch kiểm chứng. Các câu còn lại mở để làm. Không bịa đáp án cho câu đã để riêng.")
+            st.warning(f"Đã để riêng {withheld} câu chưa đủ dữ kiện hoặc lệch kiểm chứng. Các câu còn lại mở để làm. Không bịa đáp án cho câu đã để riêng.")
         with st.expander("📋 Đối soát nhãn mức độ câu hỏi (chưa thẩm định)"):
             cognitive_report = exam.get("cognitive_audit", {})
             st.caption("Chỉ thống kê nhãn khai báo; chưa xác nhận yêu cầu tư duy thực tế hoặc tỷ lệ điểm. Từng ý Đúng/Sai được liệt kê riêng. Không có dữ liệu là chưa xác định.")
