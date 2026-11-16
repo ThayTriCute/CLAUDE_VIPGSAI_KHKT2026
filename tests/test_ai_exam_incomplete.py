@@ -28,10 +28,10 @@ class TestAiExamDoesNotDieOnOneItem(unittest.TestCase):
         self.assertEqual(recovery["unresolved"], 0)
         self.assertEqual(recovery["withheld"], 1)
         self.assertEqual(len(repaired["p1"]), 2)
-        self.assertEqual(sum(event["action"] == "withheld_ai_question" for event in recovery["events"]), 1)
+        self.assertEqual(sum(event["action"] == "withheld_unplayable" for event in recovery["events"]), 1)
         self.assertNotIn("hình bên", " ".join(item["q"] for item in repaired["p1"]))
 
-    def test_bank_paper_still_fails_closed(self):
+    def test_bank_paper_withholds_the_broken_item_and_opens_the_rest(self):
         exam = {
             "p1": [
                 _mcq("Câu đủ dữ kiện."),
@@ -39,9 +39,10 @@ class TestAiExamDoesNotDieOnOneItem(unittest.TestCase):
             ],
         }
         repaired = repair_exam_context(exam, "Toán học", 12, topics=["Xác suất"])
-        self.assertEqual(repaired["context_recovery"]["unresolved"], 1)
-        self.assertEqual(repaired["context_recovery"]["withheld"], 0)
-        self.assertEqual(len(repaired["p1"]), 2)
+        self.assertEqual(repaired["context_recovery"]["unresolved"], 0)
+        self.assertEqual(repaired["context_recovery"]["withheld"], 1)
+        self.assertEqual(len(repaired["p1"]), 1)
+        self.assertNotIn("hình bên", repaired["p1"][0]["q"])
 
     def test_all_broken_ai_items_still_block_the_paper(self):
         exam = {

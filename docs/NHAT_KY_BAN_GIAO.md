@@ -1,7 +1,7 @@
 # Nhật ký bàn giao — GSAI KHKT 2026
 
 > Ca sau **đọc file này trước** khi sửa Trạm 1 / Trạm 3 / Socratic / JSON đề AI.  
-> Cập nhật: **2026-11-16 ~02:20 giờ VN**. Người ghi: ca trợ lý (theo lệnh anh MINH).  
+> Cập nhật: **2026-11-16 ~08:45 giờ VN**. Người ghi: ca trợ lý (theo lệnh anh MINH).  
 > Repo nguồn: `ThayTriCute/CLAUDE_VIPGSAI_KHKT2026`. `main` trước PR giọng nói này = **`68ae144`** (PR **#124**).  
 > App Cloud: `https://claudevipgsaikhkt2026-bybgceinifcaqggqyyvatx.streamlit.app/`  
 > Worktree máy anh: `D:\CLAUDE_FINAL KHKT 2026\_gh_compare`.
@@ -26,12 +26,27 @@ Hàm duy nhất: `build_tram3_socratic_guide` (= `build_socratic_guide`) trong `
 
 ---
 
-## 1. Ca gần nhất — đề AI không chết cả bài vì một câu lệch
+## 1. Ca gần nhất — bốn luật cho nút Trộn siêu đề
+
+Anh chốt 16/11: máy trộn Trạm 3 tự mâu thuẫn. Radio, panel, Ngữ văn, Tin học 12, Word/PDF, quét link, nạp đề thật và phòng làm bài **giữ nguyên**. Sửa `generate_blended_real_exam` và cổng mở đề.
+
+1. Chip là lệnh chủ đề. Câu mẫu trong ô (“Chỉ lấy Bài 1, 2, 3 không lấy Oxyz…”) không phải lệnh (`effective_custom_prompt`). Không đè câu kho bằng mẫu khung synthetic.
+2. Lọc theo field topic. Không khớp thì chỉ xét đề bài học sinh đọc. Lời giải không được kéo câu vào đề và không được cấm câu. Hết câu đúng chip thì báo thiếu, không vét cả môn.
+3. Điểm hình (`f` / bảng biến thiên / mã vẽ) chỉ xếp trong tập đã lọc. Bỏ trùng theo đề bài trước khi đếm. Không nới họ mẫu rồi xóa sau khiến đề ngắn.
+4. Đề kho và đề AI dùng một cổng: còn câu chơi được thì để riêng câu hỏng (`withheld_unplayable`) và mở phần còn lại. Hết câu chơi được thì vẫn chặn. Không bịa đáp án. Ô AI thay thế vẫn tối đa 2 câu và mặc định tắt.
+
+Cảnh báo thiếu câu nói đúng số đang có, không còn câu “mở từ kho cùng môn–lớp”.
+
+- File: `real_exam_engine.py`, `services/context_recovery.py`, `services/recovery_diagnostics.py`, `app.py`.
+- Test: `tests/test_tram3_mix_one_law.py`. Đổi kỳ vọng đề kho ở `tests/test_ai_exam_incomplete.py` và `tests/test_context_recovery.py` (câu kho trùng không dùng lại thì để riêng, không chặn cả bài).
+- Việc còn: hồi quy đầy đủ máy local, push nhánh, CI. Chưa merge. Chưa nghiệm thu live Cloud.
+- Chọn đề có sẵn (radio “Làm nguyên đề thi thật” và kho offline): nạp `copy_stored_exam`, đúng toàn bộ câu và thứ tự của đề đã lưu. Không đi qua `enrich_exam_data`, nên không trộn và không để riêng câu.
+
+## 1c. Ca trước — đề AI không chết cả bài vì một câu lệch
 
 Ảnh Cloud 16/11 ~02:06: hai lần “Đã nhận phản hồi từ AI” rồi `Lỗi khởi tạo đề thi: Còn câu chưa đủ dữ liệu/đáp án hoặc chưa khớp yêu cầu… chưa mở lượt làm bài này.` Checkbox “Cho phép AI sinh nguyên câu thay thế” đang bật. `validate_exam_data` đã qua (nếu không, câu lỗi sẽ khác). `enrich_exam_data` gọi `repair_exam_context`; **một** câu `needs_review` làm `unresolved > 0` và hủy cả đề.
 
-- Đề `is_ai_generated`: câu không thay được thì **để riêng** (`withheld_ai_question`), các câu còn lại vẫn mở. Nếu **mọi** câu đều hỏng thì vẫn chặn, không giao đề rỗng và không bịa đáp.
-- Đề kho / không gắn `is_ai_generated`: giữ chặn cả bài như cũ. Test `test_app_failed_delivery_logs_without_opening_exam` không đổi.
+- Đề kho và đề AI cùng để riêng câu hỏng khi còn câu chơi được. Mục 1 (bốn luật) thay câu “đề kho giữ chặn cả bài” ở dưới.
 - Bảng số liệu viết ngay trong stem (cột `|` hoặc ít nhất 3 dòng có số) không bị coi là thiếu hình. “Hình bên / đồ thị sau / bảng biến thiên” không có dữ liệu hình vẫn là lỗi.
 - Khóa `B.` hoặc đúng nguyên văn phương án được đưa về A–D. Không khớp phương án nào thì không gán chữ.
 - Câu hỏi **số cực trị** mà phương án là khoảng/lời văn không bị SymPy kết luận ảo giác. Phương án đếm (“2 điểm”, “có 2 cực trị”) vẫn đối chiếu.

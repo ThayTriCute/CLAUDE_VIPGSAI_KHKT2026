@@ -89,7 +89,9 @@ class TestContextRecovery(unittest.TestCase):
     def test_same_bank_question_is_not_reused_for_two_repairs(self):
         result = repair_exam_context({"p1": [self.missing("1"), self.missing("2")]}, "Toán", 12,
                                      bank_provider=lambda *_: {"p1": [self.replacement()]})
-        self.assertEqual(result["context_recovery"]["unresolved"], 1)
+        self.assertEqual(result["context_recovery"]["unresolved"], 0)
+        self.assertEqual(result["context_recovery"]["withheld"], 1)
+        self.assertEqual(len(result["p1"]), 1)
 
 
 class TestPdfSourceVisuals(unittest.TestCase):
